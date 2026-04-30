@@ -22,18 +22,11 @@
             }
 
             // 2. Check specific page permission
-            // values in localStorage are stored as strings, so compare to string 'true'
             if (hasAccess !== 'true') {
                 console.log("User lacks submission permission.");
                 alert("Access Denied: You do not have permission to submit requests.");
-                // Redirect back to dashboard or manager if they have access there
-                const hasMgmtAccess = localStorage.getItem('ngu_portal_access_management');
-                if (hasMgmtAccess === 'true') {
-                    window.location.href = 'recruit-approval-form-display.html';
-                } else {
-                    window.location.href = 'login.html'; // Log them out
-                    localStorage.clear();
-                }
+                // Redirect back to hub
+                window.location.href = 'homepage.html';
                 return; // Stop execution
             }
 
@@ -79,6 +72,13 @@
             border-radius: 12px;
             border: 1px solid var(--panel-border);
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        /* Action Bar for Navigation */
+        .action-bar {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: flex-start;
         }
 
         .header {
@@ -239,7 +239,7 @@
             align-items: center;
         }
 
-        button {
+        button, .btn-link {
             padding: 14px 30px;
             border: none;
             border-radius: 6px;
@@ -249,6 +249,9 @@
             transition: all 0.2s ease;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
         }
 
         .btn-submit {
@@ -267,6 +270,17 @@
             opacity: 0.5;
         }
 
+        .btn-secondary {
+            background-color: var(--input-bg);
+            color: var(--primary-text);
+            border: 1px solid var(--panel-border);
+            font-size: 0.9em;
+            padding: 10px 20px;
+        }
+        .btn-secondary:hover {
+            background-color: #38444d;
+        }
+
         .btn-logout {
             background: none;
             color: var(--secondary-text);
@@ -283,12 +297,18 @@
             .form-grid { grid-template-columns: 1fr; }
             .checkbox-group, .radio-group { gap: 10px; }
             .actions { flex-direction: column-reverse; gap: 10px; align-items: stretch;}
+            .btn-link { justify-content: center; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- New Action Bar -->
+    <div class="action-bar">
+        <a href="homepage.html" class="btn-link btn-secondary">← Back to Hub</a>
+    </div>
+
     <div class="header">
         <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
         <div class="header-text">
@@ -302,6 +322,7 @@
 
     <form id="recruitAuthorisationForm">
         
+        <!-- ... (Rest of the form contents remain exactly the same as before) ... -->
         <!-- Request Information -->
         <fieldset>
             <legend>Request Information</legend>
@@ -525,23 +546,28 @@
             if(field) field.value = today;
         });
 
-        // 2. Fetch username from localStorage (set by safety script above)
+        // 2. Fetch username from localStorage (set by safety script in head)
         const username = localStorage.getItem('ngu_portal_username');
         
         // 3. Update Header Info
-        document.getElementById('display-username').textContent = username;
+        const displayUsername = document.getElementById('display-username');
+        if(displayUsername) displayUsername.textContent = username;
 
         // 4. Pre-fill Requestor Name fields and make read-only
-        // (Forces signature consistency with login)
-        document.getElementById('requested-by').value = username;
-        document.getElementById('decl-name').value = username;
+        const requestedByField = document.getElementById('requested-by');
+        const declNameField = document.getElementById('decl-name');
+        if(requestedByField) requestedByField.value = username;
+        if(declNameField) declNameField.value = username;
     });
 
     // Logout Logic
-    document.getElementById('logout-btn').addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = 'login.html';
-    });
+    const logoutBtn = document.getElementById('logout-btn');
+    if(logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        });
+    }
 
     // --- Form Submission Logic ---
     document.getElementById('recruitAuthorisationForm').addEventListener('submit', function(e) {
@@ -549,18 +575,24 @@
 
         // Prototype Security Check: Ensure signature matches logged in name exactly
         const username = localStorage.getItem('ngu_portal_username');
-        const signature = document.getElementById('decl-signature').value.trim();
+        const signatureField = document.getElementById('decl-signature');
+        const signature = signatureField ? signatureField.value.trim() : '';
+
+        const submitButton = this.querySelector('.btn-submit');
 
         if (signature !== username) {
             alert(`⚠️ Signature Mismatch:\nThe Digital Signature must exactly match your logged-in username: "${username}"`);
-            submitButton.disabled = false;
-            submitButton.textContent = 'Submit Request';
+            if(submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit Request';
+            }
             return; // Stop submission
         }
 
-        const submitButton = this.querySelector('.btn-submit');
-        submitButton.disabled = true;
-        submitButton.textContent = 'Submitting...';
+        if(submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submitting...';
+        }
 
         // Collect form data
         const formData = new FormData(this);
@@ -572,11 +604,10 @@
         };
 
         // Construct object for Firestore saving.
-        // Approval fields are initialized here as empty/pending, to be filled later in the display app.
         const dataToSave = {
             requestInformation: {
                 dateOfRequest: formData.get('date-of-request'),
-                requestedBy: formData.get('requested-by'), // This is locked to username
+                requestedBy: formData.get('requested-by'), // Locked to username
                 department: formData.get('department'),
                 jobTitle: formData.get('job-title'),
                 location: formData.get('location'),
@@ -615,7 +646,6 @@
                 signature: signature // Verified match to username
             },
             // --- Workflow Initialization ---
-            // These sections are now empty on submission, to be filled via the display/admin app.
             approvalSignOff: { 
                 departmentHead: { decision: 'Pending', comments: '', date: '' },
                 finance: { decision: 'Pending', comments: '', date: '' },
@@ -635,7 +665,6 @@
         .then((docRef) => {
             console.log("Document written with ID: ", docRef.id);
             alert('Request submitted successfully!');
-            // Optional: Redirect to a dashboard or reset form
             location.reload(); 
         })
         .catch((error) => {
@@ -643,9 +672,10 @@
             alert('There was an error submitting the request. Please try again or contact IT support.');
         })
         .finally(() => {
-            // Re-enable button
-            submitButton.disabled = false;
-            submitButton.textContent = 'Submit Request';
+            if(submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit Request';
+            }
         });
     });
 </script>
