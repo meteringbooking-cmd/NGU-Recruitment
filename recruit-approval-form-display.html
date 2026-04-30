@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submitted Recruitment Requests - NGU Portal</title>
+    <style>
+        :root {
+            /* Shared NGU Dark Theme */
+            --body-bg: #141d26;
+            --container-bg: #1c2938;
+            --input-bg: #2d3d50;
+            --panel-border: #38444d;
+            --primary-text: #e1e8ed;
+            --secondary-text: #8899a6;
+            --accent-color: #00d4ff; /* NGU Cyan */
+            --success-color: #2ecc71;
+            --pending-color: #f1c40f;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--body-bg);
+            color: var(--primary-text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Header Styling */
+        .page-header {
+            background-color: var(--container-bg);
+            padding: 20px 30px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo { height: 40px; width: auto; }
+
+        .page-header h1 {
+            font-size: 1.4em;
+            color: var(--primary-text);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        /* Loading/Error States */
+        #status-message {
+            text-align: center;
+            padding: 40px;
+            color: var(--secondary-text);
+            background-color: var(--container-bg);
+            border-radius: 8px;
+            border: 1px solid var(--panel-border);
+        }
+
+        /* Accordion List Styling */
+        .request-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .request-item {
+            background-color: var(--container-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        /* Accordion Summary Header (The non-expanded view) */
+        .request-summary {
+            padding: 15px 20px;
+            cursor: pointer;
+            display: grid;
+            /* Grid layout: Job Title | Dept | Location | Date | Arrow */
+            grid-template-columns: 2fr 1.5fr 1fr 1.2fr 40px;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .request-summary:hover {
+            background-color: rgba(255,255,255,0.03);
+        }
+
+        .summary-cell {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 0.95em;
+        }
+
+        .cell-label {
+            display: none; /* Hide labels in desktop view */
+            color: var(--secondary-text);
+            font-size: 0.8em;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .summary-job-title {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .summary-date {
+            color: var(--secondary-text);
+            font-family: monospace;
+        }
+
+        .expand-icon {
+            text-align: center;
+            color: var(--secondary-text);
+            transition: transform 0.3s ease;
+        }
+
+        /* Accordion Content (The expanded detailed view) */
+        .request-details {
+            max-height: 0; /* Hidden by default */
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            border-top: 0 solid var(--panel-border);
+            background-color: rgba(0,0,0,0.15);
+        }
+
+        /* Active State for Accordion */
+        .request-item.active {
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 15px rgba(0,212,255,0.1);
+        }
+
+        .request-item.active .request-details {
+            max-height: 2000px; /* Arbitrary large height for expansion transition */
+            border-top-width: 1px;
+            padding: 30px;
+        }
+
+        .request-item.active .expand-icon {
+            transform: rotate(180deg);
+            color: var(--accent-color);
+        }
+
+        /* Detailed View Inner Styling (Replicating form layout) */
+        .detail-section {
+            margin-bottom: 25px;
+        }
+
+        .detail-section-title {
+            font-size: 0.9em;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .full-width { grid-column: 1 / -1; }
+
+        .detail-block label {
+            display: block;
+            color: var(--secondary-text);
+            font-size: 0.8em;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            color: var(--primary-text);
+            font-size: 1em;
+            background-color: rgba(255,255,255,0.05);
+            padding: 8px 12px;
+            border-radius: 4px;
+            min-height: 38px;
+        }
+
+        .detail-value.empty { color: #555; font-style: italic; }
+
+        textarea.detail-value {
+            width: 100%;
+            height: auto;
+            resize: none;
+            font-family: inherit;
+            border: none;
+        }
+
+        /* Signature style */
+        .signature-value {
+            font-style: italic;
+            font-family: 'Georgia', serif;
+            color: var(--accent-color);
+            font-size: 1.1em;
+        }
+
+        /* Mobile Responsive adjustments */
+        @media (max-width: 768px) {
+            .page-header { flex-direction: column; text-align: center; gap: 10px; }
+            
+            .request-summary {
+                grid-template-columns: 1fr 40px; /* Stack data, keep arrow on right */
+                gap: 5px;
+                padding: 15px;
+            }
+
+            .summary-cell {
+                grid-column: 1 / 2; /* Take full width of left column */
+                white-space: normal;
+                display: flex;
+                flex-direction: column;
+                margin-bottom: 8px;
+            }
+
+            .cell-label { display: block; } /* Show labels to identify data */
+            
+            .request-summary .expand-icon {
+                grid-column: 2 / 3;
+                grid-row: 1 / 5; /* Span across mobile rows */
+            }
+
+            .request-item.active .request-details { padding: 20px; }
+            .detail-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <header class="page-header">
+        <div class="header-brand">
+            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
+            <h1>Recruitment Requests</h1>
+        </div>
+        <div style="font-size: 0.9em; color: var(--secondary-text);">Portal Access</div>
+    </header>
+
+    <div id="status-message">⏳ Loading submitted requests...</div>
+    
+    <div id="request-list-container" class="request-list" style="display: none;">
+        <!-- Dynamically populated via JS -->
+    </div>
+</div>
+
+<!-- Firebase SDK (Compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+    // --- Firebase Configuration ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717",
+        measurementId: "G-R56BGZYV8N"
+    };
+
+    // --- Initialize Firebase ---
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const collectionName = "NGU Recuitment Approval Form";
+
+    const container = document.getElementById('request-list-container');
+    const statusMsg = document.getElementById('status-message');
+
+    // Helper: format Firestore timestamp to readable date/time
+    const formatTimestamp = (timestamp) => {
+        if (!timestamp) return "N/A";
+        const date = timestamp.toDate();
+        // Returns formats like "15 Mar 2024, 14:30"
+        return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + 
+               ', ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    // Helper: Safely get value or return placeholder
+    const getValue = (val) => {
+        if (val === null || val === undefined || val === "") return '<span class="empty">Not provided</span>';
+        if (Array.isArray(val)) return val.length > 0 ? val.join(', ') : '<span class="empty">None</span>';
+        return val;
+    };
+
+    // Fetch data from Firestore
+    async function fetchRequests() {
+        try {
+            const snapshot = await db.collection(collectionName)
+                                      .orderBy('submittedAt', 'desc') // Newest first
+                                      .get();
+
+            if (snapshot.empty) {
+                statusMsg.textContent = "No recruitment requests found.";
+                return;
+            }
+
+            statusMsg.style.display = 'none';
+            container.style.display = 'flex';
+            container.innerHTML = ''; // Clear container
+
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const reqId = doc.id;
+                
+                // Extract summary data (with fallbacks)
+                const jobTitle = data.requestInformation?.jobTitle || 'Unknown Title';
+                const dept = data.requestInformation?.department || 'Unknown Dept';
+                const location = data.requestInformation?.location || 'Unknown';
+                const submitDate = formatTimestamp(data.submittedAt);
+
+                // Create Item HTML
+                const itemHtml = `
+                    <div class="request-item" id="item-${reqId}">
+                        <div class="request-summary" onclick="toggleAccordion('${reqId}')">
+                            <div class="summary-cell summary-job-title">
+                                <div class="cell-label">Job Title</div>
+                                ${jobTitle}
+                            </div>
+                            <div class="summary-cell">
+                                <div class="cell-label">Department</div>
+                                ${dept}
+                            </div>
+                            <div class="summary-cell">
+                                <div class="cell-label">Location</div>
+                                ${location}
+                            </div>
+                            <div class="summary-cell summary-date">
+                                <div class="cell-label">Submitted</div>
+                                ${submitDate}
+                            </div>
+                            <div class="expand-icon">▼</div>
+                        </div>
+                        
+                        <div class="request-details">
+                            ${generateDetailedView(data, submitDate)}
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', itemHtml);
+            });
+
+        } catch (error) {
+            console.error("Error fetching documents: ", error);
+            statusMsg.textContent = "Error loading requests. Please check console for details.";
+            statusMsg.style.color = 'var(--danger-color)';
+        }
+    }
+
+    // Function to generate the entire HTML for the expanded detail view
+    function generateDetailedView(data, formattedSubmitDate) {
+        return `
+            <!-- Request Info -->
+            <div class="detail-section">
+                <div class="detail-section-title">Request Information</div>
+                <div class="detail-grid">
+                    <div class="detail-block">
+                        <label>Date of Request</label>
+                        <div class="detail-value">${getValue(data.requestInformation?.dateOfRequest)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>Requested By</label>
+                        <div class="detail-value">${getValue(data.requestInformation?.requestedBy)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>Hiring Manager</label>
+                        <div class="detail-value">${getValue(data.requestInformation?.hiringManager)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>Reports To</label>
+                        <div class="detail-value">${getValue(data.requestInformation?.reportsTo)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>System Submission Date</label>
+                        <div class="detail-value">${formattedSubmitDate}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vacancy -->
+            <div class="detail-section">
+                <div class="detail-section-title">Vacancy Details</div>
+                <div class="detail-grid">
+                    <div class="detail-block full-width">
+                        <label>Vacancy Type(s)</label>
+                        <div class="detail-value">${getValue(data.vacancyType)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>Replacement For</label>
+                        <div class="detail-value">${getValue(data.replacementDetails?.employeeName)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>Leaving Date</label>
+                        <div class="detail-value">${getValue(data.replacementDetails?.leavingDate)}</div>
+                    </div>
+                    <div class="detail-block full-width">
+                        <label>Reason for Vacancy</label>
+                        <textarea class="detail-value" rows="2" readonly>${data.replacementDetails?.reasonForVacancy || 'N/A'}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Business Case -->
+            <div class="detail-section">
+                <div class="detail-section-title">Business Case</div>
+                <div class="detail-grid">
+                    <div class="detail-block full-width">
+                        <label>Why is this role required?</label>
+                        <textarea class="detail-value" rows="4" readonly>${data.businessCase?.whyRoleRequired || 'N/A'}</textarea>
+                    </div>
+                    <div class="detail-block full-width">
+                        <label>Impact if not filled?</label>
+                        <textarea class="detail-value" rows="4" readonly>${data.businessCase?.impactIfNotFilled || 'N/A'}</textarea>
+                    </div>
+                    <div class="detail-block full-width">
+                        <label>Criticality Tags</label>
+                        <div class="detail-value">${getValue(data.businessCase?.impactTags)}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financials -->
+            <div class="detail-section">
+                <div class="detail-section-title">Budget & Salary</div>
+                <div class="detail-grid">
+                    <div class="detail-block">
+                        <label>Proposed Salary / Rate</label>
+                        <div class="detail-value">${getValue(data.budgetSalary?.proposedSalary)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>Cost Centre</label>
+                        <div class="detail-value">${getValue(data.budgetSalary?.costCentre)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>Budget Confirmed</label>
+                        <div class="detail-value">${getValue(data.budgetSalary?.budgetConfirmed)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>Additional Costs</label>
+                        <div class="detail-value">${getValue(data.budgetSalary?.additionalCosts)}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Requirements -->
+            <div class="detail-section">
+                <div class="detail-section-title">Requirements & Timeline</div>
+                <div class="detail-grid">
+                    <div class="detail-block">
+                        <label>Desired Start Date</label>
+                        <div class="detail-value">${getValue(data.recruitmentRequirements?.desiredStartDate)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>Latest Start Date</label>
+                        <div class="detail-value">${getValue(data.recruitmentRequirements?.latestStartDate)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>Urgency</label>
+                        <div class="detail-value">${getValue(data.recruitmentRequirements?.urgency)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>Internal/External Ad</label>
+                        <div class="detail-value">
+                            Int: ${getValue(data.recruitmentRequirements?.internalAdvertRequired)} / 
+                            Ext: ${getValue(data.recruitmentRequirements?.externalAdvertRequired)}
+                        </div>
+                    </div>
+                    <div class="detail-block full-width">
+                        <label>Qualifications Required</label>
+                        <textarea class="detail-value" rows="3" readonly>${data.recruitmentRequirements?.qualifications || 'N/A'}</textarea>
+                    </div>
+                    <div class="detail-block full-width">
+                        <label>Experience Required</label>
+                        <textarea class="detail-value" rows="3" readonly>${data.recruitmentRequirements?.experience || 'N/A'}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Outcome -->
+            <div class="detail-section">
+                <div class="detail-section-title">Declaration</div>
+                <div class="detail-grid">
+                    <div class="detail-block">
+                        <label>Declarant Name</label>
+                        <div class="detail-value">${getValue(data.declaration?.name)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>Date Signed</label>
+                        <div class="detail-value">${getValue(data.declaration?.date)}</div>
+                    </div>
+                    <div class="detail-block full-width">
+                        <label>Digital Signature</label>
+                        <div class="detail-value signature-value">${getValue(data.declaration?.signature)}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Toggle Accordion function
+    function toggleAccordion(reqId) {
+        const item = document.getElementById(`item-${reqId}`);
+        
+        // Optional: Close other open items (comment out if you want multiple open)
+        document.querySelectorAll('.request-item').forEach(el => {
+            if (el.id !== `item-${reqId}`) el.classList.remove('active');
+        });
+
+        item.classList.toggle('active');
+    }
+
+    // Start on load
+    window.onload = fetchRequests;
+</script>
+
+</body>
+</html>
