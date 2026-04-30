@@ -279,7 +279,9 @@
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const collectionName = "portal_users"; // New collection for user data
+    
+    // --- Renamed Collection ---
+    const collectionName = "NGU User Database"; 
 
     // DOM Elements
     const table = document.getElementById('user-table');
