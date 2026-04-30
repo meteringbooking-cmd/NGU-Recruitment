@@ -121,6 +121,7 @@
             display: inline-flex;
             align-items: center;
             font-weight: 600;
+            border: none;
         }
 
         .btn-logout-header {
@@ -172,7 +173,7 @@
             padding: 15px 20px;
             cursor: pointer;
             display: grid;
-            /* Grid layout: Job Title | Dept | Location | Date | Arrow */
+            /* Grid layout: Job Title | Dept | Location | (Live Badge) | Date | Arrow */
             grid-template-columns: 2fr 1.5fr 1fr 1.2fr 40px;
             align-items: center;
             gap: 10px;
@@ -188,6 +189,9 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             font-size: 0.95em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .cell-label {
@@ -206,6 +210,27 @@
         .summary-date {
             color: var(--secondary-text);
             font-family: monospace;
+        }
+
+        /* 
+           --- NEW "LIVE" BADGE STYLING ---
+        */
+        .badge-live {
+            background-color: rgba(0, 212, 255, 0.15); /* Transparent Cyan */
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+            font-size: 0.7em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 2px 7px;
+            border-radius: 4px;
+            display: none; /* Hidden by default */
+        }
+        
+        /* Show badge in summary only when applied via JS */
+        .is-live .badge-live-summary {
+            display: inline-block;
         }
 
         .expand-icon {
@@ -253,6 +278,7 @@
             margin-bottom: 15px;
             padding-bottom: 5px;
             border-bottom: 1px solid var(--panel-border);
+            display: flex; align-items: center; justify-content: space-between;
         }
 
         .detail-grid {
@@ -356,14 +382,26 @@
         }
 
         button.btn-save {
-            padding: 10px 20px; border: none; border-radius: 4px;
-            font-size: 0.9em; font-weight: 700; cursor: pointer;
-            transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.05em;
+            padding: 10px 20px;
+            font-size: 0.9em; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em;
             background-color: var(--success-color); color: #000;
         }
 
-        button.btn-save:hover { filter: brightness(1.1); }
-        button.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+        /* --- NEW "CLOSE WORKFLOW" BUTTON STYLING --- */
+        button.btn-close-workflow {
+            background-color: transparent;
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+            padding: 10px 20px;
+            font-size: 0.9em; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            display: none; /* Only show when Live */
+        }
+        button.btn-close-workflow:hover { background-color: var(--danger-color); color: #fff; }
+        
+        button:hover:not(:disabled) { filter: brightness(1.1); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* Mobile Responsive adjustments */
         @media (max-width: 768px) {
@@ -404,6 +442,8 @@
                 color: var(--secondary-text); font-weight: 600; font-size: 0.8em; text-transform: uppercase;
             }
             .approval-table tr { border-bottom: 1px solid var(--panel-border); margin-bottom: 5px; background-color: rgba(0,0,0,0.1); }
+            
+            .admin-actions { flex-direction: column-reverse; align-items: stretch;}
         }
     </style>
 </head>
@@ -412,7 +452,7 @@
 <div class="main-container">
     <header class="page-header">
         <div class="header-brand-container">
-            <!-- New Back Button -->
+            <!-- Back Button -->
             <a href="homepage.html" class="btn-link btn-secondary">← Hub</a>
             <div class="header-brand">
                 <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
@@ -425,7 +465,7 @@
         </div>
     </header>
 
-    <div id="status-message">⏳ Loading submitted requests...</div>
+    <div id="status-message">⏳ Loading active requests...</div>
     
     <div id="request-list-container" class="request-list" style="display: none;">
         <!-- Dynamically populated via JS -->
@@ -490,13 +530,18 @@
     // Fetch data from Firestore
     async function fetchRequests() {
         try {
-            // Listen for real-time updates so we don't need to refresh after saving
+            // --- UPDATED QUERY ---
+            // Only fetch requests where workflowClosed is NOT true.
+            // Prototype Security limitation: Newly submitted forms (Phase 1)
+            // will appear, but old pre-Phase-1 data will be hidden unless
+            // workflowClosed: false is manually added in console.
             db.collection(collectionName)
-              .orderBy('submittedAt', 'desc')
+              .where('workflowClosed', '==', false) // Only Active
+              .orderBy('submittedAt', 'desc') // Newest first
               .onSnapshot((snapshot) => {
                 if (snapshot.empty) {
                     if(statusMsg) {
-                        statusMsg.textContent = "No recruitment requests found.";
+                        statusMsg.textContent = "No active recruitment requests found.";
                         statusMsg.style.display = 'block';
                     }
                     if(container) container.style.display = 'none';
@@ -521,9 +566,17 @@
                         const location = data.requestInformation?.location || 'Unknown';
                         const submitDate = formatTimestamp(data.submittedAt);
 
+                        // --- NEW "LIVE" CALCULATION ---
+                        // All 3 approval steps must be set to "Approve"
+                        const approvals = data.approvalSignOff || {};
+                        const isLive =  approvals.departmentHead?.decision === 'Approve' &&
+                                        approvals.finance?.decision === 'Approve' &&
+                                        approvals.finalApprover?.decision === 'Approve';
+
                         // Create Item HTML
+                        // .is-live class applied based on calculation
                         const itemHtml = `
-                            <div class="request-item ${expandedIds.includes(reqId) ? 'active' : ''}" id="item-${reqId}">
+                            <div class="request-item ${expandedIds.includes(reqId) ? 'active' : ''} ${isLive ? 'is-live' : ''}" id="item-${reqId}">
                                 <div class="request-summary" onclick="toggleAccordion('${reqId}')">
                                     <div class="summary-cell summary-job-title">
                                         <div class="cell-label">Job Title</div>
@@ -535,7 +588,10 @@
                                     </div>
                                     <div class="summary-cell">
                                         <div class="cell-label">Location</div>
-                                        ${location}
+                                        <div style="display:flex; align-items:center; gap:10px;">
+                                            ${location}
+                                            <span class="badge-live badge-live-summary">Live</span>
+                                        </div>
                                     </div>
                                     <div class="summary-cell summary-date">
                                         <div class="cell-label">Submitted</div>
@@ -545,7 +601,7 @@
                                 </div>
                                 
                                 <div class="request-details" id="details-${reqId}">
-                                    ${generateDetailedView(reqId, data, submitDate)}
+                                    ${generateDetailedView(reqId, data, submitDate, isLive)}
                                 </div>
                             </div>
                         `;
@@ -557,14 +613,14 @@
         } catch (error) {
             console.error("Error fetching documents: ", error);
             if(statusMsg) {
-                statusMsg.textContent = "Error loading requests. Please check console.";
+                statusMsg.textContent = "Error loading requests. Composite index might be building or pre-existing data lacks workflowClosed field. Check console.";
                 statusMsg.style.color = 'var(--danger-color)';
             }
         }
     }
 
     // Function to generate HTML. 
-    function generateDetailedView(reqId, data, formattedSubmitDate) {
+    function generateDetailedView(reqId, data, formattedSubmitDate, isLive) {
         // Helper to generate select HTML with selected option
         const getSelectHtml = (name, currentVal, options) => {
             let html = `<select class="edit-select" name="${name}" data-req-id="${reqId}">`;
@@ -609,7 +665,10 @@
 
             <!-- 2. EDITABLE Approval Sign Off Section -->
             <div class="detail-section" id="approval-form-${reqId}">
-                <div class="detail-section-title">Approval Sign Off (Action Required)</div>
+                <div class="detail-section-title">
+                    Approval Sign Off (Action Required)
+                    <span class="badge-live" style="${isLive ? 'display:inline-block;' : ''}">Fully Approved & Live</span>
+                </div>
                 <table class="approval-table">
                     <thead>
                         <tr><th>Approver</th><th>Decision</th><th>Comments</th><th>Date</th></tr>
@@ -668,6 +727,13 @@
 
             <!-- Action Buttons for this specific request -->
             <div class="admin-actions">
+                <!-- NEW CLOSE WORKFLOW BUTTON (Visible only when Live) -->
+                <button type="button" class="btn-close-workflow" id="close-btn-${reqId}" 
+                        style="${isLive ? 'display:inline-flex;' : ''}"
+                        onclick="closeWorkflow('${reqId}', '${data.requestInformation?.jobTitle || 'Request'}')">
+                    Archive / Close Workflow
+                </button>
+                
                 <button type="button" class="btn-save" id="save-btn-${reqId}" onclick="saveApprovals('${reqId}')">Save Changes / Update Status</button>
             </div>
         `;
@@ -741,6 +807,45 @@
                 saveBtn.disabled = false;
                 saveBtn.textContent = 'Save Changes / Update Status';
             }
+        }
+    }
+
+    // --- NEW CLOSE/ARCHIVE LOGIC ---
+    async function closeWorkflow(reqId, jobTitle) {
+        // Confirmation is crucial before archiving
+        if (!confirm(`Are you sure you want to close the workflow for:\n"${jobTitle}"?\n\nThis will remove it from the active manager list.`)) {
+            return; // Cancel
+        }
+
+        const closeBtn = document.getElementById(`close-btn-${reqId}`);
+        const saveBtn = document.getElementById(`save-btn-${reqId}`);
+        const adminUsername = localStorage.getItem('ngu_portal_username');
+
+        if(closeBtn) {
+            closeBtn.disabled = true;
+            closeBtn.textContent = 'Closing...';
+        }
+        if(saveBtn) saveBtn.disabled = true;
+
+        try {
+            // Update Firestore setting workflowClosed to true.
+            // Audit trail is added.
+            await db.collection(collectionName).doc(reqId).update({
+                workflowClosed: true,
+                workflowClosedBy: adminUsername,
+                workflowClosedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            console.log("Document closed/archived: ", reqId);
+            alert('Workflow closed and archived successfully.');
+            // Due to real-time onSnapshot, the document will remove itself from view immediately.
+        } catch (error) {
+            console.error("Error closing document: ", error);
+            alert('Error closing workflow. Check console for details.');
+            if(closeBtn) {
+                closeBtn.disabled = false;
+                closeBtn.textContent = 'Archive / Close Workflow';
+            }
+            if(saveBtn) saveBtn.disabled = false;
         }
     }
 
