@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submitted Recruitment Requests - NGU Portal</title>
+    <title>Recruitment Workflow Manager - NGU Portal</title>
     
     <!-- 
       --- PROTOTYPE SECURITY SCRIPT ---
@@ -143,6 +143,44 @@
             border-color: #4f5b66;
         }
 
+        /* --- NEW VIEW TOGGLE STYLING --- */
+        .view-toggle {
+            display: flex;
+            background-color: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 4px;
+            border: 1px solid var(--panel-border);
+        }
+
+        .toggle-btn {
+            background: none;
+            color: var(--secondary-text);
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        .toggle-btn:hover { color: var(--primary-text); }
+
+        .toggle-btn.active {
+            background-color: var(--container-bg);
+            color: var(--accent-color);
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .toggle-btn.active svg { stroke: var(--accent-color); }
+
+        .toggle-btn svg {
+            width: 14px; height: 14px;
+            stroke: var(--secondary-text);
+            stroke-width: 2.5; fill: none;
+        }
+
         /* Loading/Error States */
         #status-message {
             text-align: center;
@@ -212,11 +250,8 @@
             font-family: monospace;
         }
 
-        /* --- NEW "LIVE" BADGE STYLING --- */
-        .badge-live {
-            background-color: rgba(0, 212, 255, 0.15); /* Transparent Cyan */
-            color: var(--accent-color);
-            border: 1px solid var(--accent-color);
+        /* --- BADGE STYLING --- */
+        .badge-status {
             font-size: 0.7em;
             font-weight: 700;
             text-transform: uppercase;
@@ -229,6 +264,17 @@
         /* Show badge in summary only when applied via JS */
         .is-live .badge-live-summary {
             display: inline-block;
+            background-color: rgba(0, 212, 255, 0.15); /* Transparent Cyan */
+            color: var(--accent-color);
+            border: 1px solid var(--accent-color);
+        }
+
+        /* NEW CLOSED BADGE */
+        .is-closed .badge-closed-summary {
+            display: inline-block;
+            background-color: rgba(239, 68, 68, 0.15); /* Transparent Red */
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
         }
 
         .expand-icon {
@@ -263,7 +309,7 @@
             color: var(--accent-color);
         }
 
-        /* Detailed View Inner Styling (Replicating form layout) */
+        /* Detailed View Inner Styling */
         .detail-section {
             margin-bottom: 30px;
         }
@@ -323,7 +369,7 @@
             font-size: 1.1em;
         }
 
-        /* --- Styling for EDITABLE fields in expanded view --- */
+        /* --- Styling for EDITABLE fields --- */
         .edit-input, .edit-select {
             width: 100%;
             padding: 8px 12px;
@@ -342,7 +388,6 @@
             background-color: #314358;
         }
 
-        /* Date picker icon in dark mode */
         ::-webkit-calendar-picker-indicator {
             filter: invert(1);
             cursor: pointer;
@@ -384,7 +429,6 @@
             background-color: var(--success-color); color: #000;
         }
 
-        /* --- NEW "CLOSE WORKFLOW" BUTTON STYLING --- */
         button.btn-close-workflow {
             background-color: transparent;
             color: var(--danger-color);
@@ -392,7 +436,7 @@
             padding: 10px 20px;
             font-size: 0.9em; font-weight: 700;
             text-transform: uppercase; letter-spacing: 0.05em;
-            display: none; /* Only show when Live */
+            display: none; /* Only show when Live and NOT already closed */
         }
         button.btn-close-workflow:hover { background-color: var(--danger-color); color: #fff; }
         
@@ -401,9 +445,9 @@
 
         /* Mobile Responsive adjustments */
         @media (max-width: 768px) {
-            .page-header { flex-direction: column; text-align: center; gap: 10px; padding: 20px;}
-            .header-brand-container { flex-direction: column; gap: 10px; }
-            .header-controls { flex-direction: column; gap: 5px;}
+            .page-header { flex-direction: column; text-align: center; gap: 15px; padding: 20px;}
+            .header-brand-container { flex-direction: column; gap: 10px; width: 100%;}
+            .header-controls { flex-direction: column; gap: 5px; width: 100%; text-align: center;}
             
             .request-summary {
                 grid-template-columns: 1fr 40px;
@@ -428,18 +472,9 @@
 
             .request-item.active .request-details { padding: 20px; }
             .detail-grid { grid-template-columns: 1fr; }
-
-            /* Mobile table layout */
-            .approval-table, .approval-table thead, .approval-table tbody, .approval-table th, .approval-table td, .approval-table tr { display: block; }
-            .approval-table th { display: none; }
-            .approval-table td { position: relative; padding-left: 40%; border-bottom: none; min-height: 45px;}
-            .approval-table td::before {
-                content: attr(data-label); position: absolute; left: 10px;
-                color: var(--secondary-text); font-weight: 600; font-size: 0.8em; text-transform: uppercase;
-            }
-            .approval-table tr { border-bottom: 1px solid var(--panel-border); margin-bottom: 5px; background-color: rgba(0,0,0,0.1); }
             
             .admin-actions { flex-direction: column-reverse; align-items: stretch;}
+            .view-toggle { width: 100%; justify-content: center; }
         }
     </style>
 </head>
@@ -455,20 +490,33 @@
                 <h1>Workflow Manager</h1>
             </div>
         </div>
+
+        <!-- --- NEW VIEW TOGGLE UI --- -->
+        <div class="view-toggle">
+            <button class="toggle-btn active" id="toggle-active" onclick="switchView('active')">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Active
+            </button>
+            <button class="toggle-btn" id="toggle-closed" onclick="switchView('closed')">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Closed Archive
+            </button>
+        </div>
+
         <div class="header-controls">
             <span>Logged in: <strong style="color:white;" id="display-username">User</strong></span>
             <button class="btn-logout-header" id="logout-btn">Sign Out</button>
         </div>
     </header>
 
-    <div id="status-message">⏳ Loading active requests...</div>
+    <div id="status-message">⏳ Loading requests...</div>
     
     <div id="request-list-container" class="request-list" style="display: none;">
         <!-- Dynamically populated via JS -->
     </div>
 </div>
 
-<!-- Firebase SDK (Compat) -->
+<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
@@ -484,7 +532,7 @@
         measurementId: "G-R56BGZYV8N"
     };
 
-    // --- Initialize Firebase ---
+    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const collectionName = "NGU Recuitment Approval Form";
@@ -492,19 +540,43 @@
     const container = document.getElementById('request-list-container');
     const statusMsg = document.getElementById('status-message');
 
+    // State
+    let currentListener = null; // Holds the real-time unsubscribe function
+    let currentView = 'active'; // 'active' or 'closed'
+
     // Setup Header & Logout
     document.addEventListener('DOMContentLoaded', () => {
         const username = localStorage.getItem('ngu_portal_username');
-        const displayUsername = document.getElementById('display-username');
-        if(displayUsername) displayUsername.textContent = username;
+        if(document.getElementById('display-username')) document.getElementById('display-username').textContent = username;
+        // Start by fetching active requests
+        fetchRequests('active'); 
     });
 
-    const logoutBtn = document.getElementById('logout-btn');
-    if(logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
+    if(document.getElementById('logout-btn')) {
+        document.getElementById('logout-btn').addEventListener('click', () => {
             localStorage.clear();
             window.location.href = 'login.html';
         });
+    }
+
+    // --- NEW SWITCH VIEW LOGIC ---
+    function switchView(viewType) {
+        if (currentView === viewType) return; // Do nothing if already on this view
+
+        currentView = viewType;
+
+        // Update UI Toggle Buttons
+        document.getElementById('toggle-active').classList.toggle('active', viewType === 'active');
+        document.getElementById('toggle-closed').classList.toggle('active', viewType === 'closed');
+
+        // Unsubscribe from current listener before starting a new one
+        if (currentListener) {
+            console.log("Unsubscribing from current snapshot listener.");
+            currentListener(); 
+        }
+
+        // Fetch new data based on view
+        fetchRequests(viewType);
     }
 
 
@@ -523,104 +595,124 @@
         return val;
     };
 
-    // Fetch data from Firestore
-    async function fetchRequests() {
-            // --- UPDATED JS FIX ---
-            // Wrapped .onSnapshot to correctly handle the error callback
-            db.collection(collectionName)
-              .where('workflowClosed', '==', false) // Only Active
-              .orderBy('submittedAt', 'desc') // Newest first
-              .onSnapshot(
-                // 1. SUCCESS CALLBACK
-                (snapshot) => {
-                    if (snapshot.empty) {
-                        if(statusMsg) {
-                            statusMsg.textContent = "No active recruitment requests found. Ensure new requests are submitted using the updated form or pre-existing data is manually initialized with workflowClosed=false.";
-                            statusMsg.style.display = 'block';
-                        }
-                        if(container) container.style.display = 'none';
-                        return;
-                    }
+    // Fetch data from Firestore (Real-time listener)
+    function fetchRequests(viewType) {
+        if(statusMsg) {
+            statusMsg.textContent = `⏳ Loading ${viewType} requests...`;
+            statusMsg.style.display = 'block';
+            statusMsg.style.color = 'var(--secondary-text)';
+        }
+        if(container) container.style.display = 'none';
 
-                    if(statusMsg) statusMsg.style.display = 'none';
-                    if(container) {
-                        container.style.display = 'flex';
-                        
-                        const expandedIds = Array.from(document.querySelectorAll('.request-item.active')).map(el => el.id.replace('item-',''));
+        // Define query based on viewType ('active' means workflowClosed == false, 'closed' means workflowClosed == true)
+        const closedStatusToLookFor = (viewType === 'closed');
 
-                        container.innerHTML = ''; 
-
-                        snapshot.forEach(doc => {
-                            const data = doc.data();
-                            const reqId = doc.id;
-                            
-                            const jobTitle = data.requestInformation?.jobTitle || 'Unknown Title';
-                            const dept = data.requestInformation?.department || 'Unknown Dept';
-                            const location = data.requestInformation?.location || 'Unknown';
-                            const submitDate = formatTimestamp(data.submittedAt);
-
-                            // --- NEW "LIVE" CALCULATION ---
-                            const approvals = data.approvalSignOff || {};
-                            const isLive =  approvals.departmentHead?.decision === 'Approve' &&
-                                            approvals.finance?.decision === 'Approve' &&
-                                            approvals.finalApprover?.decision === 'Approve';
-
-                            const itemHtml = `
-                                <div class="request-item ${expandedIds.includes(reqId) ? 'active' : ''} ${isLive ? 'is-live' : ''}" id="item-${reqId}">
-                                    <div class="request-summary" onclick="toggleAccordion('${reqId}')">
-                                        <div class="summary-cell summary-job-title">
-                                            <div class="cell-label">Job Title</div>
-                                            ${jobTitle}
-                                        </div>
-                                        <div class="summary-cell">
-                                            <div class="cell-label">Department</div>
-                                            ${dept}
-                                        </div>
-                                        <div class="summary-cell">
-                                            <div class="cell-label">Location</div>
-                                            <div style="display:flex; align-items:center; gap:10px;">
-                                                ${location}
-                                                <span class="badge-live badge-live-summary">Live</span>
-                                            </div>
-                                        </div>
-                                        <div class="summary-cell summary-date">
-                                            <div class="cell-label">Submitted</div>
-                                            ${submitDate}
-                                        </div>
-                                        <div class="expand-icon">▼</div>
-                                    </div>
-                                    
-                                    <div class="request-details" id="details-${reqId}">
-                                        ${generateDetailedView(reqId, data, submitDate, isLive)}
-                                    </div>
-                                </div>
-                            `;
-                            container.insertAdjacentHTML('beforeend', itemHtml);
-                        });
-                    }
-                },
-                // 2. ERROR CALLBACK (Crucial Fix)
-                (error) => { 
-                    console.error("Firestore Snapshot Error: ", error);
+        // REFACTOR: Assign listener to state variable so we can unsubscribe later
+        currentListener = db.collection(collectionName)
+          .where('workflowClosed', '==', closedStatusToLookFor) // Dynamic Filter
+          .orderBy('submittedAt', 'desc') // Newest first
+          .onSnapshot(
+            // 1. SUCCESS CALLBACK
+            (snapshot) => {
+                if (snapshot.empty) {
                     if(statusMsg) {
-                        // Helpful error message for the prototype missing index
-                        statusMsg.innerHTML = `⚠️ <strong>Error: Firestore Composite Index Missing.</strong><br><br>
-                                               Your project requires a new Composite Index to filter and sort requests simultaneously.<br>
-                                               To resolve this, open your browser developer console (F12) to find the unique link generated by Firebase. Following that link will create the index automatically.<br><br>
-                                               <em>Or manually create it in Firebase Console:</em><br>
-                                               Collection: <code>NGU Recuitment Approval Form</code><br>
-                                               Fields: <code>workflowClosed</code> (Asc) & <code>submittedAt</code> (Desc).`;
-                        statusMsg.style.color = 'var(--danger-color)';
+                        statusMsg.textContent = `No ${viewType} recruitment requests found.`;
                         statusMsg.style.display = 'block';
                     }
                     if(container) container.style.display = 'none';
+                    return;
                 }
-            );
+
+                if(statusMsg) statusMsg.style.display = 'none';
+                if(container) {
+                    container.style.display = 'flex';
+                    
+                    // Store IDs of items currently expanded to re-expand them after render
+                    const expandedIds = Array.from(document.querySelectorAll('.request-item.active')).map(el => el.id.replace('item-',''));
+
+                    container.innerHTML = ''; // Clear container
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const reqId = doc.id;
+                        
+                        const jobTitle = data.requestInformation?.jobTitle || 'Unknown Title';
+                        const dept = data.requestInformation?.department || 'Unknown Dept';
+                        const location = data.requestInformation?.location || 'Unknown';
+                        const submitDate = formatTimestamp(data.submittedAt);
+
+                        // --- BADGE CALCULATIONS ---
+                        // 1. Fully Approved/Live
+                        const approvals = data.approvalSignOff || {};
+                        const isLive =  approvals.departmentHead?.decision === 'Approve' &&
+                                        approvals.finance?.decision === 'Approve' &&
+                                        approvals.finalApprover?.decision === 'Approve';
+                        
+                        // 2. Closed/Archived (comes directly from the data)
+                        const isClosed = data.workflowClosed === true;
+
+                        // Create Item HTML
+                        // .is-live and .is-closed classes applied for summary styling
+                        const itemHtml = `
+                            <div class="request-item ${expandedIds.includes(reqId) ? 'active' : ''} ${isLive ? 'is-live' : ''} ${isClosed ? 'is-closed' : ''}" id="item-${reqId}">
+                                <div class="request-summary" onclick="toggleAccordion('${reqId}')">
+                                    <div class="summary-cell summary-job-title">
+                                        <div class="cell-label">Job Title</div>
+                                        ${jobTitle}
+                                    </div>
+                                    <div class="summary-cell">
+                                        <div class="cell-label">Department</div>
+                                        ${dept}
+                                    </div>
+                                    <div class="summary-cell">
+                                        <div class="cell-label">Location</div>
+                                        <div style="display:flex; align-items:center; gap:10px;">
+                                            ${location}
+                                            <span class="badge-status badge-live-summary">Live</span>
+                                            <span class="badge-status badge-closed-summary">Closed</span>
+                                        </div>
+                                    </div>
+                                    <div class="summary-cell summary-date">
+                                        <div class="cell-label">Submitted</div>
+                                        ${submitDate}
+                                    </div>
+                                    <div class="expand-icon">▼</div>
+                                </div>
+                                
+                                <div class="request-details" id="details-${reqId}">
+                                    ${generateDetailedView(reqId, data, submitDate, isLive, isClosed)}
+                                </div>
+                            </div>
+                        `;
+                        container.insertAdjacentHTML('beforeend', itemHtml);
+                    });
+                }
+            },
+            // 2. ERROR CALLBACK (Handle missing index)
+            (error) => { 
+                console.error("Firestore Snapshot Error: ", error);
+                if(statusMsg) {
+                    // Helpful error message for the prototype missing index
+                    statusMsg.innerHTML = `⚠️ <strong>Error: Firestore Composite Index Missing.</strong><br><br>
+                                           The new Archive view requires a unique Firestore Index.<br>
+                                           Open your browser developer console (F12) to find the unique link generated by Firebase. Following that link will create the index automatically.<br><br>
+                                           <em>Or manually create it:</em> Collection <code>NGU Recuitment Approval Form</code>, fields <code>workflowClosed</code> (Asc) & <code>submittedAt</code> (Desc).`;
+                    statusMsg.style.color = 'var(--danger-color)';
+                    statusMsg.style.display = 'block';
+                }
+                if(container) container.style.display = 'none';
+            }
+        );
     }
 
     // Function to generate HTML. 
-    function generateDetailedView(reqId, data, formattedSubmitDate, isLive) {
+    // Closed requests are rendered entirely read-only.
+    function generateDetailedView(reqId, data, formattedSubmitDate, isLive, isClosed) {
+        
+        // Helper: Generate editable select ONLY IF NOT CLOSED
         const getSelectHtml = (name, currentVal, options) => {
+            if (isClosed) return `<div class="detail-value">${currentVal || 'N/A'}</div>`; // Read-only div for archived
+
             let html = `<select class="edit-select" name="${name}" data-req-id="${reqId}">`;
             options.forEach(opt => {
                 const selected = opt === currentVal ? 'selected' : '';
@@ -630,12 +722,37 @@
             return html;
         };
 
+        // Helper: Generate editable input ONLY IF NOT CLOSED
+        const getInputHtml = (name, type, currentVal) => {
+            if (isClosed) return `<div class="detail-value">${currentVal || 'N/A'}</div>`; // Read-only div
+            return `<input type="${type}" class="edit-input" name="${name}" value="${currentVal || ''}" data-req-id="${reqId}">`;
+        }
+
+        // Helper: Generate editable radio ONLY IF NOT CLOSED
+        const getRadioHtml = (baseName, value) => {
+            if (isClosed) {
+                // Just return a standard read-only value display
+                const finalStatus = data.finalOutcome?.approvedToRecruit;
+                return `<div class="detail-value">${finalStatus || 'N/A'}</div>`;
+            }
+            // Standard editable radio group
+            return `
+                <div class="edit-radio-group">
+                    <label><input type="radio" name="${baseName}-${reqId}" value="Yes" ${data.finalOutcome?.approvedToRecruit === 'Yes' ? 'checked' : ''}> Yes</label>
+                    <label><input type="radio" name="${baseName}-${reqId}" value="No" ${data.finalOutcome?.approvedToRecruit === 'No' ? 'checked' : ''}> No</label>
+                </div>
+            `;
+        }
+
         const decisionOptions = ['Pending', 'Approve', 'Reject', 'More Info Needed'];
 
         return `
-            <!-- 1. Read-Only Request Info -->
+            <!-- 1. Read-Only Request Info (Submitted by user) -->
             <div class="detail-section">
-                <div class="detail-section-title">Request Information (Read-Only)</div>
+                <div class="detail-section-title">
+                    Request Information (Read-Only)
+                    <span class="badge-status" style="${isClosed ? 'display:inline-block;' : ''}">Closed Workflow</span>
+                </div>
                 <div class="detail-grid">
                     <div class="detail-block"><label>Date Requested</label><div class="detail-value">${getReadOnlyValue(data.requestInformation?.dateOfRequest)}</div></div>
                     <div class="detail-block"><label>Requested By</label><div class="detail-value">${getReadOnlyValue(data.requestInformation?.requestedBy)}</div></div>
@@ -661,11 +778,28 @@
                 </div>
             </div>
 
-            <!-- 2. EDITABLE Approval Sign Off Section -->
+            <!-- --- CLOSED AUDIT TRAIL SECTION --- -->
+            ${isClosed ? `
+            <div class="detail-section" style="border: 1px solid var(--danger-color); padding: 20px; border-radius: 8px; background-color: rgba(239, 68, 68, 0.05);">
+                <div class="detail-section-title" style="color: var(--danger-color); border-bottom-color: var(--danger-color);">Archived Workflow Audit</div>
+                <div class="detail-grid">
+                    <div class="detail-block">
+                        <label>Closed By (Admin)</label>
+                        <div class="detail-value">${getReadOnlyValue(data.workflowClosedBy)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>Date Archived</label>
+                        <div class="detail-value">${formatTimestamp(data.workflowClosedAt)}</div>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- 2. Approval Sign Off Section (Editable if not closed) -->
             <div class="detail-section" id="approval-form-${reqId}">
                 <div class="detail-section-title">
-                    Approval Sign Off (Action Required)
-                    <span class="badge-live" style="${isLive ? 'display:inline-block;' : ''}">Fully Approved & Live</span>
+                    Approval Sign Off ${isClosed ? '(Archived)' : '(Action Required)'}
+                    <span class="badge-status" style="${isLive ? 'display:inline-block;' : ''}">Fully Approved & Live</span>
                 </div>
                 <table class="approval-table">
                     <thead>
@@ -675,57 +809,52 @@
                         <tr>
                             <td data-label="Approver"><strong class="approver-label">Dept Head</strong></td>
                             <td data-label="Decision">${getSelectHtml('dept-head-decision', data.approvalSignOff?.departmentHead?.decision, decisionOptions)}</td>
-                            <td data-label="Comments"><input type="text" class="edit-input" name="dept-head-comments" value="${data.approvalSignOff?.departmentHead?.comments || ''}" data-req-id="${reqId}"></td>
-                            <td data-label="Date"><input type="date" class="edit-input" name="dept-head-date" value="${data.approvalSignOff?.departmentHead?.date || ''}" data-req-id="${reqId}"></td>
+                            <td data-label="Comments">${getInputHtml('dept-head-comments', 'text', data.approvalSignOff?.departmentHead?.comments)}</td>
+                            <td data-label="Date">${getInputHtml('dept-head-date', 'date', data.approvalSignOff?.departmentHead?.date)}</td>
                         </tr>
                         <tr>
                             <td data-label="Approver"><strong class="approver-label">Finance</strong></td>
                             <td data-label="Decision">${getSelectHtml('finance-decision', data.approvalSignOff?.finance?.decision, decisionOptions)}</td>
-                            <td data-label="Comments"><input type="text" class="edit-input" name="finance-comments" value="${data.approvalSignOff?.finance?.comments || ''}" data-req-id="${reqId}"></td>
-                            <td data-label="Date"><input type="date" class="edit-input" name="finance-date" value="${data.approvalSignOff?.finance?.date || ''}" data-req-id="${reqId}"></td>
+                            <td data-label="Comments">${getInputHtml('finance-comments', 'text', data.approvalSignOff?.finance?.comments)}</td>
+                            <td data-label="Date">${getInputHtml('finance-date', 'date', data.approvalSignOff?.finance?.date)}</td>
                         </tr>
                         <tr>
                             <td data-label="Approver"><strong class="approver-label">Final</strong></td>
                             <td data-label="Decision">${getSelectHtml('final-decision', data.approvalSignOff?.finalApprover?.decision, decisionOptions)}</td>
-                            <td data-label="Comments"><input type="text" class="edit-input" name="final-comments" value="${data.approvalSignOff?.finalApprover?.comments || ''}" data-req-id="${reqId}"></td>
-                            <td data-label="Date"><input type="date" class="edit-input" name="final-date" value="${data.approvalSignOff?.finalApprover?.date || ''}" data-req-id="${reqId}"></td>
+                            <td data-label="Comments">${getInputHtml('final-comments', 'text', data.approvalSignOff?.finalApprover?.comments)}</td>
+                            <td data-label="Date">${getInputHtml('final-date', 'date', data.approvalSignOff?.finalApprover?.date)}</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <!-- 3. EDITABLE Final Outcome Section -->
+            <!-- 3. Final Outcome Section (Editable if not closed) -->
             <div class="detail-section" id="outcome-form-${reqId}">
-                <div class="detail-section-title">Final Outcome (Admin Use)</div>
+                <div class="detail-section-title">Final Outcome ${isClosed ? '(Archived)' : '(Admin Use)'}</div>
                 <div class="detail-grid">
                     <div class="detail-block">
                         <label>Approved to Recruit?</label>
-                        <div class="edit-radio-group">
-                            <label><input type="radio" name="approved-${reqId}" value="Yes" ${data.finalOutcome?.approvedToRecruit === 'Yes' ? 'checked' : ''}> Yes</label>
-                            <label><input type="radio" name="approved-${reqId}" value="No" ${data.finalOutcome?.approvedToRecruit === 'No' ? 'checked' : ''}> No</label>
-                        </div>
+                        ${getRadioHtml('approved', data.finalOutcome?.approvedToRecruit)}
                     </div>
                     <div class="detail-block">
                         <label>Date Actioned</label>
-                        <input type="date" class="edit-input" name="date-approved-${reqId}" value="${data.finalOutcome?.dateApproved || ''}">
+                        ${getInputHtml(`date-approved-${reqId}`, 'date', data.finalOutcome?.dateApproved)}
                     </div>
                     <div class="detail-block">
                         <label>Recruitment Ref #</label>
-                        <input type="text" class="edit-input" name="recruitment-ref-${reqId}" value="${data.finalOutcome?.recruitmentReference || ''}" placeholder="e.g. NGU001">
+                        ${getInputHtml(`recruitment-ref-${reqId}`, 'text', data.finalOutcome?.recruitmentReference)}
                     </div>
                     <div class="detail-block">
                         <label>Team Notified?</label>
-                        <div class="edit-radio-group">
-                            <label><input type="radio" name="team-notified-${reqId}" value="Yes" ${data.finalOutcome?.recruitmentTeamNotified === 'Yes' ? 'checked' : ''}> Yes</label>
-                            <label><input type="radio" name="team-notified-${reqId}" value="No" ${data.finalOutcome?.recruitmentTeamNotified === 'No' ? 'checked' : ''}> No</label>
-                        </div>
+                        ${getRadioHtml('team-notified', data.finalOutcome?.recruitmentTeamNotified)}
                     </div>
                 </div>
             </div>
 
-            <!-- Action Buttons for this specific request -->
+            <!-- Action Buttons - HIDE IF CLOSED -->
+            ${isClosed ? '' : `
             <div class="admin-actions">
-                <!-- NEW CLOSE WORKFLOW BUTTON -->
+                <!-- CLOSE WORKFLOW BUTTON (Visible only when Live) -->
                 <button type="button" class="btn-close-workflow" id="close-btn-${reqId}" 
                         style="${isLive ? 'display:inline-flex;' : ''}"
                         onclick="closeWorkflow('${reqId}', '${data.requestInformation?.jobTitle || 'Request'}')">
@@ -734,6 +863,7 @@
                 
                 <button type="button" class="btn-save" id="save-btn-${reqId}" onclick="saveApprovals('${reqId}')">Save Changes / Update Status</button>
             </div>
+            `}
         `;
     }
 
@@ -742,6 +872,7 @@
         if(item) item.classList.toggle('active');
     }
 
+    // --- SAVE LOGIC ---
     async function saveApprovals(reqId) {
         const saveBtn = document.getElementById(`save-btn-${reqId}`);
         const detailsPanel = document.getElementById(`details-${reqId}`);
@@ -774,10 +905,10 @@
                 }
             },
             finalOutcome: {
-                approvedToRecruit: getRadioVal(`approved-${reqId}`),
+                approvedToRecruit: getRadioVal('approved'),
                 dateApproved: getElVal(`date-approved-${reqId}`),
                 recruitmentReference: getElVal(`recruitment-ref-${reqId}`),
-                recruitmentTeamNotified: getRadioVal(`team-notified-${reqId}`)
+                recruitmentTeamNotified: getRadioVal('team-notified')
             },
             lastUpdatedByAdmin: adminUsername,
             lastWorkflowUpdateAt: firebase.firestore.FieldValue.serverTimestamp() 
@@ -798,8 +929,9 @@
         }
     }
 
+    // --- CLOSE/ARCHIVE LOGIC ---
     async function closeWorkflow(reqId, jobTitle) {
-        if (!confirm(`Are you sure you want to close the workflow for:\n"${jobTitle}"?\n\nThis will remove it from the active manager list.`)) {
+        if (!confirm(`Are you sure you want to close the workflow for:\n"${jobTitle}"?\n\nThis will remove it from the active manager list and archive it.`)) {
             return; 
         }
 
@@ -831,8 +963,6 @@
             if(saveBtn) saveBtn.disabled = false;
         }
     }
-
-    window.onload = fetchRequests;
 </script>
 
 </body>
