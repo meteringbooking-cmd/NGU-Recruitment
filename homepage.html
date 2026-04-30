@@ -117,7 +117,7 @@
             color: var(--primary-text);
             display: flex;
             flex-direction: column;
-            align-items: center; /* Center content for professional look */
+            align-items: center; 
             text-align: center;
             gap: 15px;
             transition: all 0.25s ease;
@@ -139,7 +139,7 @@
         .app-icon svg {
             width: 50px;
             height: 50px;
-            stroke: var(--accent-color); /* Use Cyan for icon lines */
+            stroke: var(--accent-color); 
             stroke-width: 1.5;
             fill: none;
         }
@@ -181,6 +181,7 @@
 
         /* 
            --- LOCKED CARD STYLING ---
+           Greys out the card and prevents interaction.
         */
         .app-card.locked {
             opacity: 0.3;
@@ -236,7 +237,7 @@
 
     <div class="hub-welcome">
         <h2>Corporate Applications</h2>
-        <p>Select an operational module below. Modules marked as locked are restricted based on your current security profile.</p>
+        <p>Select an operational module below. Modules marked as restricted are locked based on your current security profile.</p>
     </div>
 
     <!-- The Grid of App Cards with Professional Icons -->
@@ -264,8 +265,9 @@
             <div class="btn-go">Open Request →</div>
         </a>
 
-        <!-- App 2: Recruitment Form Manager -->
-        <a href="recruit-approval-form-manager.html" class="app-card" id="card-manager">
+        <!-- App 2: Recruitment Form Display (Workflow Manager) -->
+        <!-- URL Updated to recruit-approval-form-display.html -->
+        <a href="recruit-approval-form-display.html" class="app-card" id="card-manager">
             <div class="lock-overlay">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                 Restricted
@@ -313,10 +315,12 @@
         if(username) document.getElementById('display-username').textContent = username;
 
         // --- Permission Logic ---
+        // Fetch permission strings ('true'/'false') from localStorage set at login
         const accessSubStr = localStorage.getItem('ngu_portal_access_submission');
         const accessMgmtStr = localStorage.getItem('ngu_portal_access_management');
         const accessUserDbStr = localStorage.getItem('ngu_portal_access_userdb');
 
+        // Apply visual lock and disable interaction if permission is NOT 'true'
         if (accessSubStr !== 'true') lockCard('card-submission');
         if (accessMgmtStr !== 'true') lockCard('card-manager');
         if (accessUserDbStr !== 'true') lockCard('card-userdb');
@@ -328,6 +332,7 @@
         window.location.href = 'login.html';
     });
 
+    // Helper function to grey out a card, show lock overlay, and prevent clicks via CSS
     function lockCard(cardId) {
         const card = document.getElementById(cardId);
         if (card) {
