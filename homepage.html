@@ -81,25 +81,30 @@
         /* Hub Section */
         .hub-welcome {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
+            padding: 0 20px;
         }
         .hub-welcome h2 {
-            font-size: 1.8em;
+            font-size: 2em;
             color: var(--primary-text);
-            font-weight: 700;
-            margin-bottom: 10px;
+            font-weight: 800;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
         .hub-welcome p {
             color: var(--secondary-text);
-            max-width: 600px;
+            max-width: 650px;
             margin: 0 auto;
+            font-size: 1.05em;
         }
 
         /* App Grid */
         .app-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding-bottom: 40px;
         }
 
         /* App Card styling */
@@ -107,11 +112,13 @@
             background-color: var(--container-bg);
             border: 1px solid var(--panel-border);
             border-radius: 12px;
-            padding: 30px;
+            padding: 40px 30px;
             text-decoration: none;
             color: var(--primary-text);
             display: flex;
             flex-direction: column;
+            align-items: center; /* Center content for professional look */
+            text-align: center;
             gap: 15px;
             transition: all 0.25s ease;
             position: relative;
@@ -121,48 +128,64 @@
 
         .app-card:hover:not(.locked) {
             border-color: var(--accent-color);
-            box-shadow: 0 5px 20px rgba(0,212,255,0.15);
-            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0,212,255,0.15);
+            transform: translateY(-3px);
         }
 
+        /* Professional Icon Styling */
         .app-icon {
-            font-size: 2em;
-            color: var(--accent-color);
+            margin-bottom: 10px;
+        }
+        .app-icon svg {
+            width: 50px;
+            height: 50px;
+            stroke: var(--accent-color); /* Use Cyan for icon lines */
+            stroke-width: 1.5;
+            fill: none;
         }
 
         .app-title {
-            font-size: 1.1em;
+            font-size: 1.15em;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.12em;
             color: var(--primary-text);
         }
 
         .app-desc {
-            font-size: 0.9em;
+            font-size: 0.95em;
             color: var(--secondary-text);
-            flex-grow: 1; /* Pushes button to bottom */
+            flex-grow: 1; 
+            margin-bottom: 10px;
+            line-height: 1.5;
         }
 
         .btn-go {
-            margin-top: 10px;
+            margin-top: auto;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
             font-size: 0.9em;
             font-weight: 700;
             text-transform: uppercase;
             color: var(--accent-color);
+            padding: 8px 16px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .app-card:hover:not(.locked) .btn-go {
+            background-color: rgba(0, 212, 255, 0.1);
         }
 
         /* 
            --- LOCKED CARD STYLING ---
-           Greys out the card and prevents clicks.
         */
         .app-card.locked {
-            opacity: 0.4;
+            opacity: 0.3;
             cursor: not-allowed;
-            pointer-events: none; /* Prevents clicks on the whole card */
+            pointer-events: none; 
             filter: grayscale(100%);
         }
 
@@ -171,27 +194,29 @@
             position: absolute;
             top: 15px;
             right: 15px;
-            background-color: rgba(239, 68, 68, 0.2);
-            border: 1px solid var(--danger-color);
-            color: var(--danger-color);
-            padding: 3px 8px;
-            border-radius: 4px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--panel-border);
+            color: var(--secondary-text);
+            padding: 4px 10px;
+            border-radius: 20px;
             font-size: 0.7em;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            display: none; /* Hidden by default */
+            display: none; 
+            display: flex; align-items: center; gap: 5px;
         }
 
         .app-card.locked .lock-overlay {
-            display: block; /* Shown only when card is locked */
+            display: flex;
         }
 
         @media (max-width: 768px) {
             .page-header { flex-direction: column; text-align: center; gap: 10px; padding: 20px;}
             .header-user-info { flex-direction: column; gap: 5px;}
             .app-grid { grid-template-columns: 1fr; }
-            .hub-welcome h2 { font-size: 1.5em; }
+            .hub-welcome h2 { font-size: 1.6em; }
+            .app-card { padding: 30px 20px; }
         }
     </style>
 </head>
@@ -210,39 +235,72 @@
     </header>
 
     <div class="hub-welcome">
-        <h2>Application Access</h2>
-        <p>Select an application below to get started. Applications that appear greyed out are currently locked based on your user permissions.</p>
+        <h2>Corporate Applications</h2>
+        <p>Select an operational module below. Modules marked as locked are restricted based on your current security profile.</p>
     </div>
 
-    <!-- The Grid of App Cards -->
+    <!-- The Grid of App Cards with Professional Icons -->
     <div class="app-grid">
         
         <!-- App 1: Recruitment Submission -->
         <a href="recruit-approval-form.html" class="app-card" id="card-submission">
-            <div class="lock-overlay">🔒 Locked</div>
-            <div class="app-icon">📝</div>
-            <div class="app-title">Request Recruitment</div>
-            <div class="app-desc">Submit a new Recruitment Authorisation Request form to begin the approval process.</div>
-            <div class="btn-go">Go to form →</div>
+            <div class="lock-overlay">
+                <!-- Lock Icon -->
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Restricted
+            </div>
+            <!-- Professional Form Icon -->
+            <div class="app-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+            </div>
+            <div class="app-title">Personnel Requisition</div>
+            <div class="app-desc">Initiate a formal Recruitment Authorisation Request for new headcount or replacement roles.</div>
+            <div class="btn-go">Open Request →</div>
         </a>
 
         <!-- App 2: Recruitment Form Manager -->
-        <!-- NOTE: Ensure filename is recruit-approval-form-manager.html on github -->
         <a href="recruit-approval-form-manager.html" class="app-card" id="card-manager">
-            <div class="lock-overlay">🔒 Locked</div>
-            <div class="app-icon">📊</div>
-            <div class="app-title">Recruitment Form Manager</div>
-            <div class="app-desc">View submitted requests, track status, and complete the Approval Sign Off workflow.</div>
-            <div class="btn-go">Go to manager →</div>
+            <div class="lock-overlay">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Restricted
+            </div>
+            <!-- Professional Management/Dashboard Icon -->
+            <div class="app-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                    <line x1="9" y1="21" x2="9" y2="9"></line>
+                </svg>
+            </div>
+            <div class="app-title">Workflow Manager</div>
+            <div class="app-desc">Review submitted requests, manage approval sign-offs, and track active recruitment workflows.</div>
+            <div class="btn-go">Open Manager →</div>
         </a>
 
         <!-- App 3: User Database -->
         <a href="user-database.html" class="app-card" id="card-userdb">
-            <div class="lock-overlay">🔒 Locked</div>
-            <div class="app-icon">👥</div>
-            <div class="app-title">User Database</div>
-            <div class="app-desc">Manage portal users, set passwords, and configure access permissions (Admin Only).</div>
-            <div class="btn-go">Go to database →</div>
+            <div class="lock-overlay">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Restricted
+            </div>
+            <!-- Professional Users Icon -->
+            <div class="app-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+            </div>
+            <div class="app-title">Access Control</div>
+            <div class="app-desc">Administer portal user accounts, manage security credentials, and configure system permissions.</div>
+            <div class="btn-go">Open Database →</div>
         </a>
 
     </div>
@@ -255,12 +313,10 @@
         if(username) document.getElementById('display-username').textContent = username;
 
         // --- Permission Logic ---
-        // Fetch permission strings ('true'/'false') from localStorage
         const accessSubStr = localStorage.getItem('ngu_portal_access_submission');
         const accessMgmtStr = localStorage.getItem('ngu_portal_access_management');
         const accessUserDbStr = localStorage.getItem('ngu_portal_access_userdb');
 
-        // Apply visual lock if permission is NOT 'true'
         if (accessSubStr !== 'true') lockCard('card-submission');
         if (accessMgmtStr !== 'true') lockCard('card-manager');
         if (accessUserDbStr !== 'true') lockCard('card-userdb');
@@ -272,7 +328,6 @@
         window.location.href = 'login.html';
     });
 
-    // Helper function to grey out a card and add the lock overlay
     function lockCard(cardId) {
         const card = document.getElementById(cardId);
         if (card) {
