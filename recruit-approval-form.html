@@ -3,14 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Approval to Recruit - Authorisation Request</title>
+    <title>Approval to Recruit - Recruitment Authorisation Request</title>
     <style>
         :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --bg-color: #f8f9fa;
-            --border-color: #dce1e6;
-            --text-color: #333;
+            --primary-color: #1f3c5f; /* Corporate Blue */
+            --secondary-color: #00d4ff; /* Highlight Cyan */
+            --warning-color: #e74c3c; /* Red for alert text */
+            --bg-color: #eef1f4; /* Light Grey/Blue Background */
+            --container-bg: #ffffff; /* White Form Container */
+            --border-color: #d8dee4; /* Muted Borders */
+            --text-color: #333; /* Dark Grey Text */
+            --text-muted: #666; /* Lighter Grey Text */
+            --legend-bg: #fff;
         }
 
         body {
@@ -25,7 +29,7 @@
         .container {
             max-width: 900px;
             margin: 0 auto;
-            background: #fff;
+            background-color: var(--container-bg);
             padding: 40px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
@@ -36,17 +40,50 @@
             border-bottom: 2px solid var(--primary-color);
             padding-bottom: 20px;
             margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header img.logo {
+            height: 60px;
+            width: auto;
+        }
+
+        .header-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .header h1 {
-            margin: 0 0 10px 0;
+            margin: 0;
             color: var(--primary-color);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 1.8em;
         }
 
-        .header p {
-            margin: 0;
-            color: #e74c3c;
+        .header h2 {
+            margin: 5px 0 0;
+            color: var(--text-muted);
             font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 1em;
+        }
+
+        .header p.warning {
+            margin: 15px 0 0;
+            color: var(--warning-color);
+            font-weight: 500;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 4px;
+            display: inline-block;
         }
 
         fieldset {
@@ -54,17 +91,19 @@
             border-radius: 6px;
             padding: 20px;
             margin-bottom: 25px;
-            background-color: #fff;
+            background-color: var(--container-bg);
         }
 
         legend {
-            font-size: 1.1em;
+            font-size: 1em;
             font-weight: 600;
             color: var(--primary-color);
-            background: #fff;
+            background: var(--legend-bg);
             padding: 0 10px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .form-grid {
@@ -82,6 +121,7 @@
             font-weight: 500;
             margin-bottom: 5px;
             color: #555;
+            font-size: 0.9em;
         }
 
         input[type="text"],
@@ -90,11 +130,12 @@
         select,
         textarea {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
             box-sizing: border-box;
             font-family: inherit;
+            color: var(--text-color);
         }
 
         input[type="text"]:focus,
@@ -103,7 +144,7 @@
         textarea:focus {
             outline: none;
             border-color: var(--secondary-color);
-            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+            box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.2);
         }
 
         .checkbox-group, .radio-group {
@@ -117,7 +158,16 @@
             font-weight: normal;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-group input, .radio-group input {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            accent-color: var(--secondary-color);
         }
 
         table {
@@ -128,7 +178,7 @@
 
         th, td {
             border: 1px solid var(--border-color);
-            padding: 12px;
+            padding: 15px;
             text-align: left;
         }
 
@@ -136,6 +186,9 @@
             background-color: #f1f4f6;
             font-weight: 600;
             color: var(--primary-color);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.9em;
         }
 
         .actions {
@@ -148,22 +201,22 @@
         }
 
         button {
-            padding: 12px 24px;
+            padding: 14px 28px;
             border: none;
             border-radius: 4px;
             font-size: 1em;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s;
         }
 
         .btn-submit {
-            background-color: var(--secondary-color);
+            background-color: var(--primary-color);
             color: white;
         }
 
         .btn-submit:hover {
-            background-color: #2980b9;
+            filter: brightness(1.15);
         }
 
         .btn-print {
@@ -207,6 +260,7 @@
             .container { box-shadow: none; padding: 0; }
             .actions { display: none; }
             input, select, textarea { border: none; border-bottom: 1px solid #ccc; border-radius: 0; }
+            legend { background: #fff; }
         }
     </style>
 </head>
@@ -214,12 +268,15 @@
 
 <div class="container">
     <div class="header">
-        <h1>Approval to Recruit</h1>
-        <h2>Recruitment Authorisation Request</h2>
-        <p>Please complete this form to request approval to recruit. Recruitment activity must not begin until final approval has been granted.</p>
+        <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
+        <div class="header-text">
+            <h1>Approval to Recruit</h1>
+            <h2>Recruitment Authorisation Request</h2>
+        </div>
+        <p class="warning">Please complete this form to request approval to recruit. Recruitment activity must not begin until final approval has been granted.</p>
     </div>
 
-    <form action="#" method="POST">
+    <form id="recruitAuthorisationForm">
         
         <!-- Request Information -->
         <fieldset>
@@ -270,7 +327,7 @@
 
         <!-- Replacement Details -->
         <fieldset>
-            <legend>If Replacement Role: Replacement Details</legend>
+            <legend>Replacement Details (if applicable)</legend>
             <div class="form-grid">
                 <div>
                     <label for="employee-name">Employee Name:</label>
@@ -468,7 +525,7 @@
         <!-- Declaration -->
         <fieldset>
             <legend>Declaration</legend>
-            <p><em>I confirm the information provided in this request is accurate and complete.</em></p>
+            <p style="font-size:0.9em; font-style:italic; margin-bottom: 15px;">I confirm the information provided in this request is accurate and complete.</p>
             <div class="form-grid">
                 <div>
                     <label for="decl-name">Name:</label>
@@ -493,6 +550,136 @@
 
     </form>
 </div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+    // --- Firebase Configuration ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717",
+        measurementId: "G-R56BGZYV8N"
+    };
+
+    // --- Initialize Firebase ---
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // --- Form Submission Logic ---
+    document.getElementById('recruitAuthorisationForm').addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent default page refresh
+
+        const submitButton = this.querySelector('.btn-submit');
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting...';
+
+        // Collect form data
+        const formData = new FormData(this);
+        const formObject = {};
+
+        // Helper function for radio buttons
+        const getRadioValue = (name) => {
+            const radio = document.querySelector(`input[name="${name}"]:checked`);
+            return radio ? radio.value : null;
+        };
+
+        // Construct object for Firestore saving
+        // Nesting keys logically to make it clear what data belongs together in the DB.
+        const dataToSave = {
+            requestInformation: {
+                dateOfRequest: formData.get('date-of-request'),
+                requestedBy: formData.get('requested-by'),
+                department: formData.get('department'),
+                jobTitle: formData.get('job-title'),
+                location: formData.get('location'),
+                hiringManager: formData.get('hiring-manager'),
+                reportsTo: formData.get('reports-to')
+            },
+            // Array from checked values from vacancy type checkbox input name="vacancy-type"
+            vacancyType: formData.getAll('vacancy-type'), 
+            replacementDetails: {
+                employeeName: formData.get('employee-name'),
+                leavingDate: formData.get('leaving-date'),
+                reasonForVacancy: formData.get('reason-vacancy')
+            },
+            businessCase: {
+                whyRoleRequired: formData.get('why-required'),
+                impactIfNotFilled: formData.get('impact-not-filled'),
+                // Array from checked values from impact checkbox input name="impact"
+                impactTags: formData.getAll('impact') 
+            },
+            budgetSalary: {
+                proposedSalary: formData.get('proposed-salary'),
+                costCentre: formData.get('cost-centre'),
+                budgetConfirmed: getRadioValue('budget-confirmed'),
+                additionalCosts: formData.get('additional-costs')
+            },
+            recruitmentRequirements: {
+                desiredStartDate: formData.get('desired-start'),
+                latestStartDate: formData.get('latest-start'),
+                urgency: formData.get('urgency'),
+                internalAdvertRequired: getRadioValue('internal-ad'),
+                externalAdvertRequired: getRadioValue('external-ad'),
+                qualifications: formData.get('qualifications'),
+                experience: formData.get('experience')
+            },
+            // Approver data from table in object structure
+            approvalSignOff: { 
+                departmentHead: {
+                    decision: formData.get('dept-head-decision'),
+                    comments: formData.get('dept-head-comments'),
+                    date: formData.get('dept-head-date')
+                },
+                finance: {
+                    decision: formData.get('finance-decision'),
+                    comments: formData.get('finance-comments'),
+                    date: formData.get('finance-date')
+                },
+                finalApprover: {
+                    decision: formData.get('final-decision'),
+                    comments: formData.get('final-comments'),
+                    date: formData.get('final-date')
+                }
+            },
+            finalOutcome: {
+                approvedToRecruit: getRadioValue('approved'),
+                dateApproved: formData.get('date-approved'),
+                recruitmentReference: formData.get('recruitment-ref'),
+                recruitmentTeamNotified: getRadioValue('team-notified')
+            },
+            declaration: {
+                name: formData.get('decl-name'),
+                date: formData.get('decl-date'),
+                signature: formData.get('decl-signature')
+            },
+            // Server Timestamp is essential to track when requests came in
+            submittedAt: firebase.firestore.FieldValue.serverTimestamp() 
+        };
+
+        // --- Save Data to Firestore Collection ---
+        db.collection("NGU Recuitment Approval Form").add(dataToSave)
+        .then((docRef) => {
+            console.log("Document written with ID: ", docRef.id);
+            alert('Request submitted successfully! Recruitment activity must not begin until final approval has been granted.');
+            document.getElementById('recruitAuthorisationForm').reset(); // Reset form on success
+        })
+        .catch((error) => {
+            console.error("Error adding document: ", error);
+            alert('There was an error submitting the request. Please try again or contact IT support.');
+        })
+        .finally(() => {
+            // Re-enable the submit button on success or failure so user can try again if there was an error.
+            submitButton.disabled = false;
+            submitButton.textContent = 'Submit Request';
+        });
+    });
+</script>
 
 </body>
 </html>
