@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - NGU Portal</title>
+    <style>
+        :root {
+            /* Shared NGU Dark Theme */
+            --body-bg: #141d26;
+            --container-bg: #1c2938;
+            --input-bg: #2d3d50;
+            --panel-border: #38444d;
+            --primary-text: #e1e8ed;
+            --secondary-text: #8899a6;
+            --accent-color: #00d4ff; /* NGU Cyan */
+            --danger-color: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--body-bg);
+            color: var(--primary-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+        }
+
+        .login-container {
+            width: 400px;
+            background-color: var(--container-bg);
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .logo { height: 60px; width: auto; margin-bottom: 20px; }
+
+        h1 {
+            font-size: 1.4em;
+            color: var(--primary-text);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 30px;
+        }
+
+        .form-group { text-align: left; margin-bottom: 20px; }
+        .form-group label { display: block; color: var(--secondary-text); font-size: 0.85em; text-transform: uppercase; margin-bottom: 8px; }
+        
+        .login-input {
+            width: 100%; padding: 12px 15px;
+            background-color: var(--input-bg); border: 1px solid var(--panel-border);
+            border-radius: 6px; color: var(--primary-text); font-family: inherit; font-size: 1em;
+        }
+        .login-input:focus { outline: none; border-color: var(--accent-color); }
+
+        button.btn-login {
+            width: 100%; padding: 14px; border: none; border-radius: 6px;
+            font-size: 1em; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.05em;
+            background-color: var(--accent-color); color: #000;
+            margin-top: 10px;
+        }
+        button.btn-login:hover { filter: brightness(1.1); }
+        button.btn-login:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        #error-message {
+            color: var(--danger-color);
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger-color);
+            padding: 10px; border-radius: 6px;
+            font-size: 0.9em; margin-bottom: 20px;
+            display: none; /* Hidden by default */
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
+    <h1>Portal Login</h1>
+
+    <div id="error-message">⚠️ Invalid username or password.</div>
+
+    <form id="login-form">
+        <div class="form-group">
+            <label for="username">Username (Full Name)</label>
+            <input type="text" id="username" class="login-input" required placeholder="e.g., John Doe">
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" class="login-input" required>
+        </div>
+        <button type="submit" class="btn-login" id="submit-btn">Sign In</button>
+    </form>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+    // --- Firebase Configuration ---
+    // Using existing config
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717",
+        measurementId: "G-R56BGZYV8N"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const usersCollection = "portal_users"; // Collection defined in user-database.html
+
+    const form = document.getElementById('login-form');
+    const errorMsg = document.getElementById('error-message');
+    const submitBtn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        errorMsg.style.display = 'none'; // Hide previous errors
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Verifying...";
+
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        // Query Firestore for this username
+        db.collection(usersCollection)
+          .where("username", "==", username)
+          .get()
+          .then((snapshot) => {
+              if (snapshot.empty) {
+                  // User not found
+                  throw new Error("Auth failed");
+              }
+
+              // In prototype, there should only be one user with this exact name
+              const userDoc = snapshot.docs[0];
+              const userData = userDoc.data();
+
+              // Prototype Security: Plain text match
+              if (userData.password !== password) {
+                  throw new Error("Auth failed");
+              }
+
+              // --- Success Logic ---
+              console.log("Login successful for: ", username);
+              
+              // Save "session" data to localStorage
+              localStorage.setItem('ngu_portal_username', username);
+              localStorage.setItem('ngu_portal_access_submission', userData.accessSubmission);
+              localStorage.setItem('ngu_portal_access_management', userData.accessManagement);
+
+              // Redirect to a central dashboard or the first allowed app
+              // For now, we will redirect to the Manager page if they have access, 
+              // otherwise the submission form.
+              if (userData.accessManagement) {
+                  window.location.href = 'recruit-approval-form-display.html'; // Or 'manager.html' based on your renaming
+              } else if (userData.accessSubmission) {
+                  window.location.href = 'recruit-approval-form.html';
+              } else {
+                  alert("Account active but no permissions assigned. Contact Admin.");
+                  submitBtn.disabled = false;
+                  submitBtn.textContent = "Sign In";
+                  localStorage.clear();
+              }
+          })
+          .catch((error) => {
+              console.error("Login Error: ", error);
+              errorMsg.style.display = 'block';
+              submitBtn.disabled = false;
+              submitBtn.textContent = "Sign In";
+              // Clear any old session data just in case
+              localStorage.clear();
+          });
+    });
+</script>
+
+</body>
+</html>
