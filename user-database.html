@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal User Database - NGU</title>
+    <style>
+        :root {
+            /* NGU Dark Theme */
+            --body-bg: #141d26;
+            --container-bg: #1c2938;
+            --input-bg: #2d3d50;
+            --panel-border: #38444d;
+            --primary-text: #e1e8ed;
+            --secondary-text: #8899a6;
+            --accent-color: #00d4ff; /* NGU Cyan */
+            --success-color: #2ecc71;
+            --danger-color: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--body-bg);
+            color: var(--primary-text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .main-container { max-width: 1100px; margin: 0 auto; }
+
+        /* Header */
+        .page-header {
+            background-color: var(--container-bg);
+            padding: 20px 30px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-brand { display: flex; align-items: center; gap: 15px; }
+        .logo { height: 40px; width: auto; }
+        .page-header h1 { font-size: 1.4em; text-transform: uppercase; letter-spacing: 0.1em; }
+
+        /* Action Bar */
+        .action-bar {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        /* Forms/Table Section */
+        .content-panel {
+            background-color: var(--container-bg);
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            padding: 30px;
+            overflow: hidden;
+        }
+
+        .panel-title {
+            font-size: 1.1em;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Buttons */
+        button {
+            padding: 10px 20px; border: none; border-radius: 6px;
+            font-size: 0.9em; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.05em;
+        }
+
+        .btn-primary { background-color: var(--accent-color); color: #000; }
+        .btn-primary:hover { filter: brightness(1.1); }
+
+        .btn-secondary { background-color: var(--input-bg); color: var(--primary-text); border: 1px solid var(--panel-border); }
+        .btn-secondary:hover { background-color: #38444d; }
+
+        .btn-danger { background-color: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); padding: 5px 10px; font-size: 0.8em;}
+        .btn-danger:hover { background-color: var(--danger-color); color: #fff; }
+
+        /* Table */
+        .user-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .user-table th, .user-table td { border-bottom: 1px solid var(--panel-border); padding: 15px; text-align: left; }
+        .user-table th { color: var(--secondary-text); font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.05em; }
+        .user-table tr:last-child td { border-bottom: none; }
+        .user-table tr:hover td { background-color: rgba(255,255,255,0.02); }
+
+        /* Access Tags */
+        .tag {
+            display: inline-block; padding: 4px 8px; border-radius: 4px;
+            font-size: 0.75em; font-weight: 700; text-transform: uppercase;
+            margin-right: 5px; margin-bottom: 5px;
+        }
+        .tag-off { background-color: #38444d; color: var(--secondary-text); }
+        .tag-on { background-color: rgba(46, 204, 113, 0.15); color: var(--success-color); border: 1px solid var(--success-color); }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7); display: none;
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-overlay.active { display: flex; }
+
+        .modal-content {
+            background-color: var(--container-bg);
+            padding: 30px; border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            width: 500px; max-width: 90%;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .modal-header {
+            font-size: 1.1em; color: var(--primary-text); text-transform: uppercase;
+            margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--panel-border);
+            display: flex; justify-content: space-between;
+        }
+        .close-modal { background: none; border: none; color: var(--secondary-text); font-size: 1.5em; cursor: pointer; }
+
+        /* Inputs */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; color: var(--secondary-text); font-size: 0.85em; text-transform: uppercase; margin-bottom: 5px; }
+        
+        .edit-input {
+            width: 100%; padding: 12px;
+            background-color: var(--input-bg); border: 1px solid var(--panel-border);
+            border-radius: 6px; color: var(--primary-text); font-family: inherit; font-size: 1em;
+        }
+        .edit-input:focus { outline: none; border-color: var(--accent-color); }
+
+        .switch-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .switch-label {
+            display: flex; align-items: center; justify-content: space-between;
+            color: var(--primary-text); font-size: 0.95em;
+            padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 6px;
+        }
+
+        /* Basic switch styling */
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #38444d; transition: .4s; border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--accent-color); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        #status-message { text-align: center; color: var(--secondary-text); padding: 20px; }
+
+        /* Security Warning */
+        .security-warning {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+            padding: 10px; border-radius: 6px;
+            font-size: 0.8em; margin-bottom: 20px; font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <header class="page-header">
+        <div class="header-brand">
+            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
+            <h1>Portal User Database</h1>
+        </div>
+    </header>
+
+    <div class="security-warning">
+        ⚠️ PROTOTYPE WARNING: Passwords are stored as plain text in Firestore. This is insecure for production. Use Firebase Auth for actual deployment.
+    </div>
+
+    <div class="action-bar">
+        <button class="btn-primary" onclick="openAddModal()">+ Add New User</button>
+    </div>
+
+    <div class="content-panel">
+        <div class="panel-title">System Users</div>
+        
+        <div id="status-message">⏳ Loading users...</div>
+        
+        <table class="user-table" id="user-table" style="display: none;">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Access: Submission Form</th>
+                    <th>Access: Form Manager</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="user-table-body">
+                <!-- Populated via JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add/Edit User Modal -->
+<div class="modal-overlay" id="user-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <span id="modal-title">Add User</span>
+            <button class="close-modal" onclick="closeModal()">×</button>
+        </div>
+        <form id="user-form">
+            <input type="hidden" id="edit-doc-id">
+            
+            <div class="form-group">
+                <label for="username">Username (Full Name)</label>
+                <input type="text" id="username" class="edit-input" required placeholder="John Doe">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password (Prototype - Plain Text)</label>
+                <input type="text" id="password" class="edit-input" required>
+            </div>
+
+            <div class="switch-group">
+                <div class="panel-title" style="font-size: 0.8em; margin-bottom: 5px;">Permissions</div>
+                
+                <label class="switch-label">
+                    <span>Recruitment Approval Form (Submit)</span>
+                    <div class="switch">
+                        <input type="checkbox" id="access-submission">
+                        <span class="slider"></span>
+                    </div>
+                </label>
+                
+                <label class="switch-label">
+                    <span>Recruitment Form Manager (View/Approve)</span>
+                    <div class="switch">
+                        <input type="checkbox" id="access-management">
+                        <span class="slider"></span>
+                    </div>
+                </label>
+            </div>
+
+            <div class="actions" style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Save User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+    // --- Firebase Configuration ---
+    // Using your existing config
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717",
+        measurementId: "G-R56BGZYV8N"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const collectionName = "portal_users"; // New collection for user data
+
+    // DOM Elements
+    const table = document.getElementById('user-table');
+    const tableBody = document.getElementById('user-table-body');
+    const statusMsg = document.getElementById('status-message');
+    const modal = document.getElementById('user-modal');
+    const form = document.getElementById('user-form');
+    const modalTitle = document.getElementById('modal-title');
+    const docIdInput = document.getElementById('edit-doc-id');
+
+    // State
+    let isEditing = false;
+
+    // --- Core Functions ---
+
+    // 1. Fetch and Listen to Users (Real-time)
+    function loadUsers() {
+        db.collection(collectionName).orderBy('username').onSnapshot((snapshot) => {
+            if (snapshot.empty) {
+                statusMsg.textContent = "No users found. Add your first user.";
+                statusMsg.style.display = 'block';
+                table.style.display = 'none';
+                return;
+            }
+
+            statusMsg.style.display = 'none';
+            table.style.display = 'table';
+            tableBody.innerHTML = '';
+
+            snapshot.forEach(doc => {
+                const user = doc.data();
+                const id = doc.id;
+
+                const row = `
+                    <tr>
+                        <td style="font-weight:600; color:var(--primary-text);">${user.username}</td>
+                        <td>${renderAccessTag(user.accessSubmission)}</td>
+                        <td>${renderAccessTag(user.accessManagement)}</td>
+                        <td>
+                            <button class="btn-secondary" style="padding: 5px 10px; font-size:0.8em; margin-right:5px;" onclick="openEditModal('${id}', '${user.username}', '${user.password}', ${user.accessSubmission}, ${user.accessManagement})">Edit</button>
+                            <button class="btn-danger" onclick="deleteUser('${id}', '${user.username}')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+        }, (error) => {
+            console.error("Error loading users: ", error);
+            statusMsg.textContent = "Error loading database. Check console.";
+        });
+    }
+
+    // Helper to render On/Off tags
+    function renderAccessTag(hasAccess) {
+        return hasAccess 
+            ? '<span class="tag tag-on">Enabled</span>' 
+            : '<span class="tag tag-off">Disabled</span>';
+    }
+
+    // 2. Add/Edit Submit
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value; // Plain text!
+        const accessSubmission = document.getElementById('access-submission').checked;
+        const accessManagement = document.getElementById('access-management').checked;
+
+        const userData = {
+            username: username,
+            password: password,
+            accessSubmission: accessSubmission,
+            accessManagement: accessManagement,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        if (isEditing) {
+            // Update existing
+            const id = docIdInput.value;
+            db.collection(collectionName).doc(id).update(userData)
+            .then(() => {
+                alert(`User ${username} updated.`);
+                closeModal();
+            })
+            .catch(err => alert("Error updating: " + err));
+        } else {
+            // Check if username already exists (basic check)
+            db.collection(collectionName).where("username", "==", username).get()
+            .then(snapshot => {
+                if(!snapshot.empty) {
+                    alert("A user with this name already exists.");
+                    return;
+                }
+                
+                // Add new
+                userData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                db.collection(collectionName).add(userData)
+                .then(() => {
+                    alert(`User ${username} added.`);
+                    closeModal();
+                })
+                .catch(err => alert("Error adding: " + err));
+            });
+        }
+    });
+
+    // 3. Delete User
+    function deleteUser(id, name) {
+        if(confirm(`Are you sure you want to delete user: ${name}?\nThis cannot be undone.`)) {
+            db.collection(collectionName).doc(id).delete()
+            .then(() => alert("User deleted."))
+            .catch(err => alert("Error deleting: " + err));
+        }
+    }
+
+    // --- Modal Management ---
+
+    function openAddModal() {
+        isEditing = false;
+        modalTitle.textContent = "Add New User";
+        form.reset();
+        docIdInput.value = '';
+        document.getElementById('username').disabled = false; // Allow editing username for new users
+        modal.classList.add('active');
+    }
+
+    function openEditModal(id, username, password, accessSub, accessMgmt) {
+        isEditing = true;
+        modalTitle.textContent = `Edit User: ${username}`;
+        docIdInput.value = id;
+        
+        document.getElementById('username').value = username;
+        document.getElementById('username').disabled = true; // Don't allow changing username once created
+        document.getElementById('password').value = password;
+        document.getElementById('access-submission').checked = accessSub;
+        document.getElementById('access-management').checked = accessMgmt;
+        
+        modal.classList.add('active');
+    }
+
+    function closeModal() {
+        modal.classList.remove('active');
+    }
+
+    // Close modal if clicking overlay
+    modal.addEventListener('click', e => { if(e.target === modal) closeModal(); });
+
+    // Start
+    window.onload = loadUsers;
+</script>
+
+</body>
+</html>
