@@ -151,6 +151,7 @@
             background-color: var(--container-bg);
             border-radius: 8px;
             border: 1px solid var(--panel-border);
+            max-width: 800px; margin: 0 auto;
         }
 
         /* Accordion List Styling */
@@ -173,7 +174,6 @@
             padding: 15px 20px;
             cursor: pointer;
             display: grid;
-            /* Grid layout: Job Title | Dept | Location | (Live Badge) | Date | Arrow */
             grid-template-columns: 2fr 1.5fr 1fr 1.2fr 40px;
             align-items: center;
             gap: 10px;
@@ -212,9 +212,7 @@
             font-family: monospace;
         }
 
-        /* 
-           --- NEW "LIVE" BADGE STYLING ---
-        */
+        /* --- NEW "LIVE" BADGE STYLING --- */
         .badge-live {
             background-color: rgba(0, 212, 255, 0.15); /* Transparent Cyan */
             color: var(--accent-color);
@@ -325,9 +323,7 @@
             font-size: 1.1em;
         }
 
-        /* 
-           --- Styling for EDITABLE fields in expanded view ---
-        */
+        /* --- Styling for EDITABLE fields in expanded view --- */
         .edit-input, .edit-select {
             width: 100%;
             padding: 8px 12px;
@@ -529,99 +525,101 @@
 
     // Fetch data from Firestore
     async function fetchRequests() {
-        try {
-            // --- UPDATED QUERY ---
-            // Only fetch requests where workflowClosed is NOT true.
-            // Prototype Security limitation: Newly submitted forms (Phase 1)
-            // will appear, but old pre-Phase-1 data will be hidden unless
-            // workflowClosed: false is manually added in console.
+            // --- UPDATED JS FIX ---
+            // Wrapped .onSnapshot to correctly handle the error callback
             db.collection(collectionName)
               .where('workflowClosed', '==', false) // Only Active
               .orderBy('submittedAt', 'desc') // Newest first
-              .onSnapshot((snapshot) => {
-                if (snapshot.empty) {
+              .onSnapshot(
+                // 1. SUCCESS CALLBACK
+                (snapshot) => {
+                    if (snapshot.empty) {
+                        if(statusMsg) {
+                            statusMsg.textContent = "No active recruitment requests found. Ensure new requests are submitted using the updated form or pre-existing data is manually initialized with workflowClosed=false.";
+                            statusMsg.style.display = 'block';
+                        }
+                        if(container) container.style.display = 'none';
+                        return;
+                    }
+
+                    if(statusMsg) statusMsg.style.display = 'none';
+                    if(container) {
+                        container.style.display = 'flex';
+                        
+                        const expandedIds = Array.from(document.querySelectorAll('.request-item.active')).map(el => el.id.replace('item-',''));
+
+                        container.innerHTML = ''; 
+
+                        snapshot.forEach(doc => {
+                            const data = doc.data();
+                            const reqId = doc.id;
+                            
+                            const jobTitle = data.requestInformation?.jobTitle || 'Unknown Title';
+                            const dept = data.requestInformation?.department || 'Unknown Dept';
+                            const location = data.requestInformation?.location || 'Unknown';
+                            const submitDate = formatTimestamp(data.submittedAt);
+
+                            // --- NEW "LIVE" CALCULATION ---
+                            const approvals = data.approvalSignOff || {};
+                            const isLive =  approvals.departmentHead?.decision === 'Approve' &&
+                                            approvals.finance?.decision === 'Approve' &&
+                                            approvals.finalApprover?.decision === 'Approve';
+
+                            const itemHtml = `
+                                <div class="request-item ${expandedIds.includes(reqId) ? 'active' : ''} ${isLive ? 'is-live' : ''}" id="item-${reqId}">
+                                    <div class="request-summary" onclick="toggleAccordion('${reqId}')">
+                                        <div class="summary-cell summary-job-title">
+                                            <div class="cell-label">Job Title</div>
+                                            ${jobTitle}
+                                        </div>
+                                        <div class="summary-cell">
+                                            <div class="cell-label">Department</div>
+                                            ${dept}
+                                        </div>
+                                        <div class="summary-cell">
+                                            <div class="cell-label">Location</div>
+                                            <div style="display:flex; align-items:center; gap:10px;">
+                                                ${location}
+                                                <span class="badge-live badge-live-summary">Live</span>
+                                            </div>
+                                        </div>
+                                        <div class="summary-cell summary-date">
+                                            <div class="cell-label">Submitted</div>
+                                            ${submitDate}
+                                        </div>
+                                        <div class="expand-icon">▼</div>
+                                    </div>
+                                    
+                                    <div class="request-details" id="details-${reqId}">
+                                        ${generateDetailedView(reqId, data, submitDate, isLive)}
+                                    </div>
+                                </div>
+                            `;
+                            container.insertAdjacentHTML('beforeend', itemHtml);
+                        });
+                    }
+                },
+                // 2. ERROR CALLBACK (Crucial Fix)
+                (error) => { 
+                    console.error("Firestore Snapshot Error: ", error);
                     if(statusMsg) {
-                        statusMsg.textContent = "No active recruitment requests found.";
+                        // Helpful error message for the prototype missing index
+                        statusMsg.innerHTML = `⚠️ <strong>Error: Firestore Composite Index Missing.</strong><br><br>
+                                               Your project requires a new Composite Index to filter and sort requests simultaneously.<br>
+                                               To resolve this, open your browser developer console (F12) to find the unique link generated by Firebase. Following that link will create the index automatically.<br><br>
+                                               <em>Or manually create it in Firebase Console:</em><br>
+                                               Collection: <code>NGU Recuitment Approval Form</code><br>
+                                               Fields: <code>workflowClosed</code> (Asc) & <code>submittedAt</code> (Desc).`;
+                        statusMsg.style.color = 'var(--danger-color)';
                         statusMsg.style.display = 'block';
                     }
                     if(container) container.style.display = 'none';
-                    return;
                 }
-
-                if(statusMsg) statusMsg.style.display = 'none';
-                if(container) {
-                    container.style.display = 'flex';
-                    
-                    // Store IDs of items currently expanded to re-expand them after render
-                    const expandedIds = Array.from(document.querySelectorAll('.request-item.active')).map(el => el.id.replace('item-',''));
-
-                    container.innerHTML = ''; // Clear container
-
-                    snapshot.forEach(doc => {
-                        const data = doc.data();
-                        const reqId = doc.id;
-                        
-                        const jobTitle = data.requestInformation?.jobTitle || 'Unknown Title';
-                        const dept = data.requestInformation?.department || 'Unknown Dept';
-                        const location = data.requestInformation?.location || 'Unknown';
-                        const submitDate = formatTimestamp(data.submittedAt);
-
-                        // --- NEW "LIVE" CALCULATION ---
-                        // All 3 approval steps must be set to "Approve"
-                        const approvals = data.approvalSignOff || {};
-                        const isLive =  approvals.departmentHead?.decision === 'Approve' &&
-                                        approvals.finance?.decision === 'Approve' &&
-                                        approvals.finalApprover?.decision === 'Approve';
-
-                        // Create Item HTML
-                        // .is-live class applied based on calculation
-                        const itemHtml = `
-                            <div class="request-item ${expandedIds.includes(reqId) ? 'active' : ''} ${isLive ? 'is-live' : ''}" id="item-${reqId}">
-                                <div class="request-summary" onclick="toggleAccordion('${reqId}')">
-                                    <div class="summary-cell summary-job-title">
-                                        <div class="cell-label">Job Title</div>
-                                        ${jobTitle}
-                                    </div>
-                                    <div class="summary-cell">
-                                        <div class="cell-label">Department</div>
-                                        ${dept}
-                                    </div>
-                                    <div class="summary-cell">
-                                        <div class="cell-label">Location</div>
-                                        <div style="display:flex; align-items:center; gap:10px;">
-                                            ${location}
-                                            <span class="badge-live badge-live-summary">Live</span>
-                                        </div>
-                                    </div>
-                                    <div class="summary-cell summary-date">
-                                        <div class="cell-label">Submitted</div>
-                                        ${submitDate}
-                                    </div>
-                                    <div class="expand-icon">▼</div>
-                                </div>
-                                
-                                <div class="request-details" id="details-${reqId}">
-                                    ${generateDetailedView(reqId, data, submitDate, isLive)}
-                                </div>
-                            </div>
-                        `;
-                        container.insertAdjacentHTML('beforeend', itemHtml);
-                    });
-                }
-            });
-
-        } catch (error) {
-            console.error("Error fetching documents: ", error);
-            if(statusMsg) {
-                statusMsg.textContent = "Error loading requests. Composite index might be building or pre-existing data lacks workflowClosed field. Check console.";
-                statusMsg.style.color = 'var(--danger-color)';
-            }
-        }
+            );
     }
 
     // Function to generate HTML. 
     function generateDetailedView(reqId, data, formattedSubmitDate, isLive) {
-        // Helper to generate select HTML with selected option
         const getSelectHtml = (name, currentVal, options) => {
             let html = `<select class="edit-select" name="${name}" data-req-id="${reqId}">`;
             options.forEach(opt => {
@@ -635,7 +633,7 @@
         const decisionOptions = ['Pending', 'Approve', 'Reject', 'More Info Needed'];
 
         return `
-            <!-- 1. Read-Only Request Info (Submitted by user) -->
+            <!-- 1. Read-Only Request Info -->
             <div class="detail-section">
                 <div class="detail-section-title">Request Information (Read-Only)</div>
                 <div class="detail-grid">
@@ -727,7 +725,7 @@
 
             <!-- Action Buttons for this specific request -->
             <div class="admin-actions">
-                <!-- NEW CLOSE WORKFLOW BUTTON (Visible only when Live) -->
+                <!-- NEW CLOSE WORKFLOW BUTTON -->
                 <button type="button" class="btn-close-workflow" id="close-btn-${reqId}" 
                         style="${isLive ? 'display:inline-flex;' : ''}"
                         onclick="closeWorkflow('${reqId}', '${data.requestInformation?.jobTitle || 'Request'}')">
@@ -739,13 +737,11 @@
         `;
     }
 
-    // Toggle Accordion function
     function toggleAccordion(reqId) {
         const item = document.getElementById(`item-${reqId}`);
         if(item) item.classList.toggle('active');
     }
 
-    // --- SAVE LOGIC ---
     async function saveApprovals(reqId) {
         const saveBtn = document.getElementById(`save-btn-${reqId}`);
         const detailsPanel = document.getElementById(`details-${reqId}`);
@@ -755,16 +751,10 @@
             saveBtn.textContent = 'Saving...';
         }
 
-        // Helper to get input value within this specific accordion panel
         const getElVal = (name) => detailsPanel ? (detailsPanel.querySelector(`[name="${name}"]`)?.value || '') : '';
-        
-        // Helper for radio buttons within this specific panel
         const getRadioVal = (name) => detailsPanel ? (detailsPanel.querySelector(`input[name="${name}"]:checked`)?.value || null) : null;
-
-        // Prototype Security audit trail: Who actioned this?
         const adminUsername = localStorage.getItem('ngu_portal_username');
 
-        // Construct update object echoing the submission structure
         const updatedData = {
             approvalSignOff: { 
                 departmentHead: {
@@ -789,13 +779,11 @@
                 recruitmentReference: getElVal(`recruitment-ref-${reqId}`),
                 recruitmentTeamNotified: getRadioVal(`team-notified-${reqId}`)
             },
-            // Prototype audit data
             lastUpdatedByAdmin: adminUsername,
             lastWorkflowUpdateAt: firebase.firestore.FieldValue.serverTimestamp() 
         };
 
         try {
-            // Update specific document in Firestore
             await db.collection(collectionName).doc(reqId).update(updatedData);
             console.log("Document updated: ", reqId);
             alert('Approvals and status updated successfully.');
@@ -810,11 +798,9 @@
         }
     }
 
-    // --- NEW CLOSE/ARCHIVE LOGIC ---
     async function closeWorkflow(reqId, jobTitle) {
-        // Confirmation is crucial before archiving
         if (!confirm(`Are you sure you want to close the workflow for:\n"${jobTitle}"?\n\nThis will remove it from the active manager list.`)) {
-            return; // Cancel
+            return; 
         }
 
         const closeBtn = document.getElementById(`close-btn-${reqId}`);
@@ -828,8 +814,6 @@
         if(saveBtn) saveBtn.disabled = true;
 
         try {
-            // Update Firestore setting workflowClosed to true.
-            // Audit trail is added.
             await db.collection(collectionName).doc(reqId).update({
                 workflowClosed: true,
                 workflowClosedBy: adminUsername,
@@ -837,7 +821,6 @@
             });
             console.log("Document closed/archived: ", reqId);
             alert('Workflow closed and archived successfully.');
-            // Due to real-time onSnapshot, the document will remove itself from view immediately.
         } catch (error) {
             console.error("Error closing document: ", error);
             alert('Error closing workflow. Check console for details.');
@@ -849,7 +832,6 @@
         }
     }
 
-    // Start on load
     window.onload = fetchRequests;
 </script>
 
