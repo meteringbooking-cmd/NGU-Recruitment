@@ -4,6 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submit Recruitment Request - NGU Portal</title>
+    
+    <!-- 
+      --- PROTOTYPE SECURITY SCRIPT ---
+      Executes immediately to check 'session' data in localStorage before rendering body.
+    -->
+    <script>
+        (function() {
+            const username = localStorage.getItem('ngu_portal_username');
+            const hasAccess = localStorage.getItem('ngu_portal_access_submission');
+
+            // 1. Check if user is logged in at all
+            if (!username) {
+                console.log("No session found, redirecting to login.");
+                window.location.href = 'login.html';
+                return; // Stop execution
+            }
+
+            // 2. Check specific page permission
+            // values in localStorage are stored as strings, so compare to string 'true'
+            if (hasAccess !== 'true') {
+                console.log("User lacks submission permission.");
+                alert("Access Denied: You do not have permission to submit requests.");
+                // Redirect back to dashboard or manager if they have access there
+                const hasMgmtAccess = localStorage.getItem('ngu_portal_access_management');
+                if (hasMgmtAccess === 'true') {
+                    window.location.href = 'recruit-approval-form-display.html';
+                } else {
+                    window.location.href = 'login.html'; // Log them out
+                    localStorage.clear();
+                }
+                return; // Stop execution
+            }
+
+            // If we get here, user is allowed. Body will render normally.
+            console.log("Access granted to user: ", username);
+        })();
+    </script>
+    
     <style>
         :root {
             /* NGU Dark Theme Color Palette */
@@ -198,6 +236,7 @@
             margin-top: 30px;
             padding-top: 30px;
             border-top: 1px solid var(--panel-border);
+            align-items: center;
         }
 
         button {
@@ -228,10 +267,22 @@
             opacity: 0.5;
         }
 
+        .btn-logout {
+            background: none;
+            color: var(--secondary-text);
+            text-transform: none;
+            letter-spacing: normal;
+            font-weight: normal;
+            font-size: 0.9em;
+            padding: 10px;
+        }
+        .btn-logout:hover { color: var(--danger-color); text-decoration: underline; }
+
         @media (max-width: 768px) {
             .container { padding: 20px; }
             .form-grid { grid-template-columns: 1fr; }
             .checkbox-group, .radio-group { gap: 10px; }
+            .actions { flex-direction: column-reverse; gap: 10px; align-items: stretch;}
         }
     </style>
 </head>
@@ -245,7 +296,7 @@
             <h2>Submit Authorisation Request</h2>
         </div>
         <div class="info-box">
-            Complete the sections below to submit a new recruitment request for approval. Note: Approval workflow begins after submission.
+            Complete the sections below to submit a new recruitment request for approval. You are currently logged in as <strong id="display-username" style="color:white;">User</strong>.
         </div>
     </div>
 
@@ -261,7 +312,7 @@
                 </div>
                 <div class="field-container">
                     <label for="requested-by">Requested By</label>
-                    <input type="text" id="requested-by" name="requested-by" required placeholder="Your Full Name">
+                    <input type="text" id="requested-by" name="requested-by" required readonly>
                 </div>
                 <div class="field-container">
                     <label for="department">Department</label>
@@ -418,11 +469,11 @@
             <div class="form-grid">
                 <div class="field-container">
                     <label for="decl-name">Requestor Name</label>
-                    <input type="text" id="decl-name" name="decl-name" required placeholder="Type full name">
+                    <input type="text" id="decl-name" name="decl-name" required readonly placeholder="Type full name">
                 </div>
                 <div class="field-container">
                     <label for="decl-date">Date Signed</label>
-                    <input type="date" id="decl-date" name="decl-date" required>
+                    <input type="date" id="decl-date" name="decl-date" required readonly>
                 </div>
                 <div class="field-container full-width">
                     <label for="decl-signature">Digital Signature (Type Full Name)</label>
@@ -433,6 +484,7 @@
 
         <!-- Action Buttons -->
         <div class="actions">
+            <button type="button" class="btn-logout" id="logout-btn">Logout</button>
             <button type="submit" class="btn-submit">Submit Request</button>
         </div>
 
@@ -459,8 +511,9 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Set today's date by default for date fields
+    // Setup page based on logged in user
     document.addEventListener('DOMContentLoaded', () => {
+        // 1. Set dates to today
         const now = new Date();
         const day = ("0" + now.getDate()).slice(-2);
         const month = ("0" + (now.getMonth() + 1)).slice(-2);
@@ -471,11 +524,39 @@
             const field = document.getElementById(id);
             if(field) field.value = today;
         });
+
+        // 2. Fetch username from localStorage (set by safety script above)
+        const username = localStorage.getItem('ngu_portal_username');
+        
+        // 3. Update Header Info
+        document.getElementById('display-username').textContent = username;
+
+        // 4. Pre-fill Requestor Name fields and make read-only
+        // (Forces signature consistency with login)
+        document.getElementById('requested-by').value = username;
+        document.getElementById('decl-name').value = username;
+    });
+
+    // Logout Logic
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'login.html';
     });
 
     // --- Form Submission Logic ---
     document.getElementById('recruitAuthorisationForm').addEventListener('submit', function(e) {
         e.preventDefault(); // Prevent default page refresh
+
+        // Prototype Security Check: Ensure signature matches logged in name exactly
+        const username = localStorage.getItem('ngu_portal_username');
+        const signature = document.getElementById('decl-signature').value.trim();
+
+        if (signature !== username) {
+            alert(`⚠️ Signature Mismatch:\nThe Digital Signature must exactly match your logged-in username: "${username}"`);
+            submitButton.disabled = false;
+            submitButton.textContent = 'Submit Request';
+            return; // Stop submission
+        }
 
         const submitButton = this.querySelector('.btn-submit');
         submitButton.disabled = true;
@@ -495,7 +576,7 @@
         const dataToSave = {
             requestInformation: {
                 dateOfRequest: formData.get('date-of-request'),
-                requestedBy: formData.get('requested-by'),
+                requestedBy: formData.get('requested-by'), // This is locked to username
                 department: formData.get('department'),
                 jobTitle: formData.get('job-title'),
                 location: formData.get('location'),
@@ -529,9 +610,9 @@
                 experience: formData.get('experience')
             },
             declaration: {
-                name: formData.get('decl-name'),
+                name: formData.get('decl-name'), // Locked to username
                 date: formData.get('decl-date'),
-                signature: formData.get('decl-signature')
+                signature: signature // Verified match to username
             },
             // --- Workflow Initialization ---
             // These sections are now empty on submission, to be filled via the display/admin app.
@@ -554,8 +635,8 @@
         .then((docRef) => {
             console.log("Document written with ID: ", docRef.id);
             alert('Request submitted successfully!');
-            // Optional: Redirect to a confirmation page or reset form
-            // location.reload();
+            // Optional: Redirect to a dashboard or reset form
+            location.reload(); 
         })
         .catch((error) => {
             console.error("Error adding document: ", error);
