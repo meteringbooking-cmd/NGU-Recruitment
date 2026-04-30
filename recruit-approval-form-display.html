@@ -4,6 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submitted Recruitment Requests - NGU Portal</title>
+    
+    <!-- 
+      --- PROTOTYPE SECURITY SCRIPT ---
+      Executes immediately to check 'session' data in localStorage before rendering body.
+    -->
+    <script>
+        (function() {
+            const username = localStorage.getItem('ngu_portal_username');
+            const hasAccess = localStorage.getItem('ngu_portal_access_management');
+
+            // 1. Check if user is logged in at all
+            if (!username) {
+                console.log("No session found, redirecting to login.");
+                window.location.href = 'login.html';
+                return; // Stop execution
+            }
+
+            // 2. Check specific page permission
+            // values in localStorage are stored as strings, so compare to string 'true'
+            if (hasAccess !== 'true') {
+                console.log("User lacks management permission.");
+                alert("Access Denied: You do not have permission to access the Workflow Manager.");
+                // Redirect back to submission form if they have access there
+                const hasSubAccess = localStorage.getItem('ngu_portal_access_submission');
+                if (hasSubAccess === 'true') {
+                    window.location.href = 'recruit-approval-form.html';
+                } else {
+                    window.location.href = 'login.html'; // Log them out
+                    localStorage.clear();
+                }
+                return; // Stop execution
+            }
+
+            // If we get here, user is allowed. Body will render normally.
+            console.log("Access granted to user: ", username);
+        })();
+    </script>
+    
     <style>
         :root {
             /* Shared NGU Dark Theme */
@@ -61,6 +99,27 @@
             text-transform: uppercase;
             letter-spacing: 0.1em;
         }
+
+        .header-user-info {
+            text-align: right;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-user-info span { color: var(--secondary-text); font-size: 0.9em; }
+
+        .btn-logout-header {
+            background: none;
+            border: 1px solid var(--panel-border);
+            color: var(--primary-text);
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+        }
+        .btn-logout-header:hover { border-color: var(--danger-color); color: var(--danger-color); background-color: rgba(239, 68, 68, 0.05);}
 
         /* Loading/Error States */
         #status-message {
@@ -288,7 +347,8 @@
 
         /* Mobile Responsive adjustments */
         @media (max-width: 768px) {
-            .page-header { flex-direction: column; text-align: center; gap: 10px; }
+            .page-header { flex-direction: column; text-align: center; gap: 10px; padding: 20px;}
+            .header-user-info { flex-direction: column; gap: 5px;}
             
             .request-summary {
                 grid-template-columns: 1fr 40px;
@@ -334,7 +394,10 @@
             <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
             <h1>Workflow Manager</h1>
         </div>
-        <div style="font-size: 0.9em; color: var(--secondary-text);">Admin Access</div>
+        <div class="header-user-info">
+            <span>Logged in: <strong style="color:white;" id="display-username">User</strong></span>
+            <button class="btn-logout-header" id="logout-btn">Sign Out</button>
+        </div>
     </header>
 
     <div id="status-message">⏳ Loading submitted requests...</div>
@@ -367,6 +430,18 @@
 
     const container = document.getElementById('request-list-container');
     const statusMsg = document.getElementById('status-message');
+
+    // Setup Header & Logout
+    document.addEventListener('DOMContentLoaded', () => {
+        const username = localStorage.getItem('ngu_portal_username');
+        document.getElementById('display-username').textContent = username;
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'login.html';
+    });
+
 
     // Helper: format Firestore timestamp to readable date/time
     const formatTimestamp = (timestamp) => {
@@ -591,6 +666,9 @@
         // Helper for radio buttons within this specific panel
         const getRadioVal = (name) => detailsPanel.querySelector(`input[name="${name}"]:checked`)?.value || null;
 
+        // Prototype Security audit trail: Who actioned this?
+        const adminUsername = localStorage.getItem('ngu_portal_username');
+
         // Construct update object echoing the submission structure
         const updatedData = {
             approvalSignOff: { 
@@ -616,7 +694,9 @@
                 recruitmentReference: getElVal(`recruitment-ref-${reqId}`),
                 recruitmentTeamNotified: getRadioVal(`team-notified-${reqId}`)
             },
-            lastUpdatedByAdmin: firebase.firestore.FieldValue.serverTimestamp() // Good practice audit trail
+            // Prototype audit data
+            lastUpdatedByAdmin: adminUsername,
+            lastWorkflowUpdateAt: firebase.firestore.FieldValue.serverTimestamp() 
         };
 
         try {
