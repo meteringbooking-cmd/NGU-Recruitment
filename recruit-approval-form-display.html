@@ -22,18 +22,11 @@
             }
 
             // 2. Check specific page permission
-            // values in localStorage are stored as strings, so compare to string 'true'
             if (hasAccess !== 'true') {
                 console.log("User lacks management permission.");
                 alert("Access Denied: You do not have permission to access the Workflow Manager.");
-                // Redirect back to submission form if they have access there
-                const hasSubAccess = localStorage.getItem('ngu_portal_access_submission');
-                if (hasSubAccess === 'true') {
-                    window.location.href = 'recruit-approval-form.html';
-                } else {
-                    window.location.href = 'login.html'; // Log them out
-                    localStorage.clear();
-                }
+                // Redirect back to hub
+                window.location.href = 'homepage.html';
                 return; // Stop execution
             }
 
@@ -83,6 +76,14 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            flex-wrap: wrap; /* Allows wrapping on mobile */
+            gap: 15px;
+        }
+
+        .header-brand-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
 
         .header-brand {
@@ -98,28 +99,48 @@
             color: var(--primary-text);
             text-transform: uppercase;
             letter-spacing: 0.1em;
+            margin: 0;
         }
 
-        .header-user-info {
+        .header-controls {
             text-align: right;
             display: flex;
             align-items: center;
             gap: 15px;
         }
 
-        .header-user-info span { color: var(--secondary-text); font-size: 0.9em; }
+        .header-controls span { color: var(--secondary-text); font-size: 0.9em; }
+
+        /* Button Styling */
+        button, .btn-link {
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            font-weight: 600;
+        }
 
         .btn-logout-header {
             background: none;
             border: 1px solid var(--panel-border);
             color: var(--primary-text);
             padding: 8px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85em;
-            transition: all 0.2s;
         }
         .btn-logout-header:hover { border-color: var(--danger-color); color: var(--danger-color); background-color: rgba(239, 68, 68, 0.05);}
+
+        .btn-secondary {
+            background-color: var(--input-bg);
+            color: var(--primary-text);
+            border: 1px solid var(--panel-border);
+            padding: 8px 15px;
+        }
+        .btn-secondary:hover {
+            background-color: #38444d;
+            border-color: #4f5b66;
+        }
 
         /* Loading/Error States */
         #status-message {
@@ -280,7 +301,6 @@
 
         /* 
            --- Styling for EDITABLE fields in expanded view ---
-           Adapted from submission form CSS
         */
         .edit-input, .edit-select {
             width: 100%;
@@ -348,7 +368,8 @@
         /* Mobile Responsive adjustments */
         @media (max-width: 768px) {
             .page-header { flex-direction: column; text-align: center; gap: 10px; padding: 20px;}
-            .header-user-info { flex-direction: column; gap: 5px;}
+            .header-brand-container { flex-direction: column; gap: 10px; }
+            .header-controls { flex-direction: column; gap: 5px;}
             
             .request-summary {
                 grid-template-columns: 1fr 40px;
@@ -390,11 +411,15 @@
 
 <div class="main-container">
     <header class="page-header">
-        <div class="header-brand">
-            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
-            <h1>Workflow Manager</h1>
+        <div class="header-brand-container">
+            <!-- New Back Button -->
+            <a href="homepage.html" class="btn-link btn-secondary">← Hub</a>
+            <div class="header-brand">
+                <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
+                <h1>Workflow Manager</h1>
+            </div>
         </div>
-        <div class="header-user-info">
+        <div class="header-controls">
             <span>Logged in: <strong style="color:white;" id="display-username">User</strong></span>
             <button class="btn-logout-header" id="logout-btn">Sign Out</button>
         </div>
@@ -434,13 +459,17 @@
     // Setup Header & Logout
     document.addEventListener('DOMContentLoaded', () => {
         const username = localStorage.getItem('ngu_portal_username');
-        document.getElementById('display-username').textContent = username;
+        const displayUsername = document.getElementById('display-username');
+        if(displayUsername) displayUsername.textContent = username;
     });
 
-    document.getElementById('logout-btn').addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = 'login.html';
-    });
+    const logoutBtn = document.getElementById('logout-btn');
+    if(logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        });
+    }
 
 
     // Helper: format Firestore timestamp to readable date/time
@@ -466,70 +495,75 @@
               .orderBy('submittedAt', 'desc')
               .onSnapshot((snapshot) => {
                 if (snapshot.empty) {
-                    statusMsg.textContent = "No recruitment requests found.";
-                    statusMsg.style.display = 'block';
-                    container.style.display = 'none';
+                    if(statusMsg) {
+                        statusMsg.textContent = "No recruitment requests found.";
+                        statusMsg.style.display = 'block';
+                    }
+                    if(container) container.style.display = 'none';
                     return;
                 }
 
-                statusMsg.style.display = 'none';
-                container.style.display = 'flex';
-                
-                // Store IDs of items currently expanded to re-expand them after render
-                const expandedIds = Array.from(document.querySelectorAll('.request-item.active')).map(el => el.id.replace('item-',''));
-
-                container.innerHTML = ''; // Clear container
-
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const reqId = doc.id;
+                if(statusMsg) statusMsg.style.display = 'none';
+                if(container) {
+                    container.style.display = 'flex';
                     
-                    const jobTitle = data.requestInformation?.jobTitle || 'Unknown Title';
-                    const dept = data.requestInformation?.department || 'Unknown Dept';
-                    const location = data.requestInformation?.location || 'Unknown';
-                    const submitDate = formatTimestamp(data.submittedAt);
+                    // Store IDs of items currently expanded to re-expand them after render
+                    const expandedIds = Array.from(document.querySelectorAll('.request-item.active')).map(el => el.id.replace('item-',''));
 
-                    // Create Item HTML
-                    const itemHtml = `
-                        <div class="request-item ${expandedIds.includes(reqId) ? 'active' : ''}" id="item-${reqId}">
-                            <div class="request-summary" onclick="toggleAccordion('${reqId}')">
-                                <div class="summary-cell summary-job-title">
-                                    <div class="cell-label">Job Title</div>
-                                    ${jobTitle}
+                    container.innerHTML = ''; // Clear container
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const reqId = doc.id;
+                        
+                        const jobTitle = data.requestInformation?.jobTitle || 'Unknown Title';
+                        const dept = data.requestInformation?.department || 'Unknown Dept';
+                        const location = data.requestInformation?.location || 'Unknown';
+                        const submitDate = formatTimestamp(data.submittedAt);
+
+                        // Create Item HTML
+                        const itemHtml = `
+                            <div class="request-item ${expandedIds.includes(reqId) ? 'active' : ''}" id="item-${reqId}">
+                                <div class="request-summary" onclick="toggleAccordion('${reqId}')">
+                                    <div class="summary-cell summary-job-title">
+                                        <div class="cell-label">Job Title</div>
+                                        ${jobTitle}
+                                    </div>
+                                    <div class="summary-cell">
+                                        <div class="cell-label">Department</div>
+                                        ${dept}
+                                    </div>
+                                    <div class="summary-cell">
+                                        <div class="cell-label">Location</div>
+                                        ${location}
+                                    </div>
+                                    <div class="summary-cell summary-date">
+                                        <div class="cell-label">Submitted</div>
+                                        ${submitDate}
+                                    </div>
+                                    <div class="expand-icon">▼</div>
                                 </div>
-                                <div class="summary-cell">
-                                    <div class="cell-label">Department</div>
-                                    ${dept}
+                                
+                                <div class="request-details" id="details-${reqId}">
+                                    ${generateDetailedView(reqId, data, submitDate)}
                                 </div>
-                                <div class="summary-cell">
-                                    <div class="cell-label">Location</div>
-                                    ${location}
-                                </div>
-                                <div class="summary-cell summary-date">
-                                    <div class="cell-label">Submitted</div>
-                                    ${submitDate}
-                                </div>
-                                <div class="expand-icon">▼</div>
                             </div>
-                            
-                            <div class="request-details" id="details-${reqId}">
-                                ${generateDetailedView(reqId, data, submitDate)}
-                            </div>
-                        </div>
-                    `;
-                    container.insertAdjacentHTML('beforeend', itemHtml);
-                });
+                        `;
+                        container.insertAdjacentHTML('beforeend', itemHtml);
+                    });
+                }
             });
 
         } catch (error) {
             console.error("Error fetching documents: ", error);
-            statusMsg.textContent = "Error loading requests. Please check console.";
-            statusMsg.style.color = 'var(--danger-color)';
+            if(statusMsg) {
+                statusMsg.textContent = "Error loading requests. Please check console.";
+                statusMsg.style.color = 'var(--danger-color)';
+            }
         }
     }
 
     // Function to generate HTML. 
-    // Request data is read-only. Approval/Outcome sections are editable forms.
     function generateDetailedView(reqId, data, formattedSubmitDate) {
         // Helper to generate select HTML with selected option
         const getSelectHtml = (name, currentVal, options) => {
@@ -642,29 +676,24 @@
     // Toggle Accordion function
     function toggleAccordion(reqId) {
         const item = document.getElementById(`item-${reqId}`);
-        // Optional: Close other open items
-        /*
-        document.querySelectorAll('.request-item').forEach(el => {
-            if (el.id !== `item-${reqId}`) el.classList.remove('active');
-        });
-        */
-        item.classList.toggle('active');
+        if(item) item.classList.toggle('active');
     }
 
     // --- SAVE LOGIC ---
-    // Collects data from editable fields in expanded view and updates Firestore
     async function saveApprovals(reqId) {
         const saveBtn = document.getElementById(`save-btn-${reqId}`);
         const detailsPanel = document.getElementById(`details-${reqId}`);
         
-        saveBtn.disabled = true;
-        saveBtn.textContent = 'Saving...';
+        if(saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+        }
 
         // Helper to get input value within this specific accordion panel
-        const getElVal = (name) => detailsPanel.querySelector(`[name="${name}"]`)?.value || '';
+        const getElVal = (name) => detailsPanel ? (detailsPanel.querySelector(`[name="${name}"]`)?.value || '') : '';
         
         // Helper for radio buttons within this specific panel
-        const getRadioVal = (name) => detailsPanel.querySelector(`input[name="${name}"]:checked`)?.value || null;
+        const getRadioVal = (name) => detailsPanel ? (detailsPanel.querySelector(`input[name="${name}"]:checked`)?.value || null) : null;
 
         // Prototype Security audit trail: Who actioned this?
         const adminUsername = localStorage.getItem('ngu_portal_username');
@@ -704,13 +733,14 @@
             await db.collection(collectionName).doc(reqId).update(updatedData);
             console.log("Document updated: ", reqId);
             alert('Approvals and status updated successfully.');
-            // No reload needed due to onSnapshot listener, inputs will stay as set
         } catch (error) {
             console.error("Error updating document: ", error);
             alert('Error saving changes. Verify permissions and try again.');
         } finally {
-            saveBtn.disabled = false;
-            saveBtn.textContent = 'Save Changes / Update Status';
+            if(saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Changes / Update Status';
+            }
         }
     }
 
