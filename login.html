@@ -90,8 +90,8 @@
 
     <form id="login-form">
         <div class="form-group">
-            <label for="username">Username (Full Name)</label>
-            <input type="text" id="username" class="login-input" required placeholder="e.g., John Doe">
+            <label for="username">Username</label>
+            <input type="text" id="username" class="login-input" required placeholder="Full Name">
         </div>
         <div class="form-group">
             <label for="password">Password</label>
@@ -145,6 +145,28 @@
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
 
+        // ---
+        // ⚠️ START HARDCODED EMERGENCY FAILSAFE CHECK
+        // This is a major security risk for production, but added as requested for prototype backup.
+        // ---
+        if (username === 'Admin' && password === 'Pingu2020!&') {
+            console.log("Emergency Failsafe Login Successful.");
+            
+            // Set session data with full administrative access
+            localStorage.setItem('ngu_portal_username', 'Hardcoded Emergency Admin');
+            localStorage.setItem('ngu_portal_access_submission', 'true');
+            localStorage.setItem('ngu_portal_access_management', 'true');
+            localStorage.setItem('ngu_portal_access_userdb', 'true'); // Critical: gives access to manage users
+
+            // Redirect to Hub
+            window.location.href = 'homepage.html';
+            return; // STOP execution here, do not query Firestore.
+        }
+        // --- END HARDCODED EMERGENCY FAILSAFE CHECK ---
+
+
+        // --- Normal DB-driven Login Logic ---
+
         // Query Firestore for this username
         db.collection(usersCollection)
           .where("username", "==", username)
@@ -159,7 +181,7 @@
               const userDoc = snapshot.docs[0];
               const userData = userDoc.data();
 
-              // Prototype Security: Plain text match
+              // Prototype Security: Plain text match against DB
               if (userData.password !== password) {
                   throw new Error("Auth failed");
               }
@@ -168,12 +190,10 @@
               console.log("Login successful for: ", username);
               
               // Save "session" data to localStorage
-              // Ensure we explicitly convert the boolean true/false to a string 'true'/'false'
-              // so the security scripts on app pages work correctly.
               localStorage.setItem('ngu_portal_username', username);
               localStorage.setItem('ngu_portal_access_submission', String(userData.accessSubmission || false));
               localStorage.setItem('ngu_portal_access_management', String(userData.accessManagement || false));
-              localStorage.setItem('ngu_portal_access_userdb', String(userData.accessUserDb || false)); // New permission
+              localStorage.setItem('ngu_portal_access_userdb', String(userData.accessUserDb || false));
 
               // Redirect to Central Hub
               window.location.href = 'homepage.html';
