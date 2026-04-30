@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Approval to Recruit - Recruitment Authorisation Request</title>
+    <title>Submit Recruitment Request - NGU Portal</title>
     <style>
         :root {
             /* NGU Dark Theme Color Palette */
@@ -16,7 +16,6 @@
             --secondary-text: #8899a6; /* Muted grey text */
             
             --accent-color: #00d4ff;   /* NGU Cyan */
-            --primary-button: #1f3c5f; /* Corporate Blue */
             --danger-color: #ef4444;   /* Alert/Warning */
         }
 
@@ -78,12 +77,12 @@
             font-size: 1em;
         }
 
-        .warning-box {
+        .info-box {
             margin: 20px 0 0;
             color: var(--primary-text);
             font-weight: 500;
-            background-color: rgba(239, 68, 68, 0.1); /* Transparent Danger */
-            border: 1px solid var(--danger-color);
+            background-color: rgba(0, 212, 255, 0.1); /* Transparent Accent */
+            border: 1px solid var(--accent-color);
             padding: 15px;
             border-radius: 8px;
             font-size: 0.95em;
@@ -133,7 +132,6 @@
 
         input[type="text"],
         input[type="date"],
-        input[type="number"],
         select,
         textarea {
             width: 100%;
@@ -158,7 +156,6 @@
             box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
         }
 
-        /* Styling for Date picker icon in webkit */
         ::-webkit-calendar-picker-indicator {
             filter: invert(1);
             cursor: pointer;
@@ -192,44 +189,6 @@
             height: 18px;
             margin: 0;
             accent-color: var(--accent-color);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            background-color: rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        th, td {
-            border: 1px solid var(--panel-border);
-            padding: 15px;
-            text-align: left;
-            font-size: 0.95em;
-        }
-
-        th {
-            background-color: rgba(0,0,0,0.2);
-            font-weight: 700;
-            color: var(--secondary-text);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-size: 0.8em;
-        }
-
-        strong.approver-label {
-            color: var(--primary-text);
-            font-weight: 600;
-        }
-
-        .business-case-meta {
-            color: var(--secondary-text);
-            font-size: 0.85em;
-            font-style: italic;
-            margin-top: -15px;
-            margin-bottom: 20px;
         }
 
         .actions {
@@ -269,59 +228,10 @@
             opacity: 0.5;
         }
 
-        .btn-print {
-            background-color: var(--input-bg);
-            color: var(--primary-text);
-            border: 1px solid var(--panel-border);
-        }
-
-        .btn-print:hover {
-            background-color: #38444d;
-        }
-
         @media (max-width: 768px) {
             .container { padding: 20px; }
             .form-grid { grid-template-columns: 1fr; }
-            table, thead, tbody, th, td, tr { display: block; }
-            th { display: none; }
-            td {
-                position: relative;
-                padding-left: 45%;
-                border-bottom: none;
-                min-height: 50px;
-            }
-            td::before {
-                content: attr(data-label);
-                position: absolute;
-                left: 15px;
-                color: var(--secondary-text);
-                font-weight: 600;
-                font-size: 0.8em;
-                text-transform: uppercase;
-            }
-            tr {
-                border-bottom: 2px solid var(--panel-border);
-                margin-bottom: 15px;
-                background-color: rgba(0,0,0,0.1);
-            }
             .checkbox-group, .radio-group { gap: 10px; }
-        }
-        
-        @media print {
-            :root {
-                --body-bg: #fff;
-                --container-bg: #fff;
-                --input-bg: #fff;
-                --primary-text: #000;
-                --secondary-text: #444;
-                --panel-border: #ccc;
-            }
-            body { padding: 0; }
-            .container { box-shadow: none; padding: 0; border: none;}
-            .actions { display: none; }
-            input, select, textarea { border: none; border-bottom: 1px solid #ccc; border-radius: 0; padding: 5px; }
-            .warning-box { border: 1px solid #000; background: none; color: #000; }
-            ::-webkit-calendar-picker-indicator { filter: none; }
         }
     </style>
 </head>
@@ -331,11 +241,11 @@
     <div class="header">
         <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
         <div class="header-text">
-            <h1>Approval to Recruit</h1>
-            <h2>Recruitment Authorisation Request</h2>
+            <h1>Recruitment Portal</h1>
+            <h2>Submit Authorisation Request</h2>
         </div>
-        <div class="warning-box">
-            Recruitment activity must not begin until final approval has been granted. Please complete this form accurately to request approval.
+        <div class="info-box">
+            Complete the sections below to submit a new recruitment request for approval. Note: Approval workflow begins after submission.
         </div>
     </div>
 
@@ -351,7 +261,7 @@
                 </div>
                 <div class="field-container">
                     <label for="requested-by">Requested By</label>
-                    <input type="text" id="requested-by" name="requested-by" required placeholder="Full Name">
+                    <input type="text" id="requested-by" name="requested-by" required placeholder="Your Full Name">
                 </div>
                 <div class="field-container">
                     <label for="department">Department</label>
@@ -410,7 +320,6 @@
         <!-- Business Case -->
         <fieldset>
             <legend>Business Case</legend>
-            <div class="business-case-meta">Provide justification for this recruitment request.</div>
             <div class="form-grid">
                 <div class="field-container full-width">
                     <label for="why-required">Why is this role required?</label>
@@ -502,102 +411,17 @@
             </div>
         </fieldset>
 
-        <!-- Approval Sign Off -->
-        <fieldset>
-            <legend>Approval Sign Off</legend>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Approver</th>
-                        <th>Decision</th>
-                        <th>Comments</th>
-                        <th>Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td data-label="Approver"><strong class="approver-label">Department Head</strong></td>
-                        <td data-label="Decision">
-                            <select name="dept-head-decision">
-                                <option value="Pending" selected>Pending</option>
-                                <option value="Approve">Approve</option>
-                                <option value="Reject">Reject</option>
-                                <option value="More Info Needed">More Info Needed</option>
-                            </select>
-                        </td>
-                        <td data-label="Comments"><input type="text" name="dept-head-comments"></td>
-                        <td data-label="Date"><input type="date" name="dept-head-date"></td>
-                    </tr>
-                    <tr>
-                        <td data-label="Approver"><strong class="approver-label">Finance</strong></td>
-                        <td data-label="Decision">
-                            <select name="finance-decision">
-                                <option value="Pending" selected>Pending</option>
-                                <option value="Approve">Approve</option>
-                                <option value="Reject">Reject</option>
-                                <option value="More Info Needed">More Info Needed</option>
-                            </select>
-                        </td>
-                        <td data-label="Comments"><input type="text" name="finance-comments"></td>
-                        <td data-label="Date"><input type="date" name="finance-date"></td>
-                    </tr>
-                    <tr>
-                        <td data-label="Approver"><strong class="approver-label">Final Approver</strong></td>
-                        <td data-label="Decision">
-                            <select name="final-decision">
-                                <option value="Pending" selected>Pending</option>
-                                <option value="Approve">Approve</option>
-                                <option value="Reject">Reject</option>
-                                <option value="More Info Needed">More Info Needed</option>
-                            </select>
-                        </td>
-                        <td data-label="Comments"><input type="text" name="final-comments"></td>
-                        <td data-label="Date"><input type="date" name="final-date"></td>
-                    </tr>
-                </tbody>
-            </table>
-        </fieldset>
-
-        <!-- Final Outcome -->
-        <fieldset>
-            <legend>Final Outcome (Admin Use Only)</legend>
-            <div class="form-grid">
-                <div class="field-container">
-                    <label>Approved to Recruit</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="approved" value="Yes"> Yes</label>
-                        <label><input type="radio" name="approved" value="No"> No</label>
-                    </div>
-                </div>
-                <div class="field-container">
-                    <label for="date-approved">Date Approved</label>
-                    <input type="date" id="date-approved" name="date-approved">
-                </div>
-                <div class="field-container">
-                    <label for="recruitment-ref">Recruitment Reference</label>
-                    <input type="text" id="recruitment-ref" name="recruitment-ref">
-                </div>
-                <div class="field-container">
-                    <label>Recruitment Team Notified</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="team-notified" value="Yes"> Yes</label>
-                        <label><input type="radio" name="team-notified" value="No"> No</label>
-                    </div>
-                </div>
-            </div>
-        </fieldset>
-
         <!-- Declaration -->
         <fieldset>
             <legend>Declaration</legend>
-            <p style="font-size:0.95em; color: var(--primary-text); margin-bottom: 20px;">I confirm the information provided in this request is accurate and complete.</p>
+            <p style="font-size:0.95em; color: var(--primary-text); margin-bottom: 20px;">I confirm the information provided in this request is accurate and complete to the best of my knowledge.</p>
             <div class="form-grid">
                 <div class="field-container">
-                    <label for="decl-name">Name</label>
-                    <input type="text" id="decl-name" name="decl-name" required>
+                    <label for="decl-name">Requestor Name</label>
+                    <input type="text" id="decl-name" name="decl-name" required placeholder="Type full name">
                 </div>
                 <div class="field-container">
-                    <label for="decl-date">Date</label>
+                    <label for="decl-date">Date Signed</label>
                     <input type="date" id="decl-date" name="decl-date" required>
                 </div>
                 <div class="field-container full-width">
@@ -609,7 +433,6 @@
 
         <!-- Action Buttons -->
         <div class="actions">
-            <button type="button" class="btn-print" onclick="window.print()">Print / Save PDF</button>
             <button type="submit" class="btn-submit">Submit Request</button>
         </div>
 
@@ -667,7 +490,8 @@
             return radio ? radio.value : null;
         };
 
-        // Construct object for Firestore saving
+        // Construct object for Firestore saving.
+        // Approval fields are initialized here as empty/pending, to be filled later in the display app.
         const dataToSave = {
             requestInformation: {
                 dateOfRequest: formData.get('date-of-request'),
@@ -704,33 +528,23 @@
                 qualifications: formData.get('qualifications'),
                 experience: formData.get('experience')
             },
-            approvalSignOff: { 
-                departmentHead: {
-                    decision: formData.get('dept-head-decision'),
-                    comments: formData.get('dept-head-comments'),
-                    date: formData.get('dept-head-date')
-                },
-                finance: {
-                    decision: formData.get('finance-decision'),
-                    comments: formData.get('finance-comments'),
-                    date: formData.get('finance-date')
-                },
-                finalApprover: {
-                    decision: formData.get('final-decision'),
-                    comments: formData.get('final-comments'),
-                    date: formData.get('final-date')
-                }
-            },
-            finalOutcome: {
-                approvedToRecruit: getRadioValue('approved'),
-                dateApproved: formData.get('date-approved'),
-                recruitmentReference: formData.get('recruitment-ref'),
-                recruitmentTeamNotified: getRadioValue('team-notified')
-            },
             declaration: {
                 name: formData.get('decl-name'),
                 date: formData.get('decl-date'),
                 signature: formData.get('decl-signature')
+            },
+            // --- Workflow Initialization ---
+            // These sections are now empty on submission, to be filled via the display/admin app.
+            approvalSignOff: { 
+                departmentHead: { decision: 'Pending', comments: '', date: '' },
+                finance: { decision: 'Pending', comments: '', date: '' },
+                finalApprover: { decision: 'Pending', comments: '', date: '' }
+            },
+            finalOutcome: {
+                approvedToRecruit: null, // null, 'Yes', 'No'
+                dateApproved: '',
+                recruitmentReference: '',
+                recruitmentTeamNotified: null
             },
             submittedAt: firebase.firestore.FieldValue.serverTimestamp() 
         };
@@ -740,12 +554,12 @@
         .then((docRef) => {
             console.log("Document written with ID: ", docRef.id);
             alert('Request submitted successfully!');
-            // Optional: Redirect or reset form
-            // document.getElementById('recruitAuthorisationForm').reset();
+            // Optional: Redirect to a confirmation page or reset form
+            // location.reload();
         })
         .catch((error) => {
             console.error("Error adding document: ", error);
-            alert('There was an error submitting the request. Please try again.');
+            alert('There was an error submitting the request. Please try again or contact IT support.');
         })
         .finally(() => {
             // Re-enable button
