@@ -122,12 +122,19 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     
-    // --- Updated Collection Name ---
+    // --- Collection Name ---
     const usersCollection = "NGU User Database"; 
 
     const form = document.getElementById('login-form');
     const errorMsg = document.getElementById('error-message');
     const submitBtn = document.getElementById('submit-btn');
+
+    // On Load: If already "logged in", redirect to homepage
+    window.onload = () => {
+        if(localStorage.getItem('ngu_portal_username')){
+            window.location.href = 'homepage.html';
+        }
+    };
 
     form.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -161,21 +168,15 @@
               console.log("Login successful for: ", username);
               
               // Save "session" data to localStorage
+              // Ensure we explicitly convert the boolean true/false to a string 'true'/'false'
+              // so the security scripts on app pages work correctly.
               localStorage.setItem('ngu_portal_username', username);
-              localStorage.setItem('ngu_portal_access_submission', userData.accessSubmission);
-              localStorage.setItem('ngu_portal_access_management', userData.accessManagement);
+              localStorage.setItem('ngu_portal_access_submission', String(userData.accessSubmission || false));
+              localStorage.setItem('ngu_portal_access_management', String(userData.accessManagement || false));
+              localStorage.setItem('ngu_portal_access_userdb', String(userData.accessUserDb || false)); // New permission
 
-              // Redirect
-              if (userData.accessManagement) {
-                  window.location.href = 'recruit-approval-form-display.html'; 
-              } else if (userData.accessSubmission) {
-                  window.location.href = 'recruit-approval-form.html';
-              } else {
-                  alert("Account active but no permissions assigned. Contact Admin.");
-                  submitBtn.disabled = false;
-                  submitBtn.textContent = "Sign In";
-                  localStorage.clear();
-              }
+              // Redirect to Central Hub
+              window.location.href = 'homepage.html';
           })
           .catch((error) => {
               console.error("Login Error: ", error);
