@@ -121,7 +121,9 @@
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const usersCollection = "portal_users"; // Collection defined in user-database.html
+    
+    // --- Updated Collection Name ---
+    const usersCollection = "NGU User Database"; 
 
     const form = document.getElementById('login-form');
     const errorMsg = document.getElementById('error-message');
@@ -163,11 +165,9 @@
               localStorage.setItem('ngu_portal_access_submission', userData.accessSubmission);
               localStorage.setItem('ngu_portal_access_management', userData.accessManagement);
 
-              // Redirect to a central dashboard or the first allowed app
-              // For now, we will redirect to the Manager page if they have access, 
-              // otherwise the submission form.
+              // Redirect
               if (userData.accessManagement) {
-                  window.location.href = 'recruit-approval-form-display.html'; // Or 'manager.html' based on your renaming
+                  window.location.href = 'recruit-approval-form-display.html'; 
               } else if (userData.accessSubmission) {
                   window.location.href = 'recruit-approval-form.html';
               } else {
