@@ -15,6 +15,7 @@
             --secondary-text: #8899a6;
             --accent-color: #00d4ff; /* NGU Cyan */
             --success-color: #2ecc71;
+            --danger-color: #ef4444;
             --pending-color: #f1c40f;
         }
 
@@ -149,7 +150,7 @@
         }
 
         .request-item.active .request-details {
-            max-height: 2000px; /* Arbitrary large height for expansion transition */
+            max-height: 3000px; /* Arbitrary large height for expansion transition */
             border-top-width: 1px;
             padding: 30px;
         }
@@ -161,7 +162,7 @@
 
         /* Detailed View Inner Styling (Replicating form layout) */
         .detail-section {
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
 
         .detail-section-title {
@@ -190,6 +191,7 @@
             margin-bottom: 5px;
         }
 
+        /* Styling for read-only values */
         .detail-value {
             color: var(--primary-text);
             font-size: 1em;
@@ -217,33 +219,110 @@
             font-size: 1.1em;
         }
 
+        /* 
+           --- Styling for EDITABLE fields in expanded view ---
+           Adapted from submission form CSS
+        */
+        .edit-input, .edit-select {
+            width: 100%;
+            padding: 8px 12px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 4px;
+            font-family: inherit;
+            color: var(--primary-text);
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+
+        .edit-input:focus, .edit-select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background-color: #314358;
+        }
+
+        /* Date picker icon in dark mode */
+        ::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
+        .edit-radio-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 5px;
+        }
+
+        .edit-radio-group label {
+            text-transform: none; font-weight: normal; color: var(--primary-text);
+            display: flex; align-items: center; gap: 5px; font-size: 0.95em;
+            cursor: pointer;
+        }
+
+        .edit-radio-group input { accent-color: var(--accent-color); cursor: pointer; }
+
+        /* Approval Table (editable) */
+        .approval-table {
+            width: 100%; border-collapse: collapse; margin-top: 10px;
+            background-color: rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;
+        }
+        .approval-table th, .approval-table td { border: 1px solid var(--panel-border); padding: 10px; text-align: left; }
+        .approval-table th { background-color: rgba(0,0,0,0.2); color: var(--secondary-text); font-size: 0.8em; text-transform: uppercase; }
+        strong.approver-label { color: var(--primary-text); font-weight: 600; font-size: 0.95em;}
+
+        /* Action Buttons */
+        .admin-actions {
+            display: flex; justify-content: flex-end; gap: 15px;
+            margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--panel-border);
+        }
+
+        button.btn-save {
+            padding: 10px 20px; border: none; border-radius: 4px;
+            font-size: 0.9em; font-weight: 700; cursor: pointer;
+            transition: all 0.2s ease; text-transform: uppercase; letter-spacing: 0.05em;
+            background-color: var(--success-color); color: #000;
+        }
+
+        button.btn-save:hover { filter: brightness(1.1); }
+        button.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
         /* Mobile Responsive adjustments */
         @media (max-width: 768px) {
             .page-header { flex-direction: column; text-align: center; gap: 10px; }
             
             .request-summary {
-                grid-template-columns: 1fr 40px; /* Stack data, keep arrow on right */
+                grid-template-columns: 1fr 40px;
                 gap: 5px;
                 padding: 15px;
             }
 
             .summary-cell {
-                grid-column: 1 / 2; /* Take full width of left column */
+                grid-column: 1 / 2;
                 white-space: normal;
                 display: flex;
                 flex-direction: column;
                 margin-bottom: 8px;
             }
 
-            .cell-label { display: block; } /* Show labels to identify data */
+            .cell-label { display: block; }
             
             .request-summary .expand-icon {
                 grid-column: 2 / 3;
-                grid-row: 1 / 5; /* Span across mobile rows */
+                grid-row: 1 / 5;
             }
 
             .request-item.active .request-details { padding: 20px; }
             .detail-grid { grid-template-columns: 1fr; }
+
+            /* Mobile table layout */
+            .approval-table, .approval-table thead, .approval-table tbody, .approval-table th, .approval-table td, .approval-table tr { display: block; }
+            .approval-table th { display: none; }
+            .approval-table td { position: relative; padding-left: 40%; border-bottom: none; min-height: 45px;}
+            .approval-table td::before {
+                content: attr(data-label); position: absolute; left: 10px;
+                color: var(--secondary-text); font-weight: 600; font-size: 0.8em; text-transform: uppercase;
+            }
+            .approval-table tr { border-bottom: 1px solid var(--panel-border); margin-bottom: 5px; background-color: rgba(0,0,0,0.1); }
         }
     </style>
 </head>
@@ -253,9 +332,9 @@
     <header class="page-header">
         <div class="header-brand">
             <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
-            <h1>Recruitment Requests</h1>
+            <h1>Workflow Manager</h1>
         </div>
-        <div style="font-size: 0.9em; color: var(--secondary-text);">Portal Access</div>
+        <div style="font-size: 0.9em; color: var(--secondary-text);">Admin Access</div>
     </header>
 
     <div id="status-message">⏳ Loading submitted requests...</div>
@@ -293,13 +372,12 @@
     const formatTimestamp = (timestamp) => {
         if (!timestamp) return "N/A";
         const date = timestamp.toDate();
-        // Returns formats like "15 Mar 2024, 14:30"
         return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + 
                ', ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     };
 
-    // Helper: Safely get value or return placeholder
-    const getValue = (val) => {
+    // Helper: Safely get read-only value or return placeholder
+    const getReadOnlyValue = (val) => {
         if (val === null || val === undefined || val === "") return '<span class="empty">Not provided</span>';
         if (Array.isArray(val)) return val.length > 0 ? val.join(', ') : '<span class="empty">None</span>';
         return val;
@@ -308,213 +386,180 @@
     // Fetch data from Firestore
     async function fetchRequests() {
         try {
-            const snapshot = await db.collection(collectionName)
-                                      .orderBy('submittedAt', 'desc') // Newest first
-                                      .get();
+            // Listen for real-time updates so we don't need to refresh after saving
+            db.collection(collectionName)
+              .orderBy('submittedAt', 'desc')
+              .onSnapshot((snapshot) => {
+                if (snapshot.empty) {
+                    statusMsg.textContent = "No recruitment requests found.";
+                    statusMsg.style.display = 'block';
+                    container.style.display = 'none';
+                    return;
+                }
 
-            if (snapshot.empty) {
-                statusMsg.textContent = "No recruitment requests found.";
-                return;
-            }
-
-            statusMsg.style.display = 'none';
-            container.style.display = 'flex';
-            container.innerHTML = ''; // Clear container
-
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const reqId = doc.id;
+                statusMsg.style.display = 'none';
+                container.style.display = 'flex';
                 
-                // Extract summary data (with fallbacks)
-                const jobTitle = data.requestInformation?.jobTitle || 'Unknown Title';
-                const dept = data.requestInformation?.department || 'Unknown Dept';
-                const location = data.requestInformation?.location || 'Unknown';
-                const submitDate = formatTimestamp(data.submittedAt);
+                // Store IDs of items currently expanded to re-expand them after render
+                const expandedIds = Array.from(document.querySelectorAll('.request-item.active')).map(el => el.id.replace('item-',''));
 
-                // Create Item HTML
-                const itemHtml = `
-                    <div class="request-item" id="item-${reqId}">
-                        <div class="request-summary" onclick="toggleAccordion('${reqId}')">
-                            <div class="summary-cell summary-job-title">
-                                <div class="cell-label">Job Title</div>
-                                ${jobTitle}
+                container.innerHTML = ''; // Clear container
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const reqId = doc.id;
+                    
+                    const jobTitle = data.requestInformation?.jobTitle || 'Unknown Title';
+                    const dept = data.requestInformation?.department || 'Unknown Dept';
+                    const location = data.requestInformation?.location || 'Unknown';
+                    const submitDate = formatTimestamp(data.submittedAt);
+
+                    // Create Item HTML
+                    const itemHtml = `
+                        <div class="request-item ${expandedIds.includes(reqId) ? 'active' : ''}" id="item-${reqId}">
+                            <div class="request-summary" onclick="toggleAccordion('${reqId}')">
+                                <div class="summary-cell summary-job-title">
+                                    <div class="cell-label">Job Title</div>
+                                    ${jobTitle}
+                                </div>
+                                <div class="summary-cell">
+                                    <div class="cell-label">Department</div>
+                                    ${dept}
+                                </div>
+                                <div class="summary-cell">
+                                    <div class="cell-label">Location</div>
+                                    ${location}
+                                </div>
+                                <div class="summary-cell summary-date">
+                                    <div class="cell-label">Submitted</div>
+                                    ${submitDate}
+                                </div>
+                                <div class="expand-icon">▼</div>
                             </div>
-                            <div class="summary-cell">
-                                <div class="cell-label">Department</div>
-                                ${dept}
+                            
+                            <div class="request-details" id="details-${reqId}">
+                                ${generateDetailedView(reqId, data, submitDate)}
                             </div>
-                            <div class="summary-cell">
-                                <div class="cell-label">Location</div>
-                                ${location}
-                            </div>
-                            <div class="summary-cell summary-date">
-                                <div class="cell-label">Submitted</div>
-                                ${submitDate}
-                            </div>
-                            <div class="expand-icon">▼</div>
                         </div>
-                        
-                        <div class="request-details">
-                            ${generateDetailedView(data, submitDate)}
-                        </div>
-                    </div>
-                `;
-                container.insertAdjacentHTML('beforeend', itemHtml);
+                    `;
+                    container.insertAdjacentHTML('beforeend', itemHtml);
+                });
             });
 
         } catch (error) {
             console.error("Error fetching documents: ", error);
-            statusMsg.textContent = "Error loading requests. Please check console for details.";
+            statusMsg.textContent = "Error loading requests. Please check console.";
             statusMsg.style.color = 'var(--danger-color)';
         }
     }
 
-    // Function to generate the entire HTML for the expanded detail view
-    function generateDetailedView(data, formattedSubmitDate) {
+    // Function to generate HTML. 
+    // Request data is read-only. Approval/Outcome sections are editable forms.
+    function generateDetailedView(reqId, data, formattedSubmitDate) {
+        // Helper to generate select HTML with selected option
+        const getSelectHtml = (name, currentVal, options) => {
+            let html = `<select class="edit-select" name="${name}" data-req-id="${reqId}">`;
+            options.forEach(opt => {
+                const selected = opt === currentVal ? 'selected' : '';
+                html += `<option value="${opt}" ${selected}>${opt}</option>`;
+            });
+            html += `</select>`;
+            return html;
+        };
+
+        const decisionOptions = ['Pending', 'Approve', 'Reject', 'More Info Needed'];
+
         return `
-            <!-- Request Info -->
+            <!-- 1. Read-Only Request Info (Submitted by user) -->
             <div class="detail-section">
-                <div class="detail-section-title">Request Information</div>
+                <div class="detail-section-title">Request Information (Read-Only)</div>
                 <div class="detail-grid">
-                    <div class="detail-block">
-                        <label>Date of Request</label>
-                        <div class="detail-value">${getValue(data.requestInformation?.dateOfRequest)}</div>
-                    </div>
-                    <div class="detail-block">
-                        <label>Requested By</label>
-                        <div class="detail-value">${getValue(data.requestInformation?.requestedBy)}</div>
-                    </div>
-                    <div class="detail-block">
-                        <label>Hiring Manager</label>
-                        <div class="detail-value">${getValue(data.requestInformation?.hiringManager)}</div>
-                    </div>
-                    <div class="detail-block">
-                        <label>Reports To</label>
-                        <div class="detail-value">${getValue(data.requestInformation?.reportsTo)}</div>
-                    </div>
-                    <div class="detail-block">
-                        <label>System Submission Date</label>
-                        <div class="detail-value">${formattedSubmitDate}</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Vacancy -->
-            <div class="detail-section">
-                <div class="detail-section-title">Vacancy Details</div>
-                <div class="detail-grid">
-                    <div class="detail-block full-width">
-                        <label>Vacancy Type(s)</label>
-                        <div class="detail-value">${getValue(data.vacancyType)}</div>
-                    </div>
-                    <div class="detail-block">
-                        <label>Replacement For</label>
-                        <div class="detail-value">${getValue(data.replacementDetails?.employeeName)}</div>
-                    </div>
-                    <div class="detail-block">
-                        <label>Leaving Date</label>
-                        <div class="detail-value">${getValue(data.replacementDetails?.leavingDate)}</div>
-                    </div>
-                    <div class="detail-block full-width">
-                        <label>Reason for Vacancy</label>
-                        <textarea class="detail-value" rows="2" readonly>${data.replacementDetails?.reasonForVacancy || 'N/A'}</textarea>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Business Case -->
-            <div class="detail-section">
-                <div class="detail-section-title">Business Case</div>
-                <div class="detail-grid">
+                    <div class="detail-block"><label>Date Requested</label><div class="detail-value">${getReadOnlyValue(data.requestInformation?.dateOfRequest)}</div></div>
+                    <div class="detail-block"><label>Requested By</label><div class="detail-value">${getReadOnlyValue(data.requestInformation?.requestedBy)}</div></div>
+                    <div class="detail-block"><label>Hiring Manager</label><div class="detail-value">${getReadOnlyValue(data.requestInformation?.hiringManager)}</div></div>
+                    <div class="detail-block"><label>System Submit Date</label><div class="detail-value">${formattedSubmitDate}</div></div>
+                    <div class="detail-block full-width"><label>Vacancy Type(s)</label><div class="detail-value">${getReadOnlyValue(data.vacancyType)}</div></div>
                     <div class="detail-block full-width">
                         <label>Why is this role required?</label>
-                        <textarea class="detail-value" rows="4" readonly>${data.businessCase?.whyRoleRequired || 'N/A'}</textarea>
+                        <textarea class="detail-value" rows="3" readonly>${data.businessCase?.whyRoleRequired || 'N/A'}</textarea>
+                    </div>
+                    <div class="detail-block">
+                        <label>Proposed Salary</label>
+                        <div class="detail-value">${getReadOnlyValue(data.budgetSalary?.proposedSalary)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>Declaration Name</label>
+                        <div class="detail-value">${getReadOnlyValue(data.declaration?.name)}</div>
                     </div>
                     <div class="detail-block full-width">
-                        <label>Impact if not filled?</label>
-                        <textarea class="detail-value" rows="4" readonly>${data.businessCase?.impactIfNotFilled || 'N/A'}</textarea>
-                    </div>
-                    <div class="detail-block full-width">
-                        <label>Criticality Tags</label>
-                        <div class="detail-value">${getValue(data.businessCase?.impactTags)}</div>
+                        <label>Requestor Signature</label>
+                        <div class="detail-value signature-value">${getReadOnlyValue(data.declaration?.signature)}</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Financials -->
-            <div class="detail-section">
-                <div class="detail-section-title">Budget & Salary</div>
-                <div class="detail-grid">
-                    <div class="detail-block">
-                        <label>Proposed Salary / Rate</label>
-                        <div class="detail-value">${getValue(data.budgetSalary?.proposedSalary)}</div>
-                    </div>
-                    <div class="detail-block">
-                        <label>Cost Centre</label>
-                        <div class="detail-value">${getValue(data.budgetSalary?.costCentre)}</div>
-                    </div>
-                    <div class="detail-block">
-                        <label>Budget Confirmed</label>
-                        <div class="detail-value">${getValue(data.budgetSalary?.budgetConfirmed)}</div>
-                    </div>
-                    <div class="detail-block">
-                        <label>Additional Costs</label>
-                        <div class="detail-value">${getValue(data.budgetSalary?.additionalCosts)}</div>
-                    </div>
-                </div>
+            <!-- 2. EDITABLE Approval Sign Off Section -->
+            <div class="detail-section" id="approval-form-${reqId}">
+                <div class="detail-section-title">Approval Sign Off (Action Required)</div>
+                <table class="approval-table">
+                    <thead>
+                        <tr><th>Approver</th><th>Decision</th><th>Comments</th><th>Date</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td data-label="Approver"><strong class="approver-label">Dept Head</strong></td>
+                            <td data-label="Decision">${getSelectHtml('dept-head-decision', data.approvalSignOff?.departmentHead?.decision, decisionOptions)}</td>
+                            <td data-label="Comments"><input type="text" class="edit-input" name="dept-head-comments" value="${data.approvalSignOff?.departmentHead?.comments || ''}" data-req-id="${reqId}"></td>
+                            <td data-label="Date"><input type="date" class="edit-input" name="dept-head-date" value="${data.approvalSignOff?.departmentHead?.date || ''}" data-req-id="${reqId}"></td>
+                        </tr>
+                        <tr>
+                            <td data-label="Approver"><strong class="approver-label">Finance</strong></td>
+                            <td data-label="Decision">${getSelectHtml('finance-decision', data.approvalSignOff?.finance?.decision, decisionOptions)}</td>
+                            <td data-label="Comments"><input type="text" class="edit-input" name="finance-comments" value="${data.approvalSignOff?.finance?.comments || ''}" data-req-id="${reqId}"></td>
+                            <td data-label="Date"><input type="date" class="edit-input" name="finance-date" value="${data.approvalSignOff?.finance?.date || ''}" data-req-id="${reqId}"></td>
+                        </tr>
+                        <tr>
+                            <td data-label="Approver"><strong class="approver-label">Final</strong></td>
+                            <td data-label="Decision">${getSelectHtml('final-decision', data.approvalSignOff?.finalApprover?.decision, decisionOptions)}</td>
+                            <td data-label="Comments"><input type="text" class="edit-input" name="final-comments" value="${data.approvalSignOff?.finalApprover?.comments || ''}" data-req-id="${reqId}"></td>
+                            <td data-label="Date"><input type="date" class="edit-input" name="final-date" value="${data.approvalSignOff?.finalApprover?.date || ''}" data-req-id="${reqId}"></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
 
-            <!-- Requirements -->
-            <div class="detail-section">
-                <div class="detail-section-title">Requirements & Timeline</div>
+            <!-- 3. EDITABLE Final Outcome Section -->
+            <div class="detail-section" id="outcome-form-${reqId}">
+                <div class="detail-section-title">Final Outcome (Admin Use)</div>
                 <div class="detail-grid">
                     <div class="detail-block">
-                        <label>Desired Start Date</label>
-                        <div class="detail-value">${getValue(data.recruitmentRequirements?.desiredStartDate)}</div>
-                    </div>
-                    <div class="detail-block">
-                        <label>Latest Start Date</label>
-                        <div class="detail-value">${getValue(data.recruitmentRequirements?.latestStartDate)}</div>
-                    </div>
-                    <div class="detail-block">
-                        <label>Urgency</label>
-                        <div class="detail-value">${getValue(data.recruitmentRequirements?.urgency)}</div>
-                    </div>
-                    <div class="detail-block">
-                        <label>Internal/External Ad</label>
-                        <div class="detail-value">
-                            Int: ${getValue(data.recruitmentRequirements?.internalAdvertRequired)} / 
-                            Ext: ${getValue(data.recruitmentRequirements?.externalAdvertRequired)}
+                        <label>Approved to Recruit?</label>
+                        <div class="edit-radio-group">
+                            <label><input type="radio" name="approved-${reqId}" value="Yes" ${data.finalOutcome?.approvedToRecruit === 'Yes' ? 'checked' : ''}> Yes</label>
+                            <label><input type="radio" name="approved-${reqId}" value="No" ${data.finalOutcome?.approvedToRecruit === 'No' ? 'checked' : ''}> No</label>
                         </div>
                     </div>
-                    <div class="detail-block full-width">
-                        <label>Qualifications Required</label>
-                        <textarea class="detail-value" rows="3" readonly>${data.recruitmentRequirements?.qualifications || 'N/A'}</textarea>
+                    <div class="detail-block">
+                        <label>Date Actioned</label>
+                        <input type="date" class="edit-input" name="date-approved-${reqId}" value="${data.finalOutcome?.dateApproved || ''}">
                     </div>
-                    <div class="detail-block full-width">
-                        <label>Experience Required</label>
-                        <textarea class="detail-value" rows="3" readonly>${data.recruitmentRequirements?.experience || 'N/A'}</textarea>
+                    <div class="detail-block">
+                        <label>Recruitment Ref #</label>
+                        <input type="text" class="edit-input" name="recruitment-ref-${reqId}" value="${data.finalOutcome?.recruitmentReference || ''}" placeholder="e.g. NGU001">
+                    </div>
+                    <div class="detail-block">
+                        <label>Team Notified?</label>
+                        <div class="edit-radio-group">
+                            <label><input type="radio" name="team-notified-${reqId}" value="Yes" ${data.finalOutcome?.recruitmentTeamNotified === 'Yes' ? 'checked' : ''}> Yes</label>
+                            <label><input type="radio" name="team-notified-${reqId}" value="No" ${data.finalOutcome?.recruitmentTeamNotified === 'No' ? 'checked' : ''}> No</label>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Outcome -->
-            <div class="detail-section">
-                <div class="detail-section-title">Declaration</div>
-                <div class="detail-grid">
-                    <div class="detail-block">
-                        <label>Declarant Name</label>
-                        <div class="detail-value">${getValue(data.declaration?.name)}</div>
-                    </div>
-                    <div class="detail-block">
-                        <label>Date Signed</label>
-                        <div class="detail-value">${getValue(data.declaration?.date)}</div>
-                    </div>
-                    <div class="detail-block full-width">
-                        <label>Digital Signature</label>
-                        <div class="detail-value signature-value">${getValue(data.declaration?.signature)}</div>
-                    </div>
-                </div>
+            <!-- Action Buttons for this specific request -->
+            <div class="admin-actions">
+                <button type="button" class="btn-save" id="save-btn-${reqId}" onclick="saveApprovals('${reqId}')">Save Changes / Update Status</button>
             </div>
         `;
     }
@@ -522,13 +567,71 @@
     // Toggle Accordion function
     function toggleAccordion(reqId) {
         const item = document.getElementById(`item-${reqId}`);
-        
-        // Optional: Close other open items (comment out if you want multiple open)
+        // Optional: Close other open items
+        /*
         document.querySelectorAll('.request-item').forEach(el => {
             if (el.id !== `item-${reqId}`) el.classList.remove('active');
         });
-
+        */
         item.classList.toggle('active');
+    }
+
+    // --- SAVE LOGIC ---
+    // Collects data from editable fields in expanded view and updates Firestore
+    async function saveApprovals(reqId) {
+        const saveBtn = document.getElementById(`save-btn-${reqId}`);
+        const detailsPanel = document.getElementById(`details-${reqId}`);
+        
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+
+        // Helper to get input value within this specific accordion panel
+        const getElVal = (name) => detailsPanel.querySelector(`[name="${name}"]`)?.value || '';
+        
+        // Helper for radio buttons within this specific panel
+        const getRadioVal = (name) => detailsPanel.querySelector(`input[name="${name}"]:checked`)?.value || null;
+
+        // Construct update object echoing the submission structure
+        const updatedData = {
+            approvalSignOff: { 
+                departmentHead: {
+                    decision: getElVal('dept-head-decision'),
+                    comments: getElVal('dept-head-comments'),
+                    date: getElVal('dept-head-date')
+                },
+                finance: {
+                    decision: getElVal('finance-decision'),
+                    comments: getElVal('finance-comments'),
+                    date: getElVal('finance-date')
+                },
+                finalApprover: {
+                    decision: getElVal('final-decision'),
+                    comments: getElVal('final-comments'),
+                    date: getElVal('final-date')
+                }
+            },
+            finalOutcome: {
+                approvedToRecruit: getRadioVal(`approved-${reqId}`),
+                dateApproved: getElVal(`date-approved-${reqId}`),
+                recruitmentReference: getElVal(`recruitment-ref-${reqId}`),
+                recruitmentTeamNotified: getRadioVal(`team-notified-${reqId}`)
+            },
+            lastUpdatedByAdmin: firebase.firestore.FieldValue.serverTimestamp() // Good practice audit trail
+        };
+
+        try {
+            // Update specific document in Firestore
+            await db.collection(collectionName).doc(reqId).update(updatedData);
+            console.log("Document updated: ", reqId);
+            alert('Approvals and status updated successfully.');
+            // No reload needed due to onSnapshot listener, inputs will stay as set
+        } catch (error) {
+            console.error("Error updating document: ", error);
+            alert('Error saving changes. Verify permissions and try again.');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.textContent = 'Save Changes / Update Status';
+        }
     }
 
     // Start on load
