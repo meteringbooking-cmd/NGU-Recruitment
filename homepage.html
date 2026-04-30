@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Hub - NGU Portal</title>
+    
+    <!-- 
+      --- PROTOTYPE SECURITY SCRIPT ---
+      Executes immediately to check 'session' data in localStorage before rendering body.
+      All users must be logged in to see the hub.
+    -->
+    <script>
+        (function() {
+            const username = localStorage.getItem('ngu_portal_username');
+            // 1. Check if user is logged in at all
+            if (!username) {
+                console.log("No session found, redirecting to login.");
+                window.location.href = 'login.html';
+                return; // Stop execution
+            }
+            // If we get here, user is allowed. Body will render normally.
+            console.log("Access granted to user: ", username);
+        })();
+    </script>
+    
+    <style>
+        :root {
+            /* Shared NGU Dark Theme */
+            --body-bg: #141d26;
+            --container-bg: #1c2938;
+            --input-bg: #2d3d50;
+            --panel-border: #38444d;
+            --primary-text: #e1e8ed;
+            --secondary-text: #8899a6;
+            --accent-color: #00d4ff; /* NGU Cyan */
+            --danger-color: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--body-bg);
+            color: var(--primary-text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        /* Header Styling */
+        .page-header {
+            background-color: var(--container-bg);
+            padding: 20px 30px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .header-brand { display: flex; align-items: center; gap: 15px; }
+        .logo { height: 40px; width: auto; }
+        .page-header h1 { font-size: 1.4em; text-transform: uppercase; letter-spacing: 0.1em; }
+
+        .header-user-info { text-align: right; display: flex; align-items: center; gap: 15px; }
+        .header-user-info span { color: var(--secondary-text); font-size: 0.9em; }
+
+        .btn-logout-header {
+            background: none; border: 1px solid var(--panel-border); color: var(--primary-text);
+            padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: all 0.2s;
+        }
+        .btn-logout-header:hover { border-color: var(--danger-color); color: var(--danger-color); background-color: rgba(239, 68, 68, 0.05);}
+
+        /* Hub Section */
+        .hub-welcome {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .hub-welcome h2 {
+            font-size: 1.8em;
+            color: var(--primary-text);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .hub-welcome p {
+            color: var(--secondary-text);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* App Grid */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        /* App Card styling */
+        .app-card {
+            background-color: var(--container-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 30px;
+            text-decoration: none;
+            color: var(--primary-text);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            transition: all 0.25s ease;
+            position: relative;
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .app-card:hover:not(.locked) {
+            border-color: var(--accent-color);
+            box-shadow: 0 5px 20px rgba(0,212,255,0.15);
+            transform: translateY(-2px);
+        }
+
+        .app-icon {
+            font-size: 2em;
+            color: var(--accent-color);
+        }
+
+        .app-title {
+            font-size: 1.1em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--primary-text);
+        }
+
+        .app-desc {
+            font-size: 0.9em;
+            color: var(--secondary-text);
+            flex-grow: 1; /* Pushes button to bottom */
+        }
+
+        .btn-go {
+            margin-top: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9em;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--accent-color);
+        }
+
+        /* 
+           --- LOCKED CARD STYLING ---
+           Greys out the card and prevents clicks.
+        */
+        .app-card.locked {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none; /* Prevents clicks on the whole card */
+            filter: grayscale(100%);
+        }
+
+        /* Lock Overlay Text */
+        .lock-overlay {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: rgba(239, 68, 68, 0.2);
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: none; /* Hidden by default */
+        }
+
+        .app-card.locked .lock-overlay {
+            display: block; /* Shown only when card is locked */
+        }
+
+        @media (max-width: 768px) {
+            .page-header { flex-direction: column; text-align: center; gap: 10px; padding: 20px;}
+            .header-user-info { flex-direction: column; gap: 5px;}
+            .app-grid { grid-template-columns: 1fr; }
+            .hub-welcome h2 { font-size: 1.5em; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <header class="page-header">
+        <div class="header-brand">
+            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
+            <h1>Portal Hub</h1>
+        </div>
+        <div class="header-user-info">
+            <span>Welcome, <strong style="color:white;" id="display-username">User</strong></span>
+            <button class="btn-logout-header" id="logout-btn">Sign Out</button>
+        </div>
+    </header>
+
+    <div class="hub-welcome">
+        <h2>Application Access</h2>
+        <p>Select an application below to get started. Applications that appear greyed out are currently locked based on your user permissions.</p>
+    </div>
+
+    <!-- The Grid of App Cards -->
+    <div class="app-grid">
+        
+        <!-- App 1: Recruitment Submission -->
+        <a href="recruit-approval-form.html" class="app-card" id="card-submission">
+            <div class="lock-overlay">🔒 Locked</div>
+            <div class="app-icon">📝</div>
+            <div class="app-title">Request Recruitment</div>
+            <div class="app-desc">Submit a new Recruitment Authorisation Request form to begin the approval process.</div>
+            <div class="btn-go">Go to form →</div>
+        </a>
+
+        <!-- App 2: Recruitment Form Manager -->
+        <!-- NOTE: Ensure filename is recruit-approval-form-manager.html on github -->
+        <a href="recruit-approval-form-manager.html" class="app-card" id="card-manager">
+            <div class="lock-overlay">🔒 Locked</div>
+            <div class="app-icon">📊</div>
+            <div class="app-title">Recruitment Form Manager</div>
+            <div class="app-desc">View submitted requests, track status, and complete the Approval Sign Off workflow.</div>
+            <div class="btn-go">Go to manager →</div>
+        </a>
+
+        <!-- App 3: User Database -->
+        <a href="user-database.html" class="app-card" id="card-userdb">
+            <div class="lock-overlay">🔒 Locked</div>
+            <div class="app-icon">👥</div>
+            <div class="app-title">User Database</div>
+            <div class="app-desc">Manage portal users, set passwords, and configure access permissions (Admin Only).</div>
+            <div class="btn-go">Go to database →</div>
+        </a>
+
+    </div>
+</div>
+
+<script>
+    // Setup Header & Logout
+    document.addEventListener('DOMContentLoaded', () => {
+        const username = localStorage.getItem('ngu_portal_username');
+        if(username) document.getElementById('display-username').textContent = username;
+
+        // --- Permission Logic ---
+        // Fetch permission strings ('true'/'false') from localStorage
+        const accessSubStr = localStorage.getItem('ngu_portal_access_submission');
+        const accessMgmtStr = localStorage.getItem('ngu_portal_access_management');
+        const accessUserDbStr = localStorage.getItem('ngu_portal_access_userdb');
+
+        // Apply visual lock if permission is NOT 'true'
+        if (accessSubStr !== 'true') lockCard('card-submission');
+        if (accessMgmtStr !== 'true') lockCard('card-manager');
+        if (accessUserDbStr !== 'true') lockCard('card-userdb');
+    });
+
+    // Logout Logic
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'login.html';
+    });
+
+    // Helper function to grey out a card and add the lock overlay
+    function lockCard(cardId) {
+        const card = document.getElementById(cardId);
+        if (card) {
+            card.classList.add('locked');
+        }
+    }
+</script>
+
+</body>
+</html>
