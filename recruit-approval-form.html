@@ -304,7 +304,7 @@
 <body>
 
 <div class="container">
-    <!-- New Action Bar -->
+    <!-- Action Bar -->
     <div class="action-bar">
         <a href="homepage.html" class="btn-link btn-secondary">← Back to Hub</a>
     </div>
@@ -322,7 +322,6 @@
 
     <form id="recruitAuthorisationForm">
         
-        <!-- ... (Rest of the form contents remain exactly the same as before) ... -->
         <!-- Request Information -->
         <fieldset>
             <legend>Request Information</legend>
@@ -657,6 +656,10 @@
                 recruitmentReference: '',
                 recruitmentTeamNotified: null
             },
+            
+            // --- WORKFLOW STATUS ADDED HERE ---
+            workflowClosed: false,
+            
             submittedAt: firebase.firestore.FieldValue.serverTimestamp() 
         };
 
