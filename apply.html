@@ -567,7 +567,7 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, addDoc, doc, getDoc, serverTimestamp }
+    import { getFirestore, collection, addDoc, doc, getDoc, serverTimestamp, query, where, getDocs }
         from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -613,10 +613,40 @@
     async function loadVacancies() {
         const select = document.getElementById('position');
         try {
-            const snap = await getDoc(doc(db, 'NGUO Config', 'jobVacancies'));
-            const jobs = snap.exists() ? (snap.data().jobs || {}) : {};
-            const liveJobs = Object.entries(jobs).filter(([, v]) => v).map(([k]) => k);
+            // 1. Query the Recruitment Approval Form for open workflows
+            const q = query(
+                collection(db, "NGU Recuitment Approval Form"), 
+                where("workflowClosed", "==", false)
+            );
+            
+            const querySnapshot = await getDocs(q);
+            
+            // 2. Use a Set to store unique job titles
+            const uniqueTitles = new Set();
+
+            querySnapshot.forEach(doc => {
+                const data = doc.data();
+                const approvals = data.approvalSignOff || {};
+                
+                // 3. Check if fully approved (Matches live-vacancies.html logic)
+                const isLive = approvals.departmentHead?.decision === 'Approve' &&
+                               approvals.finance?.decision === 'Approve' &&
+                               approvals.finalApprover?.decision === 'Approve';
+
+                if (isLive) {
+                    const jobTitle = data.requestInformation?.jobTitle;
+                    if (jobTitle) {
+                        uniqueTitles.add(jobTitle);
+                    }
+                }
+            });
+
+            // Convert Set to an Array and sort alphabetically
+            const liveJobs = Array.from(uniqueTitles).sort();
+
             select.innerHTML = '';
+            
+            // 4. Populate the dropdown
             if (liveJobs.length === 0) {
                 select.innerHTML = '<option value="" disabled selected>No vacancies currently available</option>';
                 select.disabled = true;
@@ -629,13 +659,17 @@
                 placeholder.value = ''; placeholder.disabled = true; placeholder.selected = true;
                 placeholder.textContent = 'Select a position…';
                 select.appendChild(placeholder);
+                
                 liveJobs.forEach(title => {
                     const opt = document.createElement('option');
-                    opt.value = title; opt.textContent = title;
+                    opt.value = title; 
+                    opt.textContent = title;
                     select.appendChild(opt);
                 });
             }
         } catch (e) {
+            console.error("Error fetching live vacancies:", e);
+            // Fallback in case of database read error
             const ALL_JOBS = ['Smart Meter Engineer','Solar Installation Team','Quality Assessor - Metering','Quality Assessor - Solar','Field Team Leader - Metering','Metering Manager','Solar Manager'];
             select.innerHTML = '<option value="" disabled selected>Select a position…</option>';
             ALL_JOBS.forEach(t => { const opt = document.createElement('option'); opt.value = t; opt.textContent = t; select.appendChild(opt); });
