@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Application - NGU Careers</title>
+    
+    <style>
+        :root {
+            /* Shared NGU Dark Theme */
+            --body-bg: #141d26;
+            --container-bg: #1c2938;
+            --input-bg: #2d3d50;
+            --panel-border: #38444d;
+            --primary-text: #e1e8ed;
+            --secondary-text: #8899a6;
+            --accent-color: #00d4ff; /* NGU Cyan */
+            --success-color: #2ecc71;
+            --danger-color: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--body-bg);
+            color: var(--primary-text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background-color: var(--container-bg);
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid var(--panel-border);
+            padding-bottom: 30px;
+            margin-bottom: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header img.logo { height: 60px; width: auto; }
+
+        .header h1 {
+            margin: 10px 0 0;
+            color: var(--primary-text);
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            font-size: 1.8em;
+        }
+
+        .header h2 {
+            margin: 5px 0 0;
+            color: var(--accent-color);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 1em;
+        }
+
+        .info-box {
+            margin: 20px 0 0;
+            color: var(--primary-text);
+            background-color: rgba(0, 212, 255, 0.05);
+            border: 1px solid var(--accent-color);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            max-width: 700px;
+        }
+
+        fieldset {
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            background-color: rgba(255,255,255,0.01);
+        }
+
+        legend {
+            font-size: 0.95em;
+            font-weight: 700;
+            color: var(--accent-color);
+            padding: 0 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .full-width { grid-column: 1 / -1; }
+        .field-container { margin-bottom: 5px; }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--secondary-text);
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        input[type="text"], input[type="email"], input[type="tel"], input[type="url"], input[type="date"], select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+            font-family: inherit;
+            color: var(--primary-text);
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background-color: #314358;
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+        }
+
+        ::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+
+        .radio-group {
+            display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px;
+            padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 6px;
+        }
+
+        .radio-group label {
+            font-weight: normal; display: flex; align-items: center; gap: 10px;
+            cursor: pointer; color: var(--primary-text); text-transform: none;
+            letter-spacing: normal; font-size: 0.95em; margin: 0;
+        }
+
+        .radio-group input { cursor: pointer; width: 18px; height: 18px; accent-color: var(--accent-color); margin:0;}
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid var(--panel-border);
+        }
+
+        .btn-submit {
+            padding: 14px 40px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background-color: var(--accent-color);
+            color: #000;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+        }
+        
+        .btn-submit:disabled {
+            background-color: var(--panel-border);
+            color: var(--secondary-text);
+            cursor: not-allowed;
+        }
+
+        /* Success screen overlay */
+        #success-screen {
+            display: none;
+            text-align: center;
+            padding: 60px 20px;
+        }
+        #success-screen h2 { color: var(--success-color); font-size: 2em; margin-bottom: 15px; }
+        #success-screen p { font-size: 1.1em; color: var(--secondary-text); margin-bottom: 30px;}
+
+        @media (max-width: 768px) {
+            .container { padding: 20px; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div id="form-screen">
+        <div class="header">
+            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
+            <div class="header-text">
+                <h1>NGU Careers</h1>
+                <h2>Job Application Form</h2>
+            </div>
+            <div class="info-box">
+                Please complete the form below to submit your application. Ensure your contact details and links are accurate.
+            </div>
+        </div>
+
+        <form id="applicationForm">
+            
+            <!-- Job Details -->
+            <fieldset>
+                <legend>Role Information</legend>
+                <div class="form-grid">
+                    <div class="field-container full-width">
+                        <label for="applied-role">Role Applying For</label>
+                        <input type="text" id="applied-role" name="applied-role" placeholder="e.g. Senior Software Engineer" required>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Personal Info -->
+            <fieldset>
+                <legend>Personal Details</legend>
+                <div class="form-grid">
+                    <div class="field-container">
+                        <label for="first-name">First Name</label>
+                        <input type="text" id="first-name" name="first-name" required>
+                    </div>
+                    <div class="field-container">
+                        <label for="last-name">Last Name</label>
+                        <input type="text" id="last-name" name="last-name" required>
+                    </div>
+                    <div class="field-container">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="field-container">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" name="phone" required>
+                    </div>
+                    <div class="field-container full-width">
+                        <label for="location">City / Location</label>
+                        <input type="text" id="location" name="location" placeholder="e.g. London, UK" required>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Professional Info -->
+            <fieldset>
+                <legend>Experience & Links</legend>
+                <div class="form-grid">
+                    <div class="field-container full-width">
+                        <label for="resume-url">Link to Resume / CV (Google Drive, Dropbox, etc.)</label>
+                        <input type="url" id="resume-url" name="resume-url" placeholder="https://..." required>
+                    </div>
+                    <div class="field-container full-width">
+                        <label for="linkedin-url">LinkedIn Profile URL</label>
+                        <input type="url" id="linkedin-url" name="linkedin-url" placeholder="https://linkedin.com/in/...">
+                    </div>
+                    <div class="field-container full-width">
+                        <label for="portfolio-url">Portfolio / Personal Website (Optional)</label>
+                        <input type="url" id="portfolio-url" name="portfolio-url" placeholder="https://...">
+                    </div>
+                    <div class="field-container full-width">
+                        <label for="cover-letter">Summary / Cover Letter</label>
+                        <textarea id="cover-letter" name="cover-letter" rows="5" placeholder="Tell us why you are a great fit for this role..."></textarea>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Logistics -->
+            <fieldset>
+                <legend>Additional Information</legend>
+                <div class="form-grid">
+                    <div class="field-container">
+                        <label for="available-start">Earliest Start Date</label>
+                        <input type="date" id="available-start" name="available-start" required>
+                    </div>
+                    <div class="field-container">
+                        <label for="salary-expectations">Expected Salary / Rate</label>
+                        <input type="text" id="salary-expectations" name="salary-expectations" placeholder="e.g. £50,000 / year">
+                    </div>
+                    <div class="field-container full-width">
+                        <label>Do you have the legal right to work in the required location?</label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="right-to-work" value="Yes" required> Yes</label>
+                            <label><input type="radio" name="right-to-work" value="No" required> No</label>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <div class="actions">
+                <button type="submit" class="btn-submit" id="submit-btn">Submit Application</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Success Screen -->
+    <div id="success-screen">
+        <svg viewBox="0 0 24 24" width="80" height="80" stroke="var(--success-color)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:20px;">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <h2>Application Submitted!</h2>
+        <p>Thank you for applying. Our recruitment team will review your application and be in touch soon.</p>
+        <button class="btn-submit" onclick="location.reload()">Submit Another</button>
+    </div>
+
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+    // --- Firebase Configuration ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717",
+        measurementId: "G-R56BGZYV8N"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const collectionName = "NGU Applications";
+
+    // Helper function to safely get radio values
+    const getRadioValue = (name) => {
+        const radio = document.querySelector(`input[name="${name}"]:checked`);
+        return radio ? radio.value : null;
+    };
+
+    // Form Submission
+    document.getElementById('applicationForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+
+        const formData = new FormData(this);
+
+        // Build the payload
+        const applicationData = {
+            roleInfo: {
+                appliedRole: formData.get('applied-role')
+            },
+            personalInfo: {
+                firstName: formData.get('first-name'),
+                lastName: formData.get('last-name'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                location: formData.get('location')
+            },
+            experienceLinks: {
+                resumeUrl: formData.get('resume-url'),
+                linkedinUrl: formData.get('linkedin-url'),
+                portfolioUrl: formData.get('portfolio-url'),
+                coverLetter: formData.get('cover-letter')
+            },
+            additionalInfo: {
+                availableStartDate: formData.get('available-start'),
+                salaryExpectations: formData.get('salary-expectations'),
+                rightToWork: getRadioValue('right-to-work')
+            },
+            // Metadata for HR tracking
+            status: "New", // Tracks where they are in pipeline (New, Reviewing, Interviewing, Rejected, Hired)
+            submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        try {
+            await db.collection(collectionName).add(applicationData);
+            // Hide form, show success message
+            document.getElementById('form-screen').style.display = 'none';
+            document.getElementById('success-screen').style.display = 'block';
+            window.scrollTo(0, 0);
+        } catch (error) {
+            console.error("Error submitting application: ", error);
+            alert("An error occurred while submitting your application. Please try again.");
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit Application';
+        }
+    });
+</script>
+
+</body>
+</html>
