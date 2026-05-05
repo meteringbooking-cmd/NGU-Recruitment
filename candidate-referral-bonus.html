@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>NGU — Candidate Referral Bonus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #005EB8; --accent: #00A3E0;
+            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
+            --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
+            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%);
+            color: var(--text-light); min-height: 100vh; padding: 2rem 1.5rem 4rem;
+        }
+        body::before {
+            content: ''; position: fixed; inset: 0;
+            background: radial-gradient(circle at 15% 20%, rgba(0,163,224,0.08) 0%, transparent 55%),
+                        radial-gradient(circle at 85% 75%, rgba(0,94,184,0.07) 0%, transparent 55%);
+            pointer-events: none; z-index: -1;
+        }
+        .container { max-width: 860px; margin: 0 auto; }
+        .logo { max-height: 70px; display: block; margin: 0 auto 2rem; }
+        
+        .page-header { text-align: center; margin-bottom: 2rem; }
+        .page-header h1 {
+            font-size: 2.2rem; font-weight: 800;
+            background: linear-gradient(90deg, var(--accent), #60a5fa);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .page-header p { color: var(--text-muted); font-size: 1rem; max-width: 650px; margin: 0 auto; line-height: 1.5; }
+
+        .info-card {
+            background: rgba(0, 163, 224, 0.05); border: 1px solid rgba(0, 163, 224, 0.3);
+            border-radius: 16px; padding: 2rem; margin-bottom: 2rem; line-height: 1.6;
+        }
+        .info-card h3 { color: var(--accent); margin-bottom: 1rem; font-size: 1.1rem; border-bottom: 1px solid rgba(0, 163, 224, 0.2); padding-bottom: 0.5rem; }
+        .info-card ul { margin-left: 1.5rem; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .info-card ul li { margin-bottom: 0.5rem; }
+        .info-card p { font-size: 0.95rem; margin-bottom: 1rem; }
+        .info-card .example-box { background: var(--bg-dark); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1.5rem; font-size: 0.9rem; }
+        
+        .section {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 2rem 2.2rem 2.4rem;
+            margin-bottom: 1.8rem; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .section-header {
+            display: flex; align-items: center; gap: 0.9rem;
+            margin-bottom: 1.8rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);
+        }
+        .section-num {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; font-weight: 700; flex-shrink: 0; color: white;
+        }
+        .section-header h2 { font-size: 1.15rem; font-weight: 700; }
+        
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; }
+        .form-group { display: flex; flex-direction: column; gap: 0.45rem; margin-bottom: 1.2rem;}
+        .form-group.full { grid-column: 1 / -1; }
+        label { font-weight: 600; font-size: 0.88rem; color: var(--text-light); }
+        label .req { color: var(--accent); margin-left: 2px; }
+        
+        input[type="text"], input[type="email"], input[type="tel"], input[type="date"], select, textarea {
+            width: 100%; padding: 0.85rem 1rem; background: var(--bg-input);
+            border: 2px solid var(--border); border-radius: 10px; color: var(--text-light);
+            font-size: 0.95rem; font-family: inherit; transition: all 0.2s; resize: vertical;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,163,224,0.15);
+        }
+        input::placeholder, textarea::placeholder { color: var(--text-muted); }
+        select {
+            appearance: none; -webkit-appearance: none; cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238B9AAE' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 1rem center; padding-right: 2.5rem;
+        }
+        select option { background: var(--bg-card); color: var(--text-light); }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+
+        .conditional-group { display: none; margin-top: 0.5rem; animation: slideDown 0.2s ease; }
+        @keyframes slideDown { from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);} }
+
+        .alert-box {
+            background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 8px; padding: 0.8rem 1rem; color: #fcd34d; font-size: 0.85rem; line-height: 1.4;
+            margin-top: 0.5rem; display: none;
+        }
+
+        .sig-wrap { position: relative; }
+        .sig-canvas {
+            width: 100%; height: 120px; border: 2px solid var(--border);
+            border-radius: 10px; background: var(--bg-input); display: block;
+            cursor: crosshair; touch-action: none;
+        }
+        .sig-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; }
+        .btn-clear-sig {
+            position: absolute; top: 0.5rem; right: 0.5rem;
+            background: rgba(139,154,174,0.15); border: 1px solid var(--border);
+            color: var(--text-muted); border-radius: 6px; padding: 0.25rem 0.6rem;
+            font-size: 0.75rem; cursor: pointer; font-family: inherit; transition: all 0.18s;
+        }
+        .btn-clear-sig:hover { border-color: var(--accent); color: var(--accent); }
+
+        .btn {
+            padding: 0.85rem 2rem; border: none; border-radius: 12px;
+            font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.22s; font-family: inherit;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; width: 100%; max-width: 300px; }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.35); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 6px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        .submit-area { text-align: center; margin-top: 2rem; }
+        .submit-msg { font-size: 0.95rem; margin-top: 1rem; min-height: 1.4rem; }
+        .submit-msg.err { color: var(--error); }
+        
+        #successScreen { display: none; text-align: center; padding: 4rem 2rem; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from{opacity:0;}to{opacity:1;} }
+        #successScreen .success-icon { font-size: 4rem; margin-bottom: 1rem; }
+        #successScreen h2 { font-size: 1.8rem; font-weight: 800; color: #6ee7b7; margin-bottom: 0.8rem; }
+        #successScreen p  { color: var(--text-muted); font-size: 1rem; max-width: 500px; margin: 0 auto; line-height: 1.6; }
+
+        @media (max-width: 600px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .section { padding: 1.5rem 1.2rem; }
+            .info-card { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
+    
+    <div id="formWrapper">
+        <div class="page-header">
+            <h1>Candidate Referral Bonus</h1>
+            <p>Earn £1,000</p>
+        </div>
+
+        <div class="info-card">
+            <p style="font-size: 1.05rem; color: #fff; font-weight: 600;">Do you know a fully qualified Smart Meter Engineer who would be a great addition to NGU?</p>
+            <p>Refer them to us and earn £1,000 for every successful candidate who joins the business.</p>
+            
+            <h3>How the Bonus is Paid</h3>
+            <p>The £1,000 referral bonus is paid in instalments over a 12-month period.</p>
+            <div class="example-box">
+                <strong>Example:</strong> Engineer start date: 03/03/2025<br><br>
+                <span style="color:var(--accent);">·</span> 1st Payment: June 2025<br>
+                <span style="color:var(--accent);">·</span> 2nd Payment: September 2025<br>
+                <span style="color:var(--accent);">·</span> 3rd Payment: December 2025<br>
+                <span style="color:var(--accent);">·</span> Final Payment: March 2026
+            </div>
+
+            <h3>Important Information</h3>
+            <ul>
+                <li>Referrals will not be valid if the candidate has previously applied or has been referred by another employee within the last 6 months.</li>
+                <li>If the referred engineer submits their notice during the payment period, any remaining bonus payments will be cancelled.</li>
+                <li>Candidates who have worked for NGU within the last 6 months are not eligible.</li>
+                <li>Referrals must be submitted before interview and before completion of Team HRS.</li>
+                <li>The referral form must be completed in full and as accurately as possible.</li>
+            </ul>
+
+            <h3 style="border:none; margin-bottom: 0.5rem;">Ready to Refer?</h3>
+            <p style="margin-bottom:0;">Complete the form below with your candidate’s details. Help us grow the team while keeping the reward within our workforce.</p>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num">1</div>
+                <div><h2>Referral Details</h2></div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Your Name (Referrer) <span class="req">*</span></label>
+                    <input type="text" id="referrerName" placeholder="Enter your full name">
+                </div>
+                <div class="form-group">
+                    <label>Referral's Name <span class="req">*</span></label>
+                    <input type="text" id="referralName" placeholder="Enter candidate's full name">
+                </div>
+            </div>
+
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Best Contact Number (Referral) <span class="req">*</span></label>
+                    <input type="tel" id="referralPhone" placeholder="e.g. 07700 900000">
+                </div>
+                <div class="form-group">
+                    <label>Best Email Address (Referral) <span class="req">*</span></label>
+                    <input type="email" id="referralEmail" placeholder="candidate@example.com">
+                </div>
+            </div>
+
+            <div class="form-group full">
+                <label>Postcode of Referral <span class="req">*</span></label>
+                <input type="text" id="referralPostcode" placeholder="e.g. NE1 1AA" style="text-transform:uppercase; max-width: 300px;">
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num">2</div>
+                <div><h2>Role Details</h2></div>
+            </div>
+
+            <div class="form-group full">
+                <label>What role is your referral looking for? <span class="req">*</span></label>
+                <select id="roleSelection">
+                    <option value="" disabled selected>Select a role...</option>
+                    <option value="Smart Meter Engineer">Smart Meter Engineer</option>
+                    <option value="Upskill (from gas to dual)">Upskill (from gas to dual)</option>
+                    <option value="Head office role">Head office role</option>
+                    <option value="Training role">Training role</option>
+                    <option value="Other">Other</option>
+                </select>
+
+                <div id="upskillNote" class="alert-box">
+                    <strong>Please note:</strong> If you are referring someone for the Upskill role they must be qualified in <strong>CCN1</strong> or <strong>CMA1</strong>. <strong>MET1</strong> would be preferred but not essential.
+                </div>
+            </div>
+
+            <div class="form-group full conditional-group" id="smartMeterCompanyGroup">
+                <label>Which company are they currently working for? <span class="req">*</span></label>
+                <input type="text" id="currentCompany" placeholder="Enter current employer">
+            </div>
+
+            <div class="form-group full conditional-group" id="otherRoleInfoGroup">
+                <label>Please provide more information on which Role they would be interested in <span class="req">*</span></label>
+                <textarea id="otherRoleDetails" placeholder="Enter role details..."></textarea>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num">3</div>
+                <div><h2>Declaration</h2></div>
+            </div>
+            
+            <div class="form-group" style="max-width: 300px;">
+                <label>Date <span class="req">*</span></label>
+                <input type="date" id="declarationDate">
+            </div>
+
+            <div class="form-group full">
+                <label>Signature (Referrer) <span class="req">*</span></label>
+                <div class="sig-wrap">
+                    <canvas class="sig-canvas" id="sigCanvas" width="800" height="120"></canvas>
+                    <button type="button" class="btn-clear-sig" onclick="clearSig()">Clear</button>
+                </div>
+                <p class="sig-hint">Sign above using your mouse or finger</p>
+            </div>
+        </div>
+
+        <div class="submit-area">
+            <button class="btn btn-primary" id="submitBtn">Submit Referral</button>
+            <div class="submit-msg" id="submitMsg"></div>
+        </div>
+    </div>
+
+    <div id="successScreen">
+        <div class="success-icon">🤝</div>
+        <h2>Referral Submitted!</h2>
+        <p>Thank you for helping NGU grow. We have received your referral details. If the candidate is successful and joins the business, your bonus tracking will begin.</p>
+    </div>
+
+</div>
+
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, addDoc, serverTimestamp }
+        from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    // Firebase Initialization
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717"
+    };
+
+    const app    = initializeApp(firebaseConfig);
+    const db     = getFirestore(app);
+    const colRef = collection(db, "NGU Referral submissions");
+
+    // UI Elements
+    const roleSelection = document.getElementById('roleSelection');
+    const upskillNote = document.getElementById('upskillNote');
+    const smartMeterCompanyGroup = document.getElementById('smartMeterCompanyGroup');
+    const otherRoleInfoGroup = document.getElementById('otherRoleInfoGroup');
+    const postcode = document.getElementById('referralPostcode');
+
+    // Auto-capitalize postcode
+    postcode.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+
+    // Conditional Form Logic
+    roleSelection.addEventListener('change', function() {
+        const val = this.value;
+        
+        // Show/Hide Upskill Note
+        upskillNote.style.display = (val === 'Upskill (from gas to dual)') ? 'block' : 'none';
+        
+        // Show/Hide Company Question for Smart Meter Engineer
+        if (val === 'Smart Meter Engineer') {
+            smartMeterCompanyGroup.classList.add('visible');
+            smartMeterCompanyGroup.style.display = 'flex';
+        } else {
+            smartMeterCompanyGroup.classList.remove('visible');
+            smartMeterCompanyGroup.style.display = 'none';
+            document.getElementById('currentCompany').value = '';
+        }
+
+        // Show/Hide Other Role Details
+        if (val === 'Other') {
+            otherRoleInfoGroup.classList.add('visible');
+            otherRoleInfoGroup.style.display = 'flex';
+        } else {
+            otherRoleInfoGroup.classList.remove('visible');
+            otherRoleInfoGroup.style.display = 'none';
+            document.getElementById('otherRoleDetails').value = '';
+        }
+    });
+
+    // Signature Canvas Logic
+    const canvas = document.getElementById('sigCanvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false, lastX = 0, lastY = 0;
+
+    function getPos(e) {
+        const r = canvas.getBoundingClientRect();
+        const sx = canvas.width / r.width, sy = canvas.height / r.height;
+        if (e.touches) return [(e.touches[0].clientX - r.left) * sx, (e.touches[0].clientY - r.top) * sy];
+        return [(e.clientX - r.left) * sx, (e.clientY - r.top) * sy];
+    }
+
+    ctx.strokeStyle = '#00A3E0'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    
+    canvas.addEventListener('mousedown',  e => { drawing = true; [lastX, lastY] = getPos(e); });
+    canvas.addEventListener('mousemove',  e => { if (!drawing) return; const [x, y] = getPos(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke(); [lastX, lastY] = [x, y]; });
+    canvas.addEventListener('mouseup',   () => drawing = false);
+    canvas.addEventListener('mouseleave',() => drawing = false);
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; [lastX, lastY] = getPos(e); }, { passive: false });
+    canvas.addEventListener('touchmove',  e => { e.preventDefault(); if (!drawing) return; const [x, y] = getPos(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke(); [lastX, lastY] = [x, y]; }, { passive: false });
+    canvas.addEventListener('touchend', () => drawing = false);
+
+    window.clearSig = function() { 
+        ctx.clearRect(0, 0, canvas.width, canvas.height); 
+    };
+
+    function isCanvasBlank() { 
+        const b = document.createElement('canvas'); 
+        b.width = canvas.width; b.height = canvas.height; 
+        return canvas.toDataURL() === b.toDataURL(); 
+    }
+
+    // Default Date to Today
+    document.getElementById('declarationDate').valueAsDate = new Date();
+
+    // Submission Logic
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+        const btn = document.getElementById('submitBtn');
+        const msgEl = document.getElementById('submitMsg');
+        msgEl.textContent = '';
+
+        // Gather Values
+        const referrerName = document.getElementById('referrerName').value.trim();
+        const referralName = document.getElementById('referralName').value.trim();
+        const referralPhone = document.getElementById('referralPhone').value.trim();
+        const referralEmail = document.getElementById('referralEmail').value.trim();
+        const referralPostcode = document.getElementById('referralPostcode').value.trim();
+        const role = roleSelection.value;
+        const currentCompany = document.getElementById('currentCompany').value.trim();
+        const otherRoleDetails = document.getElementById('otherRoleDetails').value.trim();
+        const declarationDate = document.getElementById('declarationDate').value;
+
+        // Validation
+        const missing = [];
+        if (!referrerName) missing.push('Your Name');
+        if (!referralName) missing.push("Referral's Name");
+        if (!referralPhone) missing.push('Contact Number');
+        if (!referralEmail) missing.push('Email Address');
+        if (!referralPostcode) missing.push('Postcode');
+        if (!role) missing.push('Role');
+        
+        if (role === 'Smart Meter Engineer' && !currentCompany) missing.push('Current Company');
+        if (role === 'Other' && !otherRoleDetails) missing.push('Other Role Details');
+        
+        if (!declarationDate) missing.push('Date');
+        if (isCanvasBlank()) missing.push('Signature');
+
+        if (missing.length > 0) {
+            msgEl.className = 'submit-msg err';
+            msgEl.textContent = `Please complete: ${missing.slice(0, 3).join(', ')}${missing.length > 3 ? ` and ${missing.length - 3} more...` : '.'}`;
+            window.scrollTo({ top: 0, behavior: 'smooth' }); 
+            return;
+        }
+
+        btn.disabled = true; 
+        btn.innerHTML = '<span class="spinner"></span>Submitting...';
+
+        try {
+            const signatureBase64 = canvas.toDataURL('image/png');
+
+            await addDoc(colRef, {
+                submittedAt: serverTimestamp(),
+                referrerName,
+                referralName,
+                referralPhone,
+                referralEmail,
+                referralPostcode,
+                role,
+                currentCompany: role === 'Smart Meter Engineer' ? currentCompany : null,
+                otherRoleDetails: role === 'Other' ? otherRoleDetails : null,
+                declarationDate,
+                signature: signatureBase64
+            });
+
+            document.getElementById('formWrapper').style.display = 'none';
+            document.getElementById('successScreen').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        } catch (err) {
+            console.error("Submission error:", err);
+            msgEl.className = 'submit-msg err';
+            msgEl.textContent = 'Submission failed. Please try again.';
+            btn.disabled = false; 
+            btn.textContent = 'Submit Referral';
+        }
+    });
+</script>
+</body>
+</html>
