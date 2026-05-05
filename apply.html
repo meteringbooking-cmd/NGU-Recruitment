@@ -3,23 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submit Application - NGU Careers</title>
+    <title>Submit Application - NGU Portal</title>
+    
+    <!-- 
+      --- PROTOTYPE SECURITY SCRIPT ---
+      Executes immediately to check 'session' data in localStorage before rendering body.
+    -->
+    <script>
+        (function() {
+            const username = localStorage.getItem('ngu_portal_username');
+            
+            // 1. Check if user is logged in at all
+            if (!username) {
+                console.log("No session found, redirecting to login.");
+                window.location.href = 'login.html';
+                return; // Stop execution
+            }
+
+            // If we get here, user is allowed. Body will render normally.
+            console.log("Access granted to user: ", username);
+        })();
+    </script>
     
     <style>
         :root {
-            /* Shared NGU Dark Theme */
-            --body-bg: #141d26;
-            --container-bg: #1c2938;
-            --input-bg: #2d3d50;
-            --panel-border: #38444d;
-            --primary-text: #e1e8ed;
-            --secondary-text: #8899a6;
-            --accent-color: #00d4ff; /* NGU Cyan */
-            --success-color: #2ecc71;
-            --danger-color: #ef4444;
+            /* NGU Dark Theme Color Palette */
+            --body-bg: #141d26;      /* Very dark background */
+            --container-bg: #1c2938; /* Slightly lighter surface color */
+            --input-bg: #2d3d50;     /* Darker background for inputs */
+            --panel-border: #38444d; /* Muted border color */
+            
+            --primary-text: #e1e8ed;   /* Near white main text */
+            --secondary-text: #8899a6; /* Muted grey text */
+            
+            --accent-color: #00d4ff;   /* NGU Cyan */
+            --danger-color: #ef4444;   /* Alert/Warning */
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -30,13 +55,20 @@
         }
 
         .container {
-            max-width: 850px;
+            max-width: 950px;
             margin: 0 auto;
             background-color: var(--container-bg);
             padding: 40px;
             border-radius: 12px;
             border: 1px solid var(--panel-border);
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        /* Action Bar for Navigation */
+        .action-bar {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: flex-start;
         }
 
         .header {
@@ -50,7 +82,10 @@
             gap: 15px;
         }
 
-        .header img.logo { height: 60px; width: auto; }
+        .header img.logo {
+            height: 60px;
+            width: auto;
+        }
 
         .header h1 {
             margin: 10px 0 0;
@@ -63,7 +98,7 @@
 
         .header h2 {
             margin: 5px 0 0;
-            color: var(--accent-color);
+            color: var(--secondary-text);
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 0.05em;
@@ -73,7 +108,8 @@
         .info-box {
             margin: 20px 0 0;
             color: var(--primary-text);
-            background-color: rgba(0, 212, 255, 0.05);
+            font-weight: 500;
+            background-color: rgba(0, 212, 255, 0.1); /* Transparent Accent */
             border: 1px solid var(--accent-color);
             padding: 15px;
             border-radius: 8px;
@@ -104,8 +140,13 @@
             gap: 20px;
         }
 
-        .full-width { grid-column: 1 / -1; }
-        .field-container { margin-bottom: 5px; }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .field-container {
+            margin-bottom: 5px;
+        }
 
         label {
             display: block;
@@ -117,7 +158,12 @@
             letter-spacing: 0.05em;
         }
 
-        input[type="text"], input[type="email"], input[type="tel"], input[type="url"], input[type="date"], select, textarea {
+        input[type="text"],
+        input[type="email"],
+        input[type="url"],
+        input[type="date"],
+        select,
+        textarea {
             width: 100%;
             padding: 12px 15px;
             background-color: var(--input-bg);
@@ -129,6 +175,10 @@
             transition: all 0.2s ease;
         }
 
+        input:hover, select:hover, textarea:hover {
+            border-color: #4f5b66;
+        }
+
         input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: var(--accent-color);
@@ -136,188 +186,222 @@
             box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
         }
 
-        ::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
-
-        .radio-group {
-            display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px;
-            padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 6px;
+        ::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
         }
 
-        .radio-group label {
-            font-weight: normal; display: flex; align-items: center; gap: 10px;
-            cursor: pointer; color: var(--primary-text); text-transform: none;
-            letter-spacing: normal; font-size: 0.95em; margin: 0;
+        .checkbox-group, .radio-group {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 6px;
         }
 
-        .radio-group input { cursor: pointer; width: 18px; height: 18px; accent-color: var(--accent-color); margin:0;}
+        .checkbox-group label, .radio-group label {
+            font-weight: normal;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            color: var(--primary-text);
+            text-transform: none;
+            letter-spacing: normal;
+            font-size: 0.95em;
+        }
+
+        .checkbox-group input, .radio-group input {
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            accent-color: var(--accent-color);
+        }
 
         .actions {
             display: flex;
             justify-content: flex-end;
+            gap: 15px;
             margin-top: 30px;
             padding-top: 30px;
             border-top: 1px solid var(--panel-border);
+            align-items: center;
         }
 
-        .btn-submit {
-            padding: 14px 40px;
+        button, .btn-link {
+            padding: 14px 30px;
             border: none;
             border-radius: 6px;
-            font-size: 1.1em;
+            font-size: 1em;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .btn-submit {
             background-color: var(--accent-color);
             color: #000;
         }
 
-        .btn-submit:hover:not(:disabled) {
+        .btn-submit:hover {
             filter: brightness(1.1);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+            transform: translateY(-1px);
         }
         
         .btn-submit:disabled {
-            background-color: var(--panel-border);
-            color: var(--secondary-text);
+            background-color: var(--secondary-text);
             cursor: not-allowed;
+            opacity: 0.5;
         }
 
-        /* Success screen overlay */
-        #success-screen {
-            display: none;
-            text-align: center;
-            padding: 60px 20px;
+        .btn-secondary {
+            background-color: var(--input-bg);
+            color: var(--primary-text);
+            border: 1px solid var(--panel-border);
+            font-size: 0.9em;
+            padding: 10px 20px;
         }
-        #success-screen h2 { color: var(--success-color); font-size: 2em; margin-bottom: 15px; }
-        #success-screen p { font-size: 1.1em; color: var(--secondary-text); margin-bottom: 30px;}
+        .btn-secondary:hover {
+            background-color: #38444d;
+        }
+
+        .btn-logout {
+            background: none;
+            color: var(--secondary-text);
+            text-transform: none;
+            letter-spacing: normal;
+            font-weight: normal;
+            font-size: 0.9em;
+            padding: 10px;
+        }
+        .btn-logout:hover { color: var(--danger-color); text-decoration: underline; }
 
         @media (max-width: 768px) {
             .container { padding: 20px; }
             .form-grid { grid-template-columns: 1fr; }
+            .checkbox-group, .radio-group { gap: 10px; }
+            .actions { flex-direction: column-reverse; gap: 10px; align-items: stretch;}
+            .btn-link { justify-content: center; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    
-    <div id="form-screen">
-        <div class="header">
-            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
-            <div class="header-text">
-                <h1>NGU Careers</h1>
-                <h2>Job Application Form</h2>
+    <!-- Action Bar -->
+    <div class="action-bar">
+        <a href="homepage.html" class="btn-link btn-secondary">← Back to Hub</a>
+    </div>
+
+    <div class="header">
+        <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
+        <div class="header-text">
+            <h1>Internal Careers Portal</h1>
+            <h2>Submit Job Application</h2>
+        </div>
+        <div class="info-box">
+            Complete the sections below to submit your application for an open vacancy. You are currently logged in as <strong id="display-username" style="color:white;">User</strong>.
+        </div>
+    </div>
+
+    <form id="applicationForm">
+        
+        <!-- Role Information -->
+        <fieldset>
+            <legend>Role Information</legend>
+            <div class="form-grid">
+                <div class="field-container">
+                    <label for="date-of-application">Date of Application</label>
+                    <input type="date" id="date-of-application" name="date-of-application" required readonly>
+                </div>
+                <div class="field-container">
+                    <label for="role-title">Role Applying For</label>
+                    <input type="text" id="role-title" name="role-title" required>
+                </div>
+                <div class="field-container">
+                    <label for="location">Location</label>
+                    <input type="text" id="location" name="location" required>
+                </div>
+                <div class="field-container">
+                    <label for="department">Department</label>
+                    <input type="text" id="department" name="department" required>
+                </div>
             </div>
-            <div class="info-box">
-                Please complete the form below to submit your application. Ensure your contact details and links are accurate.
+        </fieldset>
+
+        <!-- Applicant Details -->
+        <fieldset>
+            <legend>Applicant Details</legend>
+            <div class="form-grid">
+                <div class="field-container full-width">
+                    <label for="applicant-name">Applicant Name</label>
+                    <input type="text" id="applicant-name" name="applicant-name" required readonly>
+                </div>
+                <div class="field-container">
+                    <label for="email">Contact Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="field-container">
+                    <label for="phone">Contact Phone</label>
+                    <input type="text" id="phone" name="phone" required>
+                </div>
             </div>
+        </fieldset>
+
+        <!-- Experience & Qualifications -->
+        <fieldset>
+            <legend>Experience & Links</legend>
+            <div class="form-grid">
+                <div class="field-container full-width">
+                    <label for="cv-link">Link to CV / Resume (Google Drive, Dropbox, etc.)</label>
+                    <input type="url" id="cv-link" name="cv-link" placeholder="https://" required>
+                </div>
+                <div class="field-container full-width">
+                    <label for="portfolio-link">LinkedIn / Portfolio Link (Optional)</label>
+                    <input type="url" id="portfolio-link" name="portfolio-link" placeholder="https://">
+                </div>
+                <div class="field-container full-width">
+                    <label for="cover-letter">Supporting Statement / Cover Letter</label>
+                    <textarea id="cover-letter" name="cover-letter" rows="5" required placeholder="Detail your experience and why you are suitable for this role..."></textarea>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Declaration -->
+        <fieldset>
+            <legend>Declaration</legend>
+            <p style="font-size:0.95em; color: var(--primary-text); margin-bottom: 20px;">I confirm the information provided in this application is accurate and complete to the best of my knowledge.</p>
+            <div class="form-grid">
+                <div class="field-container">
+                    <label for="decl-name">Applicant Name</label>
+                    <input type="text" id="decl-name" name="decl-name" required readonly>
+                </div>
+                <div class="field-container">
+                    <label for="decl-date">Date Signed</label>
+                    <input type="date" id="decl-date" name="decl-date" required readonly>
+                </div>
+                <div class="field-container full-width">
+                    <label for="decl-signature">Digital Signature (Type Full Name)</label>
+                    <input type="text" id="decl-signature" name="decl-signature" required style="font-style: italic; font-family: 'Georgia', serif; color: var(--accent-color);">
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- Action Buttons -->
+        <div class="actions">
+            <button type="button" class="btn-logout" id="logout-btn">Logout</button>
+            <button type="submit" class="btn-submit">Submit Application</button>
         </div>
 
-        <form id="applicationForm">
-            
-            <!-- Job Details -->
-            <fieldset>
-                <legend>Role Information</legend>
-                <div class="form-grid">
-                    <div class="field-container full-width">
-                        <label for="applied-role">Role Applying For</label>
-                        <input type="text" id="applied-role" name="applied-role" placeholder="e.g. Senior Software Engineer" required>
-                    </div>
-                </div>
-            </fieldset>
-
-            <!-- Personal Info -->
-            <fieldset>
-                <legend>Personal Details</legend>
-                <div class="form-grid">
-                    <div class="field-container">
-                        <label for="first-name">First Name</label>
-                        <input type="text" id="first-name" name="first-name" required>
-                    </div>
-                    <div class="field-container">
-                        <label for="last-name">Last Name</label>
-                        <input type="text" id="last-name" name="last-name" required>
-                    </div>
-                    <div class="field-container">
-                        <label for="email">Email Address</label>
-                        <input type="email" id="email" name="email" required>
-                    </div>
-                    <div class="field-container">
-                        <label for="phone">Phone Number</label>
-                        <input type="tel" id="phone" name="phone" required>
-                    </div>
-                    <div class="field-container full-width">
-                        <label for="location">City / Location</label>
-                        <input type="text" id="location" name="location" placeholder="e.g. London, UK" required>
-                    </div>
-                </div>
-            </fieldset>
-
-            <!-- Professional Info -->
-            <fieldset>
-                <legend>Experience & Links</legend>
-                <div class="form-grid">
-                    <div class="field-container full-width">
-                        <label for="resume-url">Link to Resume / CV (Google Drive, Dropbox, etc.)</label>
-                        <input type="url" id="resume-url" name="resume-url" placeholder="https://..." required>
-                    </div>
-                    <div class="field-container full-width">
-                        <label for="linkedin-url">LinkedIn Profile URL</label>
-                        <input type="url" id="linkedin-url" name="linkedin-url" placeholder="https://linkedin.com/in/...">
-                    </div>
-                    <div class="field-container full-width">
-                        <label for="portfolio-url">Portfolio / Personal Website (Optional)</label>
-                        <input type="url" id="portfolio-url" name="portfolio-url" placeholder="https://...">
-                    </div>
-                    <div class="field-container full-width">
-                        <label for="cover-letter">Summary / Cover Letter</label>
-                        <textarea id="cover-letter" name="cover-letter" rows="5" placeholder="Tell us why you are a great fit for this role..."></textarea>
-                    </div>
-                </div>
-            </fieldset>
-
-            <!-- Logistics -->
-            <fieldset>
-                <legend>Additional Information</legend>
-                <div class="form-grid">
-                    <div class="field-container">
-                        <label for="available-start">Earliest Start Date</label>
-                        <input type="date" id="available-start" name="available-start" required>
-                    </div>
-                    <div class="field-container">
-                        <label for="salary-expectations">Expected Salary / Rate</label>
-                        <input type="text" id="salary-expectations" name="salary-expectations" placeholder="e.g. £50,000 / year">
-                    </div>
-                    <div class="field-container full-width">
-                        <label>Do you have the legal right to work in the required location?</label>
-                        <div class="radio-group">
-                            <label><input type="radio" name="right-to-work" value="Yes" required> Yes</label>
-                            <label><input type="radio" name="right-to-work" value="No" required> No</label>
-                        </div>
-                    </div>
-                </div>
-            </fieldset>
-
-            <div class="actions">
-                <button type="submit" class="btn-submit" id="submit-btn">Submit Application</button>
-            </div>
-        </form>
-    </div>
-
-    <!-- Success Screen -->
-    <div id="success-screen">
-        <svg viewBox="0 0 24 24" width="80" height="80" stroke="var(--success-color)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:20px;">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-        </svg>
-        <h2>Application Submitted!</h2>
-        <p>Thank you for applying. Our recruitment team will review your application and be in touch soon.</p>
-        <button class="btn-submit" onclick="location.reload()">Submit Another</button>
-    </div>
-
+    </form>
 </div>
 
 <!-- Firebase SDK -->
@@ -336,65 +420,119 @@
         measurementId: "G-R56BGZYV8N"
     };
 
+    // --- Initialize Firebase ---
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const collectionName = "NGU Applications";
 
-    // Helper function to safely get radio values
-    const getRadioValue = (name) => {
-        const radio = document.querySelector(`input[name="${name}"]:checked`);
-        return radio ? radio.value : null;
-    };
+    // Setup page based on logged in user
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Set dates to today
+        const now = new Date();
+        const day = ("0" + now.getDate()).slice(-2);
+        const month = ("0" + (now.getMonth() + 1)).slice(-2);
+        const today = now.getFullYear()+"-"+(month)+"-"+(day) ;
+        
+        const dateFields = ['date-of-application', 'decl-date'];
+        dateFields.forEach(id => {
+            const field = document.getElementById(id);
+            if(field) field.value = today;
+        });
 
-    // Form Submission
-    document.getElementById('applicationForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const submitBtn = document.getElementById('submit-btn');
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Submitting...';
+        // 2. Fetch username from localStorage (set by safety script in head)
+        const username = localStorage.getItem('ngu_portal_username');
+        
+        // 3. Update Header Info
+        const displayUsername = document.getElementById('display-username');
+        if(displayUsername) displayUsername.textContent = username;
 
+        // 4. Pre-fill Applicant Name fields and make read-only
+        const applicantNameField = document.getElementById('applicant-name');
+        const declNameField = document.getElementById('decl-name');
+        if(applicantNameField) applicantNameField.value = username;
+        if(declNameField) declNameField.value = username;
+    });
+
+    // Logout Logic
+    const logoutBtn = document.getElementById('logout-btn');
+    if(logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        });
+    }
+
+    // --- Form Submission Logic ---
+    document.getElementById('applicationForm').addEventListener('submit', function(e) {
+        e.preventDefault(); // Prevent default page refresh
+
+        // Prototype Security Check: Ensure signature matches logged in name exactly
+        const username = localStorage.getItem('ngu_portal_username');
+        const signatureField = document.getElementById('decl-signature');
+        const signature = signatureField ? signatureField.value.trim() : '';
+
+        const submitButton = this.querySelector('.btn-submit');
+
+        if (signature !== username) {
+            alert(`⚠️ Signature Mismatch:\nThe Digital Signature must exactly match your logged-in username: "${username}"`);
+            if(submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit Application';
+            }
+            return; // Stop submission
+        }
+
+        if(submitButton) {
+            submitButton.disabled = true;
+            submitButton.textContent = 'Submitting...';
+        }
+
+        // Collect form data
         const formData = new FormData(this);
 
-        // Build the payload
-        const applicationData = {
-            roleInfo: {
-                appliedRole: formData.get('applied-role')
+        // Construct object for Firestore saving
+        const dataToSave = {
+            roleDetails: {
+                dateOfApplication: formData.get('date-of-application'),
+                roleTitle: formData.get('role-title'),
+                location: formData.get('location'),
+                department: formData.get('department')
             },
-            personalInfo: {
-                firstName: formData.get('first-name'),
-                lastName: formData.get('last-name'),
+            applicantDetails: {
+                applicantName: formData.get('applicant-name'), // Locked to username
                 email: formData.get('email'),
-                phone: formData.get('phone'),
-                location: formData.get('location')
+                phone: formData.get('phone')
             },
             experienceLinks: {
-                resumeUrl: formData.get('resume-url'),
-                linkedinUrl: formData.get('linkedin-url'),
-                portfolioUrl: formData.get('portfolio-url'),
+                cvLink: formData.get('cv-link'),
+                portfolioLink: formData.get('portfolio-link'),
                 coverLetter: formData.get('cover-letter')
             },
-            additionalInfo: {
-                availableStartDate: formData.get('available-start'),
-                salaryExpectations: formData.get('salary-expectations'),
-                rightToWork: getRadioValue('right-to-work')
+            declaration: {
+                name: formData.get('decl-name'), // Locked to username
+                date: formData.get('decl-date'),
+                signature: signature // Verified match to username
             },
-            // Metadata for HR tracking
-            status: "New", // Tracks where they are in pipeline (New, Reviewing, Interviewing, Rejected, Hired)
-            submittedAt: firebase.firestore.FieldValue.serverTimestamp()
+            status: 'Pending Review',
+            submittedAt: firebase.firestore.FieldValue.serverTimestamp() 
         };
 
-        try {
-            await db.collection(collectionName).add(applicationData);
-            // Hide form, show success message
-            document.getElementById('form-screen').style.display = 'none';
-            document.getElementById('success-screen').style.display = 'block';
-            window.scrollTo(0, 0);
-        } catch (error) {
-            console.error("Error submitting application: ", error);
-            alert("An error occurred while submitting your application. Please try again.");
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Submit Application';
-        }
+        // --- Save Data to Firestore Collection ---
+        db.collection("NGU Applications").add(dataToSave)
+        .then((docRef) => {
+            console.log("Document written with ID: ", docRef.id);
+            alert('Application submitted successfully!');
+            location.reload(); 
+        })
+        .catch((error) => {
+            console.error("Error adding document: ", error);
+            alert('There was an error submitting the application. Please try again or contact IT support.');
+        })
+        .finally(() => {
+            if(submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Submit Application';
+            }
+        });
     });
 </script>
 
