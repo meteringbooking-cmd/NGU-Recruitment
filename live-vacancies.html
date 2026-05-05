@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Vacancies Board - NGU Portal</title>
+    
+    <!-- 
+      --- PROTOTYPE SECURITY SCRIPT ---
+    -->
+    <script>
+        (function() {
+            const username = localStorage.getItem('ngu_portal_username');
+            // Assuming managers or specific recruiters access this. You can change this key.
+            const hasAccess = localStorage.getItem('ngu_portal_access_management'); 
+
+            if (!username) {
+                window.location.href = 'login.html';
+                return;
+            }
+            if (hasAccess !== 'true') {
+                alert("Access Denied: You do not have permission to view the Live Vacancies board.");
+                window.location.href = 'homepage.html';
+                return;
+            }
+        })();
+    </script>
+    
+    <style>
+        :root {
+            /* Shared NGU Dark Theme */
+            --body-bg: #141d26;
+            --container-bg: #1c2938;
+            --input-bg: #2d3d50;
+            --panel-border: #38444d;
+            --primary-text: #e1e8ed;
+            --secondary-text: #8899a6;
+            --accent-color: #00d4ff; 
+            --success-color: #2ecc71;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--body-bg);
+            color: var(--primary-text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header Styling */
+        .page-header {
+            background-color: var(--container-bg);
+            padding: 20px 30px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-brand-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo { height: 40px; width: auto; }
+
+        .page-header h1 {
+            font-size: 1.4em;
+            color: var(--primary-text);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 0;
+        }
+
+        .btn-link {
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            font-weight: 600;
+            border: 1px solid var(--panel-border);
+            background-color: var(--input-bg);
+            color: var(--primary-text);
+            padding: 8px 15px;
+        }
+        .btn-link:hover {
+            background-color: #38444d;
+            border-color: #4f5b66;
+        }
+
+        #status-message {
+            text-align: center;
+            padding: 40px;
+            color: var(--secondary-text);
+            background-color: var(--container-bg);
+            border-radius: 8px;
+            border: 1px solid var(--panel-border);
+            max-width: 800px; margin: 0 auto;
+        }
+
+        /* Vacancy Grid */
+        .vacancy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        /* Vacancy Card */
+        .vacancy-card {
+            background-color: var(--container-bg);
+            border: 1px solid var(--panel-border);
+            border-top: 4px solid var(--success-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transition: transform 0.2s ease;
+        }
+
+        .vacancy-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--panel-border);
+            background-color: rgba(0,0,0,0.1);
+        }
+
+        .card-title {
+            font-size: 1.2em;
+            color: var(--accent-color);
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .card-dept {
+            font-size: 0.9em;
+            color: var(--secondary-text);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-body {
+            padding: 20px;
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .info-block label {
+            display: block;
+            color: var(--secondary-text);
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 3px;
+        }
+
+        .info-block .value {
+            color: var(--primary-text);
+            font-size: 0.95em;
+            font-weight: 500;
+        }
+
+        .full-width { grid-column: 1 / -1; }
+
+        /* Advert Action Section */
+        .card-footer {
+            padding: 20px;
+            border-top: 1px solid var(--panel-border);
+            background-color: rgba(255,255,255,0.02);
+        }
+
+        .footer-title {
+            font-size: 0.85em;
+            color: var(--primary-text);
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .advert-toggles {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Custom Checkbox Toggle */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--input-bg);
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--panel-border);
+        }
+
+        .toggle-row label {
+            font-size: 0.9em;
+            color: var(--primary-text);
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Checkbox Styling */
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--success-color);
+            cursor: pointer;
+        }
+
+        .saving-indicator {
+            font-size: 0.75em;
+            color: var(--accent-color);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .saving-indicator.show { opacity: 1; }
+
+        @media (max-width: 768px) {
+            .page-header { flex-direction: column; text-align: center; justify-content: center;}
+            .header-brand-container { flex-direction: column; }
+            .vacancy-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <header class="page-header">
+        <div class="header-brand-container">
+            <a href="workflow-manager.html" class="btn-link">← Workflow Manager</a>
+            <div class="header-brand">
+                <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
+                <h1>Live Vacancies Board</h1>
+            </div>
+        </div>
+    </header>
+
+    <div id="status-message">⏳ Loading live vacancies...</div>
+    
+    <div id="vacancy-grid" class="vacancy-grid" style="display: none;">
+        <!-- Populated via JS -->
+    </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717",
+        measurementId: "G-R56BGZYV8N"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const collectionName = "NGU Recuitment Approval Form";
+
+    const gridContainer = document.getElementById('vacancy-grid');
+    const statusMsg = document.getElementById('status-message');
+
+    // Helper to format standard strings
+    const safeStr = (val) => val || 'Not specified';
+
+    // Format DD/MM/YYYY date strings nicely
+    const formatDate = (dateString) => {
+        if (!dateString) return 'Not specified';
+        const d = new Date(dateString);
+        if (isNaN(d.getTime())) return dateString; // Fallback if format is weird
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    };
+
+    // Listen to active workflows
+    db.collection(collectionName)
+      .where('workflowClosed', '==', false)
+      .onSnapshot((snapshot) => {
+          
+          gridContainer.innerHTML = '';
+          let liveCount = 0;
+
+          snapshot.forEach(doc => {
+              const data = doc.data();
+              const approvals = data.approvalSignOff || {};
+              
+              // 1. Check if all 3 are approved
+              const isLive = approvals.departmentHead?.decision === 'Approve' &&
+                             approvals.finance?.decision === 'Approve' &&
+                             approvals.finalApprover?.decision === 'Approve';
+
+              if (isLive) {
+                  liveCount++;
+                  renderVacancyCard(doc.id, data);
+              }
+          });
+
+          if (liveCount === 0) {
+              statusMsg.textContent = "No fully approved live vacancies found.";
+              statusMsg.style.display = 'block';
+              gridContainer.style.display = 'none';
+          } else {
+              statusMsg.style.display = 'none';
+              gridContainer.style.display = 'grid';
+          }
+      }, (error) => {
+          console.error("Error fetching live vacancies: ", error);
+          statusMsg.innerHTML = `<span style="color:var(--danger-color)">Error loading data. Check console.</span>`;
+      });
+
+    // Render an individual card
+    function renderVacancyCard(reqId, data) {
+        // Extract basic details
+        const jobTitle = safeStr(data.requestInformation?.jobTitle);
+        const dept = safeStr(data.requestInformation?.department);
+        const location = safeStr(data.requestInformation?.location);
+        
+        // Find Approval Date (Prefer finalOutcome date, fallback to Final Approver date)
+        const dateApproved = data.finalOutcome?.dateApproved || data.approvalSignOff?.finalApprover?.date;
+        const desiredStart = data.recruitmentRequirements?.desiredStartDate;
+
+        // Extract Advert Requirements
+        const externalReq = data.recruitmentRequirements?.externalAdvertRequired === 'Yes';
+        const internalReq = data.recruitmentRequirements?.internalAdvertRequired === 'Yes';
+
+        // Extract Current Saved State of Adverts (Default to false if doesn't exist)
+        const advertStatus = data.advertStatus || {};
+        const isLinkedinLive = advertStatus.linkedinLive || false;
+        const isIndeedLive = advertStatus.indeedLive || false;
+        const isInternalEmailSent = advertStatus.internalEmailSent || false;
+
+        // Build Advert HTML dynamically based on requirements
+        let advertHtml = '';
+        
+        if (externalReq) {
+            advertHtml += `
+                <div class="toggle-row">
+                    <label>
+                        <input type="checkbox" onchange="updateAdvert(this, '${reqId}', 'linkedinLive')" ${isLinkedinLive ? 'checked' : ''}> 
+                        LinkedIn Advert Live
+                    </label>
+                    <span class="saving-indicator" id="save-ind-linkedinLive-${reqId}">Saved ✓</span>
+                </div>
+                <div class="toggle-row">
+                    <label>
+                        <input type="checkbox" onchange="updateAdvert(this, '${reqId}', 'indeedLive')" ${isIndeedLive ? 'checked' : ''}> 
+                        Indeed Advert Live
+                    </label>
+                    <span class="saving-indicator" id="save-ind-indeedLive-${reqId}">Saved ✓</span>
+                </div>
+            `;
+        }
+
+        if (internalReq) {
+            advertHtml += `
+                <div class="toggle-row">
+                    <label>
+                        <input type="checkbox" onchange="updateAdvert(this, '${reqId}', 'internalEmailSent')" ${isInternalEmailSent ? 'checked' : ''}> 
+                        Internal Email Distributed
+                    </label>
+                    <span class="saving-indicator" id="save-ind-internalEmailSent-${reqId}">Saved ✓</span>
+                </div>
+            `;
+        }
+
+        if (!externalReq && !internalReq) {
+            advertHtml = `<div style="color: var(--secondary-text); font-size: 0.9em; font-style: italic;">No advertising required specified on form.</div>`;
+        }
+
+        const cardHtml = `
+            <div class="vacancy-card" id="card-${reqId}">
+                <div class="card-header">
+                    <div class="card-title">${jobTitle}</div>
+                    <div class="card-dept">${dept}</div>
+                </div>
+                
+                <div class="card-body">
+                    <div class="info-block full-width">
+                        <label>Desired Location</label>
+                        <div class="value">${location}</div>
+                    </div>
+                    <div class="info-block">
+                        <label>Date Approved</label>
+                        <div class="value">${formatDate(dateApproved)}</div>
+                    </div>
+                    <div class="info-block">
+                        <label>Desired Start Date</label>
+                        <div class="value">${formatDate(desiredStart)}</div>
+                    </div>
+                </div>
+
+                <div class="card-footer">
+                    <div class="footer-title">Advert Tracking</div>
+                    <div class="advert-toggles">
+                        ${advertHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        gridContainer.insertAdjacentHTML('beforeend', cardHtml);
+    }
+
+    // Auto-Save Function for Checkboxes
+    async function updateAdvert(checkboxElement, reqId, fieldName) {
+        const isChecked = checkboxElement.checked;
+        const indicator = document.getElementById(`save-ind-${fieldName}-${reqId}`);
+        
+        // Show saving feedback temporarily
+        indicator.textContent = 'Saving...';
+        indicator.classList.add('show');
+
+        try {
+            // Using set with {merge: true} safely updates or creates the advertStatus map
+            await db.collection(collectionName).doc(reqId).set({
+                advertStatus: {
+                    [fieldName]: isChecked
+                }
+            }, { merge: true });
+
+            // Show Success
+            indicator.textContent = 'Saved ✓';
+            setTimeout(() => { indicator.classList.remove('show'); }, 2000);
+
+        } catch (error) {
+            console.error("Error updating advert status: ", error);
+            indicator.textContent = 'Error!';
+            indicator.style.color = 'var(--danger-color)';
+            // Revert checkbox if it failed
+            checkboxElement.checked = !isChecked; 
+            setTimeout(() => { 
+                indicator.classList.remove('show'); 
+                indicator.style.color = 'var(--accent-color)';
+            }, 3000);
+        }
+    }
+</script>
+
+</body>
+</html>
