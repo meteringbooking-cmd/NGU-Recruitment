@@ -1,540 +1,1022 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submit Application - NGU Portal</title>
-    
-    <!-- 
-      --- PROTOTYPE SECURITY SCRIPT ---
-      Executes immediately to check 'session' data in localStorage before rendering body.
-    -->
-    <script>
-        (function() {
-            const username = localStorage.getItem('ngu_portal_username');
-            
-            // 1. Check if user is logged in at all
-            if (!username) {
-                console.log("No session found, redirecting to login.");
-                window.location.href = 'login.html';
-                return; // Stop execution
-            }
-
-            // If we get here, user is allowed. Body will render normally.
-            console.log("Access granted to user: ", username);
-        })();
-    </script>
-    
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>NGU — Application Form</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         :root {
-            /* NGU Dark Theme Color Palette */
-            --body-bg: #141d26;      /* Very dark background */
-            --container-bg: #1c2938; /* Slightly lighter surface color */
-            --input-bg: #2d3d50;     /* Darker background for inputs */
-            --panel-border: #38444d; /* Muted border color */
-            
-            --primary-text: #e1e8ed;   /* Near white main text */
-            --secondary-text: #8899a6; /* Muted grey text */
-            
-            --accent-color: #00d4ff;   /* NGU Cyan */
-            --danger-color: #ef4444;   /* Alert/Warning */
+            --primary: #005EB8; --accent: #00A3E0;
+            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
+            --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
+            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
+        * { margin:0; padding:0; box-sizing:border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--body-bg);
-            color: var(--primary-text);
-            line-height: 1.6;
-            padding: 20px;
+            font-family: 'Work Sans', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%);
+            color: var(--text-light); min-height: 100vh; padding: 2rem 1.5rem 4rem;
         }
-
-        .container {
-            max-width: 950px;
-            margin: 0 auto;
-            background-color: var(--container-bg);
-            padding: 40px;
-            border-radius: 12px;
-            border: 1px solid var(--panel-border);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        body::before {
+            content: ''; position: fixed; inset: 0;
+            background: radial-gradient(circle at 15% 20%, rgba(0,163,224,0.08) 0%, transparent 55%),
+                        radial-gradient(circle at 85% 75%, rgba(0,94,184,0.07) 0%, transparent 55%);
+            pointer-events: none; z-index: -1;
         }
-
-        /* Action Bar for Navigation */
-        .action-bar {
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: flex-start;
+        .container { max-width: 860px; margin: 0 auto; }
+        .logo { max-height: 70px; display: block; margin: 0 auto 2rem; }
+        .page-header { text-align: center; margin-bottom: 3rem; }
+        .page-header h1 {
+            font-size: 2.2rem; font-weight: 800;
+            background: linear-gradient(90deg, var(--accent), #60a5fa);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
         }
-
-        .header {
-            text-align: center;
-            border-bottom: 2px solid var(--panel-border);
-            padding-bottom: 30px;
-            margin-bottom: 30px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
+        .page-header p { color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 0.88rem; }
+        .section {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 2rem 2.2rem 2.4rem;
+            margin-bottom: 1.8rem; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
-
-        .header img.logo {
-            height: 60px;
-            width: auto;
+        .section-header {
+            display: flex; align-items: center; gap: 0.9rem;
+            margin-bottom: 1.8rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);
         }
-
-        .header h1 {
-            margin: 10px 0 0;
-            color: var(--primary-text);
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            font-size: 1.8em;
+        .section-num {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; font-weight: 700; flex-shrink: 0; color: white;
         }
-
-        .header h2 {
-            margin: 5px 0 0;
-            color: var(--secondary-text);
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-size: 1em;
+        .section-header h2 { font-size: 1.15rem; font-weight: 700; }
+        .section-header p  { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.1rem; }
+        .form-grid   { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; }
+        .form-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.2rem; }
+        .form-group  { display: flex; flex-direction: column; gap: 0.45rem; }
+        .form-group.full { grid-column: 1 / -1; }
+        label { font-weight: 600; font-size: 0.88rem; color: var(--text-light); }
+        label .req { color: var(--accent); margin-left: 2px; }
+        input[type="text"], input[type="email"], input[type="tel"], input[type="date"], select, textarea {
+            width: 100%; padding: 0.85rem 1rem; background: var(--bg-input);
+            border: 2px solid var(--border); border-radius: 10px; color: var(--text-light);
+            font-size: 0.95rem; font-family: inherit; transition: all 0.2s; resize: vertical;
         }
-
-        .info-box {
-            margin: 20px 0 0;
-            color: var(--primary-text);
-            font-weight: 500;
-            background-color: rgba(0, 212, 255, 0.1); /* Transparent Accent */
-            border: 1px solid var(--accent-color);
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 0.95em;
-            max-width: 700px;
-        }
-
-        fieldset {
-            border: 1px solid var(--panel-border);
-            border-radius: 8px;
-            padding: 25px;
-            margin-bottom: 30px;
-            background-color: rgba(255,255,255,0.01);
-        }
-
-        legend {
-            font-size: 0.95em;
-            font-weight: 700;
-            color: var(--accent-color);
-            padding: 0 15px;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .full-width {
-            grid-column: 1 / -1;
-        }
-
-        .field-container {
-            margin-bottom: 5px;
-        }
-
-        label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--secondary-text);
-            font-size: 0.85em;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        input[type="text"],
-        input[type="email"],
-        input[type="url"],
-        input[type="date"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px 15px;
-            background-color: var(--input-bg);
-            border: 1px solid var(--panel-border);
-            border-radius: 6px;
-            font-family: inherit;
-            color: var(--primary-text);
-            font-size: 1em;
-            transition: all 0.2s ease;
-        }
-
-        input:hover, select:hover, textarea:hover {
-            border-color: #4f5b66;
-        }
-
         input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            background-color: #314358;
-            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+            outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,163,224,0.15);
+        }
+        input::placeholder, textarea::placeholder { color: var(--text-muted); }
+        select {
+            appearance: none; -webkit-appearance: none; cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238B9AAE' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 1rem center; padding-right: 2.5rem;
+        }
+        select option { background: var(--bg-card); color: var(--text-light); }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
+        textarea { min-height: 100px; line-height: 1.5; }
+        .radio-group { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .radio-option {
+            display: flex; align-items: center; gap: 0.5rem;
+            background: var(--bg-input); border: 2px solid var(--border);
+            border-radius: 10px; padding: 0.65rem 1.1rem; cursor: pointer;
+            transition: all 0.18s; font-size: 0.92rem; font-weight: 600;
+        }
+        .radio-option input[type="radio"] { display: none; }
+        .radio-option.selected { border-color: var(--accent); background: rgba(0,163,224,0.1); color: var(--accent); }
+        .radio-option:hover { border-color: var(--accent); }
+        .conditional { display: none; margin-top: 1rem; }
+        .conditional.visible { display: block; animation: slideDown 0.2s ease; }
+        @keyframes slideDown { from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);} }
+        .upload-zone {
+            border: 2px dashed var(--border); border-radius: 12px; padding: 2rem 1rem;
+            text-align: center; cursor: pointer; transition: all 0.22s; position: relative; background: var(--bg-input);
+        }
+        .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: rgba(0,163,224,0.05); }
+        .upload-zone.has-file { border-color: var(--success); border-style: solid; background: rgba(16,185,129,0.04); }
+        .upload-zone input[type="file"] { position: absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+        .upload-zone-icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
+        .upload-zone-label { font-weight: 700; font-size: 0.92rem; margin-bottom: 0.2rem; }
+        .upload-zone-hint  { font-size: 0.78rem; color: var(--text-muted); }
+        .upload-zone-filename { font-size: 0.82rem; color: #6ee7b7; margin-top: 0.4rem; font-family: 'DM Mono', monospace; }
+        .employment-entry {
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: 12px; padding: 1.4rem; margin-bottom: 1rem; position: relative;
+        }
+        .entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+        .entry-label { font-weight: 700; font-size: 0.9rem; color: var(--accent); font-family: 'DM Mono', monospace; }
+        .btn-remove {
+            background: rgba(239,68,68,0.1); border: 1.5px solid rgba(239,68,68,0.3);
+            color: #fca5a5; border-radius: 8px; padding: 0.3rem 0.75rem;
+            font-size: 0.78rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.18s;
+        }
+        .btn-remove:hover { background: rgba(239,68,68,0.2); border-color: var(--error); }
+        .sig-wrap { position: relative; }
+        .sig-canvas {
+            width: 100%; height: 120px; border: 2px solid var(--border);
+            border-radius: 10px; background: var(--bg-input); display: block;
+            cursor: crosshair; touch-action: none;
+        }
+        .sig-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; }
+        .btn-clear-sig {
+            position: absolute; top: 0.5rem; right: 0.5rem;
+            background: rgba(139,154,174,0.15); border: 1px solid var(--border);
+            color: var(--text-muted); border-radius: 6px; padding: 0.25rem 0.6rem;
+            font-size: 0.75rem; cursor: pointer; font-family: inherit; transition: all 0.18s;
+        }
+        .btn-clear-sig:hover { border-color: var(--accent); color: var(--accent); }
+        .btn {
+            padding: 0.85rem 2rem; border: none; border-radius: 12px;
+            font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.22s; font-family: inherit;
+        }
+        .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.35); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-add {
+            background: rgba(0,163,224,0.1); border: 2px dashed rgba(0,163,224,0.4);
+            color: var(--accent); border-radius: 10px; padding: 0.65rem 1.4rem;
+            font-size: 0.88rem; font-weight: 600; cursor: pointer; font-family: inherit;
+            transition: all 0.18s; width: 100%; margin-top: 0.5rem;
+        }
+        .btn-add:hover { background: rgba(0,163,224,0.16); border-color: var(--accent); }
+        .divider { border: none; border-top: 1px solid var(--border); margin: 1.4rem 0; }
+        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 6px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .submit-area { text-align: center; margin-top: 2rem; }
+        .submit-msg { font-size: 0.95rem; margin-top: 1rem; min-height: 1.4rem; }
+        .submit-msg.ok  { color: var(--success); }
+        .submit-msg.err { color: var(--error); }
+        #successScreen { display: none; text-align: center; padding: 4rem 2rem; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from{opacity:0;}to{opacity:1;} }
+        #successScreen .success-icon { font-size: 4rem; margin-bottom: 1rem; }
+        #successScreen h2 { font-size: 1.8rem; font-weight: 800; color: #6ee7b7; margin-bottom: 0.8rem; }
+        #successScreen p  { color: var(--text-muted); font-size: 1rem; max-width: 500px; margin: 0 auto; line-height: 1.6; }
+        .no-vacancies {
+            background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 12px; padding: 1.4rem 1.6rem; color: #fcd34d; font-size: 0.92rem; line-height: 1.6;
         }
 
-        ::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            cursor: pointer;
-        }
+        /* ── Certificates styles (from engineer portal) ── */
+        .cert-section-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin: 1.4rem 0 0.8rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
+        .cert-section-label.mandatory { color: #f87171; border-color: rgba(248,113,113,0.3); }
+        .cert-section-label.desirable { color: #60a5fa; border-color: rgba(96,165,250,0.3); }
+        .cert-section-label.additional { color: var(--accent); border-color: rgba(0,163,224,0.3); }
+        .cert-upload-row { background: var(--bg-input); border: 1.5px solid var(--border); border-radius: 12px; padding: 1rem 1.2rem; display: flex; align-items: center; gap: 1rem; margin-bottom: 0.7rem; transition: border-color 0.2s; flex-wrap: wrap; }
+        .cert-upload-row.uploaded { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.04); }
+        .cert-row-icon { font-size: 1.4rem; flex-shrink: 0; }
+        .cert-row-info { flex: 1; min-width: 0; }
+        .cert-row-title { font-weight: 600; font-size: 0.9rem; }
+        .cert-row-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; font-family: 'DM Mono', monospace; word-break: break-all; }
+        .cert-row-actions { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; flex-wrap: wrap; }
+        .cert-file-label { position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 0.9rem; border-radius: 8px; border: 1.5px solid rgba(0,163,224,0.4); background: rgba(0,163,224,0.08); color: var(--accent); font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.18s; white-space: nowrap; }
+        .cert-file-label:hover { background: rgba(0,163,224,0.15); }
+        .cert-file-label input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .cert-badge { font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 20px; white-space: nowrap; }
+        .cert-badge.done  { background: rgba(16,185,129,0.18); color: #6ee7b7; }
+        .cert-badge.ready { background: rgba(245,158,11,0.18); color: #fcd34d; }
+        .cert-badge.none  { background: rgba(139,154,174,0.1); color: var(--text-muted); }
+        .yn-group { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; }
+        .yn-btn { padding: 0.35rem 1rem; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg-input); color: var(--text-muted); font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.18s; }
+        .yn-btn.selected-yes { border-color: var(--success); background: rgba(16,185,129,0.15); color: #6ee7b7; }
+        .yn-btn.selected-no  { border-color: var(--error); background: rgba(239,68,68,0.12); color: #fca5a5; }
+        .cert-inline-input { padding: 0.55rem 0.8rem; background: var(--bg-dark); border: 1.5px solid var(--border); border-radius: 8px; color: white; font-size: 0.88rem; font-family: 'DM Mono', monospace; width: 100%; max-width: 260px; transition: border-color 0.2s; }
+        .cert-inline-input:focus { outline: none; border-color: var(--accent); }
+        .add-cert-btn { width: 100%; padding: 0.7rem; border-radius: 10px; background: rgba(0,163,224,0.08); border: 2px dashed rgba(0,163,224,0.35); color: var(--accent); font-size: 0.88rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.18s; margin-top: 0.5rem; }
+        .add-cert-btn:hover { background: rgba(0,163,224,0.14); border-color: rgba(0,163,224,0.6); }
 
-        .checkbox-group, .radio-group {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-            padding: 10px;
-            background-color: rgba(0,0,0,0.1);
-            border-radius: 6px;
+        /* ── Interview availability date/time picker ── */
+        .avail-entries { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 0.8rem; }
+        .avail-entry {
+            background: var(--bg-input); border: 1.5px solid var(--border);
+            border-radius: 12px; padding: 0.9rem 1.1rem;
+            display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap;
+            animation: slideDown 0.2s ease;
         }
+        .avail-entry-num {
+            width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+            background: rgba(0,163,224,0.15); color: var(--accent);
+            font-size: 0.78rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
+        }
+        .avail-entry input[type="date"] {
+            flex: 1; min-width: 150px; padding: 0.6rem 0.8rem;
+            background: var(--bg-dark); border: 1.5px solid var(--border);
+            border-radius: 8px; color: var(--text-light); font-size: 0.9rem; font-family: inherit;
+        }
+        .avail-entry input[type="date"]:focus { outline: none; border-color: var(--accent); }
+        .avail-time-group { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+        .avail-time-btn {
+            padding: 0.4rem 0.8rem; border-radius: 8px;
+            border: 1.5px solid var(--border); background: var(--bg-dark);
+            color: var(--text-muted); font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; font-family: inherit; transition: all 0.18s; white-space: nowrap;
+        }
+        .avail-time-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .avail-time-btn.selected { border-color: var(--accent); background: rgba(0,163,224,0.15); color: var(--accent); }
+        .avail-remove {
+            background: rgba(239,68,68,0.1); border: 1.5px solid rgba(239,68,68,0.3);
+            color: #fca5a5; border-radius: 8px; padding: 0.35rem 0.6rem;
+            font-size: 0.78rem; font-weight: 600; cursor: pointer; font-family: inherit;
+            transition: all 0.18s; flex-shrink: 0;
+        }
+        .avail-remove:hover { background: rgba(239,68,68,0.2); border-color: var(--error); }
+        .avail-hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem; }
 
-        .checkbox-group label, .radio-group label {
-            font-weight: normal;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            color: var(--primary-text);
-            text-transform: none;
-            letter-spacing: normal;
-            font-size: 0.95em;
-        }
-
-        .checkbox-group input, .radio-group input {
-            cursor: pointer;
-            width: 18px;
-            height: 18px;
-            margin: 0;
-            accent-color: var(--accent-color);
-        }
-
-        .actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 15px;
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 1px solid var(--panel-border);
-            align-items: center;
-        }
-
-        button, .btn-link {
-            padding: 14px 30px;
-            border: none;
-            border-radius: 6px;
-            font-size: 1em;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-        }
-
-        .btn-submit {
-            background-color: var(--accent-color);
-            color: #000;
-        }
-
-        .btn-submit:hover {
-            filter: brightness(1.1);
-            transform: translateY(-1px);
-        }
-        
-        .btn-submit:disabled {
-            background-color: var(--secondary-text);
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
-
-        .btn-secondary {
-            background-color: var(--input-bg);
-            color: var(--primary-text);
-            border: 1px solid var(--panel-border);
-            font-size: 0.9em;
-            padding: 10px 20px;
-        }
-        .btn-secondary:hover {
-            background-color: #38444d;
-        }
-
-        .btn-logout {
-            background: none;
-            color: var(--secondary-text);
-            text-transform: none;
-            letter-spacing: normal;
-            font-weight: normal;
-            font-size: 0.9em;
-            padding: 10px;
-        }
-        .btn-logout:hover { color: var(--danger-color); text-decoration: underline; }
-
-        @media (max-width: 768px) {
-            .container { padding: 20px; }
-            .form-grid { grid-template-columns: 1fr; }
-            .checkbox-group, .radio-group { gap: 10px; }
-            .actions { flex-direction: column-reverse; gap: 10px; align-items: stretch;}
-            .btn-link { justify-content: center; }
+        @media (max-width: 600px) {
+            .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+            .section { padding: 1.5rem 1.2rem; }
+            .cert-upload-row { flex-wrap: wrap; }
+            .cert-row-actions { flex-wrap: wrap; }
         }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <!-- Action Bar -->
-    <div class="action-bar">
-        <a href="homepage.html" class="btn-link btn-secondary">← Back to Hub</a>
+    <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
+    <div class="page-header">
+        <h1>Application Form</h1>
+        <p>Complete all sections carefully — all fields marked <span style="color:var(--accent)">*</span> are required</p>
     </div>
 
-    <div class="header">
-        <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
-        <div class="header-text">
-            <h1>Internal Careers Portal</h1>
-            <h2>Submit Job Application</h2>
+    <div id="applicationForm">
+
+        <!-- 1. POSITION -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num">1</div>
+                <div><h2>Position Applied For</h2></div>
+            </div>
+            <div class="form-group" id="positionGroup">
+                <label>Position <span class="req">*</span></label>
+                <select id="position"><option value="" disabled selected>Loading available positions…</option></select>
+            </div>
         </div>
-        <div class="info-box">
-            Complete the sections below to submit your application for an open vacancy. You are currently logged in as <strong id="display-username" style="color:white;">User</strong>.
+
+        <!-- 2. PERSONAL DETAILS -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num">2</div>
+                <div><h2>Personal Details</h2></div>
+            </div>
+            <div class="form-grid-3" style="margin-bottom:1.2rem;">
+                <div class="form-group">
+                    <label>Title <span class="req">*</span></label>
+                    <select id="title">
+                        <option value="" disabled selected>Select…</option>
+                        <option>Mr</option><option>Mrs</option><option>Ms</option><option>Miss</option><option>Dr</option><option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Forename <span class="req">*</span></label><input type="text" id="forename" placeholder="First name"></div>
+                <div class="form-group"><label>Surname <span class="req">*</span></label><input type="text" id="surname" placeholder="Last name"></div>
+            </div>
+            <div class="form-grid" style="margin-bottom:1.2rem;">
+                <div class="form-group"><label>Email Address <span class="req">*</span></label><input type="email" id="email" placeholder="you@example.com"></div>
+                <div class="form-group"><label>Telephone Number <span class="req">*</span></label><input type="tel" id="phone" placeholder="+44 7700 000000"></div>
+            </div>
+            <div class="form-grid">
+                <div class="form-group full"><label>Address <span class="req">*</span></label><input type="text" id="address" placeholder="Street address"></div>
+                <div class="form-group"><label>Postcode <span class="req">*</span></label><input type="text" id="postcode" placeholder="e.g. SW1A 1AA" style="text-transform:uppercase;"></div>
+            </div>
         </div>
+
+        <!-- 3. REASONABLE ADJUSTMENTS -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num">3</div>
+                <div><h2>Reasonable Adjustments</h2><p>Interview accommodations</p></div>
+            </div>
+            <div class="form-group" style="margin-bottom:1.4rem;">
+                <label>If selected for interview, do you require any reasonable adjustments to be made on account of a <strong>disability</strong>? <span class="req">*</span></label>
+                <div class="radio-group" id="disabilityGroup" style="margin-top:0.5rem;">
+                    <label class="radio-option" id="disabilityYesLabel"><input type="radio" name="disability" value="yes"> Yes</label>
+                    <label class="radio-option" id="disabilityNoLabel"><input type="radio" name="disability" value="no"> No</label>
+                </div>
+                <div class="conditional" id="disabilityDetails">
+                    <textarea id="disabilityText" placeholder="Please tell us if there are any 'reasonable adjustments' we can make to assist you…" style="min-height:90px;"></textarea>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>If selected for interview, do you require any reasonable adjustments to be made on account of a <strong>medical condition</strong>? <span class="req">*</span></label>
+                <div class="radio-group" id="medicalGroup" style="margin-top:0.5rem;">
+                    <label class="radio-option" id="medicalYesLabel"><input type="radio" name="medical" value="yes"> Yes</label>
+                    <label class="radio-option" id="medicalNoLabel"><input type="radio" name="medical" value="no"> No</label>
+                </div>
+                <div class="conditional" id="medicalDetails">
+                    <textarea id="medicalText" placeholder="Please tell us if there are any 'reasonable adjustments' we can make to assist you…" style="min-height:90px;"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. CONVICTIONS -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num">4</div>
+                <div><h2>Criminal Convictions</h2></div>
+            </div>
+            <div class="form-group">
+                <label>Have you any convictions that are not spent under the Rehabilitation of Offenders Act? <span class="req">*</span></label>
+                <div class="radio-group" id="convictionsGroup" style="margin-top:0.5rem;">
+                    <label class="radio-option" id="convictionsYesLabel"><input type="radio" name="convictions" value="yes"> Yes</label>
+                    <label class="radio-option" id="convictionsNoLabel"><input type="radio" name="convictions" value="no"> No</label>
+                </div>
+                <div class="conditional" id="convictionsDetails">
+                    <textarea id="convictionsText" placeholder="Please provide further details…" style="min-height:90px;"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. WORK PERMIT -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num">5</div>
+                <div><h2>Right to Work</h2></div>
+            </div>
+            <div class="form-group">
+                <label>Do you need a work permit to be employed in the UK? <span class="req">*</span></label>
+                <div class="radio-group" id="workPermitGroup" style="margin-top:0.5rem;">
+                    <label class="radio-option" id="workPermitYesLabel"><input type="radio" name="workPermit" value="yes"> Yes</label>
+                    <label class="radio-option" id="workPermitNoLabel"><input type="radio" name="workPermit" value="no"> No</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. QUALIFICATIONS -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num">6</div>
+                <div><h2>Qualifications</h2><p>I confirm I have the minimum required qualifications for the role</p></div>
+            </div>
+            <div class="form-group" style="margin-bottom:1.4rem;">
+                <label>Please specify your qualifications below <span class="req">*</span></label>
+                <textarea id="qualifications" placeholder="List your relevant qualifications, certifications and training…" style="min-height:110px;"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Upload CV <span class="req">*</span></label>
+                <div class="upload-zone" id="cvZone">
+                    <input type="file" id="cvFile" accept=".pdf,.doc,.docx">
+                    <div class="upload-zone-icon">📄</div>
+                    <div class="upload-zone-label">Drop your CV here or click to browse</div>
+                    <div class="upload-zone-hint">PDF or Word document — max 10MB</div>
+                    <div class="upload-zone-filename" id="cvFileName"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. CERTIFICATES -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num">7</div>
+                <div><h2>Your Certificates</h2><p>Upload mandatory items and any desirable qualifications that apply to you</p></div>
+            </div>
+
+            <div class="cert-section-label mandatory">🔴 Mandatory Certificates</div>
+
+            <div class="cert-upload-row" id="row-mocopa">
+                <div class="cert-row-icon">⚡</div>
+                <div class="cert-row-info">
+                    <div class="cert-row-title">Level 3 Power / Smart Meter / Electric MOCOPA</div>
+                    <div id="sub-mocopa" class="cert-row-sub">No file selected</div>
+                </div>
+                <div class="cert-row-actions">
+                    <span class="cert-badge none" id="badge-mocopa">Not uploaded</span>
+                    <label class="cert-file-label">📎 Choose file<input type="file" id="file-mocopa" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('mocopa',this)"></label>
+                </div>
+            </div>
+
+            <div class="cert-upload-row" id="row-gasl3">
+                <div class="cert-row-icon">🔥</div>
+                <div class="cert-row-info">
+                    <div class="cert-row-title">Level 3 Gas / City &amp; Guilds Qualification / CMA / CCN</div>
+                    <div id="sub-gasl3" class="cert-row-sub">No file selected</div>
+                </div>
+                <div class="cert-row-actions">
+                    <span class="cert-badge none" id="badge-gasl3">Not uploaded</span>
+                    <label class="cert-file-label">📎 Choose file<input type="file" id="file-gasl3" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('gasl3',this)"></label>
+                </div>
+            </div>
+
+            <div class="cert-upload-row" id="row-cmagas">
+                <div class="cert-row-icon">🔧</div>
+                <div class="cert-row-info">
+                    <div class="cert-row-title">CMA Gas Certificate</div>
+                    <div id="sub-cmagas" class="cert-row-sub">No file selected</div>
+                </div>
+                <div class="cert-row-actions">
+                    <span class="cert-badge none" id="badge-cmagas">Not uploaded</span>
+                    <label class="cert-file-label">📎 Choose file<input type="file" id="file-cmagas" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('cmagas',this)"></label>
+                </div>
+            </div>
+
+            <!-- Driving Licence confirmation -->
+            <div class="cert-upload-row" id="row-drivinglicence">
+                <div class="cert-row-icon">🚗</div>
+                <div class="cert-row-info" style="flex:1;min-width:200px;">
+                    <div class="cert-row-title">I confirm I have a current and valid Driving Licence</div>
+                    <div class="yn-group">
+                        <button type="button" class="yn-btn" id="yn-dl-yes" onclick="setDrivingLicenceApp(true)">Yes</button>
+                        <button type="button" class="yn-btn" id="yn-dl-no"  onclick="setDrivingLicenceApp(false)">No</button>
+                    </div>
+                    <div id="dl-expiry-wrap" style="display:none;margin-top:0.7rem;">
+                        <label style="font-size:0.82rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:0.3rem;">Licence Expiry Date</label>
+                        <input type="date" id="dl-expiry" class="cert-inline-input" style="max-width:200px;resize:none;">
+                    </div>
+                </div>
+                <div class="cert-row-actions">
+                    <span class="cert-badge none" id="badge-drivinglicence">Not answered</span>
+                </div>
+            </div>
+
+            <div class="cert-section-label desirable" style="margin-top:1.8rem;">🔵 Desirable Qualifications</div>
+
+            <!-- EUSR -->
+            <div class="cert-upload-row" id="row-eusr">
+                <div class="cert-row-icon">🪪</div>
+                <div class="cert-row-info" style="flex:1;min-width:200px;">
+                    <div class="cert-row-title">EUSR Card</div>
+                    <div class="yn-group">
+                        <button type="button" class="yn-btn" id="yn-eusr-yes" onclick="setEUSRApp(true)">Yes</button>
+                        <button type="button" class="yn-btn" id="yn-eusr-no"  onclick="setEUSRApp(false)">No</button>
+                    </div>
+                    <div id="eusr-number-wrap" style="display:none;margin-top:0.6rem;">
+                        <label style="font-size:0.82rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:0.3rem;">EUSR Number</label>
+                        <input type="text" id="eusr-number" class="cert-inline-input" placeholder="Enter your EUSR number" style="resize:none;">
+                    </div>
+                </div>
+                <div class="cert-row-actions">
+                    <span class="cert-badge none" id="badge-eusr">Not answered</span>
+                </div>
+            </div>
+
+            <!-- Gas Safe -->
+            <div class="cert-upload-row" id="row-gassafe">
+                <div class="cert-row-icon">🔥</div>
+                <div class="cert-row-info" style="flex:1;min-width:200px;">
+                    <div class="cert-row-title">Current Gas Safe Number</div>
+                    <div style="margin-top:0.5rem;">
+                        <input type="text" id="gassafe-number" class="cert-inline-input" placeholder="Enter Gas Safe registration number" style="resize:none;">
+                    </div>
+                    <div style="font-size:0.76rem;color:var(--text-muted);margin-top:0.3rem;">Leave blank if not applicable</div>
+                </div>
+                <div class="cert-row-actions">
+                    <span class="cert-badge none" id="badge-gassafe">Not entered</span>
+                </div>
+            </div>
+
+            <!-- Higher Skills -->
+            <div class="cert-upload-row" id="row-higherskills">
+                <div class="cert-row-icon">🏆</div>
+                <div class="cert-row-info">
+                    <div class="cert-row-title">Higher Skills Set Certificates (e.g. 3 Phase, Medium Pressure)</div>
+                    <div id="sub-higherskills" class="cert-row-sub">No file selected</div>
+                </div>
+                <div class="cert-row-actions">
+                    <span class="cert-badge none" id="badge-higherskills">Not uploaded</span>
+                    <label class="cert-file-label">📎 Choose file<input type="file" id="file-higherskills" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('higherskills',this)"></label>
+                </div>
+            </div>
+
+            <div class="cert-section-label additional" style="margin-top:1.8rem;">➕ Additional Certificates</div>
+            <div id="additionalCertsContainer"></div>
+            <button type="button" class="add-cert-btn" id="addCertBtn">+ Add Another Certificate</button>
+        </div>
+
+        <!-- 8. EMPLOYMENT HISTORY -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num">8</div>
+                <div><h2>Employment History</h2><p>Please provide details for the past 5 years</p></div>
+            </div>
+            <div id="employmentList"></div>
+            <button class="btn-add" id="addEmploymentBtn">+ Add Employment</button>
+        </div>
+
+        <!-- 9. INTERVIEW AVAILABILITY -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num">9</div>
+                <div><h2>Interview Availability</h2></div>
+            </div>
+            <div class="form-group">
+                <label>Please tell us if there are any dates you would be <strong>unavailable</strong> for interview</label>
+                <p class="avail-hint" style="margin-bottom:0.9rem;">Add one or more unavailable dates below, with the time of day if relevant.</p>
+                <div class="avail-entries" id="unavailEntries"></div>
+                <button type="button" class="btn-add" id="addUnavailBtn" style="margin-top:0;">+ Add Unavailable Date</button>
+            </div>
+        </div>
+
+        <!-- 10. DECLARATION -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num">10</div>
+                <div><h2>Declaration</h2></div>
+            </div>
+            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.6; margin-bottom:1.6rem;">
+                I confirm that the information I have provided on this form is correct and I accept that providing deliberately false information could result in my dismissal.
+            </p>
+            <div class="form-grid" style="margin-bottom:1.2rem;">
+                <div class="form-group"><label>Applicant Name <span class="req">*</span></label><input type="text" id="declarationName" placeholder="Your full name"></div>
+                <div class="form-group"><label>Date <span class="req">*</span></label><input type="date" id="declarationDate"></div>
+            </div>
+            <div class="form-group">
+                <label>Signature <span class="req">*</span></label>
+                <div class="sig-wrap">
+                    <canvas class="sig-canvas" id="sigCanvas1" width="800" height="120"></canvas>
+                    <button type="button" class="btn-clear-sig" onclick="clearSig('sigCanvas1')">Clear</button>
+                </div>
+                <p class="sig-hint">Sign above using your mouse or finger</p>
+            </div>
+        </div>
+
+        <!-- 11. CONSENT -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-num">11</div>
+                <div><h2>Data Consent</h2></div>
+            </div>
+            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.6; margin-bottom:1.6rem;">
+                I hereby give my consent for the contact information provided on this form to be held on computer or other relevant filing systems and to be shared with other accredited organisations or agencies for recruitment opportunities.
+            </p>
+            <div class="form-grid" style="margin-bottom:1.2rem;">
+                <div class="form-group"><label>Applicant Name <span class="req">*</span></label><input type="text" id="consentName" placeholder="Your full name"></div>
+                <div class="form-group"><label>Date <span class="req">*</span></label><input type="date" id="consentDate"></div>
+            </div>
+            <div class="form-group">
+                <label>Signature <span class="req">*</span></label>
+                <div class="sig-wrap">
+                    <canvas class="sig-canvas" id="sigCanvas2" width="800" height="120"></canvas>
+                    <button type="button" class="btn-clear-sig" onclick="clearSig('sigCanvas2')">Clear</button>
+                </div>
+                <p class="sig-hint">Sign above using your mouse or finger</p>
+            </div>
+        </div>
+
+        <div class="submit-area">
+            <button class="btn btn-primary" id="submitBtn" style="min-width:220px; font-size:1.05rem;">Submit Application</button>
+            <div class="submit-msg" id="submitMsg"></div>
+        </div>
+
     </div>
 
-    <form id="applicationForm">
-        
-        <!-- Role Information -->
-        <fieldset>
-            <legend>Role Information</legend>
-            <div class="form-grid">
-                <div class="field-container">
-                    <label for="date-of-application">Date of Application</label>
-                    <input type="date" id="date-of-application" name="date-of-application" required readonly>
-                </div>
-                <div class="field-container">
-                    <label for="role-title">Role Applying For</label>
-                    <input type="text" id="role-title" name="role-title" required>
-                </div>
-                <div class="field-container">
-                    <label for="location">Location</label>
-                    <input type="text" id="location" name="location" required>
-                </div>
-                <div class="field-container">
-                    <label for="department">Department</label>
-                    <input type="text" id="department" name="department" required>
-                </div>
-            </div>
-        </fieldset>
-
-        <!-- Applicant Details -->
-        <fieldset>
-            <legend>Applicant Details</legend>
-            <div class="form-grid">
-                <div class="field-container full-width">
-                    <label for="applicant-name">Applicant Name</label>
-                    <input type="text" id="applicant-name" name="applicant-name" required readonly>
-                </div>
-                <div class="field-container">
-                    <label for="email">Contact Email</label>
-                    <input type="email" id="email" name="email" required>
-                </div>
-                <div class="field-container">
-                    <label for="phone">Contact Phone</label>
-                    <input type="text" id="phone" name="phone" required>
-                </div>
-            </div>
-        </fieldset>
-
-        <!-- Experience & Qualifications -->
-        <fieldset>
-            <legend>Experience & Links</legend>
-            <div class="form-grid">
-                <div class="field-container full-width">
-                    <label for="cv-link">Link to CV / Resume (Google Drive, Dropbox, etc.)</label>
-                    <input type="url" id="cv-link" name="cv-link" placeholder="https://" required>
-                </div>
-                <div class="field-container full-width">
-                    <label for="portfolio-link">LinkedIn / Portfolio Link (Optional)</label>
-                    <input type="url" id="portfolio-link" name="portfolio-link" placeholder="https://">
-                </div>
-                <div class="field-container full-width">
-                    <label for="cover-letter">Supporting Statement / Cover Letter</label>
-                    <textarea id="cover-letter" name="cover-letter" rows="5" required placeholder="Detail your experience and why you are suitable for this role..."></textarea>
-                </div>
-            </div>
-        </fieldset>
-
-        <!-- Declaration -->
-        <fieldset>
-            <legend>Declaration</legend>
-            <p style="font-size:0.95em; color: var(--primary-text); margin-bottom: 20px;">I confirm the information provided in this application is accurate and complete to the best of my knowledge.</p>
-            <div class="form-grid">
-                <div class="field-container">
-                    <label for="decl-name">Applicant Name</label>
-                    <input type="text" id="decl-name" name="decl-name" required readonly>
-                </div>
-                <div class="field-container">
-                    <label for="decl-date">Date Signed</label>
-                    <input type="date" id="decl-date" name="decl-date" required readonly>
-                </div>
-                <div class="field-container full-width">
-                    <label for="decl-signature">Digital Signature (Type Full Name)</label>
-                    <input type="text" id="decl-signature" name="decl-signature" required style="font-style: italic; font-family: 'Georgia', serif; color: var(--accent-color);">
-                </div>
-            </div>
-        </fieldset>
-
-        <!-- Action Buttons -->
-        <div class="actions">
-            <button type="button" class="btn-logout" id="logout-btn">Logout</button>
-            <button type="submit" class="btn-submit">Submit Application</button>
-        </div>
-
-    </form>
+    <div id="successScreen">
+        <div class="success-icon">🎉</div>
+        <h2>Application Submitted!</h2>
+        <p>Thank you for applying. We have received your application and will be in touch shortly regarding the next steps.</p>
+    </div>
 </div>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, addDoc, doc, getDoc, serverTimestamp }
+        from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-<script>
-    // --- Firebase Configuration ---
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
         authDomain: "oesperformance-a54c0.firebaseapp.com",
         projectId: "oesperformance-a54c0",
         storageBucket: "oesperformance-a54c0.firebasestorage.app",
         messagingSenderId: "484894102454",
-        appId: "1:484894102454:web:17535ee497eac2d90d6717",
-        measurementId: "G-R56BGZYV8N"
+        appId: "1:484894102454:web:17535ee497eac2d90d6717"
     };
 
-    // --- Initialize Firebase ---
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    const app    = initializeApp(firebaseConfig);
+    const db     = getFirestore(app);
+    const colRef = collection(db, "NGUO New Applicants");
 
-    // Setup page based on logged in user
-    document.addEventListener('DOMContentLoaded', () => {
-        // 1. Set dates to today
-        const now = new Date();
-        const day = ("0" + now.getDate()).slice(-2);
-        const month = ("0" + (now.getMonth() + 1)).slice(-2);
-        const today = now.getFullYear()+"-"+(month)+"-"+(day) ;
-        
-        const dateFields = ['date-of-application', 'decl-date'];
-        dateFields.forEach(id => {
-            const field = document.getElementById(id);
-            if(field) field.value = today;
-        });
+    const EMAILJS_SERVICE_ID         = 'service_b3nh4bo';
+    const EMAILJS_TEMPLATE_APPLICANT = 'template_9yts90w';
+    const EMAILJS_TEMPLATE_INTERNAL  = 'template_rdg2zp9';
+    const EMAILJS_PUBLIC_KEY         = 'ziLnha91scpGjFABh';
+    const INTERNAL_NOTIFY_EMAIL      = 'barry.dixon@next-gen.uk';
 
-        // 2. Fetch username from localStorage (set by safety script in head)
-        const username = localStorage.getItem('ngu_portal_username');
-        
-        // 3. Update Header Info
-        const displayUsername = document.getElementById('display-username');
-        if(displayUsername) displayUsername.textContent = username;
+    emailjs.init(EMAILJS_PUBLIC_KEY);
 
-        // 4. Pre-fill Applicant Name fields and make read-only
-        const applicantNameField = document.getElementById('applicant-name');
-        const declNameField = document.getElementById('decl-name');
-        if(applicantNameField) applicantNameField.value = username;
-        if(declNameField) declNameField.value = username;
-    });
-
-    // Logout Logic
-    const logoutBtn = document.getElementById('logout-btn');
-    if(logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-            localStorage.clear();
-            window.location.href = 'login.html';
+    async function sendApplicantEmail(data) {
+        return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_APPLICANT, {
+            to_email: data.email, to_name: data.forename,
+            full_name: `${data.forename} ${data.surname}`,
+            position: data.position, reply_to: INTERNAL_NOTIFY_EMAIL
         });
     }
 
-    // --- Form Submission Logic ---
-    document.getElementById('applicationForm').addEventListener('submit', function(e) {
-        e.preventDefault(); // Prevent default page refresh
-
-        // Prototype Security Check: Ensure signature matches logged in name exactly
-        const username = localStorage.getItem('ngu_portal_username');
-        const signatureField = document.getElementById('decl-signature');
-        const signature = signatureField ? signatureField.value.trim() : '';
-
-        const submitButton = this.querySelector('.btn-submit');
-
-        if (signature !== username) {
-            alert(`⚠️ Signature Mismatch:\nThe Digital Signature must exactly match your logged-in username: "${username}"`);
-            if(submitButton) {
-                submitButton.disabled = false;
-                submitButton.textContent = 'Submit Application';
-            }
-            return; // Stop submission
-        }
-
-        if(submitButton) {
-            submitButton.disabled = true;
-            submitButton.textContent = 'Submitting...';
-        }
-
-        // Collect form data
-        const formData = new FormData(this);
-
-        // Construct object for Firestore saving
-        const dataToSave = {
-            roleDetails: {
-                dateOfApplication: formData.get('date-of-application'),
-                roleTitle: formData.get('role-title'),
-                location: formData.get('location'),
-                department: formData.get('department')
-            },
-            applicantDetails: {
-                applicantName: formData.get('applicant-name'), // Locked to username
-                email: formData.get('email'),
-                phone: formData.get('phone')
-            },
-            experienceLinks: {
-                cvLink: formData.get('cv-link'),
-                portfolioLink: formData.get('portfolio-link'),
-                coverLetter: formData.get('cover-letter')
-            },
-            declaration: {
-                name: formData.get('decl-name'), // Locked to username
-                date: formData.get('decl-date'),
-                signature: signature // Verified match to username
-            },
-            status: 'Pending Review',
-            submittedAt: firebase.firestore.FieldValue.serverTimestamp() 
-        };
-
-        // --- Save Data to Firestore Collection ---
-        db.collection("NGU Applications").add(dataToSave)
-        .then((docRef) => {
-            console.log("Document written with ID: ", docRef.id);
-            alert('Application submitted successfully!');
-            location.reload(); 
-        })
-        .catch((error) => {
-            console.error("Error adding document: ", error);
-            alert('There was an error submitting the application. Please try again or contact IT support.');
-        })
-        .finally(() => {
-            if(submitButton) {
-                submitButton.disabled = false;
-                submitButton.textContent = 'Submit Application';
-            }
+    async function sendInternalEmail(data) {
+        return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_INTERNAL, {
+            to_email: INTERNAL_NOTIFY_EMAIL,
+            applicant_name: `${data.forename} ${data.surname}`,
+            applicant_email: data.email, applicant_phone: data.phone,
+            position: data.position,
+            submitted_at: new Date().toLocaleString('en-GB', { dateStyle: 'full', timeStyle: 'short' })
         });
-    });
-</script>
+    }
 
+    /* ── Vacancies ── */
+    async function loadVacancies() {
+        const select = document.getElementById('position');
+        try {
+            const snap = await getDoc(doc(db, 'NGUO Config', 'jobVacancies'));
+            const jobs = snap.exists() ? (snap.data().jobs || {}) : {};
+            const liveJobs = Object.entries(jobs).filter(([, v]) => v).map(([k]) => k);
+            select.innerHTML = '';
+            if (liveJobs.length === 0) {
+                select.innerHTML = '<option value="" disabled selected>No vacancies currently available</option>';
+                select.disabled = true;
+                const notice = document.createElement('div');
+                notice.className = 'no-vacancies'; notice.style.marginTop = '1rem';
+                notice.innerHTML = '⚠️ There are currently no open vacancies. Please check back soon.';
+                document.getElementById('positionGroup').appendChild(notice);
+            } else {
+                const placeholder = document.createElement('option');
+                placeholder.value = ''; placeholder.disabled = true; placeholder.selected = true;
+                placeholder.textContent = 'Select a position…';
+                select.appendChild(placeholder);
+                liveJobs.forEach(title => {
+                    const opt = document.createElement('option');
+                    opt.value = title; opt.textContent = title;
+                    select.appendChild(opt);
+                });
+            }
+        } catch (e) {
+            const ALL_JOBS = ['Smart Meter Engineer','Solar Installation Team','Quality Assessor - Metering','Quality Assessor - Solar','Field Team Leader - Metering','Metering Manager','Solar Manager'];
+            select.innerHTML = '<option value="" disabled selected>Select a position…</option>';
+            ALL_JOBS.forEach(t => { const opt = document.createElement('option'); opt.value = t; opt.textContent = t; select.appendChild(opt); });
+        }
+    }
+    loadVacancies();
+
+    /* ── Radio groups ── */
+    function setupRadio(name, yesId, noId, conditionalId) {
+        const radios = document.querySelectorAll(`input[name="${name}"]`);
+        radios.forEach(r => {
+            r.addEventListener('change', () => {
+                document.getElementById(yesId).classList.toggle('selected', r.value === 'yes');
+                document.getElementById(noId).classList.toggle('selected',  r.value === 'no');
+                if (conditionalId) document.getElementById(conditionalId).classList.toggle('visible', r.value === 'yes');
+            });
+        });
+        [yesId, noId].forEach(id => {
+            document.getElementById(id).addEventListener('click', function() {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true; radio.dispatchEvent(new Event('change'));
+            });
+        });
+    }
+    setupRadio('disability', 'disabilityYesLabel', 'disabilityNoLabel', 'disabilityDetails');
+    setupRadio('medical',    'medicalYesLabel',    'medicalNoLabel',    'medicalDetails');
+    setupRadio('convictions','convictionsYesLabel','convictionsNoLabel','convictionsDetails');
+    setupRadio('workPermit', 'workPermitYesLabel', 'workPermitNoLabel', null);
+    function getRadioValue(name) { const r = document.querySelector(`input[name="${name}"]:checked`); return r ? r.value : ''; }
+
+    /* ── CV upload ── */
+    const cvZone = document.getElementById('cvZone');
+    const cvFile = document.getElementById('cvFile');
+    cvFile.addEventListener('change', () => handleCVSelect(cvFile.files[0]));
+    cvZone.addEventListener('dragover',  e => { e.preventDefault(); cvZone.classList.add('dragover'); });
+    cvZone.addEventListener('dragleave', () => cvZone.classList.remove('dragover'));
+    cvZone.addEventListener('drop', e => {
+        e.preventDefault(); cvZone.classList.remove('dragover');
+        if (e.dataTransfer.files[0]) { const dt = new DataTransfer(); dt.items.add(e.dataTransfer.files[0]); cvFile.files = dt.files; handleCVSelect(e.dataTransfer.files[0]); }
+    });
+    function handleCVSelect(file) {
+        if (!file) return;
+        if (file.size > 10 * 1024 * 1024) { alert('CV file too large — max 10MB.'); return; }
+        document.getElementById('cvFileName').textContent = `📎 ${file.name}`;
+        cvZone.classList.add('has-file');
+    }
+
+    /* ── Certificates (application version — store as base64, no live upload) ── */
+    const certFileData = {};
+
+    window.handleCertFile = function(key, input) {
+        if (!input.files || !input.files[0]) return;
+        if (input.files[0].size > 10 * 1024 * 1024) { alert('Max 10MB per certificate.'); input.value = ''; return; }
+        const file = input.files[0];
+        document.getElementById(`sub-${key}`).textContent   = `📎 ${file.name}`;
+        document.getElementById(`badge-${key}`).textContent = '✓ Ready';
+        document.getElementById(`badge-${key}`).className   = 'cert-badge ready';
+        document.getElementById(`row-${key}`).classList.add('uploaded');
+        // Read as base64 for submission
+        const reader = new FileReader();
+        reader.onload = () => { certFileData[key] = { data: reader.result, filename: file.name, type: file.type }; };
+        reader.readAsDataURL(file);
+    };
+
+    window.setDrivingLicenceApp = function(val) {
+        document.getElementById('yn-dl-yes').className = 'yn-btn' + (val ? ' selected-yes' : '');
+        document.getElementById('yn-dl-no').className  = 'yn-btn' + (!val ? ' selected-no' : '');
+        document.getElementById('dl-expiry-wrap').style.display = val ? 'block' : 'none';
+        const badge = document.getElementById('badge-drivinglicence');
+        if (val) { badge.textContent = 'Yes — add expiry'; badge.className = 'cert-badge ready'; }
+        else      { badge.textContent = 'No'; badge.className = 'cert-badge done'; document.getElementById('row-drivinglicence').classList.add('uploaded'); }
+    };
+
+    window.setEUSRApp = function(val) {
+        document.getElementById('yn-eusr-yes').className = 'yn-btn' + (val ? ' selected-yes' : '');
+        document.getElementById('yn-eusr-no').className  = 'yn-btn' + (!val ? ' selected-no' : '');
+        document.getElementById('eusr-number-wrap').style.display = val ? 'block' : 'none';
+        const badge = document.getElementById('badge-eusr');
+        if (val) { badge.textContent = 'Yes — add number'; badge.className = 'cert-badge ready'; }
+        else      { badge.textContent = 'N/A'; badge.className = 'cert-badge done'; document.getElementById('row-eusr').classList.add('uploaded'); }
+    };
+
+    // Gas Safe live badge update
+    document.getElementById('gassafe-number').addEventListener('input', function() {
+        const badge = document.getElementById('badge-gassafe');
+        if (this.value.trim()) { badge.textContent = `✓ ${this.value.trim()}`; badge.className = 'cert-badge done'; }
+        else { badge.textContent = 'Not entered'; badge.className = 'cert-badge none'; }
+    });
+
+    // EUSR live badge update
+    document.getElementById('eusr-number').addEventListener('input', function() {
+        const badge = document.getElementById('badge-eusr');
+        if (this.value.trim()) { badge.textContent = `✓ ${this.value.trim()}`; badge.className = 'cert-badge done'; }
+    });
+
+    // DL expiry live badge update
+    document.getElementById('dl-expiry').addEventListener('change', function() {
+        const badge = document.getElementById('badge-drivinglicence');
+        if (this.value) {
+            badge.textContent = `✓ Expires ${this.value}`; badge.className = 'cert-badge done';
+            document.getElementById('row-drivinglicence').classList.add('uploaded');
+        }
+    });
+
+    /* Additional certs */
+    let addCertCounter = 0;
+    document.getElementById('addCertBtn').addEventListener('click', () => addAdditionalCert());
+
+    function addAdditionalCert() {
+        addCertCounter++;
+        const id = addCertCounter;
+        const container = document.getElementById('additionalCertsContainer');
+        const div = document.createElement('div');
+        div.className = 'cert-upload-row'; div.id = `row-addcert-${id}`;
+        div.innerHTML = `
+            <div class="cert-row-icon">📄</div>
+            <div class="cert-row-info" style="flex:1;min-width:0;">
+                <input type="text" class="cert-inline-input" id="addcert-name-${id}"
+                    placeholder="Certificate name / description"
+                    style="max-width:100%;margin-bottom:0.4rem;">
+                <div id="sub-addcert-${id}" class="cert-row-sub">No file selected</div>
+            </div>
+            <div class="cert-row-actions">
+                <span class="cert-badge none" id="badge-addcert-${id}">Not uploaded</span>
+                <label class="cert-file-label">📎 Choose file<input type="file" id="file-addcert-${id}" accept=".jpg,.jpeg,.png,.pdf"></label>
+                <button type="button" style="background:rgba(239,68,68,0.12);border:1.5px solid rgba(239,68,68,0.3);color:#fca5a5;border-radius:8px;padding:0.35rem 0.7rem;cursor:pointer;font-size:0.8rem;font-family:inherit;" onclick="this.closest('.cert-upload-row').remove()">✕</button>
+            </div>`;
+        container.appendChild(div);
+        document.getElementById(`file-addcert-${id}`).addEventListener('change', function() {
+            if (!this.files[0]) return;
+            if (this.files[0].size > 10 * 1024 * 1024) { alert('Max 10MB.'); this.value = ''; return; }
+            const file = this.files[0];
+            document.getElementById(`sub-addcert-${id}`).textContent   = `📎 ${file.name}`;
+            document.getElementById(`badge-addcert-${id}`).textContent = '✓ Ready';
+            document.getElementById(`badge-addcert-${id}`).className   = 'cert-badge ready';
+            document.getElementById(`row-addcert-${id}`).classList.add('uploaded');
+            const reader = new FileReader();
+            reader.onload = () => { certFileData[`addcert_${id}`] = { data: reader.result, filename: file.name, type: file.type, name: document.getElementById(`addcert-name-${id}`).value.trim() || `Additional Certificate ${id}` }; };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    /* ── Employment history ── */
+    let empCount = 0;
+    function addEmployment() {
+        empCount++;
+        const div = document.createElement('div');
+        div.className = 'employment-entry'; div.dataset.emp = empCount;
+        div.innerHTML = `
+            <div class="entry-header">
+                <span class="entry-label">Employment ${empCount}</span>
+                <button type="button" class="btn-remove" onclick="this.closest('.employment-entry').remove()">Remove</button>
+            </div>
+            <div class="form-grid" style="margin-bottom:1rem;">
+                <div class="form-group"><label>Company Name</label><input type="text" class="emp-company" placeholder="Company name"></div>
+                <div class="form-group"><label>Position</label><input type="text" class="emp-position" placeholder="Job title held"></div>
+            </div>
+            <div class="form-group">
+                <label>Reason for Leaving</label>
+                <textarea class="emp-reason" placeholder="Reason for leaving…" style="min-height:70px;"></textarea>
+            </div>`;
+        document.getElementById('employmentList').appendChild(div);
+    }
+    addEmployment();
+    document.getElementById('addEmploymentBtn').addEventListener('click', addEmployment);
+
+    /* ── Interview availability date/time ── */
+    let unavailCount = 0;
+
+    function addUnavailEntry() {
+        unavailCount++;
+        const id = unavailCount;
+        const container = document.getElementById('unavailEntries');
+        const div = document.createElement('div');
+        div.className = 'avail-entry'; div.id = `avail-entry-${id}`;
+        div.innerHTML = `
+            <div class="avail-entry-num">${id}</div>
+            <input type="date" id="avail-date-${id}" title="Unavailable date">
+            <div class="avail-time-group" id="avail-time-group-${id}">
+                <button type="button" class="avail-time-btn" data-time="AM"   onclick="selectAvailTime(${id},'AM')">AM</button>
+                <button type="button" class="avail-time-btn" data-time="PM"   onclick="selectAvailTime(${id},'PM')">PM</button>
+                <button type="button" class="avail-time-btn" data-time="All Day" onclick="selectAvailTime(${id},'All Day')">All Day</button>
+            </div>
+            <button type="button" class="avail-remove" onclick="document.getElementById('avail-entry-${id}').remove()">✕</button>`;
+        container.appendChild(div);
+    }
+
+    window.selectAvailTime = function(id, time) {
+        document.querySelectorAll(`#avail-time-group-${id} .avail-time-btn`).forEach(btn => {
+            btn.classList.toggle('selected', btn.dataset.time === time);
+        });
+    };
+
+    document.getElementById('addUnavailBtn').addEventListener('click', addUnavailEntry);
+
+    function getUnavailabilityData() {
+        const entries = [];
+        document.querySelectorAll('.avail-entry').forEach(entry => {
+            const id = entry.id.replace('avail-entry-', '');
+            const dateInput = document.getElementById(`avail-date-${id}`);
+            const selectedTimeBtn = entry.querySelector('.avail-time-btn.selected');
+            const date = dateInput ? dateInput.value : '';
+            const time = selectedTimeBtn ? selectedTimeBtn.dataset.time : '';
+            if (date || time) entries.push({ date, time: time || 'Not specified' });
+        });
+        return entries;
+    }
+
+    /* ── Signature canvases ── */
+    function setupCanvas(id) {
+        const canvas = document.getElementById(id);
+        const ctx    = canvas.getContext('2d');
+        let drawing = false, lastX = 0, lastY = 0;
+        function getPos(e) {
+            const r = canvas.getBoundingClientRect();
+            const sx = canvas.width / r.width, sy = canvas.height / r.height;
+            if (e.touches) return [(e.touches[0].clientX - r.left) * sx, (e.touches[0].clientY - r.top) * sy];
+            return [(e.clientX - r.left) * sx, (e.clientY - r.top) * sy];
+        }
+        ctx.strokeStyle = '#00A3E0'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        canvas.addEventListener('mousedown',  e => { drawing = true; [lastX, lastY] = getPos(e); });
+        canvas.addEventListener('mousemove',  e => { if (!drawing) return; const [x, y] = getPos(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke(); [lastX, lastY] = [x, y]; });
+        canvas.addEventListener('mouseup',   () => drawing = false);
+        canvas.addEventListener('mouseleave',() => drawing = false);
+        canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; [lastX, lastY] = getPos(e); }, { passive: false });
+        canvas.addEventListener('touchmove',  e => { e.preventDefault(); if (!drawing) return; const [x, y] = getPos(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke(); [lastX, lastY] = [x, y]; }, { passive: false });
+        canvas.addEventListener('touchend', () => drawing = false);
+    }
+    setupCanvas('sigCanvas1');
+    setupCanvas('sigCanvas2');
+    window.clearSig = function(id) { const c = document.getElementById(id); c.getContext('2d').clearRect(0, 0, c.width, c.height); };
+    function isCanvasBlank(canvas) { const b = document.createElement('canvas'); b.width = canvas.width; b.height = canvas.height; return canvas.toDataURL() === b.toDataURL(); }
+
+    /* ── Submit ── */
+    document.getElementById('submitBtn').addEventListener('click', async () => {
+        const btn   = document.getElementById('submitBtn');
+        const msgEl = document.getElementById('submitMsg');
+        msgEl.textContent = '';
+
+        const position        = document.getElementById('position').value;
+        const title           = document.getElementById('title').value;
+        const forename        = document.getElementById('forename').value.trim();
+        const surname         = document.getElementById('surname').value.trim();
+        const email           = document.getElementById('email').value.trim();
+        const phone           = document.getElementById('phone').value.trim();
+        const address         = document.getElementById('address').value.trim();
+        const postcode        = document.getElementById('postcode').value.trim();
+        const disability      = getRadioValue('disability');
+        const medical         = getRadioValue('medical');
+        const convictions     = getRadioValue('convictions');
+        const workPermit      = getRadioValue('workPermit');
+        const qualifications  = document.getElementById('qualifications').value.trim();
+        const declarationName = document.getElementById('declarationName').value.trim();
+        const declarationDate = document.getElementById('declarationDate').value;
+        const consentName     = document.getElementById('consentName').value.trim();
+        const consentDate     = document.getElementById('consentDate').value;
+
+        const missing = [];
+        if (!position)        missing.push('Position Applied For');
+        if (!title)           missing.push('Title');
+        if (!forename)        missing.push('Forename');
+        if (!surname)         missing.push('Surname');
+        if (!email)           missing.push('Email');
+        if (!phone)           missing.push('Telephone');
+        if (!address)         missing.push('Address');
+        if (!postcode)        missing.push('Postcode');
+        if (!disability)      missing.push('Disability adjustment question');
+        if (!medical)         missing.push('Medical adjustment question');
+        if (!convictions)     missing.push('Convictions question');
+        if (!workPermit)      missing.push('Work permit question');
+        if (!qualifications)  missing.push('Qualifications');
+        if (!cvFile.files[0]) missing.push('CV upload');
+        if (!declarationName) missing.push('Declaration name');
+        if (!declarationDate) missing.push('Declaration date');
+        if (!consentName)     missing.push('Consent name');
+        if (!consentDate)     missing.push('Consent date');
+        if (isCanvasBlank(document.getElementById('sigCanvas1'))) missing.push('Declaration signature');
+        if (isCanvasBlank(document.getElementById('sigCanvas2'))) missing.push('Consent signature');
+
+        if (missing.length > 0) {
+            msgEl.className   = 'submit-msg err';
+            msgEl.textContent = `Please complete: ${missing.slice(0, 3).join(', ')}${missing.length > 3 ? ` and ${missing.length - 3} more…` : '.'}`;
+            window.scrollTo({ top: 0, behavior: 'smooth' }); return;
+        }
+
+        btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Submitting…';
+
+        try {
+            let cvBase64 = '', cvName = '', cvType = '';
+            if (cvFile.files[0]) {
+                const file = cvFile.files[0]; cvName = file.name; cvType = file.type;
+                cvBase64 = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload  = () => resolve(reader.result);
+                    reader.onerror = () => reject(new Error('Could not read CV file'));
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            const employment = [];
+            document.querySelectorAll('.employment-entry').forEach(entry => {
+                employment.push({
+                    company:  entry.querySelector('.emp-company')?.value.trim()  || '',
+                    position: entry.querySelector('.emp-position')?.value.trim() || '',
+                    reason:   entry.querySelector('.emp-reason')?.value.trim()   || ''
+                });
+            });
+
+            // Collect certificate data
+            const dlYesBtnSelected = document.getElementById('yn-dl-yes').classList.contains('selected-yes');
+            const dlNoBtnSelected  = document.getElementById('yn-dl-no').classList.contains('selected-no');
+            const dlConfirmed = dlYesBtnSelected ? true : dlNoBtnSelected ? false : undefined;
+            const euYesBtnSelected = document.getElementById('yn-eusr-yes').classList.contains('selected-yes');
+            const euNoBtnSelected  = document.getElementById('yn-eusr-no').classList.contains('selected-no');
+            const euHas = euYesBtnSelected ? true : euNoBtnSelected ? false : null;
+
+            const additionalCerts = [];
+            document.querySelectorAll('#additionalCertsContainer .cert-upload-row').forEach(row => {
+                const id = row.id.replace('row-addcert-', '');
+                const nameEl = document.getElementById(`addcert-name-${id}`);
+                const fileEntry = certFileData[`addcert_${id}`];
+                if (nameEl || fileEntry) {
+                    additionalCerts.push({
+                        name: nameEl?.value.trim() || fileEntry?.name || `Additional Certificate ${id}`,
+                        ...(fileEntry || {})
+                    });
+                }
+            });
+
+            const certificates = {
+                mocopa:         certFileData['mocopa']      || null,
+                gasl3:          certFileData['gasl3']       || null,
+                cmagas:         certFileData['cmagas']      || null,
+                higherskills:   certFileData['higherskills']|| null,
+                drivinglicence: { confirmed: dlConfirmed, expiry: document.getElementById('dl-expiry').value || '' },
+                eusr:           { has: euHas, number: document.getElementById('eusr-number').value.trim() },
+                gassafe:        { number: document.getElementById('gassafe-number').value.trim() },
+                additional:     additionalCerts
+            };
+
+            const unavailability = getUnavailabilityData();
+
+            const sig1 = document.getElementById('sigCanvas1').toDataURL('image/png');
+            const sig2 = document.getElementById('sigCanvas2').toDataURL('image/png');
+
+            await addDoc(colRef, {
+                submittedAt: serverTimestamp(),
+                position,
+                personalDetails: { title, forename, surname, email, phone, address, postcode },
+                fullName: `${forename} ${surname}`,
+                reasonableAdjustments: {
+                    disability, disabilityText: disability === 'yes' ? document.getElementById('disabilityText').value.trim() : '',
+                    medical,    medicalText:    medical    === 'yes' ? document.getElementById('medicalText').value.trim()    : ''
+                },
+                convictions,
+                convictionsText: convictions === 'yes' ? document.getElementById('convictionsText').value.trim() : '',
+                workPermit,
+                qualifications,
+                cv: { data: cvBase64, filename: cvName, type: cvType },
+                certificates,
+                employment,
+                unavailability,
+                declaration: { name: declarationName, date: declarationDate, signature: sig1 },
+                consent:     { name: consentName,     date: consentDate,     signature: sig2 }
+            });
+
+            const emailData = { forename, surname, email, phone, position };
+            await Promise.allSettled([sendApplicantEmail(emailData), sendInternalEmail(emailData)]);
+
+            document.getElementById('applicationForm').style.display = 'none';
+            document.getElementById('successScreen').style.display   = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        } catch (err) {
+            msgEl.className   = 'submit-msg err';
+            msgEl.textContent = 'Submission failed: ' + err.message;
+            btn.disabled = false; btn.textContent = 'Submit Application';
+        }
+    });
+
+    document.getElementById('postcode').addEventListener('input', function() { this.value = this.value.toUpperCase(); });
+</script>
 </body>
 </html>
