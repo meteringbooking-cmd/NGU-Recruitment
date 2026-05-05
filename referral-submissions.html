@@ -27,6 +27,17 @@
             */
         })();
     </script>
+
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            // Initialized with your EmailJS Public Key
+            emailjs.init({
+              publicKey: "ziLnha91scpGjFABh",
+            });
+        })();
+    </script>
     
     <style>
         :root {
@@ -359,10 +370,10 @@
         statusMsg.innerHTML = `<span style="color:var(--danger-color)">Error loading data. Check console.</span>`;
     });
 
-    // Update Status logic (Accept / Deny)
-    window.updateSubmissionStatus = async function(id, newStatus) {
+    // Update Status logic (Accept / Deny) + EmailJS Integration
+    window.updateSubmissionStatus = async function(id, newStatus, candidateEmail, candidateName) {
         const confirmMsg = newStatus === 'Accepted' 
-            ? "Are you sure you want to ACCEPT this referral?" 
+            ? "Are you sure you want to ACCEPT this referral? An email will be sent to the candidate." 
             : "Are you sure you want to DENY this referral?";
             
         if (!confirm(confirmMsg)) return;
@@ -370,6 +381,25 @@
         try {
             const docRef = doc(db, "NGU Referral submissions", id);
             await updateDoc(docRef, { status: newStatus });
+            
+            // If accepted, send the email via EmailJS
+            if (newStatus === 'Accepted' && candidateEmail) {
+                try {
+                    await emailjs.send(
+                        "service_pxe89mj",   // Your Service ID
+                        "template_5f9epwr",  // Your Template ID
+                        {
+                            // Map to variables used in your EmailJS template
+                            to_email: candidateEmail,
+                            to_name: candidateName
+                        }
+                    );
+                    console.log("Acceptance email sent successfully!");
+                } catch (emailError) {
+                    console.error("Failed to send email: ", emailError);
+                    alert("Status updated, but there was an error sending the email.");
+                }
+            }
             // The onSnapshot listener will automatically trigger a re-render
         } catch (error) {
             console.error("Error updating document: ", error);
@@ -420,9 +450,13 @@
 
             let actionFooterHTML = '';
             if (status === 'Pending') {
+                // Safely format the parameters to pass into the inline onclick function
+                const emailParam = data.referralEmail ? data.referralEmail.replace(/'/g, "\\'") : '';
+                const nameParam = data.referralName ? data.referralName.replace(/'/g, "\\'") : '';
+                
                 actionFooterHTML = `
                     <button class="btn-action btn-deny" onclick="updateSubmissionStatus('${data.id}', 'Denied')">✕ Deny</button>
-                    <button class="btn-action btn-accept" onclick="updateSubmissionStatus('${data.id}', 'Accepted')">✓ Accept</button>
+                    <button class="btn-action btn-accept" onclick="updateSubmissionStatus('${data.id}', 'Accepted', '${emailParam}', '${nameParam}')">✓ Accept</button>
                 `;
             } else {
                 actionFooterHTML = `
