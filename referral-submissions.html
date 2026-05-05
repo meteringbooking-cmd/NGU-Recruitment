@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referral Submissions Board - NGU Portal</title>
+    
+    <!-- 
+      --- PROTOTYPE SECURITY SCRIPT ---
+    -->
+    <script>
+        (function() {
+            const username = localStorage.getItem('ngu_portal_username');
+            const hasAccess = localStorage.getItem('ngu_portal_access_management'); 
+
+            // Commented out for testing. Uncomment when integrating into your live portal.
+            /*
+            if (!username) {
+                window.location.href = 'login.html';
+                return;
+            }
+            if (hasAccess !== 'true') {
+                alert("Access Denied: You do not have permission to view this board.");
+                window.location.href = 'homepage.html';
+                return;
+            }
+            */
+        })();
+    </script>
+    
+    <style>
+        :root {
+            /* Shared NGU Dark Theme */
+            --body-bg: #0A1628;
+            --container-bg: #1a2942;
+            --input-bg: #0d1f3a;
+            --panel-border: #2a3f5f;
+            --primary-text: #E8EDF2;
+            --secondary-text: #8B9AAE;
+            --accent-color: #00A3E0; 
+            --success-color: #10B981;
+            --danger-color: #EF4444;
+            --warning-color: #F59E0B;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--body-bg);
+            color: var(--primary-text);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .main-container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+
+        /* Header Styling */
+        .page-header {
+            background-color: var(--container-bg);
+            padding: 20px 30px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-brand-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo { height: 40px; width: auto; }
+
+        .page-header h1 {
+            font-size: 1.4em;
+            color: var(--primary-text);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 0;
+        }
+
+        .btn-link {
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            font-weight: 600;
+            border: 1px solid var(--panel-border);
+            background-color: var(--input-bg);
+            color: var(--primary-text);
+            padding: 8px 15px;
+        }
+        .btn-link:hover {
+            background-color: #1c2b40;
+            border-color: var(--accent-color);
+        }
+
+        #status-message {
+            text-align: center;
+            padding: 40px;
+            color: var(--secondary-text);
+            background-color: var(--container-bg);
+            border-radius: 8px;
+            border: 1px solid var(--panel-border);
+            max-width: 800px; margin: 0 auto;
+        }
+
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .filter-btn {
+            background: var(--container-bg);
+            border: 1px solid var(--panel-border);
+            color: var(--secondary-text);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            background: rgba(0, 163, 224, 0.15);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        /* Grid */
+        .submission-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 25px;
+        }
+
+        /* Card */
+        .submission-card {
+            background-color: var(--container-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transition: transform 0.2s ease, border-color 0.2s ease;
+            position: relative;
+        }
+        .submission-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(0, 163, 224, 0.4);
+        }
+
+        /* Status Ribbons */
+        .card-ribbon {
+            position: absolute;
+            top: 0; right: 0;
+            padding: 4px 12px;
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom-left-radius: 8px;
+        }
+        .status-pending { background: rgba(245, 158, 11, 0.2); color: var(--warning-color); border: 1px solid rgba(245, 158, 11, 0.3); border-top:none; border-right:none;}
+        .status-accepted { background: rgba(16, 185, 129, 0.2); color: var(--success-color); border: 1px solid rgba(16, 185, 129, 0.3); border-top:none; border-right:none;}
+        .status-denied { background: rgba(239, 68, 68, 0.2); color: var(--danger-color); border: 1px solid rgba(239, 68, 68, 0.3); border-top:none; border-right:none;}
+
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--panel-border);
+            background-color: rgba(0,0,0,0.2);
+        }
+
+        .card-title {
+            font-size: 1.1em;
+            color: var(--primary-text);
+            font-weight: 700;
+            margin-bottom: 4px;
+            padding-right: 70px; /* Space for ribbon */
+        }
+        .card-subtitle {
+            font-size: 0.85em;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-body {
+            padding: 20px;
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .info-block { display: flex; flex-direction: column; gap: 3px; }
+        .info-block.full-width { grid-column: 1 / -1; }
+        
+        .info-block label {
+            color: var(--secondary-text);
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .info-block .value {
+            color: var(--primary-text);
+            font-size: 0.95em;
+            font-weight: 500;
+            word-break: break-word;
+        }
+        
+        .info-block .value.highlight {
+            color: #6ee7b7;
+            font-family: 'DM Mono', monospace;
+            font-size: 0.9em;
+        }
+
+        .card-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--panel-border);
+            background-color: var(--input-bg);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Action Buttons */
+        .btn-action {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .btn-accept {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+        .btn-accept:hover { background: rgba(16, 185, 129, 0.25); }
+        
+        .btn-deny {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+        .btn-deny:hover { background: rgba(239, 68, 68, 0.25); }
+
+        .status-text {
+            font-size: 0.9em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .page-header { flex-direction: column; text-align: center; justify-content: center;}
+            .header-brand-container { flex-direction: column; }
+            .submission-grid { grid-template-columns: 1fr; }
+            .card-body { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <header class="page-header">
+        <div class="header-brand-container">
+            <a href="workflow-manager.html" class="btn-link">← Back</a>
+            <div class="header-brand">
+                <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
+                <h1>Referral Submissions</h1>
+            </div>
+        </div>
+    </header>
+
+    <div class="filters">
+        <button class="filter-btn active" data-filter="all">All Submissions</button>
+        <button class="filter-btn" data-filter="pending">Pending</button>
+        <button class="filter-btn" data-filter="accepted">Accepted</button>
+        <button class="filter-btn" data-filter="denied">Denied</button>
+    </div>
+
+    <div id="status-message">⏳ Loading submissions...</div>
+    
+    <div id="submission-grid" class="submission-grid" style="display: none;">
+        <!-- Populated via JS -->
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy } 
+        from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const colRef = collection(db, "NGU Referral submissions");
+
+    const gridContainer = document.getElementById('submission-grid');
+    const statusMsg = document.getElementById('status-message');
+    
+    let allSubmissions = [];
+    let currentFilter = 'all';
+
+    // Format Dates nicely
+    const formatDate = (timestamp) => {
+        if (!timestamp) return 'Unknown Date';
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit' });
+    };
+
+    // Safe string helper
+    const safeStr = (str) => str ? str : '<span style="color:var(--secondary-text); font-style:italic;">Not provided</span>';
+
+    // Listen for live updates
+    const q = query(colRef, orderBy("submittedAt", "desc"));
+    
+    onSnapshot(q, (snapshot) => {
+        allSubmissions = [];
+        snapshot.forEach(doc => {
+            allSubmissions.push({ id: doc.id, ...doc.data() });
+        });
+        renderGrid();
+    }, (error) => {
+        console.error("Error fetching submissions: ", error);
+        statusMsg.innerHTML = `<span style="color:var(--danger-color)">Error loading data. Check console.</span>`;
+    });
+
+    // Update Status logic (Accept / Deny)
+    window.updateSubmissionStatus = async function(id, newStatus) {
+        const confirmMsg = newStatus === 'Accepted' 
+            ? "Are you sure you want to ACCEPT this referral?" 
+            : "Are you sure you want to DENY this referral?";
+            
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const docRef = doc(db, "NGU Referral submissions", id);
+            await updateDoc(docRef, { status: newStatus });
+            // The onSnapshot listener will automatically trigger a re-render
+        } catch (error) {
+            console.error("Error updating document: ", error);
+            alert("Failed to update status. Please try again.");
+        }
+    };
+
+    // Render Cards based on active filter
+    function renderGrid() {
+        gridContainer.innerHTML = '';
+        
+        const filteredData = allSubmissions.filter(item => {
+            const status = item.status || 'Pending'; // Default to pending if no status field
+            if (currentFilter === 'all') return true;
+            return status.toLowerCase() === currentFilter;
+        });
+
+        if (filteredData.length === 0) {
+            statusMsg.textContent = "No submissions found for this filter.";
+            statusMsg.style.display = 'block';
+            gridContainer.style.display = 'none';
+            return;
+        }
+
+        statusMsg.style.display = 'none';
+        gridContainer.style.display = 'grid';
+
+        filteredData.forEach(data => {
+            const status = data.status || 'Pending';
+            let ribbonClass = 'status-pending';
+            if (status === 'Accepted') ribbonClass = 'status-accepted';
+            if (status === 'Denied') ribbonClass = 'status-denied';
+
+            let conditionalHTML = '';
+            if (data.role === 'Smart Meter Engineer') {
+                conditionalHTML = `
+                    <div class="info-block full-width">
+                        <label>Current Company</label>
+                        <div class="value">${safeStr(data.currentCompany)}</div>
+                    </div>`;
+            } else if (data.role === 'Other') {
+                conditionalHTML = `
+                    <div class="info-block full-width">
+                        <label>Other Role Details</label>
+                        <div class="value">${safeStr(data.otherRoleDetails)}</div>
+                    </div>`;
+            }
+
+            let actionFooterHTML = '';
+            if (status === 'Pending') {
+                actionFooterHTML = `
+                    <button class="btn-action btn-deny" onclick="updateSubmissionStatus('${data.id}', 'Denied')">✕ Deny</button>
+                    <button class="btn-action btn-accept" onclick="updateSubmissionStatus('${data.id}', 'Accepted')">✓ Accept</button>
+                `;
+            } else {
+                actionFooterHTML = `
+                    <div class="status-text" style="color: var(--${status === 'Accepted' ? 'success' : 'danger'}-color)">
+                        ${status === 'Accepted' ? '✓ Accepted' : '✕ Denied'}
+                    </div>
+                `;
+            }
+
+            const cardHtml = `
+                <div class="submission-card">
+                    <div class="card-ribbon ${ribbonClass}">${status}</div>
+                    
+                    <div class="card-header">
+                        <div class="card-title">${safeStr(data.referrerName)}</div>
+                        <div class="card-subtitle">Referred: <span style="color:#fff;">${safeStr(data.referralName)}</span></div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="info-block full-width">
+                            <label>Desired Role</label>
+                            <div class="value highlight">${safeStr(data.role)}</div>
+                        </div>
+                        
+                        <div class="info-block">
+                            <label>Candidate Phone</label>
+                            <div class="value"><a href="tel:${data.referralPhone}" style="color:inherit; text-decoration:none;">${safeStr(data.referralPhone)}</a></div>
+                        </div>
+                        
+                        <div class="info-block">
+                            <label>Candidate Email</label>
+                            <div class="value"><a href="mailto:${data.referralEmail}" style="color:inherit; text-decoration:none; word-break:break-all;">${safeStr(data.referralEmail)}</a></div>
+                        </div>
+
+                        <div class="info-block">
+                            <label>Postcode</label>
+                            <div class="value">${safeStr(data.referralPostcode)}</div>
+                        </div>
+
+                        <div class="info-block">
+                            <label>Submitted At</label>
+                            <div class="value" style="font-size:0.85em;">${formatDate(data.submittedAt)}</div>
+                        </div>
+                        
+                        ${conditionalHTML}
+                        
+                        <div class="info-block full-width" style="flex-direction:row; align-items:center; gap:10px; margin-top:5px; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px;">
+                            <label>Declaration Signed:</label>
+                            <div class="value" style="color:var(--success-color); font-size:0.8em;">✓ Yes (${data.declarationDate || 'Date missing'})</div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        ${actionFooterHTML}
+                    </div>
+                </div>
+            `;
+            gridContainer.insertAdjacentHTML('beforeend', cardHtml);
+        });
+    }
+
+    // Filter Buttons Logic
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentFilter = e.target.getAttribute('data-filter');
+            renderGrid();
+        });
+    });
+
+</script>
+</body>
+</html>
