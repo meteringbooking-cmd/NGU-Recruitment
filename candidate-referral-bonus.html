@@ -286,14 +286,13 @@
     import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs }
         from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-    // EmailJS Setup (Using your standard keys)
+    // EmailJS Setup
     const EMAILJS_SERVICE_ID = 'service_b3nh4bo';
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
     const INTERNAL_NOTIFY_EMAIL = 'barry.dixon@next-gen.uk';
     
-    // --> IMPORTANT: ADD YOUR EXISTING MATCHING TEMPLATE ID HERE <--
-    const TEMPLATE_MATCH = 'YOUR_ORIGINAL_TEMPLATE_ID'; 
-    // New Template for No-Match Scenarios
+    // --- TEMPLATE ROUTING logic ---
+    const TEMPLATE_MATCH = 'template_5f9epwr'; 
     const TEMPLATE_NO_MATCH = 'template_4ryhvfl'; 
 
     emailjs.init(EMAILJS_PUBLIC_KEY);
@@ -371,7 +370,7 @@
 
     window.clearSig = function() { 
         ctx.clearRect(0, 0, canvas.width, canvas.height); 
-    };
+    }
 
     function isCanvasBlank() { 
         const b = document.createElement('canvas'); 
