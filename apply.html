@@ -77,6 +77,9 @@
         select option { background: var(--bg-card); color: var(--text-light); }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
         textarea { min-height: 100px; line-height: 1.5; }
+        .checkbox-group { display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.6rem; }
+        .checkbox-label { display: flex; align-items: flex-start; gap: 0.6rem; font-weight: 400; font-size: 0.92rem; cursor: pointer; line-height: 1.4; color: var(--text-muted); }
+        .checkbox-label input[type="checkbox"] { margin-top: 0.2rem; width: 1.1rem; height: 1.1rem; accent-color: var(--accent); cursor: pointer; }
         .radio-group { display: flex; gap: 1rem; flex-wrap: wrap; }
         .radio-option {
             display: flex; align-items: center; gap: 0.5rem;
@@ -534,9 +537,18 @@
                 <div class="section-num">11</div>
                 <div><h2>Data Consent</h2></div>
             </div>
-            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.6; margin-bottom:1.6rem;">
-                I hereby give my consent for the contact information provided on this form to be held on computer or other relevant filing systems and to be shared with other accredited organisations or agencies for recruitment opportunities.
-            </p>
+            
+            <div class="checkbox-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="consentAccurate">
+                    <span>I confirm the information provided is accurate <span class="req">*</span></span>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="consentRecruitment">
+                    <span>I understand my personal data will be used for recruitment purposes <span class="req">*</span></span>
+                </label>
+            </div>
+
             <div class="form-grid" style="margin-bottom:1.2rem;">
                 <div class="form-group"><label>Applicant Name <span class="req">*</span></label><input type="text" id="consentName" placeholder="Your full name"></div>
                 <div class="form-group"><label>Date <span class="req">*</span></label><input type="date" id="consentDate"></div>
@@ -949,8 +961,12 @@
         const qualifications  = document.getElementById('qualifications').value.trim();
         const declarationName = document.getElementById('declarationName').value.trim();
         const declarationDate = document.getElementById('declarationDate').value;
-        const consentName     = document.getElementById('consentName').value.trim();
-        const consentDate     = document.getElementById('consentDate').value;
+        
+        // Consent Fields
+        const consentAccurate    = document.getElementById('consentAccurate').checked;
+        const consentRecruitment = document.getElementById('consentRecruitment').checked;
+        const consentName        = document.getElementById('consentName').value.trim();
+        const consentDate        = document.getElementById('consentDate').value;
 
         const missing = [];
         if (!position)        missing.push('Position Applied For');
@@ -969,6 +985,8 @@
         if (!cvFile.files[0]) missing.push('CV upload');
         if (!declarationName) missing.push('Declaration name');
         if (!declarationDate) missing.push('Declaration date');
+        if (!consentAccurate) missing.push('Information accuracy confirmation');
+        if (!consentRecruitment) missing.push('Recruitment data consent');
         if (!consentName)     missing.push('Consent name');
         if (!consentDate)     missing.push('Consent date');
         if (isCanvasBlank(document.getElementById('sigCanvas1'))) missing.push('Declaration signature');
@@ -1006,12 +1024,10 @@
             // Collect certificate data
             const dlYesBtnSelected = document.getElementById('yn-dl-yes').classList.contains('selected-yes');
             const dlNoBtnSelected  = document.getElementById('yn-dl-no').classList.contains('selected-no');
-            // FIX: Use null instead of undefined for Firestore support
             const dlConfirmed = dlYesBtnSelected ? true : dlNoBtnSelected ? false : null;
             
             const euYesBtnSelected = document.getElementById('yn-eusr-yes').classList.contains('selected-yes');
             const euNoBtnSelected  = document.getElementById('yn-eusr-no').classList.contains('selected-no');
-            // FIX: Use null instead of undefined
             const euHas = euYesBtnSelected ? true : euNoBtnSelected ? false : null;
 
             const additionalCerts = [];
@@ -1057,12 +1073,17 @@
                 workPermit,
                 qualifications,
                 cv: { data: cvBase64, filename: cvName, type: cvType },
-                // FIX: Only upload the certificates payload if it was actually required
                 certificates: position === 'Smart Meter Engineer' ? certificates : null,
                 employment,
                 unavailability,
                 declaration: { name: declarationName, date: declarationDate, signature: sig1 },
-                consent:     { name: consentName,     date: consentDate,     signature: sig2 }
+                consent:     { 
+                    name: consentName, 
+                    date: consentDate, 
+                    signature: sig2,
+                    accurateConfirmed: consentAccurate,
+                    recruitmentConsent: consentRecruitment
+                }
             });
 
             const emailData = { forename, surname, email, phone, position };
