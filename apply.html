@@ -158,7 +158,7 @@
             border-radius: 12px; padding: 1.4rem 1.6rem; color: #fcd34d; font-size: 0.92rem; line-height: 1.6;
         }
 
-        /* ── Certificates styles (from engineer portal) ── */
+        /* ── Certificates styles ── */
         .cert-section-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin: 1.4rem 0 0.8rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
         .cert-section-label.mandatory { color: #f87171; border-color: rgba(248,113,113,0.3); }
         .cert-section-label.desirable { color: #60a5fa; border-color: rgba(96,165,250,0.3); }
@@ -1006,9 +1006,12 @@
             // Collect certificate data
             const dlYesBtnSelected = document.getElementById('yn-dl-yes').classList.contains('selected-yes');
             const dlNoBtnSelected  = document.getElementById('yn-dl-no').classList.contains('selected-no');
-            const dlConfirmed = dlYesBtnSelected ? true : dlNoBtnSelected ? false : undefined;
+            // FIX: Use null instead of undefined for Firestore support
+            const dlConfirmed = dlYesBtnSelected ? true : dlNoBtnSelected ? false : null;
+            
             const euYesBtnSelected = document.getElementById('yn-eusr-yes').classList.contains('selected-yes');
             const euNoBtnSelected  = document.getElementById('yn-eusr-no').classList.contains('selected-no');
+            // FIX: Use null instead of undefined
             const euHas = euYesBtnSelected ? true : euNoBtnSelected ? false : null;
 
             const additionalCerts = [];
@@ -1054,7 +1057,8 @@
                 workPermit,
                 qualifications,
                 cv: { data: cvBase64, filename: cvName, type: cvType },
-                certificates,
+                // FIX: Only upload the certificates payload if it was actually required
+                certificates: position === 'Smart Meter Engineer' ? certificates : null,
                 employment,
                 unavailability,
                 declaration: { name: declarationName, date: declarationDate, signature: sig1 },
