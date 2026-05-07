@@ -37,6 +37,7 @@
             --secondary-text: #8899a6;
             --accent-color: #00d4ff; 
             --success-color: #2ecc71;
+            --danger-color: #ef4444;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -195,6 +196,8 @@
             padding: 20px;
             border-top: 1px solid var(--panel-border);
             background-color: rgba(255,255,255,0.02);
+            display: flex;
+            flex-direction: column;
         }
 
         .footer-title {
@@ -210,6 +213,7 @@
             display: flex;
             flex-direction: column;
             gap: 12px;
+            margin-bottom: 20px;
         }
 
         /* Custom Checkbox Toggle */
@@ -249,6 +253,30 @@
         }
 
         .saving-indicator.show { opacity: 1; }
+
+        /* Close Vacancy Button */
+        .btn-close-vacancy {
+            width: 100%;
+            padding: 10px;
+            background-color: transparent;
+            border: 1px solid var(--danger-color);
+            color: var(--danger-color);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-close-vacancy:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
 
         @media (max-width: 768px) {
             .page-header { flex-direction: column; text-align: center; justify-content: center;}
@@ -432,6 +460,10 @@
                     <div class="advert-toggles">
                         ${advertHtml}
                     </div>
+                    <button class="btn-close-vacancy" onclick="closeVacancy('${reqId}')">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        Close Vacancy
+                    </button>
                 </div>
             </div>
         `;
@@ -470,6 +502,26 @@
                 indicator.classList.remove('show'); 
                 indicator.style.color = 'var(--accent-color)';
             }, 3000);
+        }
+    }
+
+    // Function to Close / Archive a Vacancy
+    async function closeVacancy(reqId) {
+        const confirmClose = confirm("Are you sure you want to close this vacancy? This will archive the role and remove it from the live board.");
+        
+        if (!confirmClose) return;
+
+        try {
+            // Setting workflowClosed to true removes it from the onSnapshot query automatically
+            await db.collection(collectionName).doc(reqId).update({
+                workflowClosed: true,
+                vacancyClosedAt: new Date().toISOString(),
+                vacancyClosedBy: localStorage.getItem('ngu_portal_username') || 'Unknown User'
+            });
+            // No UI update needed here because the onSnapshot listener will immediately re-render the grid
+        } catch (error) {
+            console.error("Error closing vacancy: ", error);
+            alert("Failed to close vacancy. Please check your connection and try again.");
         }
     }
 </script>
