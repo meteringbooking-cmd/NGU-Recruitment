@@ -5,13 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Vacancies Board - NGU Portal</title>
     
-    <!-- 
-      --- PROTOTYPE SECURITY SCRIPT ---
-    -->
     <script>
         (function() {
             const username = localStorage.getItem('ngu_portal_username');
-            // Assuming managers or specific recruiters access this. You can change this key.
             const hasAccess = localStorage.getItem('ngu_portal_access_management'); 
 
             if (!username) {
@@ -28,8 +24,7 @@
     
     <style>
         :root {
-            /* Shared NGU Dark Theme */
-            --body-bg: #141d26;
+            var(--body-bg): #141d26;
             --container-bg: #1c2938;
             --input-bg: #2d3d50;
             --panel-border: #38444d;
@@ -44,7 +39,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--body-bg);
+            background-color: #141d26;
             color: var(--primary-text);
             line-height: 1.6;
             padding: 20px;
@@ -55,7 +50,6 @@
             margin: 0 auto;
         }
 
-        /* Header Styling */
         .page-header {
             background-color: var(--container-bg);
             padding: 20px 30px;
@@ -121,14 +115,12 @@
             max-width: 800px; margin: 0 auto;
         }
 
-        /* Vacancy Grid */
         .vacancy-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 25px;
         }
 
-        /* Vacancy Card */
         .vacancy-card {
             background-color: var(--container-bg);
             border: 1px solid var(--panel-border);
@@ -150,6 +142,7 @@
             padding: 20px;
             border-bottom: 1px solid var(--panel-border);
             background-color: rgba(0,0,0,0.1);
+            position: relative;
         }
 
         .card-title {
@@ -157,6 +150,7 @@
             color: var(--accent-color);
             font-weight: 700;
             margin-bottom: 5px;
+            padding-right: 40px;
         }
 
         .card-dept {
@@ -191,7 +185,6 @@
 
         .full-width { grid-column: 1 / -1; }
 
-        /* Advert Action Section */
         .card-footer {
             padding: 20px;
             border-top: 1px solid var(--panel-border);
@@ -216,7 +209,6 @@
             margin-bottom: 20px;
         }
 
-        /* Custom Checkbox Toggle */
         .toggle-row {
             display: flex;
             align-items: center;
@@ -237,7 +229,6 @@
             gap: 10px;
         }
 
-        /* Checkbox Styling */
         input[type="checkbox"] {
             width: 18px;
             height: 18px;
@@ -254,7 +245,6 @@
 
         .saving-indicator.show { opacity: 1; }
 
-        /* Close Vacancy Button */
         .btn-close-vacancy {
             width: 100%;
             padding: 10px;
@@ -278,6 +268,26 @@
             background-color: rgba(239, 68, 68, 0.1);
         }
 
+        /* Applicant Counter Badge */
+        .applicant-badge {
+            background-color: rgba(46, 204, 113, 0.15);
+            color: var(--success-color);
+            border: 1px solid rgba(46, 204, 113, 0.4);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .applicant-badge.empty {
+            background-color: rgba(136, 153, 166, 0.1);
+            color: var(--secondary-text);
+            border-color: rgba(136, 153, 166, 0.3);
+        }
+
         @media (max-width: 768px) {
             .page-header { flex-direction: column; text-align: center; justify-content: center;}
             .header-brand-container { flex-direction: column; }
@@ -290,7 +300,7 @@
 <div class="main-container">
     <header class="page-header">
         <div class="header-brand-container">
-            <a href="recruit-approval-form-display.html" class="btn-link">← Workflow Manager</a>
+            <a href="workflow-manager.html" class="btn-link">← Workflow Manager</a>
             <div class="header-brand">
                 <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
                 <h1>Live Vacancies Board</h1>
@@ -305,7 +315,6 @@
     </div>
 </div>
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
@@ -323,180 +332,195 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const collectionName = "NGU Recuitment Approval Form";
+    const appsCollection = "NGUO New Applicants";
 
     const gridContainer = document.getElementById('vacancy-grid');
     const statusMsg = document.getElementById('status-message');
 
-    // Helper to format standard strings
+    let activeVacancies = [];
+    let allApplications = [];
+
     const safeStr = (val) => val || 'Not specified';
 
-    // Format DD/MM/YYYY date strings nicely
     const formatDate = (dateString) => {
         if (!dateString) return 'Not specified';
         const d = new Date(dateString);
-        if (isNaN(d.getTime())) return dateString; // Fallback if format is weird
+        if (isNaN(d.getTime())) return dateString; 
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
-    // Listen to active workflows
+    // Helper to extract the first continuous letters from a postcode (e.g. "NE1 4AB" -> "NE")
+    function getPostcodePrefix(str) {
+        if (!str) return '';
+        const match = str.trim().match(/^[A-Z]+/i);
+        return match ? match[0].toUpperCase() : '';
+    }
+
+    // 1. Listen to Applications to get live counts
+    db.collection(appsCollection).onSnapshot((snapshot) => {
+        allApplications = [];
+        snapshot.forEach(doc => {
+            allApplications.push(doc.data());
+        });
+        renderGrid(); // Re-render grid when apps update
+    });
+
+    // 2. Listen to active workflows (Vacancies)
     db.collection(collectionName)
       .where('workflowClosed', '==', false)
       .onSnapshot((snapshot) => {
-          
-          gridContainer.innerHTML = '';
-          let liveCount = 0;
-
+          activeVacancies = [];
           snapshot.forEach(doc => {
               const data = doc.data();
               const approvals = data.approvalSignOff || {};
               
-              // 1. Check if all 3 are approved
               const isLive = approvals.departmentHead?.decision === 'Approve' &&
                              approvals.finance?.decision === 'Approve' &&
                              approvals.finalApprover?.decision === 'Approve';
 
               if (isLive) {
-                  liveCount++;
-                  renderVacancyCard(doc.id, data);
+                  activeVacancies.push({ id: doc.id, ...data });
               }
           });
-
-          if (liveCount === 0) {
-              statusMsg.textContent = "No fully approved live vacancies found.";
-              statusMsg.style.display = 'block';
-              gridContainer.style.display = 'none';
-          } else {
-              statusMsg.style.display = 'none';
-              gridContainer.style.display = 'grid';
-          }
+          renderGrid(); // Re-render grid when vacancies update
       }, (error) => {
           console.error("Error fetching live vacancies: ", error);
           statusMsg.innerHTML = `<span style="color:var(--danger-color)">Error loading data. Check console.</span>`;
       });
 
-    // Render an individual card
-    function renderVacancyCard(reqId, data) {
-        // Extract basic details
-        const jobTitle = safeStr(data.requestInformation?.jobTitle);
-        const dept = safeStr(data.requestInformation?.department);
-        const location = safeStr(data.requestInformation?.location);
-        
-        // Find Approval Date (Prefer finalOutcome date, fallback to Final Approver date)
-        const dateApproved = data.finalOutcome?.dateApproved || data.approvalSignOff?.finalApprover?.date;
-        const desiredStart = data.recruitmentRequirements?.desiredStartDate;
+    // Main Render Function
+    function renderGrid() {
+        gridContainer.innerHTML = '';
 
-        // Extract Advert Requirements
-        const externalReq = data.recruitmentRequirements?.externalAdvertRequired === 'Yes';
-        const internalReq = data.recruitmentRequirements?.internalAdvertRequired === 'Yes';
+        if (activeVacancies.length === 0) {
+            statusMsg.textContent = "No fully approved live vacancies found.";
+            statusMsg.style.display = 'block';
+            gridContainer.style.display = 'none';
+            return;
+        }
 
-        // Extract Current Saved State of Adverts (Default to false if doesn't exist)
-        const advertStatus = data.advertStatus || {};
-        const isLinkedinLive = advertStatus.linkedinLive || false;
-        const isIndeedLive = advertStatus.indeedLive || false;
-        const isInternalEmailSent = advertStatus.internalEmailSent || false;
+        statusMsg.style.display = 'none';
+        gridContainer.style.display = 'grid';
 
-        // Build Advert HTML dynamically based on requirements
-        let advertHtml = '';
-        
-        if (externalReq) {
-            advertHtml += `
-                <div class="toggle-row">
-                    <label>
-                        <input type="checkbox" onchange="updateAdvert(this, '${reqId}', 'linkedinLive')" ${isLinkedinLive ? 'checked' : ''}> 
-                        LinkedIn Advert Live
-                    </label>
-                    <span class="saving-indicator" id="save-ind-linkedinLive-${reqId}">Saved ✓</span>
-                </div>
-                <div class="toggle-row">
-                    <label>
-                        <input type="checkbox" onchange="updateAdvert(this, '${reqId}', 'indeedLive')" ${isIndeedLive ? 'checked' : ''}> 
-                        Indeed Advert Live
-                    </label>
-                    <span class="saving-indicator" id="save-ind-indeedLive-${reqId}">Saved ✓</span>
+        activeVacancies.forEach(vacancy => {
+            const jobTitle = safeStr(vacancy.requestInformation?.jobTitle);
+            const dept = safeStr(vacancy.requestInformation?.department);
+            const location = safeStr(vacancy.requestInformation?.location);
+            
+            // Calculate Matches
+            const vacPrefix = getPostcodePrefix(location);
+            let matchCount = 0;
+            
+            allApplications.forEach(app => {
+                const appPrefix = getPostcodePrefix(app.personalDetails?.postcode);
+                if (app.position === jobTitle && appPrefix === vacPrefix && vacPrefix !== '') {
+                    matchCount++;
+                }
+            });
+
+            const dateApproved = vacancy.finalOutcome?.dateApproved || vacancy.approvalSignOff?.finalApprover?.date;
+            const desiredStart = vacancy.recruitmentRequirements?.desiredStartDate;
+
+            const externalReq = vacancy.recruitmentRequirements?.externalAdvertRequired === 'Yes';
+            const internalReq = vacancy.recruitmentRequirements?.internalAdvertRequired === 'Yes';
+
+            const advertStatus = vacancy.advertStatus || {};
+            const isLinkedinLive = advertStatus.linkedinLive || false;
+            const isIndeedLive = advertStatus.indeedLive || false;
+            const isInternalEmailSent = advertStatus.internalEmailSent || false;
+
+            let advertHtml = '';
+            
+            if (externalReq) {
+                advertHtml += `
+                    <div class="toggle-row">
+                        <label><input type="checkbox" onchange="updateAdvert(this, '${vacancy.id}', 'linkedinLive')" ${isLinkedinLive ? 'checked' : ''}> LinkedIn Advert Live</label>
+                        <span class="saving-indicator" id="save-ind-linkedinLive-${vacancy.id}">Saved ✓</span>
+                    </div>
+                    <div class="toggle-row">
+                        <label><input type="checkbox" onchange="updateAdvert(this, '${vacancy.id}', 'indeedLive')" ${isIndeedLive ? 'checked' : ''}> Indeed Advert Live</label>
+                        <span class="saving-indicator" id="save-ind-indeedLive-${vacancy.id}">Saved ✓</span>
+                    </div>
+                `;
+            }
+
+            if (internalReq) {
+                advertHtml += `
+                    <div class="toggle-row">
+                        <label><input type="checkbox" onchange="updateAdvert(this, '${vacancy.id}', 'internalEmailSent')" ${isInternalEmailSent ? 'checked' : ''}> Internal Email Distributed</label>
+                        <span class="saving-indicator" id="save-ind-internalEmailSent-${vacancy.id}">Saved ✓</span>
+                    </div>
+                `;
+            }
+
+            if (!externalReq && !internalReq) {
+                advertHtml = `<div style="color: var(--secondary-text); font-size: 0.9em; font-style: italic;">No advertising required specified on form.</div>`;
+            }
+
+            // Determine badge styling based on count
+            const badgeClass = matchCount > 0 ? 'applicant-badge' : 'applicant-badge empty';
+            const badgeText = matchCount === 1 ? '1 Local Applicant Match' : `${matchCount} Local Applicant Matches`;
+            const badgeIcon = matchCount > 0 ? '📍 ' : '';
+
+            const cardHtml = `
+                <div class="vacancy-card" id="card-${vacancy.id}">
+                    <div class="card-header">
+                        <div class="card-title">${jobTitle}</div>
+                        <div class="card-dept">${dept}</div>
+                        <div class="${badgeClass}">${badgeIcon}${badgeText}</div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="info-block full-width">
+                            <label>Desired Location</label>
+                            <div class="value">${location}</div>
+                        </div>
+                        <div class="info-block">
+                            <label>Date Approved</label>
+                            <div class="value">${formatDate(dateApproved)}</div>
+                        </div>
+                        <div class="info-block">
+                            <label>Desired Start Date</label>
+                            <div class="value">${formatDate(desiredStart)}</div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="footer-title">Advert Tracking</div>
+                        <div class="advert-toggles">
+                            ${advertHtml}
+                        </div>
+                        <button class="btn-close-vacancy" onclick="closeVacancy('${vacancy.id}')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            Close Vacancy
+                        </button>
+                    </div>
                 </div>
             `;
-        }
-
-        if (internalReq) {
-            advertHtml += `
-                <div class="toggle-row">
-                    <label>
-                        <input type="checkbox" onchange="updateAdvert(this, '${reqId}', 'internalEmailSent')" ${isInternalEmailSent ? 'checked' : ''}> 
-                        Internal Email Distributed
-                    </label>
-                    <span class="saving-indicator" id="save-ind-internalEmailSent-${reqId}">Saved ✓</span>
-                </div>
-            `;
-        }
-
-        if (!externalReq && !internalReq) {
-            advertHtml = `<div style="color: var(--secondary-text); font-size: 0.9em; font-style: italic;">No advertising required specified on form.</div>`;
-        }
-
-        const cardHtml = `
-            <div class="vacancy-card" id="card-${reqId}">
-                <div class="card-header">
-                    <div class="card-title">${jobTitle}</div>
-                    <div class="card-dept">${dept}</div>
-                </div>
-                
-                <div class="card-body">
-                    <div class="info-block full-width">
-                        <label>Desired Location</label>
-                        <div class="value">${location}</div>
-                    </div>
-                    <div class="info-block">
-                        <label>Date Approved</label>
-                        <div class="value">${formatDate(dateApproved)}</div>
-                    </div>
-                    <div class="info-block">
-                        <label>Desired Start Date</label>
-                        <div class="value">${formatDate(desiredStart)}</div>
-                    </div>
-                </div>
-
-                <div class="card-footer">
-                    <div class="footer-title">Advert Tracking</div>
-                    <div class="advert-toggles">
-                        ${advertHtml}
-                    </div>
-                    <button class="btn-close-vacancy" onclick="closeVacancy('${reqId}')">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                        Close Vacancy
-                    </button>
-                </div>
-            </div>
-        `;
-
-        gridContainer.insertAdjacentHTML('beforeend', cardHtml);
+            gridContainer.insertAdjacentHTML('beforeend', cardHtml);
+        });
     }
 
-    // Auto-Save Function for Checkboxes
     async function updateAdvert(checkboxElement, reqId, fieldName) {
         const isChecked = checkboxElement.checked;
         const indicator = document.getElementById(`save-ind-${fieldName}-${reqId}`);
         
-        // Show saving feedback temporarily
         indicator.textContent = 'Saving...';
         indicator.classList.add('show');
 
         try {
-            // Using set with {merge: true} safely updates or creates the advertStatus map
             await db.collection(collectionName).doc(reqId).set({
                 advertStatus: {
                     [fieldName]: isChecked
                 }
             }, { merge: true });
 
-            // Show Success
             indicator.textContent = 'Saved ✓';
             setTimeout(() => { indicator.classList.remove('show'); }, 2000);
-
         } catch (error) {
             console.error("Error updating advert status: ", error);
             indicator.textContent = 'Error!';
             indicator.style.color = 'var(--danger-color)';
-            // Revert checkbox if it failed
             checkboxElement.checked = !isChecked; 
             setTimeout(() => { 
                 indicator.classList.remove('show'); 
@@ -505,20 +529,16 @@
         }
     }
 
-    // Function to Close / Archive a Vacancy
     async function closeVacancy(reqId) {
         const confirmClose = confirm("Are you sure you want to close this vacancy? This will archive the role and remove it from the live board.");
-        
         if (!confirmClose) return;
 
         try {
-            // Setting workflowClosed to true removes it from the onSnapshot query automatically
             await db.collection(collectionName).doc(reqId).update({
                 workflowClosed: true,
                 vacancyClosedAt: new Date().toISOString(),
                 vacancyClosedBy: localStorage.getItem('ngu_portal_username') || 'Unknown User'
             });
-            // No UI update needed here because the onSnapshot listener will immediately re-render the grid
         } catch (error) {
             console.error("Error closing vacancy: ", error);
             alert("Failed to close vacancy. Please check your connection and try again.");
