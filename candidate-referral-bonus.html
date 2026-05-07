@@ -289,7 +289,6 @@
     // EmailJS Setup
     const EMAILJS_SERVICE_ID = 'service_b3nh4bo';
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
-    const INTERNAL_NOTIFY_EMAIL = 'barry.dixon@next-gen.uk';
     
     // --- TEMPLATE ROUTING logic ---
     const TEMPLATE_MATCH = 'template_5f9epwr'; 
@@ -370,7 +369,7 @@
 
     window.clearSig = function() { 
         ctx.clearRect(0, 0, canvas.width, canvas.height); 
-    }
+    };
 
     function isCanvasBlank() { 
         const b = document.createElement('canvas'); 
@@ -475,17 +474,10 @@
                 hasLiveVacancyMatch: hasMatch // Good to track in DB
             });
 
-            // 4. Send Email Notification
+            // 4. Send Email Notification to Candidate
             await emailjs.send(EMAILJS_SERVICE_ID, templateToUse, {
-                to_email: INTERNAL_NOTIFY_EMAIL,
-                referrer_name: referrerName,
-                referral_name: referralName,
-                referral_phone: referralPhone,
-                referral_email: referralEmail,
-                referral_postcode: referralPostcode,
-                role: role,
-                match_status: hasMatch ? "Matched Live Vacancy" : "No Match Found",
-                submitted_at: new Date().toLocaleString('en-GB', { dateStyle: 'full', timeStyle: 'short' })
+                to_email: referralEmail,        
+                to_name: referralName,          
             });
 
             document.getElementById('formWrapper').style.display = 'none';
