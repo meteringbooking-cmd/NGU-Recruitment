@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         :root {
             --primary: #005EB8; --accent: #00A3E0;
@@ -282,8 +283,20 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, addDoc, serverTimestamp }
+    import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs }
         from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    // EmailJS Setup (Using your standard keys)
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo';
+    const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
+    const INTERNAL_NOTIFY_EMAIL = 'barry.dixon@next-gen.uk';
+    
+    // --> IMPORTANT: ADD YOUR EXISTING MATCHING TEMPLATE ID HERE <--
+    const TEMPLATE_MATCH = 'YOUR_ORIGINAL_TEMPLATE_ID'; 
+    // New Template for No-Match Scenarios
+    const TEMPLATE_NO_MATCH = 'template_4ryhvfl'; 
+
+    emailjs.init(EMAILJS_PUBLIC_KEY);
 
     // Firebase Initialization
     const firebaseConfig = {
@@ -313,10 +326,8 @@
     roleSelection.addEventListener('change', function() {
         const val = this.value;
         
-        // Show/Hide Upskill Note
         upskillNote.style.display = (val === 'Upskill (from gas to dual)') ? 'block' : 'none';
         
-        // Show/Hide Company Question for Smart Meter Engineer
         if (val === 'Smart Meter Engineer') {
             smartMeterCompanyGroup.classList.add('visible');
             smartMeterCompanyGroup.style.display = 'flex';
@@ -326,7 +337,6 @@
             document.getElementById('currentCompany').value = '';
         }
 
-        // Show/Hide Other Role Details
         if (val === 'Other') {
             otherRoleInfoGroup.classList.add('visible');
             otherRoleInfoGroup.style.display = 'flex';
@@ -371,6 +381,13 @@
 
     // Default Date to Today
     document.getElementById('declarationDate').valueAsDate = new Date();
+
+    // Helper to get Postcode Prefix
+    function getPostcodePrefix(str) {
+        if (!str) return '';
+        const match = str.trim().match(/^[A-Z]+/i);
+        return match ? match[0].toUpperCase() : '';
+    }
 
     // Submission Logic
     document.getElementById('submitBtn').addEventListener('click', async () => {
@@ -417,6 +434,33 @@
         try {
             const signatureBase64 = canvas.toDataURL('image/png');
 
+            // 1. Check for Live Vacancy Match
+            const prefix = getPostcodePrefix(referralPostcode);
+            let hasMatch = false;
+
+            const q = query(collection(db, "NGU Recuitment Approval Form"), where("workflowClosed", "==", false));
+            const snapshot = await getDocs(q);
+            
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const approvals = data.approvalSignOff || {};
+                const isLive = approvals.departmentHead?.decision === 'Approve' &&
+                               approvals.finance?.decision === 'Approve' &&
+                               approvals.finalApprover?.decision === 'Approve';
+                               
+                if (isLive) {
+                    const vacRole = data.requestInformation?.jobTitle;
+                    const vacLocation = data.requestInformation?.location;
+                    if (vacRole === role && getPostcodePrefix(vacLocation) === prefix && prefix !== '') {
+                        hasMatch = true;
+                    }
+                }
+            });
+
+            // 2. Determine which template to use
+            const templateToUse = hasMatch ? TEMPLATE_MATCH : TEMPLATE_NO_MATCH;
+
+            // 3. Save to Firestore
             await addDoc(colRef, {
                 submittedAt: serverTimestamp(),
                 referrerName,
@@ -428,7 +472,21 @@
                 currentCompany: role === 'Smart Meter Engineer' ? currentCompany : null,
                 otherRoleDetails: role === 'Other' ? otherRoleDetails : null,
                 declarationDate,
-                signature: signatureBase64
+                signature: signatureBase64,
+                hasLiveVacancyMatch: hasMatch // Good to track in DB
+            });
+
+            // 4. Send Email Notification
+            await emailjs.send(EMAILJS_SERVICE_ID, templateToUse, {
+                to_email: INTERNAL_NOTIFY_EMAIL,
+                referrer_name: referrerName,
+                referral_name: referralName,
+                referral_phone: referralPhone,
+                referral_email: referralEmail,
+                referral_postcode: referralPostcode,
+                role: role,
+                match_status: hasMatch ? "Matched Live Vacancy" : "No Match Found",
+                submitted_at: new Date().toLocaleString('en-GB', { dateStyle: 'full', timeStyle: 'short' })
             });
 
             document.getElementById('formWrapper').style.display = 'none';
