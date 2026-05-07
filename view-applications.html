@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>NGU — View Applications</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #005EB8; --accent: #00A3E0;
+            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
+            --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
+            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
+            --sidebar-width: 320px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        /* Layout */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-card);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: #111d31;
+        }
+        .logo { max-height: 40px; display: block; margin-bottom: 1rem; }
+        .sidebar-header h2 { font-size: 1.2rem; color: var(--accent); }
+        
+        .applicant-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        .applicant-item {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .applicant-item:hover, .applicant-item.active {
+            border-color: var(--accent);
+            background: rgba(0, 163, 224, 0.1);
+        }
+        .app-name { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.2rem; }
+        .app-pos { font-size: 0.85rem; color: var(--accent); margin-bottom: 0.4rem; }
+        .app-date { font-size: 0.75rem; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem 3rem;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%);
+        }
+        
+        /* Details View */
+        .empty-state {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+        }
+        .loading { text-align: center; padding: 2rem; color: var(--accent); font-weight: 600; }
+
+        .app-header { margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
+        .app-header h1 { font-size: 2.2rem; margin-bottom: 0.5rem; }
+        .app-header .badge { display: inline-block; background: rgba(0,163,224,0.15); color: var(--accent); padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem; }
+
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.8rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .section h3 { font-size: 1.2rem; color: var(--accent); margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem 2rem; }
+        .data-group { margin-bottom: 1rem; }
+        .data-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; font-weight: 600; }
+        .data-value { font-size: 1rem; color: var(--text-light); word-break: break-word; }
+        
+        .text-box { background: var(--bg-input); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); font-size: 0.9rem; white-space: pre-wrap; line-height: 1.5; }
+
+        /* Tables/Lists for Arrays */
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+        .data-table th, .data-table td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        .data-table th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; background: var(--bg-input); }
+
+        /* Files & Images */
+        .btn-download {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #6ee7b7; padding: 0.5rem 1rem; border-radius: 8px;
+            text-decoration: none; font-size: 0.85rem; font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-download:hover { background: rgba(16, 185, 129, 0.2); }
+        .signature-img { background: white; border-radius: 8px; padding: 0.5rem; max-width: 100%; height: auto; max-height: 120px; border: 2px solid var(--border); }
+        
+        .cert-list { display: flex; flex-direction: column; gap: 0.8rem; }
+        .cert-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-input); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border); }
+
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
+            <h2>Applicant Portal</h2>
+        </div>
+        <div class="applicant-list" id="applicantList">
+            <div class="loading">Loading applications...</div>
+        </div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+        <div class="empty-state">Select an application from the sidebar to view details.</div>
+    </main>
+
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, query, orderBy, getDocs } 
+        from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let applicationsData = [];
+
+    async function fetchApplications() {
+        try {
+            const q = query(collection(db, "NGUO New Applicants"), orderBy("submittedAt", "desc"));
+            const snapshot = await getDocs(q);
+            
+            applicationsData = [];
+            snapshot.forEach(doc => {
+                applicationsData.push({ id: doc.id, ...doc.data() });
+            });
+            
+            renderSidebar();
+        } catch (error) {
+            console.error("Error fetching documents: ", error);
+            document.getElementById('applicantList').innerHTML = `<div class="loading" style="color:var(--error);">Error loading data. Check console.</div>`;
+        }
+    }
+
+    function renderSidebar() {
+        const listEl = document.getElementById('applicantList');
+        listEl.innerHTML = '';
+
+        if (applicationsData.length === 0) {
+            listEl.innerHTML = '<div class="loading">No applications found.</div>';
+            return;
+        }
+
+        applicationsData.forEach((app, index) => {
+            let dateStr = 'Unknown Date';
+            if (app.submittedAt && app.submittedAt.toDate) {
+                dateStr = app.submittedAt.toDate().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+            }
+
+            const div = document.createElement('div');
+            div.className = 'applicant-item';
+            div.innerHTML = `
+                <div class="app-name">${app.fullName || 'Unnamed Applicant'}</div>
+                <div class="app-pos">${app.position || 'No Position Selected'}</div>
+                <div class="app-date">${dateStr}</div>
+            `;
+            div.onclick = () => {
+                document.querySelectorAll('.applicant-item').forEach(el => el.classList.remove('active'));
+                div.classList.add('active');
+                renderDetails(app);
+            };
+            listEl.appendChild(div);
+        });
+    }
+
+    function safeVal(val, defaultText = 'Not provided') {
+        return val ? val : `<span style="color:var(--text-muted)">${defaultText}</span>`;
+    }
+
+    function renderDetails(app) {
+        const mainEl = document.getElementById('mainContent');
+        const p = app.personalDetails || {};
+        const c = app.certificates || {};
+        
+        let cvHtml = app.cv && app.cv.data 
+            ? `<a href="${app.cv.data}" download="${app.cv.filename}" class="btn-download">📄 Download CV (${app.cv.filename})</a>`
+            : `<div class="text-box">No CV uploaded</div>`;
+
+        let certsHtml = '';
+        const certMap = [
+            { key: 'mocopa', label: 'MOCOPA' },
+            { key: 'gasl3', label: 'Level 3 Gas' },
+            { key: 'cmagas', label: 'CMA Gas' },
+            { key: 'higherskills', label: 'Higher Skills' }
+        ];
+
+        certMap.forEach(cert => {
+            if (c[cert.key] && c[cert.key].data) {
+                certsHtml += `<div class="cert-item">
+                    <div><strong>${cert.label}</strong><br><small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${c[cert.key].filename}</small></div>
+                    <a href="${c[cert.key].data}" download="${c[cert.key].filename}" class="btn-download">Download</a>
+                </div>`;
+            }
+        });
+
+        if (c.additional && c.additional.length > 0) {
+            c.additional.forEach(add => {
+                if(add.data) {
+                    certsHtml += `<div class="cert-item">
+                        <div><strong>${add.name}</strong><br><small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${add.filename}</small></div>
+                        <a href="${add.data}" download="${add.filename}" class="btn-download">Download</a>
+                    </div>`;
+                }
+            });
+        }
+
+        if(!certsHtml) certsHtml = `<div class="text-box">No file certificates uploaded</div>`;
+
+        let empHtml = '';
+        if (app.employment && app.employment.length > 0) {
+            empHtml = `<table class="data-table">
+                <thead><tr><th>Company</th><th>Position</th><th>Reason for Leaving</th></tr></thead>
+                <tbody>` + app.employment.map(e => `
+                    <tr>
+                        <td>${safeVal(e.company)}</td>
+                        <td>${safeVal(e.position)}</td>
+                        <td>${safeVal(e.reason)}</td>
+                    </tr>
+                `).join('') + `</tbody></table>`;
+        } else {
+            empHtml = `<div class="text-box">No employment history provided</div>`;
+        }
+
+        let unavailHtml = '';
+        if (app.unavailability && app.unavailability.length > 0) {
+            unavailHtml = `<table class="data-table">
+                <thead><tr><th>Date</th><th>Time</th></tr></thead>
+                <tbody>` + app.unavailability.map(u => `
+                    <tr><td>${safeVal(u.date)}</td><td>${safeVal(u.time)}</td></tr>
+                `).join('') + `</tbody></table>`;
+        } else {
+            unavailHtml = `<div class="text-box">No unavailable dates specified</div>`;
+        }
+
+        mainEl.innerHTML = `
+            <div class="app-header">
+                <h1>${app.fullName}</h1>
+                <div class="badge">${app.position}</div>
+            </div>
+
+            <div class="section">
+                <h3>Personal Details</h3>
+                <div class="grid-2">
+                    <div class="data-group"><div class="data-label">Title</div><div class="data-value">${safeVal(p.title)}</div></div>
+                    <div class="data-group"><div class="data-label">Email</div><div class="data-value"><a href="mailto:${p.email}" style="color:var(--accent)">${safeVal(p.email)}</a></div></div>
+                    <div class="data-group"><div class="data-label">Phone</div><div class="data-value">${safeVal(p.phone)}</div></div>
+                    <div class="data-group"><div class="data-label">Address</div><div class="data-value">${safeVal(p.address)}</div></div>
+                    <div class="data-group"><div class="data-label">Postcode</div><div class="data-value">${safeVal(p.postcode)}</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Background & Compliance</h3>
+                <div class="grid-2">
+                    <div class="data-group">
+                        <div class="data-label">Right to Work in UK</div>
+                        <div class="data-value">${app.workPermit === 'yes' ? 'Needs Permit' : 'Does Not Need Permit'}</div>
+                    </div>
+                    <div class="data-group">
+                        <div class="data-label">Criminal Convictions</div>
+                        <div class="data-value">${app.convictions === 'yes' ? '<span style="color:var(--error);font-weight:bold;">Yes</span>' : 'No'}</div>
+                    </div>
+                </div>
+                ${app.convictions === 'yes' ? `<div class="data-group" style="margin-top:1rem;"><div class="data-label">Conviction Details</div><div class="text-box">${safeVal(app.convictionsText)}</div></div>` : ''}
+            </div>
+
+            <div class="section">
+                <h3>Reasonable Adjustments</h3>
+                <div class="grid-2">
+                    <div class="data-group">
+                        <div class="data-label">Disability Adjustments</div>
+                        <div class="data-value">${app.reasonableAdjustments?.disability === 'yes' ? 'Requested' : 'None'}</div>
+                    </div>
+                    <div class="data-group">
+                        <div class="data-label">Medical Adjustments</div>
+                        <div class="data-value">${app.reasonableAdjustments?.medical === 'yes' ? 'Requested' : 'None'}</div>
+                    </div>
+                </div>
+                ${app.reasonableAdjustments?.disability === 'yes' ? `<div class="data-group" style="margin-top:1rem;"><div class="data-label">Disability Details</div><div class="text-box">${safeVal(app.reasonableAdjustments?.disabilityText)}</div></div>` : ''}
+                ${app.reasonableAdjustments?.medical === 'yes' ? `<div class="data-group" style="margin-top:1rem;"><div class="data-label">Medical Details</div><div class="text-box">${safeVal(app.reasonableAdjustments?.medicalText)}</div></div>` : ''}
+            </div>
+
+            <div class="section">
+                <h3>Qualifications & CV</h3>
+                <div class="data-group">
+                    <div class="data-label">Listed Qualifications</div>
+                    <div class="text-box">${safeVal(app.qualifications)}</div>
+                </div>
+                <div class="data-group" style="margin-top:1.5rem;">
+                    <div class="data-label">Curriculum Vitae</div>
+                    ${cvHtml}
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Certificates & Licences</h3>
+                <div class="grid-2" style="margin-bottom:1.5rem;">
+                    <div class="data-group">
+                        <div class="data-label">Driving Licence</div>
+                        <div class="data-value">${c.drivinglicence?.confirmed ? `Confirmed (Expires: ${c.drivinglicence?.expiry || 'N/A'})` : 'No / Not provided'}</div>
+                    </div>
+                    <div class="data-group">
+                        <div class="data-label">EUSR Card</div>
+                        <div class="data-value">${c.eusr?.has ? `Yes (No: ${c.eusr?.number || 'N/A'})` : 'No / Not provided'}</div>
+                    </div>
+                    <div class="data-group">
+                        <div class="data-label">Gas Safe Registration</div>
+                        <div class="data-value">${c.gassafe?.number ? c.gassafe.number : 'Not provided'}</div>
+                    </div>
+                </div>
+                <div class="data-label">Uploaded Certificate Files</div>
+                <div class="cert-list">
+                    ${certsHtml}
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>Employment History</h3>
+                ${empHtml}
+            </div>
+
+            <div class="section">
+                <h3>Interview Unavailability</h3>
+                ${unavailHtml}
+            </div>
+
+            <div class="section">
+                <h3>Signatures & Declarations</h3>
+                <div class="grid-2">
+                    <div class="data-group">
+                        <div class="data-label">Information Declaration</div>
+                        <div class="data-value" style="margin-bottom:0.5rem;"><strong>Name:</strong> ${safeVal(app.declaration?.name)}</div>
+                        <div class="data-value" style="margin-bottom:1rem;"><strong>Date:</strong> ${safeVal(app.declaration?.date)}</div>
+                        ${app.declaration?.signature ? `<img src="${app.declaration.signature}" class="signature-img">` : '<div class="text-box">No signature data</div>'}
+                    </div>
+                    <div class="data-group">
+                        <div class="data-label">Data Consent</div>
+                        <div class="data-value" style="margin-bottom:0.5rem;"><strong>Name:</strong> ${safeVal(app.consent?.name)}</div>
+                        <div class="data-value" style="margin-bottom:1rem;"><strong>Date:</strong> ${safeVal(app.consent?.date)}</div>
+                        ${app.consent?.signature ? `<img src="${app.consent.signature}" class="signature-img">` : '<div class="text-box">No signature data</div>'}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Initialize
+    fetchApplications();
+
+</script>
+</body>
+</html>
