@@ -42,6 +42,29 @@
         .logo { max-height: 40px; display: block; margin-bottom: 1rem; }
         .sidebar-header h2 { font-size: 1.2rem; color: var(--accent); }
         
+        /* Filter Section */
+        .filter-container {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.15);
+        }
+        .filter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-light);
+            cursor: pointer;
+            user-select: none;
+        }
+        .filter-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--success);
+            cursor: pointer;
+        }
+
         .applicant-list {
             flex: 1;
             overflow-y: auto;
@@ -62,7 +85,17 @@
             background: rgba(0, 163, 224, 0.1);
         }
         .app-name { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.2rem; }
-        .app-pos { font-size: 0.85rem; color: var(--accent); margin-bottom: 0.4rem; }
+        .app-pos { font-size: 0.85rem; color: var(--accent); margin-bottom: 0.2rem; }
+        .app-postcode { 
+            font-size: 0.75rem; 
+            color: var(--text-light); 
+            background: rgba(255,255,255,0.1); 
+            padding: 2px 6px; 
+            border-radius: 4px; 
+            display: inline-block; 
+            margin-bottom: 0.4rem;
+            letter-spacing: 0.05em;
+        }
         .app-date { font-size: 0.75rem; color: var(--text-muted); font-family: 'DM Mono', monospace; }
 
         /* Area Match Badge */
@@ -148,6 +181,15 @@
             <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
             <h2>Applicant Portal</h2>
         </div>
+        
+        <!-- Filter Toggle -->
+        <div class="filter-container">
+            <label class="filter-label">
+                <input type="checkbox" id="filterMatchesToggle">
+                Only show Area Matches
+            </label>
+        </div>
+
         <div class="applicant-list" id="applicantList">
             <div class="loading">Loading applications...</div>
         </div>
@@ -175,6 +217,13 @@
     const db = getFirestore(app);
     let applicationsData = [];
     let liveVacancies = [];
+    let showOnlyMatches = false;
+
+    // Listen for filter toggle
+    document.getElementById('filterMatchesToggle').addEventListener('change', (e) => {
+        showOnlyMatches = e.target.checked;
+        renderSidebar(); // Re-render list when toggled
+    });
 
     // Helper to extract the first continuous letters from a postcode (e.g. "NE1 4AB" -> "NE")
     function getPostcodePrefix(str) {
@@ -239,18 +288,27 @@
         const listEl = document.getElementById('applicantList');
         listEl.innerHTML = '';
 
-        if (applicationsData.length === 0) {
+        // Apply Filter if toggle is checked
+        let filteredApps = applicationsData;
+        if (showOnlyMatches) {
+            filteredApps = applicationsData.filter(app => {
+                const appPostcode = app.personalDetails?.postcode || '';
+                return isAreaMatch(app.position, appPostcode);
+            });
+        }
+
+        if (filteredApps.length === 0) {
             listEl.innerHTML = '<div class="loading">No applications found.</div>';
             return;
         }
 
-        applicationsData.forEach((app) => {
+        filteredApps.forEach((app) => {
             let dateStr = 'Unknown Date';
             if (app.submittedAt && app.submittedAt.toDate) {
                 dateStr = app.submittedAt.toDate().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
             }
 
-            const appPostcode = app.personalDetails?.postcode || '';
+            const appPostcode = app.personalDetails?.postcode || 'No Postcode';
             const matchStatus = isAreaMatch(app.position, appPostcode);
 
             const div = document.createElement('div');
@@ -258,6 +316,7 @@
             div.innerHTML = `
                 <div class="app-name">${app.fullName || 'Unnamed Applicant'}</div>
                 <div class="app-pos">${app.position || 'No Position Selected'}</div>
+                <div class="app-postcode">${appPostcode}</div><br>
                 <div class="app-date">${dateStr}</div>
                 ${matchStatus ? `<div class="match-badge">📍 Area Match</div>` : ''}
             `;
