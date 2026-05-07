@@ -421,7 +421,7 @@
     }
 </script>
 
-<!-- Firebase Script to check for NEW submissions (Last 24 Hours) -->
+<!-- Firebase Script to check for NEW submissions and handle clicks -->
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getFirestore, collection, query, where, getDocs, Timestamp } 
@@ -439,14 +439,36 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // Click listeners to dismiss badges immediately and save the "viewed" timestamp
+    document.getElementById('card-applications').addEventListener('click', () => {
+        document.getElementById('badge-applications').style.display = 'none';
+        localStorage.setItem('apps_last_viewed', Date.now().toString());
+    });
+
+    document.getElementById('card-referrals').addEventListener('click', () => {
+        document.getElementById('badge-referrals').style.display = 'none';
+        localStorage.setItem('refs_last_viewed', Date.now().toString());
+    });
+
     async function checkForNewSubmissions() {
+        // Base comparison: Submissions from the last 24 hours
         const yesterday = new Date();
         yesterday.setHours(yesterday.getHours() - 24);
-        const timestampYesterday = Timestamp.fromDate(yesterday);
+
+        // Fetch user's individual "last viewed" timestamps
+        const appsLastViewed = parseInt(localStorage.getItem('apps_last_viewed')) || 0;
+        const refsLastViewed = parseInt(localStorage.getItem('refs_last_viewed')) || 0;
+
+        // Determine the actual cutoff date (whichever is more recent: 24h ago OR the last viewed time)
+        const appsCompareDate = new Date(Math.max(yesterday.getTime(), appsLastViewed));
+        const refsCompareDate = new Date(Math.max(yesterday.getTime(), refsLastViewed));
+
+        const timestampApps = Timestamp.fromDate(appsCompareDate);
+        const timestampRefs = Timestamp.fromDate(refsCompareDate);
 
         // Check for New Applications
         try {
-            const appsQuery = query(collection(db, "NGUO New Applicants"), where("submittedAt", ">=", timestampYesterday));
+            const appsQuery = query(collection(db, "NGUO New Applicants"), where("submittedAt", ">", timestampApps));
             const appsSnapshot = await getDocs(appsQuery);
             if (!appsSnapshot.empty) {
                 document.getElementById('badge-applications').style.display = 'block';
@@ -457,7 +479,8 @@
 
         // Check for New Referrals 
         try {
-            const refQuery = query(collection(db, "NGUO Employee Referrals"), where("submittedAt", ">=", timestampYesterday));
+            // Updated collection name based on your referral script
+            const refQuery = query(collection(db, "NGU Referral submissions"), where("submittedAt", ">", timestampRefs));
             const refSnapshot = await getDocs(refQuery);
             if (!refSnapshot.empty) {
                 document.getElementById('badge-referrals').style.display = 'block';
