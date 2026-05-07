@@ -363,8 +363,8 @@
             </div>
         </div>
 
-        <!-- 7. CERTIFICATES -->
-        <div class="section">
+        <!-- 7. CERTIFICATES (HIDDEN BY DEFAULT) -->
+        <div class="section" id="certificatesSection" style="display: none;">
             <div class="section-header">
                 <div class="section-num">7</div>
                 <div><h2>Your Certificates</h2><p>Upload mandatory items and any desirable qualifications that apply to you</p></div>
@@ -609,6 +609,28 @@
         });
     }
 
+    /* ── Conditional Section Numbers ── */
+    function updateSectionNumbers() {
+        let count = 1;
+        document.querySelectorAll('.section').forEach(sec => {
+            if (sec.style.display !== 'none') {
+                const numEl = sec.querySelector('.section-num');
+                if (numEl) numEl.textContent = count++;
+            }
+        });
+    }
+
+    /* ── Position Dropdown Listener ── */
+    document.getElementById('position').addEventListener('change', function() {
+        const certSection = document.getElementById('certificatesSection');
+        if (this.value === 'Smart Meter Engineer') {
+            certSection.style.display = 'block';
+        } else {
+            certSection.style.display = 'none';
+        }
+        updateSectionNumbers();
+    });
+
     /* ── Vacancies ── */
     async function loadVacancies() {
         const select = document.getElementById('position');
@@ -674,6 +696,9 @@
             select.innerHTML = '<option value="" disabled selected>Select a position…</option>';
             ALL_JOBS.forEach(t => { const opt = document.createElement('option'); opt.value = t; opt.textContent = t; select.appendChild(opt); });
         }
+        
+        // Ensure numbering is correct on initial load
+        updateSectionNumbers();
     }
     loadVacancies();
 
@@ -740,7 +765,7 @@
         document.getElementById('dl-expiry-wrap').style.display = val ? 'block' : 'none';
         const badge = document.getElementById('badge-drivinglicence');
         if (val) { badge.textContent = 'Yes — add expiry'; badge.className = 'cert-badge ready'; }
-        else      { badge.textContent = 'No'; badge.className = 'cert-badge done'; document.getElementById('row-drivinglicence').classList.add('uploaded'); }
+        else     { badge.textContent = 'No'; badge.className = 'cert-badge done'; document.getElementById('row-drivinglicence').classList.add('uploaded'); }
     };
 
     window.setEUSRApp = function(val) {
@@ -749,7 +774,7 @@
         document.getElementById('eusr-number-wrap').style.display = val ? 'block' : 'none';
         const badge = document.getElementById('badge-eusr');
         if (val) { badge.textContent = 'Yes — add number'; badge.className = 'cert-badge ready'; }
-        else      { badge.textContent = 'N/A'; badge.className = 'cert-badge done'; document.getElementById('row-eusr').classList.add('uploaded'); }
+        else     { badge.textContent = 'N/A'; badge.className = 'cert-badge done'; document.getElementById('row-eusr').classList.add('uploaded'); }
     };
 
     // Gas Safe live badge update
