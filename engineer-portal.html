@@ -178,7 +178,7 @@
             
             <div class="offer-list">
                 <div class="offer-item"><span>Job Title</span><span id="offTitle"></span></div>
-                <div class="offer-item"><span>Salary</span><span id="offSalary" style="color: #6ee7b7;"></span></div>
+                <div class="offer-item"><span>Proposed Salary</span><span id="offSalary" style="color: #6ee7b7;"></span></div>
                 <div class="offer-item"><span>Hours</span><span id="offHours">Monday to Friday 8am to 5pm, 1 in 6 callout rota where applicable</span></div>
                 <div class="offer-item"><span>Proposed Start Date</span><span id="offStartDate"></span></div>
                 <div class="offer-item"><span>Location / Area</span><span id="offLocation"></span></div>
@@ -303,7 +303,8 @@
                 // If it matches title and Area, map it!
                 if (vTitle === safeAppPos && vArea === appArea) {
                     currentVacancy = {
-                        salary: data.requestInformation?.salary || 'TBC',
+                        // Look for proposedSalary first, fallback to standard salary
+                        salary: data.requestInformation?.proposedSalary || data.proposedSalary || data.requestInformation?.salary || 'TBC',
                         type: data.requestInformation?.vacancyType || 'Full-Time',
                         location: data.requestInformation?.location || 'TBC'
                     };
@@ -378,6 +379,10 @@
                 certHtml += `<div class="cert-item"><span class="cert-name">📄 ${cert.label}</span><span class="cert-status">Verified on File</span></div>`;
             }
         });
+
+        if (c.eusr && c.eusr.has) {
+            certHtml += `<div class="cert-item"><span class="cert-name">🪪 EUSR Card (No: ${c.eusr.number})</span><span class="cert-status">Verified on File</span></div>`;
+        }
 
         if (certHtml === '') certHtml = '<div style="color:var(--text-muted); font-style:italic;">No formal certificates uploaded during application.</div>';
         certContainer.innerHTML = certHtml;
