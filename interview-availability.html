@@ -41,7 +41,7 @@
         .form-group { margin-bottom: 1.5rem; }
         label { display: block; font-weight: 600; font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
         
-        input[type="date"], input[type="text"] {
+        input[type="date"], input[type="text"], input[type="email"] {
             width: 100%; padding: 0.9rem 1rem; background: var(--bg-input);
             border: 2px solid var(--border); border-radius: 10px; color: var(--text-light);
             font-size: 1rem; font-family: inherit; transition: all 0.2s; outline: none;
@@ -119,9 +119,19 @@
             <input type="hidden" id="selectedDate">
             <input type="hidden" id="selectedTime">
 
-            <div style="text-align: left; margin-bottom: 1.5rem;">
-                <label>Your Full Name</label>
+            <div style="text-align: left; margin-bottom: 1rem;">
+                <label>Your Full Name <span style="color:var(--accent);">*</span></label>
                 <input type="text" id="applicantName" placeholder="e.g. Jane Doe">
+            </div>
+            
+            <div style="text-align: left; margin-bottom: 1rem;">
+                <label>Email Address <span style="color:var(--accent);">*</span></label>
+                <input type="email" id="applicantEmail" placeholder="To receive your confirmation">
+            </div>
+            
+            <div style="text-align: left; margin-bottom: 1.5rem;">
+                <label>Position Applied For <span style="color:var(--accent);">*</span></label>
+                <input type="text" id="applicantPosition" placeholder="e.g. Smart Meter Engineer">
             </div>
 
             <button class="btn btn-primary" id="confirmBtn" onclick="submitBooking()">Confirm Interview</button>
@@ -133,10 +143,11 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getFirestore, collection, query, where, getDocs, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-    // --- INITIALIZE EMAILJS ---
+    // --- EMAILJS CONFIG ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
     const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_FTL_TEMPLATE = 'template_5cpb2mc';
+    const EMAILJS_APPLICANT_CONFIRM = 'template_xf6p7vc'; // New template
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
     const firebaseConfig = {
@@ -156,11 +167,9 @@
     const slotsGrid = document.getElementById('slotsGrid');
     const loadingStatus = document.getElementById('loadingStatus');
 
-    // Restrict past dates
     const today = new Date().toISOString().split('T')[0];
     datePicker.setAttribute('min', today);
 
-    // Generate 30-min slots from 08:00 to 17:30
     const timeSlots = [];
     for (let h = 8; h <= 17; h++) {
         timeSlots.push(`${String(h).padStart(2, '0')}:00`);
@@ -171,7 +180,6 @@
         const selectedDate = e.target.value;
         if (!selectedDate) return;
 
-        // Block Weekends
         const day = new Date(selectedDate).getDay();
         if (day === 0 || day === 6) {
             alert("Please select a weekday (Monday - Friday).");
@@ -185,7 +193,6 @@
         loadingStatus.textContent = 'Checking availability...';
 
         try {
-            // Fetch booked slots for this exact date
             const q = query(collection(db, "NGU Interview Times"), where("date", "==", selectedDate));
             const snapshot = await getDocs(q);
             
@@ -213,7 +220,6 @@
             if (timeSlots.every(t => bookedTimes.has(t))) {
                 loadingStatus.textContent = 'No slots available on this date.';
             }
-
         } catch (error) {
             console.error("Error fetching slots:", error);
             loadingStatus.textContent = 'Error checking availability. Please try again.';
@@ -235,64 +241,83 @@
     window.closeModal = function() {
         document.getElementById('bookingModal').classList.remove('active');
         document.getElementById('applicantName').value = '';
+        document.getElementById('applicantEmail').value = '';
+        document.getElementById('applicantPosition').value = '';
     };
 
     window.submitBooking = async function() {
         const name = document.getElementById('applicantName').value.trim();
+        const email = document.getElementById('applicantEmail').value.trim();
+        const position = document.getElementById('applicantPosition').value.trim();
         const date = document.getElementById('selectedDate').value;
         const time = document.getElementById('selectedTime').value;
         const btn = document.getElementById('confirmBtn');
 
-        if (!name) return alert("Please enter your full name.");
+        if (!name || !email || !position) return alert("Please complete all fields.");
 
         btn.disabled = true;
         btn.textContent = 'Booking...';
 
         try {
-            // Document ID structure guarantees mathematical lock against double-booking
             const docId = `${date}_${time}`; 
             const docRef = doc(db, "NGU Interview Times", docId);
 
-            // Double Check no one stole it while they were typing their name
             const existingDoc = await getDocs(query(collection(db, "NGU Interview Times"), where("date", "==", date), where("time", "==", time)));
             if (!existingDoc.empty) {
                 alert("Sorry! Someone just booked this slot. Please select another time.");
                 closeModal();
-                datePicker.dispatchEvent(new Event('change')); // Refresh grid
+                datePicker.dispatchEvent(new Event('change'));
                 return;
             }
 
-            // Save to Firebase
             await setDoc(docRef, {
                 date: date,
                 time: time,
                 applicantName: name,
+                applicantEmail: email,
+                position: position,
                 status: "Booked",
                 interviewer: null,
-                bookedAt: serverTimestamp()
+                bookedAt: serverTimestamp(),
+                applicantReminderSent: false,
+                unclaimedReminderLevel: 0
             });
 
-            // Format date nicely for the email & success screen
             const displayDate = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            const firstName = name.split(' ')[0];
 
-            // Send silent EmailJS notification to FTLs
-            const emailParams = {
+            // 1. Send Confirmation to Applicant
+            const applicantParams = {
+                to_email: email,
+                first_name: firstName,
+                job_title: position,
+                interview_date: displayDate,
+                interview_time: time,
+                location_method: 'Microsoft Teams',
+                meeting_link: 'A link will be provided by your interviewer shortly',
+                duration: '30',
+                interviewer_name: 'a member of our team',
+                contact_email: 'recruitment@next-gen.uk'
+            };
+
+            // 2. Send Alert to FTLs
+            const ftlParams = {
                 applicant_name: name,
                 interview_date: displayDate,
                 interview_time: time,
-                portal_link: window.location.origin + "/FTL-interview-availability.html" // Generates relative link automatically
+                portal_link: window.location.origin + "/FTL-interview-availability.html"
             };
 
-            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_TEMPLATE, emailParams)
-                .then(() => console.log("FTL Notification Sent!"))
-                .catch(err => console.error("FTL Notification Failed:", err));
+            await Promise.allSettled([
+                emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APPLICANT_CONFIRM, applicantParams),
+                emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_TEMPLATE, ftlParams)
+            ]);
 
-            // Show Success Screen
             closeModal();
             document.getElementById('bookingContainer').style.display = 'none';
             document.getElementById('successScreen').style.display = 'block';
             
-            document.getElementById('successMsg').innerHTML = `Your interview has been booked for <strong>${time}</strong> on <strong>${displayDate}</strong>.<br><br>We look forward to speaking with you, ${name}!`;
+            document.getElementById('successMsg').innerHTML = `Your interview has been booked for <strong>${time}</strong> on <strong>${displayDate}</strong>.<br><br>We look forward to speaking with you, ${firstName}!`;
 
         } catch (error) {
             console.error("Booking Error:", error);
