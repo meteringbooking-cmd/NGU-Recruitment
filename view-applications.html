@@ -182,6 +182,7 @@
     const EMAILJS_REJECT = 'template_un6lrqi';
     const EMAILJS_APPROVED = 'template_sp8n3pp';
     const EMAILJS_HOLD = 'template_l29dir8';
+    const EMAILJS_FTL_CALL = 'template_ehh2xt6'; // FTL Assigned Call Notification
 
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
@@ -213,11 +214,11 @@
     function generatePassword() {
         const words = ['apple', 'brave', 'crane', 'delta', 'eagle', 'flame', 'grape', 'heart', 'igloo', 'jumbo'];
         const word = words[Math.floor(Math.random() * words.length)];
-        const num = Math.floor(10 + Math.random() * 90); // Random 2 digits (10-99)
+        const num = Math.floor(10 + Math.random() * 90); 
         const symbols = ['!', '@', '#', '$', '%', '&', '*'];
         const sym = symbols[Math.floor(Math.random() * symbols.length)];
         const capWord = word.charAt(0).toUpperCase() + word.slice(1);
-        return `${capWord}${num}${sym}`; // e.g., Brave42!
+        return `${capWord}${num}${sym}`; 
     }
 
     // --- EVENT LISTENERS ---
@@ -230,7 +231,7 @@
         currentTab = tab;
         document.getElementById('tabActive').classList.toggle('active', tab === 'active');
         document.getElementById('tabArchived').classList.toggle('active', tab === 'archived');
-        selectedAppId = null; // Clear selection when switching tabs
+        selectedAppId = null; 
         document.getElementById('mainContent').innerHTML = '<div class="empty-state">Select an application from the sidebar to view details.</div>';
         renderSidebar();
     };
@@ -285,6 +286,39 @@
             if (updatedApp) renderDetails(updatedApp, isAreaMatch(updatedApp.position, updatedApp.personalDetails?.postcode), getPostcodeArea(updatedApp.personalDetails?.postcode));
         }
     });
+
+    function getNextWorkingDay8AM(dateObj) {
+        let d = new Date(dateObj);
+        d.setDate(d.getDate() + 1); 
+        if (d.getDay() === 6) d.setDate(d.getDate() + 2); 
+        if (d.getDay() === 0) d.setDate(d.getDate() + 1); 
+        d.setHours(8, 0, 0, 0); 
+        return d;
+    }
+
+    async function checkAndSendReminders(apps) {
+        const now = new Date();
+        for (const app of apps) {
+            const reviews = app.reviews || [];
+            if (reviews.length >= 2) continue; 
+            let reminderCount = app.reminderCount || 0;
+            if (reminderCount >= 3) continue; 
+            let baseDate = app.submittedAt?.toDate ? app.submittedAt.toDate() : new Date(app.submittedAt);
+            if (reminderCount > 0 && app.lastReminderDate) baseDate = new Date(app.lastReminderDate);
+            const targetReminderTime = getNextWorkingDay8AM(baseDate);
+
+            if (now >= targetReminderTime) {
+                try {
+                    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REMINDER_TEMPLATE, {
+                        applicant_name: app.fullName || 'Unknown', position: app.position || 'Unknown',
+                        wait_time: calculateWaitTime(app.submittedAt), url_link: window.location.href 
+                    });
+                    const appRef = doc(db, "NGUO New Applicants", app.id);
+                    await updateDoc(appRef, { reminderCount: reminderCount + 1, lastReminderDate: now.toISOString() });
+                } catch (e) { console.error("Failed to send automated reminder:", e); }
+            }
+        }
+    }
 
     // --- MODAL & REVIEW CONTROLS ---
     window.openReviewModal = function(appId) {
@@ -364,6 +398,7 @@
     window.handleRecDecisionChange = function() {
         const val = document.getElementById('finalRecDecision').value;
         document.getElementById('holdReasonDiv').style.display = val === 'Hold' ? 'block' : 'none';
+        document.getElementById('ftlAssignDiv').style.display = val === 'Approved' ? 'block' : 'none';
     };
 
     window.submitFinalDecision = async function(appId) {
@@ -371,9 +406,19 @@
         if (!decision) return alert("Please select a decision.");
 
         let holdReason = '';
+        let assignedFTL = '';
+        let ftlName = '';
+
         if (decision === 'Hold') {
             holdReason = document.getElementById('holdReasonSelect').value;
             if (!holdReason) return alert("Please select a reason for placing this on hold.");
+        }
+        
+        if (decision === 'Approved') {
+            const ftlSelect = document.getElementById('ftlAssignSelect');
+            assignedFTL = ftlSelect.value;
+            if (!assignedFTL) return alert("Please assign an FTL to call the candidate.");
+            ftlName = ftlSelect.options[ftlSelect.selectedIndex].text;
         }
 
         if (!confirm(`Are you sure you want to confirm this action: ${decision}?`)) return;
@@ -394,10 +439,12 @@
         };
 
         let templateId = '';
+        let triggerFtlEmail = false;
+
         if (decision === 'Approved') {
             templateId = EMAILJS_APPROVED;
             
-            // IT PROVISIONING - GENERATE CREDS
+            // IT PROVISIONING
             const newUsername = generateUsername(appData.fullName);
             const newPassword = generatePassword();
             const portalLink = 'https://ngu-recruitment-portal.vercel.app/engineer.portal.html';
@@ -405,10 +452,12 @@
             updates.portalUsername = newUsername;
             updates.portalPassword = newPassword;
             updates.portalLink = portalLink;
+            updates.assignedFTL = ftlName;
 
             emailParams.portal_link = portalLink;
             emailParams.username = newUsername;
             emailParams.password = newPassword;
+            triggerFtlEmail = true;
 
         } else if (decision === 'Rejected') {
             templateId = EMAILJS_REJECT;
@@ -422,9 +471,19 @@
             await updateDoc(doc(db, "NGUO New Applicants", appId), updates);
             await emailjs.send(EMAILJS_SERVICE_ID, templateId, emailParams);
             
-            alert(`Decision saved and email sent to ${appData.personalDetails?.email}`);
+            // Send FTL Notification
+            if (triggerFtlEmail) {
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_CALL, {
+                    ftl_email: assignedFTL,
+                    ftl_name: ftlName,
+                    applicant_name: appData.fullName || 'Applicant',
+                    applicant_phone: appData.personalDetails?.phone || 'Not provided',
+                    applicant_postcode: appData.personalDetails?.postcode || 'Not provided'
+                });
+            }
             
-            // If moved to archive, clear screen
+            alert(`Decision saved. Automated emails dispatched.`);
+            
             if (decision === 'Approved' || decision === 'Rejected') {
                 selectedAppId = null;
                 document.getElementById('mainContent').innerHTML = '<div class="empty-state">Applicant archived successfully.</div>';
@@ -440,6 +499,16 @@
     };
 
     window.submitPostHoldDecision = async function(appId, decision) {
+        let assignedFTL = '';
+        let ftlName = '';
+
+        if (decision === 'Approved') {
+            const ftlSelect = document.getElementById('postHoldFtlSelect');
+            assignedFTL = ftlSelect.value;
+            if (!assignedFTL) return alert("Please assign an FTL to call the candidate before offering the role.");
+            ftlName = ftlSelect.options[ftlSelect.selectedIndex].text;
+        }
+
         if (!confirm(`Are you sure you want to finalize this applicant as: ${decision}?`)) return;
 
         const appData = applicationsData.find(a => a.id === appId);
@@ -458,6 +527,8 @@
             job_title: appData.position || 'the role'
         };
 
+        let triggerFtlEmail = false;
+
         if (decision === 'Approved') {
             const newUsername = generateUsername(appData.fullName);
             const newPassword = generatePassword();
@@ -466,17 +537,29 @@
             updates.portalUsername = newUsername;
             updates.portalPassword = newPassword;
             updates.portalLink = portalLink;
+            updates.assignedFTL = ftlName;
 
             emailParams.portal_link = portalLink;
             emailParams.username = newUsername;
             emailParams.password = newPassword;
+            triggerFtlEmail = true;
         }
 
         try {
             await updateDoc(doc(db, "NGUO New Applicants", appId), updates);
             await emailjs.send(EMAILJS_SERVICE_ID, templateId, emailParams);
+            
+            if (triggerFtlEmail) {
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_CALL, {
+                    ftl_email: assignedFTL,
+                    ftl_name: ftlName,
+                    applicant_name: appData.fullName || 'Applicant',
+                    applicant_phone: appData.personalDetails?.phone || 'Not provided',
+                    applicant_postcode: appData.personalDetails?.postcode || 'Not provided'
+                });
+            }
 
-            alert(`Final outcome saved and email sent!`);
+            alert(`Final outcome saved. Automated emails dispatched.`);
             selectedAppId = null;
             document.getElementById('mainContent').innerHTML = '<div class="empty-state">Applicant archived successfully.</div>';
         } catch (error) { console.error("Error saving post-hold decision:", error); alert("Error processing decision."); }
@@ -664,9 +747,11 @@
                                 <option value="Rejected">Reject Candidate</option>
                             </select>
                         </div>
+
+                        <!-- HOLD REASON DROPDOWN -->
                         <div id="holdReasonDiv" style="display:none; margin-bottom: 1rem;">
-                            <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--accent);">Select Reason for Hold:</label>
-                            <select id="holdReasonSelect" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--accent); background:var(--bg-input); color:white; font-size:1rem; outline:none;">
+                            <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--warning);">Select Reason for Hold:</label>
+                            <select id="holdReasonSelect" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--warning); background:var(--bg-input); color:white; font-size:1rem; outline:none;">
                                 <option value="" disabled selected>Select internal reason...</option>
                                 <option value="Comparing final applicants">Comparing final applicants</option>
                                 <option value="Awaiting references">Awaiting references</option>
@@ -676,7 +761,20 @@
                                 <option value="Need additional checks">Need additional checks</option>
                             </select>
                         </div>
-                        <button class="btn-action-alt" style="width:100%; justify-content:center; padding:0.8rem;" onclick="submitFinalDecision('${app.id}')">Submit Decision & Trigger Email</button>
+
+                        <!-- FTL ASSIGN DROPDOWN (ONLY SHOWS IF APPROVED) -->
+                        <div id="ftlAssignDiv" style="display:none; margin-bottom: 1rem;">
+                            <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Assign an FTL to Call the Candidate:</label>
+                            <select id="ftlAssignSelect" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none;">
+                                <option value="" disabled selected>Select an FTL...</option>
+                                <option value="richard.wiecko@next-gen.uk">Richard Wiecko</option>
+                                <option value="scott.carson@next-gen.uk">Scott Carson</option>
+                                <option value="stuart.whyte@next-gen.uk">Stuart Whyte</option>
+                                <option value="tom.green@next-gen.uk">Tom Green</option>
+                            </select>
+                        </div>
+
+                        <button class="btn-action-alt" style="width:100%; justify-content:center; padding:0.8rem;" onclick="submitFinalDecision('${app.id}')">Submit Decision & Trigger Actions</button>
                     `;
                 } else if (app.finalRecruitmentDecision === 'Hold') {
                     const hc = app.holdChecklist || {};
@@ -698,14 +796,36 @@
                     `;
 
                     if (isAllChecked) {
-                        packResultsHtml += `<div style="display:flex; gap:10px;"><button class="btn-danger" style="flex:1;" onclick="submitPostHoldDecision('${app.id}', 'Rejected')">Reject</button><button class="btn-action" style="flex:2; font-size:1rem;" onclick="submitPostHoldDecision('${app.id}', 'Approved')">Approved to Offer</button></div>`;
+                        packResultsHtml += `
+                            <div id="postHoldFtlDiv" style="margin-bottom: 1rem;">
+                                <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Assign an FTL to Call the Candidate (Required for Offer):</label>
+                                <select id="postHoldFtlSelect" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none;">
+                                    <option value="" disabled selected>Select an FTL...</option>
+                                    <option value="richard.wiecko@next-gen.uk">Richard Wiecko</option>
+                                    <option value="scott.carson@next-gen.uk">Scott Carson</option>
+                                    <option value="stuart.whyte@next-gen.uk">Stuart Whyte</option>
+                                    <option value="tom.green@next-gen.uk">Tom Green</option>
+                                </select>
+                            </div>
+                            <div style="display:flex; gap:10px;">
+                                <button class="btn-danger" style="flex:1;" onclick="submitPostHoldDecision('${app.id}', 'Rejected')">Reject</button>
+                                <button class="btn-action" style="flex:2; font-size:1rem;" onclick="submitPostHoldDecision('${app.id}', 'Approved')">Approved to Offer</button>
+                            </div>
+                        `;
                     } else {
                         packResultsHtml += `<div style="text-align:center; color:var(--text-muted); font-size:0.9rem; font-style:italic;">Complete all tasks above to unlock final decisions.</div>`;
                     }
                 } else {
                     const finalColor = app.finalRecruitmentDecision === 'Approved' ? 'var(--success)' : 'var(--error)';
                     const finalIcon = app.finalRecruitmentDecision === 'Approved' ? '🎉' : '❌';
-                    packResultsHtml += `<div style="text-align:center; padding: 1rem;"><div style="font-size:2rem; margin-bottom:0.5rem;">${finalIcon}</div><div style="font-size:1.4rem; font-weight:800; color:${finalColor};">${app.finalRecruitmentDecision === 'Approved' ? 'Offer Sent' : 'Applicant Rejected'}</div><div style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;">Actioned by ${app.finalRecruitmentDecisionBy || 'System'}</div></div>`;
+                    packResultsHtml += `
+                        <div style="text-align:center; padding: 1rem;">
+                            <div style="font-size:2rem; margin-bottom:0.5rem;">${finalIcon}</div>
+                            <div style="font-size:1.4rem; font-weight:800; color:${finalColor};">${app.finalRecruitmentDecision === 'Approved' ? 'Offer Sent' : 'Applicant Rejected'}</div>
+                            <div style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;">Actioned by ${app.finalRecruitmentDecisionBy || 'System'}</div>
+                            ${app.assignedFTL ? `<div style="font-size:0.85rem; color:var(--accent); font-weight:bold; margin-top:0.5rem;">Assigned Call: ${app.assignedFTL}</div>` : ''}
+                        </div>
+                    `;
                 }
                 packResultsHtml += `</div>`;
             }
