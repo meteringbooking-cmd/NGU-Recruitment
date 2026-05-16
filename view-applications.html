@@ -27,6 +27,12 @@
         .logo { max-height: 40px; display: block; margin-bottom: 1rem; }
         .sidebar-header h2 { font-size: 1.2rem; color: var(--accent); }
         
+        /* SIDEBAR TABS */
+        .sidebar-tabs { display: flex; background: var(--bg-dark); border-bottom: 1px solid var(--border); }
+        .tab-btn { flex: 1; padding: 0.8rem; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); cursor: pointer; font-weight: 600; font-family: inherit; font-size: 0.9rem; transition: all 0.2s; }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(0, 163, 224, 0.05); }
+        .tab-btn:hover:not(.active) { color: var(--text-light); background: rgba(255,255,255,0.02); }
+
         .filter-container { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); background: rgba(0, 0, 0, 0.15); }
         .filter-label { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; font-weight: 600; color: var(--text-light); cursor: pointer; user-select: none; }
         .filter-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--success); cursor: pointer; }
@@ -42,16 +48,8 @@
         .wait-time { color: #fcd34d; font-weight: 700; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-family: 'Work Sans', sans-serif;}
         .match-badge { display: inline-block; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
 
-        /* PULSING AMBER ANIMATION */
-        .pulse-amber {
-            border-color: var(--warning) !important;
-            animation: pulseAmber 2s infinite;
-        }
-        @keyframes pulseAmber {
-            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); }
-            70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-        }
+        .pulse-amber { border-color: var(--warning) !important; animation: pulseAmber 2s infinite; }
+        @keyframes pulseAmber { 0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); } 70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); } 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); } }
 
         .main-content { flex: 1; overflow-y: auto; padding: 2rem 3rem; background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%); }
         .empty-state { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 1.2rem; }
@@ -148,6 +146,11 @@
             <h2>Applicant Portal</h2>
         </div>
         
+        <div class="sidebar-tabs">
+            <button id="tabActive" class="tab-btn active" onclick="switchTab('active')">Active</button>
+            <button id="tabArchived" class="tab-btn" onclick="switchTab('archived')">Archived</button>
+        </div>
+        
         <div class="filter-container">
             <label class="filter-label">
                 <input type="checkbox" id="filterMatchesToggle">
@@ -199,11 +202,38 @@
     let liveVacancies = [];
     let showOnlyMatches = false;
     let selectedAppId = null; 
+    let currentTab = 'active';
 
+    // --- IT PROVISIONING (GENERATORS) ---
+    function generateUsername(fullName) {
+        if (!fullName) return 'user' + Math.floor(1000 + Math.random() * 9000);
+        return fullName.toLowerCase().replace(/\s+/g, '.') + Math.floor(10 + Math.random() * 90);
+    }
+
+    function generatePassword() {
+        const words = ['apple', 'brave', 'crane', 'delta', 'eagle', 'flame', 'grape', 'heart', 'igloo', 'jumbo'];
+        const word = words[Math.floor(Math.random() * words.length)];
+        const num = Math.floor(10 + Math.random() * 90); // Random 2 digits (10-99)
+        const symbols = ['!', '@', '#', '$', '%', '&', '*'];
+        const sym = symbols[Math.floor(Math.random() * symbols.length)];
+        const capWord = word.charAt(0).toUpperCase() + word.slice(1);
+        return `${capWord}${num}${sym}`; // e.g., Brave42!
+    }
+
+    // --- EVENT LISTENERS ---
     document.getElementById('filterMatchesToggle').addEventListener('change', (e) => {
         showOnlyMatches = e.target.checked;
         renderSidebar(); 
     });
+
+    window.switchTab = function(tab) {
+        currentTab = tab;
+        document.getElementById('tabActive').classList.toggle('active', tab === 'active');
+        document.getElementById('tabArchived').classList.toggle('active', tab === 'archived');
+        selectedAppId = null; // Clear selection when switching tabs
+        document.getElementById('mainContent').innerHTML = '<div class="empty-state">Select an application from the sidebar to view details.</div>';
+        renderSidebar();
+    };
 
     function calculateWaitTime(submittedAt) {
         if (!submittedAt) return '0 Days 0 Hrs';
@@ -220,7 +250,7 @@
         return match ? match[0].toUpperCase() : '';
     }
 
-    // --- LIVE VACANCIES SYNC ---
+    // --- SYNC FUNCTIONS ---
     const qVac = query(collection(db, "NGU Recuitment Approval Form"), where("workflowClosed", "==", false));
     onSnapshot(qVac, (snapshot) => {
         liveVacancies = [];
@@ -228,96 +258,35 @@
             const data = doc.data();
             const approvals = data.approvalSignOff || {};
             if (approvals.departmentHead?.decision === 'Approve' && approvals.finance?.decision === 'Approve' && approvals.finalApprover?.decision === 'Approve') {
-                liveVacancies.push({ 
-                    jobTitle: data.requestInformation?.jobTitle || '', 
-                    locationArea: getPostcodeArea(data.requestInformation?.location) 
-                });
+                liveVacancies.push({ jobTitle: data.requestInformation?.jobTitle || '', locationArea: getPostcodeArea(data.requestInformation?.location) });
             }
         });
         renderSidebar();
     });
 
-    // --- INTERVIEWS SYNC ---
     const qInt = query(collection(db, "NGU Interview Times"));
     onSnapshot(qInt, (snapshot) => {
         interviewsData = [];
         snapshot.forEach(doc => interviewsData.push({ id: doc.id, ...doc.data() }));
         renderSidebar();
-        
         if (selectedAppId) {
             const updatedApp = applicationsData.find(a => a.id === selectedAppId);
-            if (updatedApp) {
-                const matchStatus = isAreaMatch(updatedApp.position, updatedApp.personalDetails?.postcode);
-                const appArea = getPostcodeArea(updatedApp.personalDetails?.postcode);
-                renderDetails(updatedApp, matchStatus, appArea);
-            }
+            if (updatedApp) renderDetails(updatedApp, isAreaMatch(updatedApp.position, updatedApp.personalDetails?.postcode), getPostcodeArea(updatedApp.personalDetails?.postcode));
         }
     });
 
-    // --- APPLICANTS SYNC ---
     const qApp = query(collection(db, "NGUO New Applicants"), orderBy("submittedAt", "desc"));
     onSnapshot(qApp, (snapshot) => {
         applicationsData = [];
         snapshot.forEach(doc => applicationsData.push({ id: doc.id, ...doc.data() }));
         renderSidebar();
-        
         if (selectedAppId) {
             const updatedApp = applicationsData.find(a => a.id === selectedAppId);
-            if (updatedApp) {
-                const matchStatus = isAreaMatch(updatedApp.position, updatedApp.personalDetails?.postcode);
-                const appArea = getPostcodeArea(updatedApp.personalDetails?.postcode);
-                renderDetails(updatedApp, matchStatus, appArea);
-            }
+            if (updatedApp) renderDetails(updatedApp, isAreaMatch(updatedApp.position, updatedApp.personalDetails?.postcode), getPostcodeArea(updatedApp.personalDetails?.postcode));
         }
-
-        checkAndSendReminders(applicationsData);
     });
 
-    function getNextWorkingDay8AM(dateObj) {
-        let d = new Date(dateObj);
-        d.setDate(d.getDate() + 1); 
-        if (d.getDay() === 6) d.setDate(d.getDate() + 2); 
-        if (d.getDay() === 0) d.setDate(d.getDate() + 1); 
-        d.setHours(8, 0, 0, 0); 
-        return d;
-    }
-
-    async function checkAndSendReminders(apps) {
-        const now = new Date();
-        for (const app of apps) {
-            const reviews = app.reviews || [];
-            if (reviews.length >= 2) continue; 
-
-            let reminderCount = app.reminderCount || 0;
-            if (reminderCount >= 3) continue; 
-
-            let baseDate = app.submittedAt?.toDate ? app.submittedAt.toDate() : new Date(app.submittedAt);
-            if (reminderCount > 0 && app.lastReminderDate) {
-                baseDate = new Date(app.lastReminderDate);
-            }
-
-            const targetReminderTime = getNextWorkingDay8AM(baseDate);
-
-            if (now >= targetReminderTime) {
-                try {
-                    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REMINDER_TEMPLATE, {
-                        applicant_name: app.fullName || 'Unknown',
-                        position: app.position || 'Unknown',
-                        wait_time: calculateWaitTime(app.submittedAt),
-                        url_link: window.location.href 
-                    });
-
-                    const appRef = doc(db, "NGUO New Applicants", app.id);
-                    await updateDoc(appRef, {
-                        reminderCount: reminderCount + 1,
-                        lastReminderDate: now.toISOString()
-                    });
-                } catch (e) { console.error("Failed to send automated reminder:", e); }
-            }
-        }
-    }
-
-    // --- MODAL CONTROLS ---
+    // --- MODAL & REVIEW CONTROLS ---
     window.openReviewModal = function(appId) {
         document.getElementById('reviewAppId').value = appId;
         document.getElementById('reviewerName').value = localStorage.getItem('ngu_portal_username') || '';
@@ -327,7 +296,6 @@
 
     window.closeReviewModal = function() {
         document.getElementById('reviewModal').classList.remove('active');
-        document.getElementById('reviewDecision').value = ''; 
     };
 
     window.submitReview = async function() {
@@ -336,10 +304,7 @@
         const decision = document.getElementById('reviewDecision').value;
         const submitBtn = document.getElementById('submitReviewBtn');
 
-        if (!adminName || !decision) {
-            alert("Please enter your name and make a decision.");
-            return;
-        }
+        if (!adminName || !decision) return alert("Please enter your name and make a decision.");
 
         submitBtn.disabled = true;
         submitBtn.textContent = 'Saving...';
@@ -352,39 +317,22 @@
                 const data = snap.data();
                 const reviews = data.reviews || [];
                 
-                if (reviews.length >= 2) {
-                    alert("This application has already been fully reviewed.");
-                    closeReviewModal();
-                    return;
-                }
-
-                if (reviews.some(r => r.name.toLowerCase() === adminName.toLowerCase())) {
-                    alert("You have already reviewed this application. The second review must be completed by a different person.");
-                    closeReviewModal();
-                    return;
-                }
+                if (reviews.length >= 2) { alert("This application has already been fully reviewed."); return closeReviewModal(); }
+                if (reviews.some(r => r.name.toLowerCase() === adminName.toLowerCase())) { alert("You have already reviewed this application."); return closeReviewModal(); }
 
                 reviews.push({ name: adminName, decision: decision, timestamp: new Date().toISOString() });
-
                 let updates = { reviews: reviews };
                 let triggerNameChecks = false;
 
                 if (reviews.length === 2) {
                     const bothProceed = reviews[0].decision === 'Proceed' && reviews[1].decision === 'Proceed';
-                    if (bothProceed && !data.nameChecksRequested) {
-                        triggerNameChecks = true;
-                        updates.nameChecksRequested = true;
-                    }
+                    if (bothProceed && !data.nameChecksRequested) { triggerNameChecks = true; updates.nameChecksRequested = true; }
                 }
 
                 await updateDoc(appRef, updates);
 
                 if (triggerNameChecks) {
-                    const emailParams = {
-                        applicant_name: data.fullName || 'Unknown',
-                        postcode: data.personalDetails?.postcode || 'No Postcode provided'
-                    };
-                    
+                    const emailParams = { applicant_name: data.fullName || 'Unknown', postcode: data.personalDetails?.postcode || 'No Postcode' };
                     Promise.allSettled([
                         emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INTERNAL_NAME_CHECK, emailParams),
                         emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, emailParams)
@@ -394,7 +342,7 @@
             }
         } catch (error) {
             console.error("Error saving review:", error);
-            alert("Error saving review. Please try again.");
+            alert("Error saving review.");
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Save Review';
@@ -406,27 +354,16 @@
         if (!adminName || adminName.trim() === "") return;
 
         try {
-            const appRef = doc(db, "NGUO New Applicants", appId);
-            await updateDoc(appRef, {
-                nameChecksCompleted: true,
-                nameChecksCompletedBy: adminName.trim(),
-                nameChecksCompletedAt: new Date().toISOString()
+            await updateDoc(doc(db, "NGUO New Applicants", appId), {
+                nameChecksCompleted: true, nameChecksCompletedBy: adminName.trim(), nameChecksCompletedAt: new Date().toISOString()
             });
-        } catch (error) {
-            console.error("Error saving name checks status:", error);
-            alert("Error saving status. Please try again.");
-        }
+        } catch (error) { alert("Error saving status."); }
     };
 
     // --- FINAL RECRUITMENT DECISION LOGIC ---
     window.handleRecDecisionChange = function() {
         const val = document.getElementById('finalRecDecision').value;
-        const holdDiv = document.getElementById('holdReasonDiv');
-        if (val === 'Hold') {
-            holdDiv.style.display = 'block';
-        } else {
-            holdDiv.style.display = 'none';
-        }
+        document.getElementById('holdReasonDiv').style.display = val === 'Hold' ? 'block' : 'none';
     };
 
     window.submitFinalDecision = async function(appId) {
@@ -450,48 +387,56 @@
             finalRecruitmentDecisionBy: localStorage.getItem('ngu_portal_username') || 'Recruiter'
         };
 
+        const emailParams = {
+            to_email: appData.personalDetails?.email,
+            first_name: firstName,
+            job_title: appData.position || 'the role'
+        };
+
         let templateId = '';
-        if (decision === 'Approved') templateId = EMAILJS_APPROVED;
-        if (decision === 'Rejected') templateId = EMAILJS_REJECT;
-        if (decision === 'Hold') {
+        if (decision === 'Approved') {
+            templateId = EMAILJS_APPROVED;
+            
+            // IT PROVISIONING - GENERATE CREDS
+            const newUsername = generateUsername(appData.fullName);
+            const newPassword = generatePassword();
+            const portalLink = 'https://ngu-recruitment-portal.vercel.app/engineer.portal.html';
+
+            updates.portalUsername = newUsername;
+            updates.portalPassword = newPassword;
+            updates.portalLink = portalLink;
+
+            emailParams.portal_link = portalLink;
+            emailParams.username = newUsername;
+            emailParams.password = newPassword;
+
+        } else if (decision === 'Rejected') {
+            templateId = EMAILJS_REJECT;
+        } else if (decision === 'Hold') {
             templateId = EMAILJS_HOLD;
             updates.holdReason = holdReason;
-            updates.holdChecklist = {
-                notes: false,
-                checks: false,
-                manager: false,
-                compare: false,
-                outcome: false
-            };
+            updates.holdChecklist = { notes: false, checks: false, manager: false, compare: false, outcome: false };
         }
 
         try {
             await updateDoc(doc(db, "NGUO New Applicants", appId), updates);
-
-            // Send Email
-            await emailjs.send(EMAILJS_SERVICE_ID, templateId, {
-                to_email: appData.personalDetails?.email,
-                first_name: firstName,
-                job_title: appData.position || 'the role'
-            });
-
+            await emailjs.send(EMAILJS_SERVICE_ID, templateId, emailParams);
+            
             alert(`Decision saved and email sent to ${appData.personalDetails?.email}`);
-        } catch (error) {
-            console.error("Error saving final decision:", error);
-            alert("Error processing decision.");
-        }
+            
+            // If moved to archive, clear screen
+            if (decision === 'Approved' || decision === 'Rejected') {
+                selectedAppId = null;
+                document.getElementById('mainContent').innerHTML = '<div class="empty-state">Applicant archived successfully.</div>';
+            }
+        } catch (error) { console.error("Error saving final decision:", error); alert("Error processing decision."); }
     };
 
     window.updateHoldChecklist = async function(appId, taskKey, isChecked) {
         try {
-            const appRef = doc(db, "NGUO New Applicants", appId);
-            const updateObj = {};
-            updateObj[`holdChecklist.${taskKey}`] = isChecked;
-            await updateDoc(appRef, updateObj);
-        } catch (error) {
-            console.error("Error updating checklist:", error);
-            alert("Failed to save checklist status.");
-        }
+            const updateObj = {}; updateObj[`holdChecklist.${taskKey}`] = isChecked;
+            await updateDoc(doc(db, "NGUO New Applicants", appId), updateObj);
+        } catch (error) { alert("Failed to save checklist status."); }
     };
 
     window.submitPostHoldDecision = async function(appId, decision) {
@@ -501,34 +446,47 @@
         const firstName = appData.fullName ? appData.fullName.split(' ')[0] : 'Applicant';
         const templateId = decision === 'Approved' ? EMAILJS_APPROVED : EMAILJS_REJECT;
 
-        try {
-            await updateDoc(doc(db, "NGUO New Applicants", appId), {
-                finalRecruitmentDecision: decision,
-                finalRecruitmentDecisionAt: new Date().toISOString(),
-                finalRecruitmentDecisionBy: localStorage.getItem('ngu_portal_username') || 'Recruiter'
-            });
+        const updates = {
+            finalRecruitmentDecision: decision,
+            finalRecruitmentDecisionAt: new Date().toISOString(),
+            finalRecruitmentDecisionBy: localStorage.getItem('ngu_portal_username') || 'Recruiter'
+        };
 
-            await emailjs.send(EMAILJS_SERVICE_ID, templateId, {
-                to_email: appData.personalDetails?.email,
-                first_name: firstName,
-                job_title: appData.position || 'the role'
-            });
+        const emailParams = {
+            to_email: appData.personalDetails?.email,
+            first_name: firstName,
+            job_title: appData.position || 'the role'
+        };
+
+        if (decision === 'Approved') {
+            const newUsername = generateUsername(appData.fullName);
+            const newPassword = generatePassword();
+            const portalLink = 'https://ngu-recruitment-portal.vercel.app/engineer.portal.html';
+
+            updates.portalUsername = newUsername;
+            updates.portalPassword = newPassword;
+            updates.portalLink = portalLink;
+
+            emailParams.portal_link = portalLink;
+            emailParams.username = newUsername;
+            emailParams.password = newPassword;
+        }
+
+        try {
+            await updateDoc(doc(db, "NGUO New Applicants", appId), updates);
+            await emailjs.send(EMAILJS_SERVICE_ID, templateId, emailParams);
 
             alert(`Final outcome saved and email sent!`);
-        } catch (error) {
-            console.error("Error saving post-hold decision:", error);
-            alert("Error processing decision.");
-        }
+            selectedAppId = null;
+            document.getElementById('mainContent').innerHTML = '<div class="empty-state">Applicant archived successfully.</div>';
+        } catch (error) { console.error("Error saving post-hold decision:", error); alert("Error processing decision."); }
     };
 
     function isAreaMatch(appPosition, appPostcode) {
         const appArea = getPostcodeArea(appPostcode);
         if (!appArea) return false;
         const safeAppPos = (appPosition || '').trim().toLowerCase();
-        return liveVacancies.some(v => {
-            const safeVacPos = (v.jobTitle || '').trim().toLowerCase();
-            return safeVacPos === safeAppPos && v.locationArea === appArea;
-        });
+        return liveVacancies.some(v => v.jobTitle?.trim().toLowerCase() === safeAppPos && v.locationArea === appArea);
     }
 
     function renderSidebar() {
@@ -536,53 +494,51 @@
         listEl.innerHTML = '';
 
         let filteredApps = applicationsData;
+
+        // Apply Matches Filter
         if (showOnlyMatches) {
-            filteredApps = applicationsData.filter(app => isAreaMatch(app.position, app.personalDetails?.postcode));
+            filteredApps = filteredApps.filter(app => isAreaMatch(app.position, app.personalDetails?.postcode));
+        }
+
+        // Apply Active vs Archive Filter
+        const isArchived = (app) => {
+            return app.finalRecruitmentDecision === 'Approved' || 
+                   app.finalRecruitmentDecision === 'Rejected' || 
+                   app.interviewDecision === 'Interview Rejected';
+        };
+
+        if (currentTab === 'active') {
+            filteredApps = filteredApps.filter(app => !isArchived(app));
+        } else {
+            filteredApps = filteredApps.filter(app => isArchived(app));
         }
 
         if (filteredApps.length === 0) {
-            listEl.innerHTML = '<div class="loading">No applications found.</div>';
+            listEl.innerHTML = `<div class="loading">No ${currentTab} applications found.</div>`;
             return;
         }
 
         filteredApps.forEach((app) => {
-            let dateStr = 'Unknown Date';
-            if (app.submittedAt && app.submittedAt.toDate) {
-                dateStr = app.submittedAt.toDate().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
-            }
+            let dateStr = app.submittedAt?.toDate ? app.submittedAt.toDate().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : 'Unknown Date';
 
             const waitTime = calculateWaitTime(app.submittedAt);
             const appPostcode = app.personalDetails?.postcode || 'No Postcode';
             const matchStatus = isAreaMatch(app.position, appPostcode);
             const appArea = getPostcodeArea(appPostcode);
             
-            // --- Determine Status Badge (Includes Interviews Logic) ---
             const appEmail = (app.personalDetails?.email || '').toLowerCase();
             const matchedInterview = interviewsData.find(i => i.applicantEmail?.toLowerCase() === appEmail);
 
-            const reviewsCount = app.reviews ? app.reviews.length : 0;
             let reviewStatus = `<span class="wait-time">⏱ ${waitTime}</span>`;
             let pulseClass = '';
             
-            if (reviewsCount >= 2) {
-                reviewStatus = `<span style="color:var(--success); font-weight:700;">✓ Reviewed</span>`;
-            }
+            if (app.reviews?.length >= 2) reviewStatus = `<span style="color:var(--success); font-weight:700;">✓ Reviewed</span>`;
 
-            // Override with Interview Status if booked
             if (matchedInterview) {
                 if (matchedInterview.interviewCompleted) {
                     const rec = matchedInterview.interviewData?.recommendation || 'Completed';
-                    
-                    // If recruitment hasn't fully approved/rejected yet, pulse!
-                    if (app.finalRecruitmentDecision !== 'Approved' && app.finalRecruitmentDecision !== 'Rejected') {
-                        pulseClass = 'pulse-amber';
-                    }
-
-                    // Style differently based on recommendation outcome
-                    let recColor = 'var(--success)';
-                    if (rec === 'Do Not Proceed') recColor = 'var(--error)';
-                    else if (rec.includes('Hold')) recColor = 'var(--warning)';
-                    
+                    if (app.finalRecruitmentDecision !== 'Approved' && app.finalRecruitmentDecision !== 'Rejected') pulseClass = 'pulse-amber';
+                    let recColor = rec === 'Do Not Proceed' ? 'var(--error)' : (rec.includes('Hold') ? 'var(--warning)' : 'var(--success)');
                     reviewStatus = `<span style="color:${recColor}; font-weight:800;">✅ ${rec}</span>`;
                 } else {
                     const displayDate = new Date(matchedInterview.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
@@ -590,8 +546,8 @@
                 }
             }
 
-            // Final Override if Recruitment has completely closed the file
-            if (app.finalRecruitmentDecision === 'Approved') reviewStatus = `<span style="color:var(--success); font-weight:800;">🎉 Offer Sent</span>`;
+            if (app.interviewDecision === 'Interview Rejected') reviewStatus = `<span style="color:var(--error); font-weight:800;">❌ Interview Rejected</span>`;
+            if (app.finalRecruitmentDecision === 'Approved') reviewStatus = `<span style="color:var(--success); font-weight:800;">🎉 Offer Accepted</span>`;
             if (app.finalRecruitmentDecision === 'Rejected') reviewStatus = `<span style="color:var(--error); font-weight:800;">❌ Rejected</span>`;
 
             const div = document.createElement('div');
@@ -602,10 +558,7 @@
                 <div class="app-name">${app.fullName || 'Unnamed Applicant'}</div>
                 <div class="app-pos">${app.position || 'No Position Selected'}</div>
                 <div class="app-postcode">${appPostcode}</div><br>
-                <div class="app-date">
-                    <span>${dateStr}</span>
-                    ${reviewStatus}
-                </div>
+                <div class="app-date"><span>${dateStr}</span>${reviewStatus}</div>
                 ${matchStatus ? `<div class="match-badge">📍 Area Match (${appArea})</div>` : ''}
             `;
             
@@ -625,120 +578,65 @@
         const mainEl = document.getElementById('mainContent');
         const p = app.personalDetails || {}; const c = app.certificates || {};
         
-        // Match interview by email
         const appEmail = (p.email || '').toLowerCase();
         const matchedInterview = interviewsData.find(i => i.applicantEmail?.toLowerCase() === appEmail);
 
-        let cvHtml = app.cv && app.cv.data 
-            ? `<a href="${app.cv.data}" download="${app.cv.filename}" class="btn-download">📄 Download CV (${app.cv.filename})</a>`
-            : `<div class="text-box">No CV uploaded</div>`;
+        let cvHtml = app.cv && app.cv.data ? `<a href="${app.cv.data}" download="${app.cv.filename}" class="btn-download">📄 Download CV (${app.cv.filename})</a>` : `<div class="text-box">No CV uploaded</div>`;
 
         let certsHtml = '';
-        [{ key: 'mocopa', label: 'MOCOPA' }, { key: 'gasl3', label: 'Level 3 Gas' }, { key: 'cmagas', label: 'CMA Gas' }, { key: 'higherskills', label: 'Higher Skills' }]
-        .forEach(cert => {
+        [{ key: 'mocopa', label: 'MOCOPA' }, { key: 'gasl3', label: 'Level 3 Gas' }, { key: 'cmagas', label: 'CMA Gas' }, { key: 'higherskills', label: 'Higher Skills' }].forEach(cert => {
             if (c[cert.key] && c[cert.key].data) certsHtml += `<div class="cert-item"><div><strong>${cert.label}</strong><br><small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${c[cert.key].filename}</small></div><a href="${c[cert.key].data}" download="${c[cert.key].filename}" class="btn-download">Download</a></div>`;
         });
         if (c.additional && c.additional.length > 0) {
-            c.additional.forEach(add => {
-                if(add.data) certsHtml += `<div class="cert-item"><div><strong>${add.name}</strong><br><small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${add.filename}</small></div><a href="${add.data}" download="${add.filename}" class="btn-download">Download</a></div>`;
-            });
+            c.additional.forEach(add => { if(add.data) certsHtml += `<div class="cert-item"><div><strong>${add.name}</strong><br><small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${add.filename}</small></div><a href="${add.data}" download="${add.filename}" class="btn-download">Download</a></div>`; });
         }
         if(!certsHtml) certsHtml = `<div class="text-box">No file certificates uploaded</div>`;
 
-        let empHtml = app.employment && app.employment.length > 0 
-            ? `<table class="data-table"><thead><tr><th>Company</th><th>Position</th><th>Reason for Leaving</th></tr></thead><tbody>` + app.employment.map(e => `<tr><td>${safeVal(e.company)}</td><td>${safeVal(e.position)}</td><td>${safeVal(e.reason)}</td></tr>`).join('') + `</tbody></table>` 
-            : `<div class="text-box">No employment history provided</div>`;
-
-        let unavailHtml = app.unavailability && app.unavailability.length > 0 
-            ? `<table class="data-table"><thead><tr><th>Date</th><th>Time</th></tr></thead><tbody>` + app.unavailability.map(u => `<tr><td>${safeVal(u.date)}</td><td>${safeVal(u.time)}</td></tr>`).join('') + `</tbody></table>`
-            : `<div class="text-box">No unavailable dates specified</div>`;
+        let empHtml = app.employment && app.employment.length > 0 ? `<table class="data-table"><thead><tr><th>Company</th><th>Position</th><th>Reason for Leaving</th></tr></thead><tbody>` + app.employment.map(e => `<tr><td>${safeVal(e.company)}</td><td>${safeVal(e.position)}</td><td>${safeVal(e.reason)}</td></tr>`).join('') + `</tbody></table>` : `<div class="text-box">No employment history provided</div>`;
+        let unavailHtml = app.unavailability && app.unavailability.length > 0 ? `<table class="data-table"><thead><tr><th>Date</th><th>Time</th></tr></thead><tbody>` + app.unavailability.map(u => `<tr><td>${safeVal(u.date)}</td><td>${safeVal(u.time)}</td></tr>`).join('') + `</tbody></table>` : `<div class="text-box">No unavailable dates specified</div>`;
 
         const matchBadgeHtml = matchStatus ? `<div class="match-badge-large">📍 Live Vacancy Area Match (${appArea})</div>` : '';
 
-        // --- RENDER REVIEWS HTML ---
         const reviews = app.reviews || [];
         let reviewsHtml = '';
         if (reviews.length > 0) {
             reviews.forEach((rev, index) => {
                 const rDate = new Date(rev.timestamp).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
-                let decColor = 'var(--accent)';
-                if(rev.decision === 'Proceed') decColor = 'var(--success)';
-                if(rev.decision === 'Do not proceed') decColor = 'var(--error)';
-                if(rev.decision === 'Hold') decColor = 'var(--warning)';
-
-                reviewsHtml += `
-                    <div class="data-group" style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
-                        <div class="data-label">Review ${index + 1}</div>
-                        <div class="data-value" style="color: ${decColor}; font-weight: 600;">Decision: ${rev.decision}</div>
-                        <div style="font-size: 0.85rem; margin-top: 0.3rem;">Reviewed by ${rev.name}</div>
-                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">${rDate}</div>
-                    </div>
-                `;
+                let decColor = rev.decision === 'Proceed' ? 'var(--success)' : (rev.decision === 'Do not proceed' ? 'var(--error)' : 'var(--warning)');
+                reviewsHtml += `<div class="data-group" style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;"><div class="data-label">Review ${index + 1}</div><div class="data-value" style="color: ${decColor}; font-weight: 600;">Decision: ${rev.decision}</div><div style="font-size: 0.85rem; margin-top: 0.3rem;">Reviewed by ${rev.name}</div><div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">${rDate}</div></div>`;
             });
-        } else {
-            reviewsHtml = `<div class="text-box">No reviews recorded yet.</div>`;
-        }
+        } else { reviewsHtml = `<div class="text-box">No reviews recorded yet.</div>`; }
 
-        const reviewActionHtml = reviews.length < 2 
-            ? `<button class="btn-action-alt" style="margin-top:1.5rem;" onclick="openReviewModal('${app.id}')">+ Perform Review</button>` 
-            : `<div class="badge" style="margin-top:1.5rem; background:rgba(16,185,129,0.2); color:var(--success); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✓ Fully Reviewed (Completed)</div>`;
+        const reviewActionHtml = reviews.length < 2 ? `<button class="btn-action-alt" style="margin-top:1.5rem;" onclick="openReviewModal('${app.id}')">+ Perform Review</button>` : `<div class="badge" style="margin-top:1.5rem; background:rgba(16,185,129,0.2); color:var(--success); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✓ Fully Reviewed (Completed)</div>`;
 
-
-        // --- NAME CHECKS HTML ---
         let nameChecksHtml = '';
         if (app.nameChecksRequested) {
             if (app.nameChecksCompleted) {
                 const ncDate = new Date(app.nameChecksCompletedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
-                nameChecksHtml = `
-                    <div style="margin-top:1rem; padding:1rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.4); border-radius:8px;">
-                        <div style="color:var(--success); font-weight:700; margin-bottom:0.2rem;">✓ Name Checks Complete</div>
-                        <div style="font-size:0.85rem; color:var(--text-light);">Confirmed by ${app.nameChecksCompletedBy}</div>
-                        <div style="font-size:0.75rem; color:var(--text-muted);">${ncDate}</div>
-                    </div>
-                `;
+                nameChecksHtml = `<div style="margin-top:1rem; padding:1rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.4); border-radius:8px;"><div style="color:var(--success); font-weight:700; margin-bottom:0.2rem;">✓ Name Checks Complete</div><div style="font-size:0.85rem; color:var(--text-light);">Confirmed by ${app.nameChecksCompletedBy}</div><div style="font-size:0.75rem; color:var(--text-muted);">${ncDate}</div></div>`;
             } else {
-                nameChecksHtml = `
-                    <div style="margin-top:1rem; padding:1rem; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); border-radius:8px;">
-                        <div style="color:var(--warning); font-weight:700; margin-bottom:0.5rem;">⏱ Name Checks Pending</div>
-                        <div style="font-size:0.85rem; color:var(--text-light); margin-bottom:0.8rem;">Automated emails have been sent out. Waiting for results to return.</div>
-                        <button class="btn-action" onclick="markNameChecksComplete('${app.id}')">Confirm Name Checks Complete</button>
-                    </div>
-                `;
+                nameChecksHtml = `<div style="margin-top:1rem; padding:1rem; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); border-radius:8px;"><div style="color:var(--warning); font-weight:700; margin-bottom:0.5rem;">⏱ Name Checks Pending</div><div style="font-size:0.85rem; color:var(--text-light); margin-bottom:0.8rem;">Automated emails have been sent out. Waiting for results to return.</div><button class="btn-action" onclick="markNameChecksComplete('${app.id}')">Confirm Name Checks Complete</button></div>`;
             }
         }
 
-        // --- INTERVIEW RESULTS & FINAL ACTIONS HTML ---
+        // --- INTERVIEW RESULTS & FINAL ACTIONS ---
         let interviewResultsHtml = '';
         if (matchedInterview) {
             const intv = matchedInterview;
             const displayDate = new Date(intv.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-            
-            let statusBanner = intv.interviewCompleted 
-                ? `<span style="color:var(--success); font-weight:bold;">✓ Completed by ${intv.interviewer}</span>`
-                : `<span style="color:var(--warning); font-weight:bold;">⏱ Scheduled for ${displayDate} @ ${intv.time} (Interviewer: ${intv.interviewer || 'Pending'})</span>`;
+            let statusBanner = intv.interviewCompleted ? `<span style="color:var(--success); font-weight:bold;">✓ Completed by ${intv.interviewer}</span>` : `<span style="color:var(--warning); font-weight:bold;">⏱ Scheduled for ${displayDate} @ ${intv.time}</span>`;
 
             let packResultsHtml = '';
             
-            // If interview is finished, build out the detailed result pack and Recruitment Actions!
             if (intv.interviewCompleted && intv.interviewData) {
                 const data = intv.interviewData;
-                
-                let recColor = 'var(--success)';
-                if (data.recommendation === 'Do Not Proceed') recColor = 'var(--error)';
-                else if (data.recommendation.includes('Hold')) recColor = 'var(--warning)';
+                let recColor = data.recommendation === 'Do Not Proceed' ? 'var(--error)' : (data.recommendation.includes('Hold') ? 'var(--warning)' : 'var(--success)');
 
                 packResultsHtml += `
                     <div class="grid-2" style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
-                        <div class="data-group">
-                            <div class="data-label">Final Recommendation</div>
-                            <div class="data-value" style="font-size:1.4rem; color:${recColor}; font-weight:800;">${data.recommendation}</div>
-                        </div>
-                        <div class="data-group">
-                            <div class="data-label">Total Scorecard Result</div>
-                            <div class="data-value" style="font-size:1.4rem; color:var(--accent); font-weight:800;">${data.totalScore}</div>
-                        </div>
+                        <div class="data-group"><div class="data-label">Final Recommendation</div><div class="data-value" style="font-size:1.4rem; color:${recColor}; font-weight:800;">${data.recommendation}</div></div>
+                        <div class="data-group"><div class="data-label">Total Scorecard Result</div><div class="data-value" style="font-size:1.4rem; color:var(--accent); font-weight:800;">${data.totalScore}</div></div>
                     </div>
-                    
                     <div class="grid-2" style="margin-top: 1rem;">
                         ${data.strengths ? `<div class="data-group"><div class="data-label">Key Strengths</div><div class="text-box" style="border-left: 3px solid var(--success);">${data.strengths}</div></div>` : ''}
                         <div class="data-group"><div class="data-label">Risks / Concerns</div><div class="text-box" style="border-left: 3px solid var(--warning);">${data.concerns || 'None noted'}</div></div>
@@ -748,23 +646,14 @@
 
                 if (data.scores && data.scores.length > 0) {
                     let scoreRows = data.scores.map(s => `<tr><td><strong>${s.criteria}</strong></td><td style="text-align:center; font-weight:bold; color:var(--accent); font-size:1.1rem;">${s.score}</td><td>${s.comment || '<span style="color:var(--text-muted)">-</span>'}</td></tr>`).join('');
-                    packResultsHtml += `
-                        <h4 style="margin-top: 2rem; color: var(--text-light); margin-bottom: 0.8rem; font-size: 1rem;">Detailed Scorecard Breakdown</h4>
-                        <table class="data-table" style="background: rgba(0,0,0,0.15); border-radius: 8px; overflow: hidden; margin-bottom: 2rem;">
-                            <thead><tr><th style="width:30%;">Criteria</th><th style="text-align:center; width:15%;">Score</th><th>Interviewer Comments</th></tr></thead>
-                            <tbody>${scoreRows}</tbody>
-                        </table>
-                    `;
+                    packResultsHtml += `<h4 style="margin-top: 2rem; color: var(--text-light); margin-bottom: 0.8rem; font-size: 1rem;">Detailed Scorecard Breakdown</h4><table class="data-table" style="background: rgba(0,0,0,0.15); border-radius: 8px; overflow: hidden; margin-bottom: 2rem;"><thead><tr><th style="width:30%;">Criteria</th><th style="text-align:center; width:15%;">Score</th><th>Interviewer Comments</th></tr></thead><tbody>${scoreRows}</tbody></table>`;
                 }
 
-                // ==========================================
                 // RECRUITMENT DECISION ACTION BLOCK
-                // ==========================================
                 packResultsHtml += `<div style="margin-top:2rem; padding:1.5rem; background:var(--bg-card); border:2px solid var(--warning); border-radius:12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">`;
                 packResultsHtml += `<h3 style="color:var(--warning); margin-bottom:1rem; font-size:1.3rem;">Final Recruitment Action</h3>`;
 
                 if (!app.finalRecruitmentDecision) {
-                    // No decision made yet
                     packResultsHtml += `
                         <div style="margin-bottom: 1rem;">
                             <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold;">Select Final Outcome:</label>
@@ -790,7 +679,6 @@
                         <button class="btn-action-alt" style="width:100%; justify-content:center; padding:0.8rem;" onclick="submitFinalDecision('${app.id}')">Submit Decision & Trigger Email</button>
                     `;
                 } else if (app.finalRecruitmentDecision === 'Hold') {
-                    // Currently On Hold - Display Checklist
                     const hc = app.holdChecklist || {};
                     const isAllChecked = (hc.notes && hc.checks && hc.manager && hc.compare && hc.outcome);
                     
@@ -801,76 +689,50 @@
                         </div>
                         <div style="margin-bottom:1.5rem;">
                             <label style="display:block; margin-bottom:0.8rem; font-size:0.95rem; font-weight:bold; color:var(--accent);">Internal Hold Tasks:</label>
-                            
-                            <div class="checklist-item ${hc.notes ? 'checked' : ''}">
-                                <input type="checkbox" id="chk_notes" onchange="updateHoldChecklist('${app.id}', 'notes', this.checked)" ${hc.notes ? 'checked' : ''}>
-                                <label for="chk_notes">Review interview notes</label>
-                            </div>
-                            <div class="checklist-item ${hc.checks ? 'checked' : ''}">
-                                <input type="checkbox" id="chk_checks" onchange="updateHoldChecklist('${app.id}', 'checks', this.checked)" ${hc.checks ? 'checked' : ''}>
-                                <label for="chk_checks">Complete checks</label>
-                            </div>
-                            <div class="checklist-item ${hc.manager ? 'checked' : ''}">
-                                <input type="checkbox" id="chk_manager" onchange="updateHoldChecklist('${app.id}', 'manager', this.checked)" ${hc.manager ? 'checked' : ''}>
-                                <label for="chk_manager">Get manager decision</label>
-                            </div>
-                            <div class="checklist-item ${hc.compare ? 'checked' : ''}">
-                                <input type="checkbox" id="chk_compare" onchange="updateHoldChecklist('${app.id}', 'compare', this.checked)" ${hc.compare ? 'checked' : ''}>
-                                <label for="chk_compare">Compare shortlisted applicants</label>
-                            </div>
-                            <div class="checklist-item ${hc.outcome ? 'checked' : ''}">
-                                <input type="checkbox" id="chk_outcome" onchange="updateHoldChecklist('${app.id}', 'outcome', this.checked)" ${hc.outcome ? 'checked' : ''}>
-                                <label for="chk_outcome">Final outcome by due date</label>
-                            </div>
+                            <div class="checklist-item ${hc.notes ? 'checked' : ''}"><input type="checkbox" id="chk_notes" onchange="updateHoldChecklist('${app.id}', 'notes', this.checked)" ${hc.notes ? 'checked' : ''}><label for="chk_notes">Review interview notes</label></div>
+                            <div class="checklist-item ${hc.checks ? 'checked' : ''}"><input type="checkbox" id="chk_checks" onchange="updateHoldChecklist('${app.id}', 'checks', this.checked)" ${hc.checks ? 'checked' : ''}><label for="chk_checks">Complete checks</label></div>
+                            <div class="checklist-item ${hc.manager ? 'checked' : ''}"><input type="checkbox" id="chk_manager" onchange="updateHoldChecklist('${app.id}', 'manager', this.checked)" ${hc.manager ? 'checked' : ''}><label for="chk_manager">Get manager decision</label></div>
+                            <div class="checklist-item ${hc.compare ? 'checked' : ''}"><input type="checkbox" id="chk_compare" onchange="updateHoldChecklist('${app.id}', 'compare', this.checked)" ${hc.compare ? 'checked' : ''}><label for="chk_compare">Compare shortlisted applicants</label></div>
+                            <div class="checklist-item ${hc.outcome ? 'checked' : ''}"><input type="checkbox" id="chk_outcome" onchange="updateHoldChecklist('${app.id}', 'outcome', this.checked)" ${hc.outcome ? 'checked' : ''}><label for="chk_outcome">Final outcome by due date</label></div>
                         </div>
                     `;
 
                     if (isAllChecked) {
-                        packResultsHtml += `
-                            <div style="display:flex; gap:10px;">
-                                <button class="btn-danger" style="flex:1;" onclick="submitPostHoldDecision('${app.id}', 'Rejected')">Reject</button>
-                                <button class="btn-action" style="flex:2; font-size:1rem;" onclick="submitPostHoldDecision('${app.id}', 'Approved')">Approved to Offer</button>
-                            </div>
-                        `;
+                        packResultsHtml += `<div style="display:flex; gap:10px;"><button class="btn-danger" style="flex:1;" onclick="submitPostHoldDecision('${app.id}', 'Rejected')">Reject</button><button class="btn-action" style="flex:2; font-size:1rem;" onclick="submitPostHoldDecision('${app.id}', 'Approved')">Approved to Offer</button></div>`;
                     } else {
                         packResultsHtml += `<div style="text-align:center; color:var(--text-muted); font-size:0.9rem; font-style:italic;">Complete all tasks above to unlock final decisions.</div>`;
                     }
-
                 } else {
-                    // Approved or Rejected permanently
                     const finalColor = app.finalRecruitmentDecision === 'Approved' ? 'var(--success)' : 'var(--error)';
                     const finalIcon = app.finalRecruitmentDecision === 'Approved' ? '🎉' : '❌';
-                    packResultsHtml += `
-                        <div style="text-align:center; padding: 1rem;">
-                            <div style="font-size:2rem; margin-bottom:0.5rem;">${finalIcon}</div>
-                            <div style="font-size:1.4rem; font-weight:800; color:${finalColor};">${app.finalRecruitmentDecision === 'Approved' ? 'Offer Sent' : 'Applicant Rejected'}</div>
-                            <div style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;">Actioned by ${app.finalRecruitmentDecisionBy || 'System'}</div>
-                        </div>
-                    `;
+                    packResultsHtml += `<div style="text-align:center; padding: 1rem;"><div style="font-size:2rem; margin-bottom:0.5rem;">${finalIcon}</div><div style="font-size:1.4rem; font-weight:800; color:${finalColor};">${app.finalRecruitmentDecision === 'Approved' ? 'Offer Sent' : 'Applicant Rejected'}</div><div style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;">Actioned by ${app.finalRecruitmentDecisionBy || 'System'}</div></div>`;
                 }
-
                 packResultsHtml += `</div>`;
             }
 
-            interviewResultsHtml = `
-                <div class="section" style="border: 2px solid ${intv.interviewCompleted ? 'var(--success)' : 'var(--warning)'}; background: rgba(0,0,0,0.2);">
-                    <h3 style="color: ${intv.interviewCompleted ? 'var(--success)' : 'var(--warning)'}; display:flex; justify-content:space-between; align-items:center; border-bottom:none; padding-bottom:0; margin-bottom:0;">
-                        <span>Interview Stage</span>
-                        <span style="font-size:0.85rem;">${statusBanner}</span>
-                    </h3>
-                    ${packResultsHtml}
-                </div>
-            `;
+            interviewResultsHtml = `<div class="section" style="border: 2px solid ${intv.interviewCompleted ? 'var(--success)' : 'var(--warning)'}; background: rgba(0,0,0,0.2);"><h3 style="color: ${intv.interviewCompleted ? 'var(--success)' : 'var(--warning)'}; display:flex; justify-content:space-between; align-items:center; border-bottom:none; padding-bottom:0; margin-bottom:0;"><span>Interview Stage</span><span style="font-size:0.85rem;">${statusBanner}</span></h3>${packResultsHtml}</div>`;
         }
+
+        // Display Provisioned Creds if Approved
+        const credsHtml = app.finalRecruitmentDecision === 'Approved' && app.portalUsername ? `
+            <div style="margin-bottom:1.5rem; padding:1.5rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.4); border-radius:8px;">
+                <div style="color:var(--success); font-size:1.1rem; font-weight:700; margin-bottom:0.5rem;">🎉 IT Provisioning Complete</div>
+                <div style="font-size:0.95rem; color:var(--text-light); line-height: 1.6;">
+                    <strong>Portal Link:</strong> <a href="${app.portalLink}" target="_blank" style="color:var(--accent);">${app.portalLink}</a><br>
+                    <strong>Generated Username:</strong> <span style="font-family:'DM Mono', monospace; background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px;">${app.portalUsername}</span><br>
+                    <strong>Generated Password:</strong> <span style="font-family:'DM Mono', monospace; background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px;">${app.portalPassword}</span>
+                </div>
+            </div>` : '';
 
         mainEl.innerHTML = `
             <div class="app-header"><h1>${app.fullName} ${matchBadgeHtml}</h1><div style="width:100%; margin-top:10px;"><div class="badge">${app.position}</div></div></div>
             
+            ${credsHtml}
             ${interviewResultsHtml}
 
             <!-- ADMIN REVIEWS SECTION -->
             <div class="section" style="border: 1px solid var(--accent); background: rgba(0, 163, 224, 0.03);">
-                <h3 style="color: var(--accent);">Applicant Review Status</h3>
+                <h3 style="color: var(--accent);">Applicant Initial Review Status</h3>
                 <div class="grid-2">${reviewsHtml}</div>
                 ${reviewActionHtml}
                 ${nameChecksHtml}
