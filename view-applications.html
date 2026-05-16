@@ -171,13 +171,14 @@
     let applicationsData = [];
     let liveVacancies = [];
     let showOnlyMatches = false;
+    let selectedAppId = null; // Memorizes the active applicant during refreshes
 
     document.getElementById('filterMatchesToggle').addEventListener('change', (e) => {
         showOnlyMatches = e.target.checked;
         renderSidebar(); 
     });
 
-    // --- HELPER: Wait Time Calculator ---
+    // --- HELPER: Wait Time Calculator (Days & Hours explicitly) ---
     function calculateWaitTime(submittedAt) {
         if (!submittedAt) return '0 Days 0 Hrs';
         const past = submittedAt.toDate ? submittedAt.toDate() : new Date(submittedAt);
@@ -210,47 +211,79 @@
         renderSidebar();
     });
 
-    // --- APPLICANTS SYNC & REMINDER LOGIC ---
+    // --- APPLICANTS SYNC (Single Source of Truth) ---
     const qApp = query(collection(db, "NGUO New Applicants"), orderBy("submittedAt", "desc"));
     onSnapshot(qApp, (snapshot) => {
         applicationsData = [];
         snapshot.forEach(doc => applicationsData.push({ id: doc.id, ...doc.data() }));
         renderSidebar();
+        
+        // If an applicant was already selected, instantly update their detail screen
+        if (selectedAppId) {
+            const updatedApp = applicationsData.find(a => a.id === selectedAppId);
+            if (updatedApp) {
+                const matchStatus = isAreaMatch(updatedApp.position, updatedApp.personalDetails?.postcode);
+                const appArea = getPostcodeArea(updatedApp.personalDetails?.postcode);
+                renderDetails(updatedApp, matchStatus, appArea);
+            }
+        }
+
+        // Background check to send automated reminders
         checkAndSendReminders(applicationsData);
     });
 
+    // --- REMINDER LOGIC ---
     function getNextWorkingDay8AM(dateObj) {
         let d = new Date(dateObj);
-        d.setDate(d.getDate() + 1);
-        if (d.getDay() === 6) d.setDate(d.getDate() + 2);
-        if (d.getDay() === 0) d.setDate(d.getDate() + 1);
-        d.setHours(8, 0, 0, 0); 
+        d.setDate(d.getDate() + 1); // Move to next day
+        
+        // Skip weekends
+        if (d.getDay() === 6) d.setDate(d.getDate() + 2); // Saturday -> Monday
+        if (d.getDay() === 0) d.setDate(d.getDate() + 1); // Sunday -> Monday
+        
+        d.setHours(8, 0, 0, 0); // Set to exactly 8:00 AM
         return d;
     }
 
     async function checkAndSendReminders(apps) {
         const now = new Date();
+        
         for (const app of apps) {
             const reviews = app.reviews || [];
-            if (reviews.length >= 2) continue;
+            if (reviews.length >= 2) continue; // It is fully reviewed. Stop checking.
 
             let reminderCount = app.reminderCount || 0;
-            if (reminderCount >= 3) continue;
+            if (reminderCount >= 3) continue; // Max 3 reminders already sent. Stop checking.
 
+            // Determine the baseline date to calculate the "Next Working Day" from
             let baseDate = app.submittedAt?.toDate ? app.submittedAt.toDate() : new Date(app.submittedAt);
-            if (reminderCount > 0 && app.lastReminderDate) baseDate = new Date(app.lastReminderDate);
+            if (reminderCount > 0 && app.lastReminderDate) {
+                baseDate = new Date(app.lastReminderDate);
+            }
 
             const targetReminderTime = getNextWorkingDay8AM(baseDate);
 
+            // If we have passed the target 8AM time, fire the email!
             if (now >= targetReminderTime) {
                 try {
                     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REMINDER_TEMPLATE, {
-                        applicant_name: app.fullName || 'Unknown', position: app.position || 'Unknown',
-                        wait_time: calculateWaitTime(app.submittedAt), url_link: window.location.href 
+                        applicant_name: app.fullName || 'Unknown',
+                        position: app.position || 'Unknown',
+                        wait_time: calculateWaitTime(app.submittedAt),
+                        url_link: window.location.href // Helps them jump right to the portal
                     });
+
+                    // Update DB to register that we sent it
                     const appRef = doc(db, "NGUO New Applicants", app.id);
-                    await updateDoc(appRef, { reminderCount: reminderCount + 1, lastReminderDate: now.toISOString() });
-                } catch (e) { console.error("Failed to send automated reminder:", e); }
+                    await updateDoc(appRef, {
+                        reminderCount: reminderCount + 1,
+                        lastReminderDate: now.toISOString()
+                    });
+                    
+                    console.log(`Automated Reminder #${reminderCount + 1} sent for ${app.fullName}`);
+                } catch (e) {
+                    console.error("Failed to send automated reminder:", e);
+                }
             }
         }
     }
@@ -265,6 +298,7 @@
 
     window.closeReviewModal = function() {
         document.getElementById('reviewModal').classList.remove('active');
+        document.getElementById('reviewDecision').value = ''; 
     };
 
     // --- REVIEW SUBMISSION LOGIC ---
@@ -296,6 +330,13 @@
                     return;
                 }
 
+                // Protect against the exact same person submitting both reviews
+                if (reviews.some(r => r.name.toLowerCase() === adminName.toLowerCase())) {
+                    alert("You have already reviewed this application. The second review must be completed by a different person.");
+                    closeReviewModal();
+                    return;
+                }
+
                 reviews.push({ name: adminName, decision: decision, timestamp: new Date().toISOString() });
 
                 let updates = { reviews: reviews };
@@ -310,9 +351,10 @@
                     }
                 }
 
+                // Single Source of Truth Update (Triggers onSnapshot instantly)
                 await updateDoc(appRef, updates);
 
-                // FIRE EMAILJS IF NEEDED
+                // FIRE EMAILJS IF NEEDED (Silent background process)
                 if (triggerNameChecks) {
                     console.log("Both reviews are 'Proceed'. Triggering Name Check emails...");
                     const emailParams = {
@@ -320,25 +362,13 @@
                         postcode: data.personalDetails?.postcode || 'No Postcode provided'
                     };
                     
-                    // Send to both templates concurrently
-                    await Promise.allSettled([
+                    Promise.allSettled([
                         emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INTERNAL_NAME_CHECK, emailParams),
                         emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, emailParams)
                     ]);
-                    console.log("Name Check emails sent successfully.");
                 }
 
                 closeReviewModal();
-                alert("Review submitted successfully!");
-
-                // Refresh UI
-                const currentAppIndex = applicationsData.findIndex(a => a.id === appId);
-                if (currentAppIndex !== -1) {
-                    applicationsData[currentAppIndex] = { ...data, ...updates }; // Apply updates locally
-                    const matchStatus = isAreaMatch(applicationsData[currentAppIndex].position, applicationsData[currentAppIndex].personalDetails?.postcode);
-                    const appArea = getPostcodeArea(applicationsData[currentAppIndex].personalDetails?.postcode);
-                    renderDetails(applicationsData[currentAppIndex], matchStatus, appArea);
-                }
             }
         } catch (error) {
             console.error("Error saving review:", error);
@@ -356,24 +386,11 @@
 
         try {
             const appRef = doc(db, "NGUO New Applicants", appId);
-            
-            const updates = {
+            await updateDoc(appRef, {
                 nameChecksCompleted: true,
                 nameChecksCompletedBy: adminName.trim(),
                 nameChecksCompletedAt: new Date().toISOString()
-            };
-
-            await updateDoc(appRef, updates);
-            
-            const currentAppIndex = applicationsData.findIndex(a => a.id === appId);
-            if (currentAppIndex !== -1) {
-                applicationsData[currentAppIndex] = { ...applicationsData[currentAppIndex], ...updates };
-                const matchStatus = isAreaMatch(applicationsData[currentAppIndex].position, applicationsData[currentAppIndex].personalDetails?.postcode);
-                const appArea = getPostcodeArea(applicationsData[currentAppIndex].personalDetails?.postcode);
-                renderDetails(applicationsData[currentAppIndex], matchStatus, appArea);
-            }
-            
-            alert("Name checks marked as complete!");
+            });
         } catch (error) {
             console.error("Error saving name checks status:", error);
             alert("Error saving status. Please try again.");
@@ -416,12 +433,18 @@
             const matchStatus = isAreaMatch(app.position, appPostcode);
             const appArea = getPostcodeArea(appPostcode);
             
+            // Check if fully reviewed
             const reviewsCount = app.reviews ? app.reviews.length : 0;
-            let reviewStatus = `<span class="wait-time">⏱ ${waitTime}</span>`;
-            if (reviewsCount >= 2) reviewStatus = `<span style="color:var(--success); font-weight:700;">✓ Reviewed</span>`;
+            const reviewStatus = reviewsCount >= 2 ? `<span style="color:var(--success); font-weight:700;">✓ Reviewed</span>` : `<span class="wait-time">⏱ ${waitTime}</span>`;
 
             const div = document.createElement('div');
             div.className = 'applicant-item';
+            
+            // Re-apply active class if it is the currently selected applicant
+            if (selectedAppId === app.id) {
+                div.classList.add('active');
+            }
+
             div.innerHTML = `
                 <div class="app-name">${app.fullName || 'Unnamed Applicant'}</div>
                 <div class="app-pos">${app.position || 'No Position Selected'}</div>
@@ -432,7 +455,9 @@
                 </div>
                 ${matchStatus ? `<div class="match-badge">📍 Area Match (${appArea})</div>` : ''}
             `;
+            
             div.onclick = () => {
+                selectedAppId = app.id; // Lock applicant in memory
                 document.querySelectorAll('.applicant-item').forEach(el => el.classList.remove('active'));
                 div.classList.add('active');
                 renderDetails(app, matchStatus, appArea);
