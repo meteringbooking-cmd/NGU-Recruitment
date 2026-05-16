@@ -75,7 +75,7 @@
         <div class="filter-container">
             <label class="filter-label">
                 <input type="checkbox" id="filterMatchesToggle">
-                Only show Area Matches (<30 mi)
+                Only show Area Matches
             </label>
         </div>
 
@@ -107,67 +107,20 @@
     let applicationsData = [];
     let liveVacancies = [];
     let showOnlyMatches = false;
-    let vacsLoaded = false;
-    let appsLoaded = false;
-    
-    const coordCache = {};
 
     document.getElementById('filterMatchesToggle').addEventListener('change', (e) => {
         showOnlyMatches = e.target.checked;
         renderSidebar(); 
     });
 
-    // --- BULLETPROOF GEOCODING ENGINE ---
-    function cleanFormat(str) { return str ? str.trim().toUpperCase().replace(/\s+/g, '') : ''; }
-
-    async function geocodeLocation(inputLocation) {
-        const clean = cleanFormat(inputLocation);
-        if (clean.length < 2 || clean === 'NOTSPECIFIED') return null;
-        if (coordCache.hasOwnProperty(clean)) return coordCache[clean];
-
-        try {
-            let res = await fetch(`https://api.postcodes.io/postcodes/${clean}`);
-            if (res.ok) {
-                const data = await res.json();
-                coordCache[clean] = { lat: data.result.latitude, lon: data.result.longitude };
-                return coordCache[clean];
-            }
-
-            const fallbackOutcode = clean.length > 4 ? clean.slice(0, -3) : clean;
-            res = await fetch(`https://api.postcodes.io/outcodes/${fallbackOutcode}`);
-            if (res.ok) {
-                const data = await res.json();
-                coordCache[clean] = { lat: data.result.latitude, lon: data.result.longitude };
-                return coordCache[clean];
-            }
-        } catch (e) {
-            console.warn("Geocode error for:", inputLocation);
-        }
-
-        coordCache[clean] = null; 
-        return null;
-    }
-
-    function calcDistanceMiles(coords1, coords2) {
-        if (!coords1 || !coords2) return Infinity;
-        const R = 3956;
-        const dLat = (coords2.lat - coords1.lat) * Math.PI / 180;
-        const dLon = (coords2.lon - coords1.lon) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(coords1.lat * Math.PI / 180) * Math.cos(coords2.lat * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
+    // --- LIGHTWEIGHT POSTCODE AREA EXTRACTOR ---
+    function getPostcodeArea(postcodeStr) {
+        if (!postcodeStr) return '';
+        const match = postcodeStr.trim().match(/^[a-zA-Z]+/);
+        return match ? match[0].toUpperCase() : '';
     }
 
     // --- DATA LOADERS & SYNC ---
-    async function syncLocationsAndRender() {
-        const uniqueLocations = new Set();
-        liveVacancies.forEach(v => { if(v.location) uniqueLocations.add(v.location); });
-        applicationsData.forEach(a => { if(a.personalDetails?.postcode) uniqueLocations.add(a.personalDetails.postcode); });
-        
-        await Promise.all(Array.from(uniqueLocations).map(loc => geocodeLocation(loc)));
-        renderSidebar();
-    }
-
     // Live Vacancies Real-time Listener
     const qVac = query(collection(db, "NGU Recuitment Approval Form"), where("workflowClosed", "==", false));
     onSnapshot(qVac, (snapshot) => {
@@ -178,12 +131,11 @@
             if (approvals.departmentHead?.decision === 'Approve' && approvals.finance?.decision === 'Approve' && approvals.finalApprover?.decision === 'Approve') {
                 liveVacancies.push({ 
                     jobTitle: data.requestInformation?.jobTitle || '', 
-                    location: data.requestInformation?.location || '' 
+                    locationArea: getPostcodeArea(data.requestInformation?.location) 
                 });
             }
         });
-        vacsLoaded = true;
-        if (appsLoaded) syncLocationsAndRender();
+        renderSidebar();
     });
 
     // Applicants Real-time Listener
@@ -191,20 +143,17 @@
     onSnapshot(qApp, (snapshot) => {
         applicationsData = [];
         snapshot.forEach(doc => applicationsData.push({ id: doc.id, ...doc.data() }));
-        appsLoaded = true;
-        if (vacsLoaded) syncLocationsAndRender();
+        renderSidebar();
     });
 
     // --- RENDERING ---
     function isAreaMatch(appPosition, appPostcode) {
-        const appCoords = coordCache[cleanFormat(appPostcode)];
-        if (!appCoords) return false;
+        const appArea = getPostcodeArea(appPostcode);
+        if (!appArea) return false;
 
         return liveVacancies.some(v => {
-            const vacCoords = coordCache[cleanFormat(v.location)];
-            const distance = calcDistanceMiles(vacCoords, appCoords);
             const isJobMatch = appPosition?.trim().toLowerCase() === v.jobTitle?.trim().toLowerCase();
-            return isJobMatch && distance <= 30;
+            return isJobMatch && v.locationArea === appArea;
         });
     }
 
@@ -230,6 +179,7 @@
 
             const appPostcode = app.personalDetails?.postcode || 'No Postcode';
             const matchStatus = isAreaMatch(app.position, appPostcode);
+            const appArea = getPostcodeArea(appPostcode);
 
             const div = document.createElement('div');
             div.className = 'applicant-item';
@@ -238,12 +188,12 @@
                 <div class="app-pos">${app.position || 'No Position Selected'}</div>
                 <div class="app-postcode">${appPostcode}</div><br>
                 <div class="app-date">${dateStr}</div>
-                ${matchStatus ? `<div class="match-badge">📍 Live Area Match (<30 mi)</div>` : ''}
+                ${matchStatus ? `<div class="match-badge">📍 Live Area Match (${appArea})</div>` : ''}
             `;
             div.onclick = () => {
                 document.querySelectorAll('.applicant-item').forEach(el => el.classList.remove('active'));
                 div.classList.add('active');
-                renderDetails(app, matchStatus);
+                renderDetails(app, matchStatus, appArea);
             };
             listEl.appendChild(div);
         });
@@ -251,7 +201,7 @@
 
     function safeVal(val, defaultText = 'Not provided') { return val ? val : `<span style="color:var(--text-muted)">${defaultText}</span>`; }
 
-    function renderDetails(app, matchStatus) {
+    function renderDetails(app, matchStatus, appArea) {
         const mainEl = document.getElementById('mainContent');
         const p = app.personalDetails || {}; const c = app.certificates || {};
         
@@ -279,7 +229,7 @@
             ? `<table class="data-table"><thead><tr><th>Date</th><th>Time</th></tr></thead><tbody>` + app.unavailability.map(u => `<tr><td>${safeVal(u.date)}</td><td>${safeVal(u.time)}</td></tr>`).join('') + `</tbody></table>`
             : `<div class="text-box">No unavailable dates specified</div>`;
 
-        const matchBadgeHtml = matchStatus ? `<div class="match-badge-large">📍 Live Vacancy Area Match (<30 miles)</div>` : '';
+        const matchBadgeHtml = matchStatus ? `<div class="match-badge-large">📍 Live Vacancy Area Match (${appArea})</div>` : '';
 
         mainEl.innerHTML = `
             <div class="app-header"><h1>${app.fullName} ${matchBadgeHtml}</h1><div style="width:100%; margin-top:10px;"><div class="badge">${app.position}</div></div></div>
