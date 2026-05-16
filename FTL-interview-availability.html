@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTL Interview Dashboard</title>
+    <style>
+        /* Replace with your own CSS */
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+        .card { border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;}
+        .card.assigned { background-color: #e2e3e5; }
+        input, button { padding: 10px; }
+        .controls { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <h2>FTL Interview Dashboard</h2>
+    
+    <div class="controls">
+        <label for="ftlName"><strong>Your Name (Interviewer):</strong></label>
+        <input type="text" id="ftlName" placeholder="Enter your name to claim slots" required>
+    </div>
+
+    <div id="dashboardGrid">Loading interviews...</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, updateDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // 1. PASTE YOUR FIREBASE CONFIG HERE
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const dashboardGrid = document.getElementById('dashboardGrid');
+        const ftlNameInput = document.getElementById('ftlName');
+
+        const loadInterviews = async () => {
+            dashboardGrid.innerHTML = '';
+            // Query all times, ideally ordered by date
+            const q = query(collection(db, "NGU Interview Times"), orderBy("date"));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                dashboardGrid.innerHTML = '<p>No interviews booked yet.</p>';
+                return;
+            }
+
+            querySnapshot.forEach((documentSnapshot) => {
+                const data = documentSnapshot.data();
+                const docId = documentSnapshot.id;
+
+                const card = document.createElement('div');
+                card.className = 'card' + (data.interviewerName ? ' assigned' : '');
+
+                const info = document.createElement('div');
+                info.innerHTML = `
+                    <strong>Applicant:</strong> ${data.applicantName} <br>
+                    <strong>Date & Time:</strong> ${data.date} at ${data.time} <br>
+                    <strong>Interviewer:</strong> <span style="color: ${data.interviewerName ? 'green' : 'red'}">${data.interviewerName || 'Unassigned'}</span>
+                `;
+
+                const actionDiv = document.createElement('div');
+                
+                if (!data.interviewerName) {
+                    const assignBtn = document.createElement('button');
+                    assignBtn.innerText = "Assign to Me";
+                    assignBtn.addEventListener('click', () => assignInterview(docId, data));
+                    actionDiv.appendChild(assignBtn);
+                } else {
+                    actionDiv.innerText = "Claimed";
+                }
+
+                card.appendChild(info);
+                card.appendChild(actionDiv);
+                dashboardGrid.appendChild(card);
+            });
+        };
+
+        const assignInterview = async (docId, interviewData) => {
+            const ftlName = ftlNameInput.value.trim();
+            if (!ftlName) {
+                alert("Please enter your name at the top before claiming an interview.");
+                return;
+            }
+
+            try {
+                const docRef = doc(db, "NGU Interview Times", docId);
+                await updateDoc(docRef, {
+                    interviewerName: ftlName
+                });
+
+                // 2. TRIGGER EMAILJS HERE TO NOTIFY APPLICANT/INTERVIEWER
+                // emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", { applicant: interviewData.applicantName, interviewer: ftlName, date: interviewData.date, time: interviewData.time });
+
+                alert("Interview successfully assigned to you!");
+                loadInterviews(); // Refresh UI
+            } catch (e) {
+                console.error("Error assigning interview: ", e);
+                alert("Failed to assign interview.");
+            }
+        };
+
+        // Initialize dashboard
+        loadInterviews();
+    </script>
+</body>
+</html>
