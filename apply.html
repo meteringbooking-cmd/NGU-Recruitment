@@ -635,7 +635,7 @@
     /* ── Position Dropdown Listener ── */
     document.getElementById('position').addEventListener('change', function() {
         const certSection = document.getElementById('certificatesSection');
-        if (this.value === 'Smart Meter Engineer') {
+        if (this.value === 'Smart Meter Engineer' || this.value === 'SMETs 2 installer') {
             certSection.style.display = 'block';
         } else {
             certSection.style.display = 'none';
@@ -1073,7 +1073,7 @@
                 workPermit,
                 qualifications,
                 cv: { data: cvBase64, filename: cvName, type: cvType },
-                certificates: position === 'Smart Meter Engineer' ? certificates : null,
+                certificates: (position === 'Smart Meter Engineer' || position === 'SMETs 2 installer') ? certificates : null,
                 employment,
                 unavailability,
                 declaration: { name: declarationName, date: declarationDate, signature: sig1 },
