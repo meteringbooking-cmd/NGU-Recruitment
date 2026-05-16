@@ -1,1 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>NGU — Engineer Onboarding Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
+    <style>
+        :root {
+            --primary: #005EB8; --accent: #00A3E0;
+            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
+            --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
+            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Work Sans', sans-serif; background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%); color: var(--text-light); min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(circle at 15% 20%, rgba(0,163,224,0.08) 0%, transparent 55%), radial-gradient(circle at 85% 75%, rgba(0,94,184,0.07) 0%, transparent 55%); pointer-events: none; z-index: -1; }
+
+        /* --- LOGIN SCREEN --- */
+        #loginScreen { width: 100%; max-width: 400px; padding: 2rem; margin-top: 10vh; }
+        .login-card { background: var(--bg-card); padding: 2.5rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; }
+        .logo { max-height: 50px; margin-bottom: 1.5rem; }
+        .login-card h2 { color: var(--accent); margin-bottom: 0.5rem; font-size: 1.4rem; }
+        .login-card p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
+        .input-group { margin-bottom: 1.5rem; text-align: left; }
+        .input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .input-group input { width: 100%; padding: 0.9rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: white; font-family: inherit; font-size: 1rem; outline: none; transition: border-color 0.2s;}
+        .input-group input:focus { border-color: var(--accent); }
+        .btn-primary { width: 100%; padding: 0.9rem; border: none; border-radius: 8px; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; font-weight: 700; font-size: 1rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; font-family: inherit; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.3); }
+
+        /* --- PORTAL SCREEN --- */
+        #portalScreen { width: 100%; max-width: 1000px; padding: 2rem; display: none; animation: fadeIn 0.4s ease; }
+        .portal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 15px;}
+        .portal-header h1 { font-size: 1.8rem; color: white; }
+        .portal-header span { color: var(--accent); }
+        
+        .pulse-btn { background: rgba(16, 185, 129, 0.15); border: 2px solid var(--success); color: #6ee7b7; padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; animation: pulse 2s infinite; transition: all 0.2s; }
+        .pulse-btn:hover { background: rgba(16, 185, 129, 0.3); }
+        @keyframes pulse { 
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } 
+        }
+
+        .section { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); padding: 1.8rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .section h3 { color: var(--accent); font-size: 1.2rem; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        .data-item { background: var(--bg-input); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
+        .data-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; font-weight: 600; }
+        .data-value { font-size: 1.05rem; font-weight: 500; color: white; word-break: break-word; }
+        .data-value.mono { font-family: 'DM Mono', monospace; font-size: 0.95rem; color: #6ee7b7; }
+
+        .cert-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 0.5rem; }
+        .cert-name { font-weight: 600; }
+        .cert-status { font-size: 0.85rem; padding: 3px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.1); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+        /* --- OFFER MODAL --- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;}
+        .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease;}
+        .modal-content { background: var(--bg-card); width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; border-radius: 12px; border: 1px solid var(--border); padding: 2.5rem; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        .modal-title { font-size: 1.6rem; color: var(--accent); font-weight: 800; margin-bottom: 1.5rem; text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem;}
+        
+        .offer-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 2rem; }
+        .offer-item { display: flex; justify-content: space-between; padding: 12px; background: var(--bg-input); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
+        .offer-item span:first-child { color: var(--text-muted); font-weight: 600; }
+        .offer-item span:last-child { color: white; font-weight: 700; text-align: right; }
+
+        .modal-actions { display: flex; gap: 10px; flex-direction: column; }
+        .btn-success { background: rgba(16, 185, 129, 0.15); border: 2px solid var(--success); color: #6ee7b7; padding: 1rem; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; transition: all 0.2s; }
+        .btn-success:hover { background: rgba(16, 185, 129, 0.3); transform: translateY(-2px); }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 1rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s; }
+        .btn-outline:hover { border-color: var(--accent); color: var(--accent); background: rgba(0, 163, 224, 0.05); }
+
+        #questionBlock { display: none; margin-top: 1.5rem; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); }
+        #questionBlock textarea { width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: white; font-family: inherit; font-size: 0.95rem; outline: none; resize: vertical; margin-bottom: 1rem; }
+        #questionBlock textarea:focus { border-color: var(--warning); }
+
+        #successMessage { display: none; text-align: center; color: #6ee7b7; font-weight: 700; padding: 1.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; margin-top: 1.5rem; }
+
+        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LOGIN SCREEN -->
+    <div id="loginScreen">
+        <div class="login-card">
+            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
+            <h2>Welcome to NGU</h2>
+            <p>Please enter your provisioned credentials to access your onboarding portal.</p>
+            
+            <div class="input-group">
+                <label>Username</label>
+                <input type="text" id="loginUser" placeholder="e.g. john.doe42">
+            </div>
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="loginPass" placeholder="••••••••">
+            </div>
+            <button class="btn-primary" id="loginBtn" onclick="attemptLogin()">Access Portal</button>
+            <div id="loginError" style="color: var(--error); margin-top: 1rem; font-size: 0.9rem; display: none;">Invalid username or password.</div>
+        </div>
+    </div>
+
+    <!-- 2. PORTAL SCREEN -->
+    <div id="portalScreen">
+        <div class="portal-header">
+            <div>
+                <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo" style="margin-bottom:0;">
+                <h1 style="margin-top: 10px;">Hello, <span id="welcomeName"></span>!</h1>
+                <p style="color: var(--text-muted); font-size: 0.95rem;">Review your details and finalize your onboarding below.</p>
+            </div>
+            <button class="pulse-btn" onclick="openOfferModal()">📄 View Offer Summary</button>
+        </div>
+
+        <div class="section">
+            <h3>Personal & Contact Information</h3>
+            <div class="grid-2">
+                <div class="data-item"><div class="data-label">Full Name</div><div class="data-value" id="pName"></div></div>
+                <div class="data-item"><div class="data-label">Email Address</div><div class="data-value" id="pEmail"></div></div>
+                <div class="data-item"><div class="data-label">Telephone</div><div class="data-value" id="pPhone"></div></div>
+                <div class="data-item"><div class="data-label">Home Postcode</div><div class="data-value" id="pPostcode"></div></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Compliance & Right to Work</h3>
+            <div class="grid-2">
+                <div class="data-item"><div class="data-label">Right to Work in UK</div><div class="data-value" id="pRightToWork"></div></div>
+                <div class="data-item"><div class="data-label">Unspent Criminal Convictions</div><div class="data-value" id="pConvictions"></div></div>
+                <div class="data-item"><div class="data-label">DVLA Licence Status</div><div class="data-value" id="pDvla"></div></div>
+                <div class="data-item"><div class="data-label">Medical Adjustments Needed</div><div class="data-value" id="pMedical"></div></div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Verified Documents & Certificates</h3>
+            <div id="certContainer">
+                <!-- Dynamically Populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. OFFER SUMMARY MODAL -->
+    <div class="modal-overlay" id="offerModal">
+        <div class="modal-content">
+            <div class="modal-title">Your Job Offer Summary</div>
+            
+            <div class="offer-list">
+                <div class="offer-item"><span>Job Title</span><span id="offTitle"></span></div>
+                <div class="offer-item"><span>Salary</span><span id="offSalary" style="color: #6ee7b7;"></span></div>
+                <div class="offer-item"><span>Hours</span><span id="offHours">Monday to Friday 8am to 5pm, 1 in 6 callout rota where applicable</span></div>
+                <div class="offer-item"><span>Proposed Start Date</span><span id="offStartDate"></span></div>
+                <div class="offer-item"><span>Location / Area</span><span id="offLocation"></span></div>
+                <div class="offer-item"><span>Contract Type</span><span id="offContract"></span></div>
+                <div class="offer-item"><span>Reporting Manager</span><span id="offManager" style="color: var(--accent);"></span></div>
+            </div>
+
+            <div class="modal-actions" id="actionButtons">
+                <button class="btn-success" onclick="acceptOffer()">✅ Accept and Continue</button>
+                <button class="btn-outline" onclick="toggleQuestionBlock()">❓ Ask a Question</button>
+            </div>
+
+            <div id="questionBlock">
+                <label style="display:block; color:var(--text-light); margin-bottom:0.5rem; font-weight:600;">How can we help?</label>
+                <textarea id="questionText" rows="4" placeholder="Type your question for the recruitment team here..."></textarea>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-outline" style="flex:1; padding:0.8rem;" onclick="toggleQuestionBlock()">Cancel</button>
+                    <button class="btn-primary" style="flex:2; padding:0.8rem; background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);" onclick="submitQuestion()">Submit Question</button>
+                </div>
+            </div>
+
+            <div id="successMessage"></div>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    // --- EMAILJS CONFIG ---
+    const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
+    const EMAILJS_QUESTION_TEMPLATE = 'template_vzmdy3a';
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let currentApplicant = null;
+    let currentVacancy = null;
+
+    // --- HELPER: POSTCODE AREA MATCHING ---
+    function getPostcodeArea(str) {
+        if (!str || typeof str !== 'string') return '';
+        const match = str.trim().match(/^[a-zA-Z]+/);
+        return match ? match[0].toUpperCase() : '';
+    }
+
+    // --- LOGIN LOGIC ---
+    window.attemptLogin = async function() {
+        const user = document.getElementById('loginUser').value.trim();
+        const pass = document.getElementById('loginPass').value.trim();
+        const btn = document.getElementById('loginBtn');
+        const err = document.getElementById('loginError');
+
+        if (!user || !pass) return;
+
+        btn.disabled = true;
+        btn.textContent = 'Authenticating...';
+        err.style.display = 'none';
+
+        try {
+            // Query Applicant Database
+            const q = query(collection(db, "NGUO New Applicants"), where("portalUsername", "==", user), where("portalPassword", "==", pass));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                err.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Access Portal';
+                return;
+            }
+
+            // Set Current Applicant
+            querySnapshot.forEach((doc) => {
+                currentApplicant = { id: doc.id, ...doc.data() };
+            });
+
+            // Fetch Corresponding Vacancy (Workflow Manager)
+            await fetchVacancyData(currentApplicant.position, currentApplicant.personalDetails?.postcode);
+
+            // Populate & Swap UI
+            populatePortalData();
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('portalScreen').style.display = 'block';
+
+        } catch (error) {
+            console.error("Login Error:", error);
+            alert("Connection error. Please try again.");
+            btn.disabled = false;
+            btn.textContent = 'Access Portal';
+        }
+    };
+
+    // --- FETCH VACANCY LOGIC ---
+    async function fetchVacancyData(jobTitle, postcode) {
+        currentVacancy = { salary: 'TBC', type: 'Full-Time', location: 'TBC' }; // Fallback defaults
+        
+        if (!jobTitle) return;
+        const appArea = getPostcodeArea(postcode);
+        const safeAppPos = jobTitle.trim().toLowerCase();
+
+        try {
+            // Query all open vacancies
+            const vacQ = query(collection(db, "NGU Recuitment Approval Form"), where("workflowClosed", "==", false));
+            const vacSnap = await getDocs(vacQ);
+            
+            vacSnap.forEach(doc => {
+                const data = doc.data();
+                const vTitle = (data.requestInformation?.jobTitle || '').trim().toLowerCase();
+                const vArea = getPostcodeArea(data.requestInformation?.location);
+                
+                // If it matches title and Area, map it!
+                if (vTitle === safeAppPos && vArea === appArea) {
+                    currentVacancy = {
+                        salary: data.requestInformation?.salary || 'TBC',
+                        type: data.requestInformation?.vacancyType || 'Full-Time',
+                        location: data.requestInformation?.location || 'TBC'
+                    };
+                }
+            });
+        } catch (e) { console.error("Failed to fetch vacancy details:", e); }
+    }
+
+    // --- RENDER PORTAL DATA ---
+    function populatePortalData() {
+        const a = currentApplicant;
+        const p = a.personalDetails || {};
+        const c = a.certificates || {};
+
+        document.getElementById('welcomeName').textContent = a.fullName ? a.fullName.split(' ')[0] : 'Engineer';
+
+        // 1. Personal Info
+        document.getElementById('pName').textContent = a.fullName || 'N/A';
+        document.getElementById('pEmail').textContent = p.email || 'N/A';
+        document.getElementById('pPhone').textContent = p.phone || 'N/A';
+        document.getElementById('pPostcode').textContent = p.postcode || 'N/A';
+
+        // 2. Compliance
+        document.getElementById('pRightToWork').innerHTML = a.workPermit === 'no' ? '<span style="color:var(--success)">Valid (UK Citizen/No Permit Req)</span>' : '<span style="color:var(--warning)">Requires Permit</span>';
+        document.getElementById('pConvictions').innerHTML = a.convictions === 'no' ? '<span style="color:var(--success)">Clear</span>' : '<span style="color:var(--error)">Declared</span>';
+        document.getElementById('pDvla').innerHTML = c.drivinglicence?.confirmed ? '<span style="color:var(--success)">Valid & Confirmed</span>' : '<span style="color:var(--warning)">Pending Upload</span>';
+        document.getElementById('pMedical').innerHTML = (a.reasonableAdjustments?.medical === 'yes' || a.reasonableAdjustments?.disability === 'yes') ? '<span style="color:var(--warning)">Adjustments Requested</span>' : '<span style="color:var(--success)">None Declared</span>';
+
+        // 3. Certificates
+        const certContainer = document.getElementById('certContainer');
+        let certHtml = '';
+        
+        const coreCerts = [
+            { key: 'mocopa', label: 'MOCOPA Certification' },
+            { key: 'gasl3', label: 'Level 3 Gas Diploma' },
+            { key: 'cmagas', label: 'CMA1 / CMA3 Gas' }
+        ];
+
+        coreCerts.forEach(cert => {
+            if (c[cert.key] && c[cert.key].filename) {
+                certHtml += `<div class="cert-item"><span class="cert-name">📄 ${cert.label}</span><span class="cert-status">Verified on File</span></div>`;
+            }
+        });
+
+        if (c.eusr && c.eusr.has) {
+            certHtml += `<div class="cert-item"><span class="cert-name">🪪 EUSR Card (No: ${c.eusr.number})</span><span class="cert-status">Verified on File</span></div>`;
+        }
+
+        if (certHtml === '') certHtml = '<div style="color:var(--text-muted); font-style:italic;">No formal certificates uploaded during application.</div>';
+        certContainer.innerHTML = certHtml;
+
+        // 4. PREPARE OFFER MODAL DATA
+        const rawDate = a.startDate || '';
+        const formatStart = rawDate ? new Date(rawDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'TBC';
+
+        document.getElementById('offTitle').textContent = a.position || 'Unknown';
+        document.getElementById('offSalary').textContent = currentVacancy.salary;
+        document.getElementById('offStartDate').textContent = formatStart;
+        document.getElementById('offLocation').textContent = currentVacancy.location;
+        document.getElementById('offContract').textContent = currentVacancy.type;
+        document.getElementById('offManager').textContent = a.assignedFTL || 'TBC';
+    }
+
+    // --- MODAL CONTROLS ---
+    window.openOfferModal = function() {
+        document.getElementById('offerModal').classList.add('active');
+    };
+
+    window.toggleQuestionBlock = function() {
+        const block = document.getElementById('questionBlock');
+        const actions = document.getElementById('actionButtons');
+        
+        if (block.style.display === 'block') {
+            block.style.display = 'none';
+            actions.style.display = 'flex';
+            document.getElementById('questionText').value = '';
+        } else {
+            block.style.display = 'block';
+            actions.style.display = 'none';
+        }
+    };
+
+    // --- ACTIONS ---
+    window.acceptOffer = async function() {
+        if (!confirm("Are you sure you want to formally accept this offer?")) return;
+
+        try {
+            await updateDoc(doc(db, "NGUO New Applicants", currentApplicant.id), {
+                offerAccepted: true,
+                offerAcceptedAt: new Date().toISOString()
+            });
+
+            const msgEl = document.getElementById('successMessage');
+            document.getElementById('actionButtons').style.display = 'none';
+            document.getElementById('questionBlock').style.display = 'none';
+            
+            msgEl.innerHTML = "🎉 Offer Accepted!<br><br>Welcome to the team! Your Reporting Manager will be in touch shortly regarding your first day.";
+            msgEl.style.display = 'block';
+        } catch (e) {
+            console.error(e);
+            alert("Error saving acceptance. Please try again.");
+        }
+    };
+
+    window.submitQuestion = async function() {
+        const text = document.getElementById('questionText').value.trim();
+        if (!text) return alert("Please type a question.");
+
+        try {
+            await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_QUESTION_TEMPLATE, {
+                applicant_name: currentApplicant.fullName,
+                question: text,
+                reply_to: currentApplicant.personalDetails?.email
+            });
+
+            const msgEl = document.getElementById('successMessage');
+            document.getElementById('questionBlock').style.display = 'none';
+            
+            msgEl.innerHTML = "✅ Your enquiry has been sent to recruitment.<br><br>We will respond to you via email shortly.";
+            msgEl.style.display = 'block';
+
+        } catch (e) {
+            console.error(e);
+            alert("Failed to send question. Please check your connection.");
+        }
+    };
+
+</script>
+</body>
+</html>
