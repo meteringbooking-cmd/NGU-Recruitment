@@ -90,7 +90,7 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, orderBy, getDocs, where } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, query, orderBy, onSnapshot, where } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
@@ -103,9 +103,13 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    
     let applicationsData = [];
     let liveVacancies = [];
     let showOnlyMatches = false;
+    let vacsLoaded = false;
+    let appsLoaded = false;
+    
     const coordCache = {};
 
     document.getElementById('filterMatchesToggle').addEventListener('change', (e) => {
@@ -113,39 +117,35 @@
         renderSidebar(); 
     });
 
-    // --- GEOLOCATION HELPER MODULES ---
-    function formatStr(str) { return str ? str.trim().toUpperCase().replace(/\s+/g, '') : ''; }
+    // --- BULLETPROOF GEOCODING ENGINE ---
+    function cleanFormat(str) { return str ? str.trim().toUpperCase().replace(/\s+/g, '') : ''; }
 
-    async function fetchOutcodeCoords(outcode) {
-        const clean = formatStr(outcode);
-        if (!clean) return null;
-        if (coordCache[`out_${clean}`]) return coordCache[`out_${clean}`];
+    async function geocodeLocation(inputLocation) {
+        const clean = cleanFormat(inputLocation);
+        if (clean.length < 2 || clean === 'NOTSPECIFIED') return null;
+        if (coordCache.hasOwnProperty(clean)) return coordCache[clean];
+
         try {
-            const res = await fetch(`https://api.postcodes.io/outcodes/${clean}`);
+            let res = await fetch(`https://api.postcodes.io/postcodes/${clean}`);
             if (res.ok) {
                 const data = await res.json();
-                coordCache[`out_${clean}`] = { lat: data.result.latitude, lon: data.result.longitude };
-                return coordCache[`out_${clean}`];
+                coordCache[clean] = { lat: data.result.latitude, lon: data.result.longitude };
+                return coordCache[clean];
             }
-        } catch (e) {}
-        coordCache[`out_${clean}`] = null; return null;
-    }
 
-    async function fetchPostcodeCoords(postcode) {
-        const clean = formatStr(postcode);
-        if (!clean) return null;
-        if (coordCache[`post_${clean}`]) return coordCache[`post_${clean}`];
-        try {
-            const res = await fetch(`https://api.postcodes.io/postcodes/${clean}`);
+            const fallbackOutcode = clean.length > 4 ? clean.slice(0, -3) : clean;
+            res = await fetch(`https://api.postcodes.io/outcodes/${fallbackOutcode}`);
             if (res.ok) {
                 const data = await res.json();
-                coordCache[`post_${clean}`] = { lat: data.result.latitude, lon: data.result.longitude };
-                return coordCache[`post_${clean}`];
-            } else if (clean.length > 3) {
-                return await fetchOutcodeCoords(clean.slice(0, -3));
+                coordCache[clean] = { lat: data.result.latitude, lon: data.result.longitude };
+                return coordCache[clean];
             }
-        } catch (e) {}
-        coordCache[`post_${clean}`] = null; return null;
+        } catch (e) {
+            console.warn("Geocode error for:", inputLocation);
+        }
+
+        coordCache[clean] = null; 
+        return null;
     }
 
     function calcDistanceMiles(coords1, coords2) {
@@ -158,48 +158,53 @@
         return R * c;
     }
 
-    async function loadDataAndRender() {
-        try {
-            // Load Vacancies
-            const qVac = query(collection(db, "NGU Recuitment Approval Form"), where("workflowClosed", "==", false));
-            const snapVac = await getDocs(qVac);
-            liveVacancies = [];
-            snapVac.forEach(doc => {
-                const data = doc.data();
-                const approvals = data.approvalSignOff || {};
-                if (approvals.departmentHead?.decision === 'Approve' && approvals.finance?.decision === 'Approve' && approvals.finalApprover?.decision === 'Approve') {
-                    liveVacancies.push({ jobTitle: data.requestInformation?.jobTitle || '', locationOutcode: data.requestInformation?.location || '' });
-                }
-            });
-
-            // Load Applications
-            const qApp = query(collection(db, "NGUO New Applicants"), orderBy("submittedAt", "desc"));
-            const snapApp = await getDocs(qApp);
-            applicationsData = [];
-            snapApp.forEach(doc => applicationsData.push({ id: doc.id, ...doc.data() }));
-
-            // Pre-calculate all API locations simultaneously
-            const promises = [];
-            liveVacancies.forEach(v => { if(v.locationOutcode) promises.push(fetchOutcodeCoords(v.locationOutcode)); });
-            applicationsData.forEach(a => { if(a.personalDetails?.postcode) promises.push(fetchPostcodeCoords(a.personalDetails.postcode)); });
-            
-            await Promise.all(promises);
-
-            renderSidebar();
-        } catch (error) {
-            console.error("Error loading data: ", error);
-            document.getElementById('applicantList').innerHTML = `<div class="loading" style="color:var(--error);">Error loading data. Check console.</div>`;
-        }
+    // --- DATA LOADERS & SYNC ---
+    async function syncLocationsAndRender() {
+        const uniqueLocations = new Set();
+        liveVacancies.forEach(v => { if(v.location) uniqueLocations.add(v.location); });
+        applicationsData.forEach(a => { if(a.personalDetails?.postcode) uniqueLocations.add(a.personalDetails.postcode); });
+        
+        await Promise.all(Array.from(uniqueLocations).map(loc => geocodeLocation(loc)));
+        renderSidebar();
     }
 
+    // Live Vacancies Real-time Listener
+    const qVac = query(collection(db, "NGU Recuitment Approval Form"), where("workflowClosed", "==", false));
+    onSnapshot(qVac, (snapshot) => {
+        liveVacancies = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const approvals = data.approvalSignOff || {};
+            if (approvals.departmentHead?.decision === 'Approve' && approvals.finance?.decision === 'Approve' && approvals.finalApprover?.decision === 'Approve') {
+                liveVacancies.push({ 
+                    jobTitle: data.requestInformation?.jobTitle || '', 
+                    location: data.requestInformation?.location || '' 
+                });
+            }
+        });
+        vacsLoaded = true;
+        if (appsLoaded) syncLocationsAndRender();
+    });
+
+    // Applicants Real-time Listener
+    const qApp = query(collection(db, "NGUO New Applicants"), orderBy("submittedAt", "desc"));
+    onSnapshot(qApp, (snapshot) => {
+        applicationsData = [];
+        snapshot.forEach(doc => applicationsData.push({ id: doc.id, ...doc.data() }));
+        appsLoaded = true;
+        if (vacsLoaded) syncLocationsAndRender();
+    });
+
+    // --- RENDERING ---
     function isAreaMatch(appPosition, appPostcode) {
-        const appCoords = coordCache[`post_${formatStr(appPostcode)}`];
+        const appCoords = coordCache[cleanFormat(appPostcode)];
         if (!appCoords) return false;
 
         return liveVacancies.some(v => {
-            const vacCoords = coordCache[`out_${formatStr(v.locationOutcode)}`];
+            const vacCoords = coordCache[cleanFormat(v.location)];
             const distance = calcDistanceMiles(vacCoords, appCoords);
-            return v.jobTitle === appPosition && distance <= 30;
+            const isJobMatch = appPosition?.trim().toLowerCase() === v.jobTitle?.trim().toLowerCase();
+            return isJobMatch && distance <= 30;
         });
     }
 
@@ -315,9 +320,6 @@
             </div></div>
         `;
     }
-
-    loadDataAndRender();
-
 </script>
 </body>
 </html>
