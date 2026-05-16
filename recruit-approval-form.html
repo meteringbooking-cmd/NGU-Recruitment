@@ -515,7 +515,17 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
 <script>
+    // --- Initialize EmailJS ---
+    (function() {
+        emailjs.init({
+          publicKey: "ziLnha91scpGjFABh",
+        });
+    })();
+
     // --- Firebase Configuration ---
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
@@ -666,12 +676,33 @@
         // --- Save Data to Firestore Collection ---
         db.collection("NGU Recuitment Approval Form").add(dataToSave)
         .then((docRef) => {
-            console.log("Document written with ID: ", docRef.id);
-            alert('Request submitted successfully!');
+            console.log("Document written to Firebase with ID: ", docRef.id);
+            
+            // --- Trigger EmailJS Notification ---
+            // Package up the key details we want to send in the email
+            const templateParams = {
+                requested_by: formData.get('requested-by'),
+                date_of_request: formData.get('date-of-request'),
+                department: formData.get('department'),
+                job_title: formData.get('job-title'),
+                location: formData.get('location') || 'N/A',
+                hiring_manager: formData.get('hiring-manager') || 'N/A',
+                urgency: formData.get('urgency') || 'N/A',
+                vacancy_type: formData.getAll('vacancy-type').join(', ') || 'N/A',
+                why_required: formData.get('why-required'),
+                proposed_salary: formData.get('proposed-salary') || 'N/A',
+                firebase_id: docRef.id // Send the database ID just in case
+            };
+
+            return emailjs.send('service_t9mebjl', 'template_qfkx1r6', templateParams);
+        })
+        .then((response) => {
+            console.log("EmailJS SUCCESS!", response.status, response.text);
+            alert('Request submitted and notification sent successfully!');
             location.reload(); 
         })
         .catch((error) => {
-            console.error("Error adding document: ", error);
+            console.error("Error adding document or sending email: ", error);
             alert('There was an error submitting the request. Please try again or contact IT support.');
         })
         .finally(() => {
