@@ -8,6 +8,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
     <script>
         (function() {
             const username = localStorage.getItem('ngu_portal_username');
@@ -43,7 +46,7 @@
 
         .header-brand { display: flex; align-items: center; gap: 15px; }
         .logo { height: 40px; width: auto; }
-        .page-header h1 { font-size: 1.4em; color: var(--primary-text); text-transform: uppercase; letter-spacing: 0.1em; margin: 0; }
+        .page-header h1 { font-size: 1.4em; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.1em; margin: 0; }
 
         .btn-link {
             border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: all 0.2s;
@@ -56,7 +59,7 @@
 
         .interview-card {
             background: var(--bg-card); border: 1px solid var(--border);
-            border-left: 5px solid var(--accent); border-radius: 10px;
+            border-left: 5px solid var(--warning); border-radius: 10px;
             padding: 20px; display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: all 0.2s;
             flex-wrap: wrap; gap: 15px;
@@ -116,6 +119,13 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, where } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
+    // --- EMAILJS CONFIG ---
+    const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
+    const EMAILJS_FTL_REMINDER = 'template_v410t15';
+    const EMAILJS_APP_REMINDER = 'template_n1r23pg';
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
         authDomain: "oesperformance-a54c0.firebaseapp.com",
@@ -132,7 +142,7 @@
     document.getElementById('displayName').textContent = currentUser;
     const scheduleGrid = document.getElementById('scheduleGrid');
 
-    // Fetch all bookings from today onwards
+    // Load active interviews
     const today = new Date().toISOString().split('T')[0];
     const q = query(collection(db, "NGU Interview Times"), where("date", ">=", today));
 
@@ -144,7 +154,9 @@
             bookings.push({ id: doc.id, ...doc.data() });
         });
 
-        // Sort chronologically (Date then Time)
+        // Background script to process email reminders silently
+        processAutomatedReminders(bookings);
+
         bookings.sort((a, b) => {
             if (a.date === b.date) return a.time.localeCompare(b.time);
             return a.date.localeCompare(b.date);
@@ -180,7 +192,7 @@
             card.innerHTML = `
                 <div class="card-info">
                     <div class="card-date">🗓 ${displayDate} @ ${booking.time}</div>
-                    <div class="card-name">${booking.applicantName}</div>
+                    <div class="card-name">${booking.applicantName} - <span style="font-size:0.9rem; font-weight:normal;">${booking.position || 'Applicant'}</span></div>
                     <div class="card-booked-at">System Booked: ${bookedDateStr}</div>
                 </div>
                 <div class="card-action">
@@ -191,17 +203,83 @@
         });
     }, (error) => {
         console.error("Error loading schedule:", error);
-        scheduleGrid.innerHTML = '<div class="empty-state" style="color:var(--error); border-color:var(--error);">Failed to load schedule. Check permissions.</div>';
     });
+
+    // --- BACKGROUND AUTOMATION SCRIPT ---
+    async function processAutomatedReminders(bookings) {
+        const now = new Date();
+
+        for (const b of bookings) {
+            const docRef = doc(db, "NGU Interview Times", b.id);
+            const updates = {};
+            let emailSent = false;
+
+            // 1. FTL UNCLAIMED REMINDER LOGIC (24, 48, 72 hours)
+            if (!b.interviewer && b.bookedAt) {
+                const bookedTime = b.bookedAt.toDate ? b.bookedAt.toDate() : new Date(b.bookedAt);
+                const hoursWaiting = (now - bookedTime) / (1000 * 60 * 60);
+                const level = b.unclaimedReminderLevel || 0;
+
+                if (hoursWaiting >= 72 && level < 3) {
+                    updates.unclaimedReminderLevel = 3;
+                    emailSent = true;
+                } else if (hoursWaiting >= 48 && level < 2) {
+                    updates.unclaimedReminderLevel = 2;
+                    emailSent = true;
+                } else if (hoursWaiting >= 24 && level < 1) {
+                    updates.unclaimedReminderLevel = 1;
+                    emailSent = true;
+                }
+
+                if (emailSent) {
+                    const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_REMINDER, {
+                        applicant_name: b.applicantName,
+                        hours_waiting: Math.floor(hoursWaiting),
+                        interview_date: displayDate,
+                        interview_time: b.time,
+                        portal_link: window.location.href
+                    });
+                }
+            }
+
+            // 2. APPLICANT 24HR REMINDER LOGIC
+            if (b.applicantEmail && !b.applicantReminderSent) {
+                // Construct Date Object for Interview Time
+                const interviewDateTime = new Date(`${b.date}T${b.time}`);
+                const hoursUntilInterview = (interviewDateTime - now) / (1000 * 60 * 60);
+
+                // If interview is strictly between 0 and 24 hours away
+                if (hoursUntilInterview > 0 && hoursUntilInterview <= 24) {
+                    updates.applicantReminderSent = true;
+
+                    const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                    const firstName = b.applicantName ? b.applicantName.split(' ')[0] : 'Applicant';
+
+                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APP_REMINDER, {
+                        to_email: b.applicantEmail,
+                        first_name: firstName,
+                        job_title: b.position || 'the role',
+                        interview_date: displayDate,
+                        interview_time: b.time,
+                        interviewer_name: b.interviewer || 'a member of our team',
+                        location_method: 'Microsoft Teams',
+                        contact_email: 'recruitment@next-gen.uk'
+                    });
+                }
+            }
+
+            // Sync flags to Database if any emails fired
+            if (Object.keys(updates).length > 0) {
+                await updateDoc(docRef, updates);
+            }
+        }
+    }
 
     window.claimInterview = async function(docId) {
         if (!confirm("Are you sure you want to assign yourself as the interviewer for this timeslot?")) return;
-
         try {
-            const docRef = doc(db, "NGU Interview Times", docId);
-            await updateDoc(docRef, {
-                interviewer: currentUser
-            });
+            await updateDoc(doc(db, "NGU Interview Times", docId), { interviewer: currentUser });
         } catch (error) {
             console.error("Error claiming interview:", error);
             alert("Error assigning interview. Please try again.");
