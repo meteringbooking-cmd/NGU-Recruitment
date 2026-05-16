@@ -4,14 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>NGU — View Applications</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    
     <style>
         :root {
             --primary: #005EB8; --accent: #00A3E0;
             --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
             --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
-            --success: #10B981; --error: #EF4444;
-            --sidebar-width: 330px;
+            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
+            --sidebar-width: 340px;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family: 'Work Sans', sans-serif; background: var(--bg-dark); color: var(--text-light); height: 100vh; display: flex; overflow: hidden; }
@@ -30,8 +36,10 @@
         .applicant-item:hover, .applicant-item.active { border-color: var(--accent); background: rgba(0, 163, 224, 0.1); }
         .app-name { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.2rem; }
         .app-pos { font-size: 0.85rem; color: var(--accent); margin-bottom: 0.2rem; }
-        .app-postcode { font-size: 0.75rem; color: var(--text-light); background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 0.4rem; }
-        .app-date { font-size: 0.75rem; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+        .app-postcode { font-size: 0.75rem; color: var(--text-light); background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 0.4rem; letter-spacing: 0.05em;}
+        .app-date { font-size: 0.75rem; color: var(--text-muted); font-family: 'DM Mono', monospace; display: flex; justify-content: space-between; align-items: center;}
+        
+        .wait-time { color: var(--warning); font-weight: 700; background: rgba(245, 158, 11, 0.1); padding: 2px 6px; border-radius: 4px; }
 
         .match-badge { display: inline-block; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
 
@@ -57,8 +65,10 @@
         .data-table th, .data-table td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
         .data-table th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; background: var(--bg-input); }
 
-        .btn-download { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
-        .btn-download:hover { background: rgba(16, 185, 129, 0.2); }
+        .btn-action { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; cursor: pointer; }
+        .btn-action:hover { background: rgba(16, 185, 129, 0.2); }
+        .btn-download { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(0, 163, 224, 0.1); border: 1px solid rgba(0, 163, 224, 0.4); color: var(--accent); padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+        .btn-download:hover { background: rgba(0, 163, 224, 0.2); }
         .signature-img { background: white; border-radius: 8px; padding: 0.5rem; max-width: 100%; height: auto; max-height: 120px; border: 2px solid var(--border); }
         .cert-list { display: flex; flex-direction: column; gap: 0.8rem; }
         .cert-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-input); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border); }
@@ -90,7 +100,13 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, orderBy, onSnapshot, where } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, query, orderBy, onSnapshot, where, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    // --- INITIALIZE EMAILJS ---
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; // Update if needed
+    const EMAILJS_REMINDER_TEMPLATE = 'template_b6zrvyk';
+    const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
+    emailjs.init(EMAILJS_PUBLIC_KEY);
 
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
@@ -113,15 +129,23 @@
         renderSidebar(); 
     });
 
-    // --- AREA PREFIX EXTRACTOR ---
+    // --- HELPER: Wait Time Calculator (DD:HH) ---
+    function calculateWaitTime(submittedAt) {
+        if (!submittedAt) return '00:00';
+        const past = submittedAt.toDate ? submittedAt.toDate() : new Date(submittedAt);
+        const diffMs = Math.max(0, new Date() - past);
+        const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+        return `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}`;
+    }
+
     function getPostcodeArea(str) {
         if (!str || typeof str !== 'string') return '';
         const match = str.trim().match(/^[a-zA-Z]+/);
         return match ? match[0].toUpperCase() : '';
     }
 
-    // --- DATA LOADERS & SYNC ---
-    // Live Vacancies Real-time Listener
+    // --- LIVE VACANCIES SYNC ---
     const qVac = query(collection(db, "NGU Recuitment Approval Form"), where("workflowClosed", "==", false));
     onSnapshot(qVac, (snapshot) => {
         liveVacancies = [];
@@ -138,21 +162,119 @@
         renderSidebar();
     });
 
-    // Applicants Real-time Listener
+    // --- APPLICANTS SYNC & REMINDER LOGIC ---
     const qApp = query(collection(db, "NGUO New Applicants"), orderBy("submittedAt", "desc"));
     onSnapshot(qApp, (snapshot) => {
         applicationsData = [];
         snapshot.forEach(doc => applicationsData.push({ id: doc.id, ...doc.data() }));
         renderSidebar();
+        
+        // Background check to send automated reminders
+        checkAndSendReminders(applicationsData);
     });
 
-    // --- MATCHING LOGIC ---
+    // --- REMINDER LOGIC ---
+    function getNextWorkingDay8AM(dateObj) {
+        let d = new Date(dateObj);
+        d.setDate(d.getDate() + 1); // Move to next day
+        
+        // Skip weekends
+        if (d.getDay() === 6) d.setDate(d.getDate() + 2); // Saturday -> Monday
+        if (d.getDay() === 0) d.setDate(d.getDate() + 1); // Sunday -> Monday
+        
+        d.setHours(8, 0, 0, 0); // Set to exactly 8:00 AM
+        return d;
+    }
+
+    async function checkAndSendReminders(apps) {
+        const now = new Date();
+        
+        for (const app of apps) {
+            const reviews = app.reviews || [];
+            if (reviews.length >= 2) continue; // It is fully reviewed. Stop checking.
+
+            let reminderCount = app.reminderCount || 0;
+            if (reminderCount >= 3) continue; // Max 3 reminders already sent. Stop checking.
+
+            // Determine the baseline date to calculate the "Next Working Day" from
+            let baseDate = app.submittedAt?.toDate ? app.submittedAt.toDate() : new Date(app.submittedAt);
+            if (reminderCount > 0 && app.lastReminderDate) {
+                baseDate = new Date(app.lastReminderDate);
+            }
+
+            const targetReminderTime = getNextWorkingDay8AM(baseDate);
+
+            // If we have passed the target 8AM time, fire the email!
+            if (now >= targetReminderTime) {
+                try {
+                    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REMINDER_TEMPLATE, {
+                        applicant_name: app.fullName || 'Unknown',
+                        position: app.position || 'Unknown',
+                        wait_time: calculateWaitTime(app.submittedAt),
+                        url_link: window.location.href // Helps them jump right to the portal
+                    });
+
+                    // Update DB to register that we sent it
+                    const appRef = doc(db, "NGUO New Applicants", app.id);
+                    await updateDoc(appRef, {
+                        reminderCount: reminderCount + 1,
+                        lastReminderDate: now.toISOString()
+                    });
+                    
+                    console.log(`Automated Reminder #${reminderCount + 1} sent for ${app.fullName}`);
+                } catch (e) {
+                    console.error("Failed to send automated reminder:", e);
+                }
+            }
+        }
+    }
+
+    // --- REVIEW LOGIC ---
+    window.markAsReviewed = async function(appId) {
+        const adminName = prompt("Please enter your name to confirm you have reviewed this application:");
+        if (!adminName || adminName.trim() === "") return;
+
+        try {
+            const appRef = doc(db, "NGUO New Applicants", appId);
+            const snap = await getDoc(appRef);
+            
+            if (snap.exists()) {
+                const data = snap.data();
+                const reviews = data.reviews || [];
+                
+                if (reviews.length >= 2) {
+                    alert("This application has already been fully reviewed.");
+                    return;
+                }
+
+                // Add new review object to array
+                reviews.push({
+                    name: adminName.trim(),
+                    timestamp: new Date().toISOString()
+                });
+
+                await updateDoc(appRef, { reviews: reviews });
+                
+                // If the detail pane is open, refresh it manually to show the new review instantly
+                const currentAppIndex = applicationsData.findIndex(a => a.id === appId);
+                if (currentAppIndex !== -1) {
+                    applicationsData[currentAppIndex].reviews = reviews;
+                    // Find active match status to re-render identically
+                    const matchStatus = isAreaMatch(applicationsData[currentAppIndex].position, applicationsData[currentAppIndex].personalDetails?.postcode);
+                    const appArea = getPostcodeArea(applicationsData[currentAppIndex].personalDetails?.postcode);
+                    renderDetails(applicationsData[currentAppIndex], matchStatus, appArea);
+                }
+            }
+        } catch (error) {
+            console.error("Error saving review:", error);
+            alert("Error saving review. Please try again.");
+        }
+    };
+
     function isAreaMatch(appPosition, appPostcode) {
         const appArea = getPostcodeArea(appPostcode);
         if (!appArea) return false;
-
         const safeAppPos = (appPosition || '').trim().toLowerCase();
-
         return liveVacancies.some(v => {
             const safeVacPos = (v.jobTitle || '').trim().toLowerCase();
             return safeVacPos === safeAppPos && v.locationArea === appArea;
@@ -179,9 +301,14 @@
                 dateStr = app.submittedAt.toDate().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
             }
 
+            const waitTime = calculateWaitTime(app.submittedAt);
             const appPostcode = app.personalDetails?.postcode || 'No Postcode';
             const matchStatus = isAreaMatch(app.position, appPostcode);
             const appArea = getPostcodeArea(appPostcode);
+            
+            // Check if fully reviewed
+            const reviewsCount = app.reviews ? app.reviews.length : 0;
+            const reviewStatus = reviewsCount >= 2 ? `<span style="color:var(--success);">✓ Reviewed</span>` : `<span class="wait-time">Wait: ${waitTime}</span>`;
 
             const div = document.createElement('div');
             div.className = 'applicant-item';
@@ -189,7 +316,10 @@
                 <div class="app-name">${app.fullName || 'Unnamed Applicant'}</div>
                 <div class="app-pos">${app.position || 'No Position Selected'}</div>
                 <div class="app-postcode">${appPostcode}</div><br>
-                <div class="app-date">${dateStr}</div>
+                <div class="app-date">
+                    <span>${dateStr}</span>
+                    ${reviewStatus}
+                </div>
                 ${matchStatus ? `<div class="match-badge">📍 Area Match (${appArea})</div>` : ''}
             `;
             div.onclick = () => {
@@ -233,9 +363,39 @@
 
         const matchBadgeHtml = matchStatus ? `<div class="match-badge-large">📍 Live Vacancy Area Match (${appArea})</div>` : '';
 
+        // --- RENDER REVIEWS HTML ---
+        const reviews = app.reviews || [];
+        let reviewsHtml = '';
+        if (reviews.length > 0) {
+            reviews.forEach((rev, index) => {
+                const rDate = new Date(rev.timestamp).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+                reviewsHtml += `
+                    <div class="data-group" style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
+                        <div class="data-label">Review ${index + 1}</div>
+                        <div class="data-value" style="color: var(--success); font-weight: 600;">✓ Reviewed by ${rev.name}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">${rDate}</div>
+                    </div>
+                `;
+            });
+        } else {
+            reviewsHtml = `<div class="text-box">No reviews recorded yet.</div>`;
+        }
+
+        const reviewActionHtml = reviews.length < 2 
+            ? `<button class="btn-action" style="margin-top:1.5rem;" onclick="markAsReviewed('${app.id}')">+ Mark as Reviewed</button>` 
+            : `<div class="badge" style="margin-top:1.5rem; background:rgba(16,185,129,0.2); color:var(--success); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✓ Fully Reviewed (Completed)</div>`;
+
+
         mainEl.innerHTML = `
             <div class="app-header"><h1>${app.fullName} ${matchBadgeHtml}</h1><div style="width:100%; margin-top:10px;"><div class="badge">${app.position}</div></div></div>
             
+            <!-- ADMIN REVIEWS SECTION -->
+            <div class="section" style="border: 1px solid var(--accent); background: rgba(0, 163, 224, 0.03);">
+                <h3 style="color: var(--accent);">Applicant Review Status</h3>
+                <div class="grid-2">${reviewsHtml}</div>
+                ${reviewActionHtml}
+            </div>
+
             <div class="section"><h3>Personal Details</h3><div class="grid-2">
                 <div class="data-group"><div class="data-label">Title</div><div class="data-value">${safeVal(p.title)}</div></div>
                 <div class="data-group"><div class="data-label">Email</div><div class="data-value"><a href="mailto:${p.email}" style="color:var(--accent)">${safeVal(p.email)}</a></div></div>
