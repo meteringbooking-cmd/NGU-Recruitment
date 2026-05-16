@@ -3,146 +3,157 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>NGU — Book Your Interview</title>
+    <title>NGU — View Applications</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-
+    
     <style>
         :root {
             --primary: #005EB8; --accent: #00A3E0;
             --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
             --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
             --success: #10B981; --error: #EF4444; --warning: #F59E0B;
+            --sidebar-width: 340px;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
-        body {
-            font-family: 'Work Sans', sans-serif;
-            background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%);
-            color: var(--text-light); min-height: 100vh; padding: 2rem 1.5rem;
-            display: flex; flex-direction: column; align-items: center;
-        }
-        body::before {
-            content: ''; position: fixed; inset: 0;
-            background: radial-gradient(circle at 15% 20%, rgba(0,163,224,0.08) 0%, transparent 55%),
-                        radial-gradient(circle at 85% 75%, rgba(0,94,184,0.07) 0%, transparent 55%);
-            pointer-events: none; z-index: -1;
-        }
+        body { font-family: 'Work Sans', sans-serif; background: var(--bg-dark); color: var(--text-light); height: 100vh; display: flex; overflow: hidden; }
         
-        .container { width: 100%; max-width: 600px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; box-shadow: 0 8px 25px rgba(0,0,0,0.3); margin-top: 2rem; }
-        .logo { max-height: 60px; display: block; margin: 0 auto 1.5rem; }
-        .page-header { text-align: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
-        .page-header h1 { font-size: 1.8rem; font-weight: 800; color: var(--accent); margin-bottom: 0.5rem; }
-        .page-header p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; }
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border); background: #111d31; }
+        .logo { max-height: 40px; display: block; margin-bottom: 1rem; }
+        .sidebar-header h2 { font-size: 1.2rem; color: var(--accent); }
+        
+        .filter-container { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); background: rgba(0, 0, 0, 0.15); }
+        .filter-label { display: flex; align-items: center; gap: 0.6rem; font-size: 0.85rem; font-weight: 600; color: var(--text-light); cursor: pointer; user-select: none; }
+        .filter-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--success); cursor: pointer; }
 
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; font-weight: 600; font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .applicant-list { flex: 1; overflow-y: auto; padding: 1rem; }
+        .applicant-item { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; cursor: pointer; transition: all 0.2s; position: relative; }
+        .applicant-item:hover, .applicant-item.active { border-color: var(--accent); background: rgba(0, 163, 224, 0.1); }
+        .app-name { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.2rem; }
+        .app-pos { font-size: 0.85rem; color: var(--accent); margin-bottom: 0.2rem; }
+        .app-postcode { font-size: 0.75rem; color: var(--text-light); background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 0.4rem; letter-spacing: 0.05em;}
+        .app-date { font-size: 0.75rem; color: var(--text-muted); font-family: 'DM Mono', monospace; display: flex; justify-content: space-between; align-items: center;}
         
-        input[type="date"], input[type="text"], input[type="email"] {
-            width: 100%; padding: 0.9rem 1rem; background: var(--bg-input);
-            border: 2px solid var(--border); border-radius: 10px; color: var(--text-light);
-            font-size: 1rem; font-family: inherit; transition: all 0.2s; outline: none;
-        }
-        input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,163,224,0.15); }
-        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.8); cursor: pointer; }
+        .wait-time { color: #fcd34d; font-weight: 700; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-family: 'Work Sans', sans-serif;}
+        .match-badge { display: inline-block; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
 
-        .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 1rem; }
-        
-        .slot-btn {
-            background: var(--bg-input); border: 2px solid var(--border);
-            color: var(--text-light); padding: 0.8rem; border-radius: 8px;
-            font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
-            font-family: 'DM Mono', monospace;
-        }
-        .slot-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: rgba(0,163,224,0.1); }
-        .slot-btn:disabled { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.05); color: var(--text-muted); cursor: not-allowed; text-decoration: line-through; }
-        
-        .status-msg { text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem; font-style: italic; }
+        .main-content { flex: 1; overflow-y: auto; padding: 2rem 3rem; background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%); }
+        .empty-state { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 1.2rem; }
+        .loading { text-align: center; padding: 2rem; color: var(--accent); font-weight: 600; }
 
-        /* Modal Styles */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;}
+        .app-header { margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
+        .app-header h1 { font-size: 2.2rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;}
+        .app-header .badge { display: inline-block; background: rgba(0,163,224,0.15); color: var(--accent); padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem; }
+        .match-badge-large { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); padding: 0.4rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px; }
+
+        .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.8rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .section h3 { font-size: 1.2rem; color: var(--accent); margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem 2rem; }
+        .data-group { margin-bottom: 1rem; }
+        .data-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; font-weight: 600; }
+        .data-value { font-size: 1rem; color: var(--text-light); word-break: break-word; }
+        .text-box { background: var(--bg-input); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); font-size: 0.9rem; white-space: pre-wrap; line-height: 1.5; }
+
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+        .data-table th, .data-table td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
+        .data-table th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; background: var(--bg-input); }
+
+        .btn-action { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; cursor: pointer; }
+        .btn-action:hover { background: rgba(16, 185, 129, 0.2); }
+        
+        .btn-action-alt { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: rgba(0, 163, 224, 0.1); border: 1px solid rgba(0, 163, 224, 0.4); color: var(--accent); padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; cursor: pointer; }
+        .btn-action-alt:hover { background: rgba(0, 163, 224, 0.2); }
+
+        .btn-download { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(0, 163, 224, 0.1); border: 1px solid rgba(0, 163, 224, 0.4); color: var(--accent); padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
+        .btn-download:hover { background: rgba(0, 163, 224, 0.2); }
+        .signature-img { background: white; border-radius: 8px; padding: 0.5rem; max-width: 100%; height: auto; max-height: 120px; border: 2px solid var(--border); }
+        .cert-list { display: flex; flex-direction: column; gap: 0.8rem; }
+        .cert-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-input); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border); }
+
+        /* Review Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;}
         .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease;}
-        .modal-content { background: var(--bg-card); width: 100%; max-width: 400px; border-radius: 16px; border: 1px solid var(--border); padding: 2.5rem; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; }
-        .modal-title { font-size: 1.4rem; color: var(--accent); font-weight: 700; margin-bottom: 0.5rem; }
-        .modal-subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
-        
-        .btn { padding: 0.85rem 1.5rem; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; width: 100%; margin-top: 1rem; }
-        .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; }
-        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.35); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--text-light); margin-top: 0.5rem; }
+        .modal-content { background: var(--bg-card); width: 100%; max-width: 450px; border-radius: 12px; border: 1px solid var(--border); padding: 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        .modal-title { font-size: 1.4rem; color: var(--accent); font-weight: 700; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;}
+        .modal-form-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .modal-form-group label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+        .modal-input, .modal-select { width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: white; font-family: inherit; font-size: 0.95rem; outline: none;}
+        .modal-input:focus, .modal-select:focus { border-color: var(--accent); }
+        .modal-actions { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;}
+        .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--text-light); padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 600;}
         .btn-cancel:hover { background: rgba(255,255,255,0.05); }
-
-        #successScreen { display: none; text-align: center; padding: 3rem 1rem; }
-        .success-icon { font-size: 4rem; margin-bottom: 1rem; }
         
         @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
     </style>
 </head>
 <body>
 
-    <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
-    
-    <div class="container" id="bookingContainer">
-        <div class="page-header">
-            <h1>Interview Booking</h1>
-            <p>Select an available date and time below to schedule your interview with Next Generation Utilities.</p>
-        </div>
-
-        <div class="form-group">
-            <label>1. Select a Date</label>
-            <input type="date" id="datePicker">
-        </div>
-
-        <div class="form-group" id="slotsWrapper" style="display: none;">
-            <label>2. Select a Time Slot</label>
-            <div class="slots-grid" id="slotsGrid"></div>
-            <div id="loadingStatus" class="status-msg"></div>
-        </div>
-    </div>
-
-    <div class="container" id="successScreen">
-        <div class="success-icon">✅</div>
-        <h1 style="color:var(--success); margin-bottom:1rem;">Booking Confirmed!</h1>
-        <p style="color:var(--text-muted); font-size:1.05rem; line-height:1.6;" id="successMsg"></p>
-    </div>
-
-    <!-- BOOKING CONFIRMATION MODAL -->
-    <div class="modal-overlay" id="bookingModal">
+    <!-- REVIEW MODAL -->
+    <div class="modal-overlay" id="reviewModal">
         <div class="modal-content">
-            <div class="modal-title">Confirm Booking</div>
-            <div class="modal-subtitle" id="modalTimeDisplay"></div>
+            <div class="modal-title">Review Application</div>
+            <input type="hidden" id="reviewAppId">
             
-            <input type="hidden" id="selectedDate">
-            <input type="hidden" id="selectedTime">
-
-            <div style="text-align: left; margin-bottom: 1rem;">
-                <label>Your Full Name <span style="color:var(--accent);">*</span></label>
-                <input type="text" id="applicantName" placeholder="e.g. Jane Doe">
-            </div>
-            
-            <div style="text-align: left; margin-bottom: 1.5rem;">
-                <label>Email Address <span style="color:var(--accent);">*</span></label>
-                <input type="email" id="applicantEmail" placeholder="To receive your confirmation">
+            <div class="modal-form-group">
+                <label>Reviewer Name</label>
+                <input type="text" id="reviewerName" class="modal-input" placeholder="Enter your full name">
             </div>
 
-            <button class="btn btn-primary" id="confirmBtn" onclick="submitBooking()">Confirm Interview</button>
-            <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+            <div class="modal-form-group">
+                <label>Decision</label>
+                <select id="reviewDecision" class="modal-select">
+                    <option value="" disabled selected>Select a decision...</option>
+                    <option value="Proceed">Proceed with applicant</option>
+                    <option value="Hold">Place on hold</option>
+                    <option value="Do not proceed">Do not proceed</option>
+                </select>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeReviewModal()">Cancel</button>
+                <button class="btn-action-alt" id="submitReviewBtn" onclick="submitReview()">Save Review</button>
+            </div>
         </div>
     </div>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
+            <h2>Applicant Portal</h2>
+        </div>
+        
+        <div class="filter-container">
+            <label class="filter-label">
+                <input type="checkbox" id="filterMatchesToggle">
+                Only show Area Matches
+            </label>
+        </div>
+
+        <div class="applicant-list" id="applicantList">
+            <div class="loading">Loading applications...</div>
+        </div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+        <div class="empty-state">Select an application from the sidebar to view details.</div>
+    </main>
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, where, getDocs, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, query, orderBy, onSnapshot, where, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-    // --- EMAILJS CONFIG ---
-    const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
+    // --- INITIALIZE EMAILJS ---
     const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
-    const EMAILJS_FTL_TEMPLATE = 'template_5cpb2mc';
-    const EMAILJS_APPLICANT_CONFIRM = 'template_xf6p7vc'; 
+    const EMAILJS_REMINDER_TEMPLATE = 'template_b6zrvyk';
+    const EMAILJS_INTERNAL_NAME_CHECK = 'template_9m20itg';
+    const EMAILJS_EXTERNAL_NAME_CHECK = 'template_cuqwtx4';
+    const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
     const firebaseConfig = {
@@ -156,183 +167,438 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    
+    let applicationsData = [];
+    let liveVacancies = [];
+    let showOnlyMatches = false;
+    let selectedAppId = null; // Memorizes the active applicant during refreshes
 
-    const datePicker = document.getElementById('datePicker');
-    const slotsWrapper = document.getElementById('slotsWrapper');
-    const slotsGrid = document.getElementById('slotsGrid');
-    const loadingStatus = document.getElementById('loadingStatus');
+    document.getElementById('filterMatchesToggle').addEventListener('change', (e) => {
+        showOnlyMatches = e.target.checked;
+        renderSidebar(); 
+    });
 
-    // Restrict past dates
-    const today = new Date().toISOString().split('T')[0];
-    datePicker.setAttribute('min', today);
-
-    // Generate 30-min slots from 08:00 to 17:30
-    const timeSlots = [];
-    for (let h = 8; h <= 17; h++) {
-        timeSlots.push(`${String(h).padStart(2, '0')}:00`);
-        timeSlots.push(`${String(h).padStart(2, '0')}:30`);
+    // --- HELPER: Wait Time Calculator (Days & Hours explicitly) ---
+    function calculateWaitTime(submittedAt) {
+        if (!submittedAt) return '0 Days 0 Hrs';
+        const past = submittedAt.toDate ? submittedAt.toDate() : new Date(submittedAt);
+        const diffMs = Math.max(0, new Date() - past);
+        const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+        return `${days} Days ${hours} Hrs`;
     }
 
-    datePicker.addEventListener('change', async (e) => {
-        const selectedDate = e.target.value;
-        if (!selectedDate) return;
+    function getPostcodeArea(str) {
+        if (!str || typeof str !== 'string') return '';
+        const match = str.trim().match(/^[a-zA-Z]+/);
+        return match ? match[0].toUpperCase() : '';
+    }
 
-        // Block Weekends
-        const day = new Date(selectedDate).getDay();
-        if (day === 0 || day === 6) {
-            alert("Please select a weekday (Monday - Friday).");
-            e.target.value = '';
-            slotsWrapper.style.display = 'none';
+    // --- LIVE VACANCIES SYNC ---
+    const qVac = query(collection(db, "NGU Recuitment Approval Form"), where("workflowClosed", "==", false));
+    onSnapshot(qVac, (snapshot) => {
+        liveVacancies = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const approvals = data.approvalSignOff || {};
+            if (approvals.departmentHead?.decision === 'Approve' && approvals.finance?.decision === 'Approve' && approvals.finalApprover?.decision === 'Approve') {
+                liveVacancies.push({ 
+                    jobTitle: data.requestInformation?.jobTitle || '', 
+                    locationArea: getPostcodeArea(data.requestInformation?.location) 
+                });
+            }
+        });
+        renderSidebar();
+    });
+
+    // --- APPLICANTS SYNC (Single Source of Truth) ---
+    const qApp = query(collection(db, "NGUO New Applicants"), orderBy("submittedAt", "desc"));
+    onSnapshot(qApp, (snapshot) => {
+        applicationsData = [];
+        snapshot.forEach(doc => applicationsData.push({ id: doc.id, ...doc.data() }));
+        renderSidebar();
+        
+        // If an applicant was already selected, instantly update their detail screen
+        if (selectedAppId) {
+            const updatedApp = applicationsData.find(a => a.id === selectedAppId);
+            if (updatedApp) {
+                const matchStatus = isAreaMatch(updatedApp.position, updatedApp.personalDetails?.postcode);
+                const appArea = getPostcodeArea(updatedApp.personalDetails?.postcode);
+                renderDetails(updatedApp, matchStatus, appArea);
+            }
+        }
+
+        // Background check to send automated reminders
+        checkAndSendReminders(applicationsData);
+    });
+
+    // --- REMINDER LOGIC ---
+    function getNextWorkingDay8AM(dateObj) {
+        let d = new Date(dateObj);
+        d.setDate(d.getDate() + 1); // Move to next day
+        
+        // Skip weekends
+        if (d.getDay() === 6) d.setDate(d.getDate() + 2); // Saturday -> Monday
+        if (d.getDay() === 0) d.setDate(d.getDate() + 1); // Sunday -> Monday
+        
+        d.setHours(8, 0, 0, 0); // Set to exactly 8:00 AM
+        return d;
+    }
+
+    async function checkAndSendReminders(apps) {
+        const now = new Date();
+        
+        for (const app of apps) {
+            const reviews = app.reviews || [];
+            if (reviews.length >= 2) continue; // It is fully reviewed. Stop checking.
+
+            let reminderCount = app.reminderCount || 0;
+            if (reminderCount >= 3) continue; // Max 3 reminders already sent. Stop checking.
+
+            // Determine the baseline date to calculate the "Next Working Day" from
+            let baseDate = app.submittedAt?.toDate ? app.submittedAt.toDate() : new Date(app.submittedAt);
+            if (reminderCount > 0 && app.lastReminderDate) {
+                baseDate = new Date(app.lastReminderDate);
+            }
+
+            const targetReminderTime = getNextWorkingDay8AM(baseDate);
+
+            // If we have passed the target 8AM time, fire the email!
+            if (now >= targetReminderTime) {
+                try {
+                    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REMINDER_TEMPLATE, {
+                        applicant_name: app.fullName || 'Unknown',
+                        position: app.position || 'Unknown',
+                        wait_time: calculateWaitTime(app.submittedAt),
+                        url_link: window.location.href // Helps them jump right to the portal
+                    });
+
+                    // Update DB to register that we sent it
+                    const appRef = doc(db, "NGUO New Applicants", app.id);
+                    await updateDoc(appRef, {
+                        reminderCount: reminderCount + 1,
+                        lastReminderDate: now.toISOString()
+                    });
+                    
+                    console.log(`Automated Reminder #${reminderCount + 1} sent for ${app.fullName}`);
+                } catch (e) {
+                    console.error("Failed to send automated reminder:", e);
+                }
+            }
+        }
+    }
+
+    // --- MODAL CONTROLS ---
+    window.openReviewModal = function(appId) {
+        document.getElementById('reviewAppId').value = appId;
+        document.getElementById('reviewerName').value = localStorage.getItem('ngu_portal_username') || '';
+        document.getElementById('reviewDecision').value = '';
+        document.getElementById('reviewModal').classList.add('active');
+    };
+
+    window.closeReviewModal = function() {
+        document.getElementById('reviewModal').classList.remove('active');
+        document.getElementById('reviewDecision').value = ''; 
+    };
+
+    // --- REVIEW SUBMISSION LOGIC ---
+    window.submitReview = async function() {
+        const appId = document.getElementById('reviewAppId').value;
+        const adminName = document.getElementById('reviewerName').value.trim();
+        const decision = document.getElementById('reviewDecision').value;
+        const submitBtn = document.getElementById('submitReviewBtn');
+
+        if (!adminName || !decision) {
+            alert("Please enter your name and make a decision.");
             return;
         }
 
-        slotsWrapper.style.display = 'block';
-        slotsGrid.innerHTML = '';
-        loadingStatus.textContent = 'Checking availability...';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
 
         try {
-            const q = query(collection(db, "NGU Interview Times"), where("date", "==", selectedDate));
-            const snapshot = await getDocs(q);
+            const appRef = doc(db, "NGUO New Applicants", appId);
+            const snap = await getDoc(appRef);
             
-            const bookedTimes = new Set();
-            snapshot.forEach(doc => {
-                bookedTimes.add(doc.data().time);
-            });
-
-            loadingStatus.textContent = '';
-
-            // Calculate current time + 24 hours to enforce 24hr notice
-            const nowPlus24Hours = new Date().getTime() + (24 * 60 * 60 * 1000);
-
-            timeSlots.forEach(time => {
-                const btn = document.createElement('button');
-                btn.className = 'slot-btn';
-                btn.textContent = time;
-
-                // Check if the slot is in the past or within the 24-hour buffer
-                const slotDateTime = new Date(`${selectedDate}T${time}:00`).getTime();
+            if (snap.exists()) {
+                const data = snap.data();
+                const reviews = data.reviews || [];
                 
-                if (bookedTimes.has(time) || slotDateTime <= nowPlus24Hours) {
-                    btn.disabled = true;
-                    if (slotDateTime <= nowPlus24Hours && !bookedTimes.has(time)) {
-                        btn.title = "Interviews must be booked at least 24 hours in advance";
-                    }
-                } else {
-                    btn.onclick = () => openModal(selectedDate, time);
+                if (reviews.length >= 2) {
+                    alert("This application has already been fully reviewed.");
+                    closeReviewModal();
+                    return;
                 }
-                
-                slotsGrid.appendChild(btn);
-            });
 
-            // If all buttons are disabled, show a message
-            const allDisabled = Array.from(slotsGrid.querySelectorAll('.slot-btn')).every(btn => btn.disabled);
-            if (allDisabled) {
-                loadingStatus.textContent = 'No slots available on this date. Please select another date.';
+                // Protect against the exact same person submitting both reviews
+                if (reviews.some(r => r.name.toLowerCase() === adminName.toLowerCase())) {
+                    alert("You have already reviewed this application. The second review must be completed by a different person.");
+                    closeReviewModal();
+                    return;
+                }
+
+                reviews.push({ name: adminName, decision: decision, timestamp: new Date().toISOString() });
+
+                let updates = { reviews: reviews };
+                let triggerNameChecks = false;
+
+                // CHECK FOR 2 PROCEEDS
+                if (reviews.length === 2) {
+                    const bothProceed = reviews[0].decision === 'Proceed' && reviews[1].decision === 'Proceed';
+                    if (bothProceed && !data.nameChecksRequested) {
+                        triggerNameChecks = true;
+                        updates.nameChecksRequested = true;
+                    }
+                }
+
+                // Single Source of Truth Update (Triggers onSnapshot instantly)
+                await updateDoc(appRef, updates);
+
+                // FIRE EMAILJS IF NEEDED (Silent background process)
+                if (triggerNameChecks) {
+                    console.log("Both reviews are 'Proceed'. Triggering Name Check emails...");
+                    const emailParams = {
+                        applicant_name: data.fullName || 'Unknown',
+                        postcode: data.personalDetails?.postcode || 'No Postcode provided'
+                    };
+                    
+                    Promise.allSettled([
+                        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INTERNAL_NAME_CHECK, emailParams),
+                        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, emailParams)
+                    ]);
+                }
+
+                closeReviewModal();
             }
-
         } catch (error) {
-            console.error("Error fetching slots:", error);
-            loadingStatus.textContent = 'Error checking availability. Please try again.';
+            console.error("Error saving review:", error);
+            alert("Error saving review. Please try again.");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Save Review';
         }
-    });
-
-    // --- MODAL CONTROLS ---
-    window.openModal = function(date, time) {
-        document.getElementById('selectedDate').value = date;
-        document.getElementById('selectedTime').value = time;
-        
-        const displayDate = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        document.getElementById('modalTimeDisplay').innerHTML = `<strong>${time}</strong> on <br>${displayDate}`;
-        
-        document.getElementById('bookingModal').classList.add('active');
-        document.getElementById('applicantName').focus();
     };
 
-    window.closeModal = function() {
-        document.getElementById('bookingModal').classList.remove('active');
-        document.getElementById('applicantName').value = '';
-        document.getElementById('applicantEmail').value = '';
-    };
-
-    window.submitBooking = async function() {
-        const name = document.getElementById('applicantName').value.trim();
-        const email = document.getElementById('applicantEmail').value.trim();
-        const date = document.getElementById('selectedDate').value;
-        const time = document.getElementById('selectedTime').value;
-        const btn = document.getElementById('confirmBtn');
-
-        if (!name || !email) return alert("Please complete all fields.");
-
-        btn.disabled = true;
-        btn.textContent = 'Booking...';
+    // --- NAME CHECK COMPLETION LOGIC ---
+    window.markNameChecksComplete = async function(appId) {
+        const adminName = prompt("Please enter your name to confirm Name Checks are complete:");
+        if (!adminName || adminName.trim() === "") return;
 
         try {
-            const docId = `${date}_${time}`; 
-            const docRef = doc(db, "NGU Interview Times", docId);
-
-            const existingDoc = await getDocs(query(collection(db, "NGU Interview Times"), where("date", "==", date), where("time", "==", time)));
-            if (!existingDoc.empty) {
-                alert("Sorry! Someone just booked this slot. Please select another time.");
-                closeModal();
-                datePicker.dispatchEvent(new Event('change'));
-                return;
-            }
-
-            await setDoc(docRef, {
-                date: date,
-                time: time,
-                applicantName: name,
-                applicantEmail: email,
-                status: "Booked",
-                interviewer: null,
-                bookedAt: serverTimestamp(),
-                applicantReminderSent: false,
-                unclaimedReminderLevel: 0
+            const appRef = doc(db, "NGUO New Applicants", appId);
+            await updateDoc(appRef, {
+                nameChecksCompleted: true,
+                nameChecksCompletedBy: adminName.trim(),
+                nameChecksCompletedAt: new Date().toISOString()
             });
-
-            const displayDate = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-            const firstName = name.split(' ')[0];
-
-            // 1. Send Confirmation to Applicant
-            const applicantParams = {
-                to_email: email,
-                first_name: firstName,
-                job_title: 'your applied role', // Defaulted since position field is removed
-                interview_date: displayDate,
-                interview_time: time,
-                location_method: 'Microsoft Teams',
-                meeting_link: 'A link will be provided by your interviewer shortly',
-                duration: '30',
-                interviewer_name: 'a member of our team',
-                contact_email: 'recruitment@next-gen.uk'
-            };
-
-            // 2. Send Alert to FTLs
-            const ftlParams = {
-                applicant_name: name,
-                interview_date: displayDate,
-                interview_time: time,
-                portal_link: window.location.origin + "/FTL-interview-availability.html"
-            };
-
-            await Promise.allSettled([
-                emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APPLICANT_CONFIRM, applicantParams),
-                emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_TEMPLATE, ftlParams)
-            ]);
-
-            closeModal();
-            document.getElementById('bookingContainer').style.display = 'none';
-            document.getElementById('successScreen').style.display = 'block';
-            
-            document.getElementById('successMsg').innerHTML = `Your interview has been booked for <strong>${time}</strong> on <strong>${displayDate}</strong>.<br><br>We look forward to speaking with you, ${firstName}!`;
-
         } catch (error) {
-            console.error("Booking Error:", error);
-            alert("An error occurred. Please try again.");
-            btn.disabled = false;
-            btn.textContent = 'Confirm Interview';
+            console.error("Error saving name checks status:", error);
+            alert("Error saving status. Please try again.");
         }
     };
+
+
+    function isAreaMatch(appPosition, appPostcode) {
+        const appArea = getPostcodeArea(appPostcode);
+        if (!appArea) return false;
+        const safeAppPos = (appPosition || '').trim().toLowerCase();
+        return liveVacancies.some(v => {
+            const safeVacPos = (v.jobTitle || '').trim().toLowerCase();
+            return safeVacPos === safeAppPos && v.locationArea === appArea;
+        });
+    }
+
+    function renderSidebar() {
+        const listEl = document.getElementById('applicantList');
+        listEl.innerHTML = '';
+
+        let filteredApps = applicationsData;
+        if (showOnlyMatches) {
+            filteredApps = applicationsData.filter(app => isAreaMatch(app.position, app.personalDetails?.postcode));
+        }
+
+        if (filteredApps.length === 0) {
+            listEl.innerHTML = '<div class="loading">No applications found.</div>';
+            return;
+        }
+
+        filteredApps.forEach((app) => {
+            let dateStr = 'Unknown Date';
+            if (app.submittedAt && app.submittedAt.toDate) {
+                dateStr = app.submittedAt.toDate().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+            }
+
+            const waitTime = calculateWaitTime(app.submittedAt);
+            const appPostcode = app.personalDetails?.postcode || 'No Postcode';
+            const matchStatus = isAreaMatch(app.position, appPostcode);
+            const appArea = getPostcodeArea(appPostcode);
+            
+            // Check if fully reviewed
+            const reviewsCount = app.reviews ? app.reviews.length : 0;
+            const reviewStatus = reviewsCount >= 2 ? `<span style="color:var(--success); font-weight:700;">✓ Reviewed</span>` : `<span class="wait-time">⏱ ${waitTime}</span>`;
+
+            const div = document.createElement('div');
+            div.className = 'applicant-item';
+            
+            // Re-apply active class if it is the currently selected applicant
+            if (selectedAppId === app.id) {
+                div.classList.add('active');
+            }
+
+            div.innerHTML = `
+                <div class="app-name">${app.fullName || 'Unnamed Applicant'}</div>
+                <div class="app-pos">${app.position || 'No Position Selected'}</div>
+                <div class="app-postcode">${appPostcode}</div><br>
+                <div class="app-date">
+                    <span>${dateStr}</span>
+                    ${reviewStatus}
+                </div>
+                ${matchStatus ? `<div class="match-badge">📍 Area Match (${appArea})</div>` : ''}
+            `;
+            
+            div.onclick = () => {
+                selectedAppId = app.id; // Lock applicant in memory
+                document.querySelectorAll('.applicant-item').forEach(el => el.classList.remove('active'));
+                div.classList.add('active');
+                renderDetails(app, matchStatus, appArea);
+            };
+            listEl.appendChild(div);
+        });
+    }
+
+    function safeVal(val, defaultText = 'Not provided') { return val ? val : `<span style="color:var(--text-muted)">${defaultText}</span>`; }
+
+    function renderDetails(app, matchStatus, appArea) {
+        const mainEl = document.getElementById('mainContent');
+        const p = app.personalDetails || {}; const c = app.certificates || {};
+        
+        let cvHtml = app.cv && app.cv.data 
+            ? `<a href="${app.cv.data}" download="${app.cv.filename}" class="btn-download">📄 Download CV (${app.cv.filename})</a>`
+            : `<div class="text-box">No CV uploaded</div>`;
+
+        let certsHtml = '';
+        [{ key: 'mocopa', label: 'MOCOPA' }, { key: 'gasl3', label: 'Level 3 Gas' }, { key: 'cmagas', label: 'CMA Gas' }, { key: 'higherskills', label: 'Higher Skills' }]
+        .forEach(cert => {
+            if (c[cert.key] && c[cert.key].data) certsHtml += `<div class="cert-item"><div><strong>${cert.label}</strong><br><small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${c[cert.key].filename}</small></div><a href="${c[cert.key].data}" download="${c[cert.key].filename}" class="btn-download">Download</a></div>`;
+        });
+        if (c.additional && c.additional.length > 0) {
+            c.additional.forEach(add => {
+                if(add.data) certsHtml += `<div class="cert-item"><div><strong>${add.name}</strong><br><small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${add.filename}</small></div><a href="${add.data}" download="${add.filename}" class="btn-download">Download</a></div>`;
+            });
+        }
+        if(!certsHtml) certsHtml = `<div class="text-box">No file certificates uploaded</div>`;
+
+        let empHtml = app.employment && app.employment.length > 0 
+            ? `<table class="data-table"><thead><tr><th>Company</th><th>Position</th><th>Reason for Leaving</th></tr></thead><tbody>` + app.employment.map(e => `<tr><td>${safeVal(e.company)}</td><td>${safeVal(e.position)}</td><td>${safeVal(e.reason)}</td></tr>`).join('') + `</tbody></table>` 
+            : `<div class="text-box">No employment history provided</div>`;
+
+        let unavailHtml = app.unavailability && app.unavailability.length > 0 
+            ? `<table class="data-table"><thead><tr><th>Date</th><th>Time</th></tr></thead><tbody>` + app.unavailability.map(u => `<tr><td>${safeVal(u.date)}</td><td>${safeVal(u.time)}</td></tr>`).join('') + `</tbody></table>`
+            : `<div class="text-box">No unavailable dates specified</div>`;
+
+        const matchBadgeHtml = matchStatus ? `<div class="match-badge-large">📍 Live Vacancy Area Match (${appArea})</div>` : '';
+
+        // --- RENDER REVIEWS HTML ---
+        const reviews = app.reviews || [];
+        let reviewsHtml = '';
+        if (reviews.length > 0) {
+            reviews.forEach((rev, index) => {
+                const rDate = new Date(rev.timestamp).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+                // Determine color based on decision
+                let decColor = 'var(--accent)';
+                if(rev.decision === 'Proceed') decColor = 'var(--success)';
+                if(rev.decision === 'Do not proceed') decColor = 'var(--error)';
+                if(rev.decision === 'Hold') decColor = 'var(--warning)';
+
+                reviewsHtml += `
+                    <div class="data-group" style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
+                        <div class="data-label">Review ${index + 1}</div>
+                        <div class="data-value" style="color: ${decColor}; font-weight: 600;">Decision: ${rev.decision}</div>
+                        <div style="font-size: 0.85rem; margin-top: 0.3rem;">Reviewed by ${rev.name}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">${rDate}</div>
+                    </div>
+                `;
+            });
+        } else {
+            reviewsHtml = `<div class="text-box">No reviews recorded yet.</div>`;
+        }
+
+        const reviewActionHtml = reviews.length < 2 
+            ? `<button class="btn-action-alt" style="margin-top:1.5rem;" onclick="openReviewModal('${app.id}')">+ Perform Review</button>` 
+            : `<div class="badge" style="margin-top:1.5rem; background:rgba(16,185,129,0.2); color:var(--success); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✓ Fully Reviewed (Completed)</div>`;
+
+
+        // --- NAME CHECKS HTML ---
+        let nameChecksHtml = '';
+        if (app.nameChecksRequested) {
+            if (app.nameChecksCompleted) {
+                const ncDate = new Date(app.nameChecksCompletedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+                nameChecksHtml = `
+                    <div style="margin-top:1rem; padding:1rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.4); border-radius:8px;">
+                        <div style="color:var(--success); font-weight:700; margin-bottom:0.2rem;">✓ Name Checks Complete</div>
+                        <div style="font-size:0.85rem; color:var(--text-light);">Confirmed by ${app.nameChecksCompletedBy}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">${ncDate}</div>
+                    </div>
+                `;
+            } else {
+                nameChecksHtml = `
+                    <div style="margin-top:1rem; padding:1rem; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); border-radius:8px;">
+                        <div style="color:var(--warning); font-weight:700; margin-bottom:0.5rem;">⏱ Name Checks Pending</div>
+                        <div style="font-size:0.85rem; color:var(--text-light); margin-bottom:0.8rem;">Automated emails have been sent out. Waiting for results to return.</div>
+                        <button class="btn-action" onclick="markNameChecksComplete('${app.id}')">Confirm Name Checks Complete</button>
+                    </div>
+                `;
+            }
+        }
+
+
+        mainEl.innerHTML = `
+            <div class="app-header"><h1>${app.fullName} ${matchBadgeHtml}</h1><div style="width:100%; margin-top:10px;"><div class="badge">${app.position}</div></div></div>
+            
+            <!-- ADMIN REVIEWS SECTION -->
+            <div class="section" style="border: 1px solid var(--accent); background: rgba(0, 163, 224, 0.03);">
+                <h3 style="color: var(--accent);">Applicant Review Status</h3>
+                <div class="grid-2">${reviewsHtml}</div>
+                ${reviewActionHtml}
+                ${nameChecksHtml}
+            </div>
+
+            <div class="section"><h3>Personal Details</h3><div class="grid-2">
+                <div class="data-group"><div class="data-label">Title</div><div class="data-value">${safeVal(p.title)}</div></div>
+                <div class="data-group"><div class="data-label">Email</div><div class="data-value"><a href="mailto:${p.email}" style="color:var(--accent)">${safeVal(p.email)}</a></div></div>
+                <div class="data-group"><div class="data-label">Phone</div><div class="data-value">${safeVal(p.phone)}</div></div>
+                <div class="data-group"><div class="data-label">Address</div><div class="data-value">${safeVal(p.address)}</div></div>
+                <div class="data-group"><div class="data-label">Postcode</div><div class="data-value">${safeVal(p.postcode)}</div></div>
+            </div></div>
+
+            <div class="section"><h3>Background & Compliance</h3><div class="grid-2">
+                <div class="data-group"><div class="data-label">Right to Work in UK</div><div class="data-value">${app.workPermit === 'yes' ? 'Needs Permit' : 'Does Not Need Permit'}</div></div>
+                <div class="data-group"><div class="data-label">Criminal Convictions</div><div class="data-value">${app.convictions === 'yes' ? '<span style="color:var(--error);font-weight:bold;">Yes</span>' : 'No'}</div></div>
+            </div>${app.convictions === 'yes' ? `<div class="data-group" style="margin-top:1rem;"><div class="data-label">Conviction Details</div><div class="text-box">${safeVal(app.convictionsText)}</div></div>` : ''}</div>
+
+            <div class="section"><h3>Reasonable Adjustments</h3><div class="grid-2">
+                <div class="data-group"><div class="data-label">Disability Adjustments</div><div class="data-value">${app.reasonableAdjustments?.disability === 'yes' ? 'Requested' : 'None'}</div></div>
+                <div class="data-group"><div class="data-label">Medical Adjustments</div><div class="data-value">${app.reasonableAdjustments?.medical === 'yes' ? 'Requested' : 'None'}</div></div>
+            </div>${app.reasonableAdjustments?.disability === 'yes' ? `<div class="data-group" style="margin-top:1rem;"><div class="data-label">Disability Details</div><div class="text-box">${safeVal(app.reasonableAdjustments?.disabilityText)}</div></div>` : ''}
+            ${app.reasonableAdjustments?.medical === 'yes' ? `<div class="data-group" style="margin-top:1rem;"><div class="data-label">Medical Details</div><div class="text-box">${safeVal(app.reasonableAdjustments?.medicalText)}</div></div>` : ''}</div>
+
+            <div class="section"><h3>Qualifications & CV</h3><div class="data-group"><div class="data-label">Listed Qualifications</div><div class="text-box">${safeVal(app.qualifications)}</div></div><div class="data-group" style="margin-top:1.5rem;"><div class="data-label">Curriculum Vitae</div>${cvHtml}</div></div>
+
+            <div class="section"><h3>Certificates & Licences</h3><div class="grid-2" style="margin-bottom:1.5rem;">
+                <div class="data-group"><div class="data-label">Driving Licence</div><div class="data-value">${c.drivinglicence?.confirmed ? `Confirmed (Expires: ${c.drivinglicence?.expiry || 'N/A'})` : 'No / Not provided'}</div></div>
+                <div class="data-group"><div class="data-label">EUSR Card</div><div class="data-value">${c.eusr?.has ? `Yes (No: ${c.eusr?.number || 'N/A'})` : 'No / Not provided'}</div></div>
+                <div class="data-group"><div class="data-label">Gas Safe Registration</div><div class="data-value">${c.gassafe?.number ? c.gassafe.number : 'Not provided'}</div></div>
+            </div><div class="data-label">Uploaded Certificate Files</div><div class="cert-list">${certsHtml}</div></div>
+
+            <div class="section"><h3>Employment History</h3>${empHtml}</div>
+            <div class="section"><h3>Interview Unavailability</h3>${unavailHtml}</div>
+
+            <div class="section"><h3>Signatures & Declarations</h3><div class="grid-2">
+                <div class="data-group"><div class="data-label">Information Declaration</div><div class="data-value" style="margin-bottom:0.5rem;"><strong>Name:</strong> ${safeVal(app.declaration?.name)}</div><div class="data-value" style="margin-bottom:1rem;"><strong>Date:</strong> ${safeVal(app.declaration?.date)}</div>${app.declaration?.signature ? `<img src="${app.declaration.signature}" class="signature-img">` : '<div class="text-box">No signature data</div>'}</div>
+                <div class="data-group"><div class="data-label">Data Consent</div><div class="data-value" style="margin-bottom:0.5rem;"><strong>Name:</strong> ${safeVal(app.consent?.name)}</div><div class="data-value" style="margin-bottom:1rem;"><strong>Date:</strong> ${safeVal(app.consent?.date)}</div>${app.consent?.signature ? `<img src="${app.consent.signature}" class="signature-img">` : '<div class="text-box">No signature data</div>'}</div>
+            </div></div>
+        `;
+    }
 </script>
 </body>
 </html>
