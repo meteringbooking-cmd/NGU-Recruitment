@@ -39,21 +39,7 @@
         .app-postcode { font-size: 0.75rem; color: var(--text-light); background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 0.4rem; letter-spacing: 0.05em;}
         .app-date { font-size: 0.75rem; color: var(--text-muted); font-family: 'DM Mono', monospace; display: flex; justify-content: space-between; align-items: center;}
         
-        /* UPDATED WAIT TIME BADGE */
-        .wait-time { 
-            color: #fcd34d; 
-            font-weight: 700; 
-            background: rgba(245, 158, 11, 0.15); 
-            border: 1px solid rgba(245, 158, 11, 0.4);
-            padding: 4px 8px; 
-            border-radius: 6px; 
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            font-family: 'Work Sans', sans-serif;
-        }
-
+        .wait-time { color: #fcd34d; font-weight: 700; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-family: 'Work Sans', sans-serif;}
         .match-badge { display: inline-block; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
 
         .main-content { flex: 1; overflow-y: auto; padding: 2rem 3rem; background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%); }
@@ -78,16 +64,63 @@
         .data-table th, .data-table td { padding: 0.8rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
         .data-table th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; background: var(--bg-input); }
 
-        .btn-action { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; cursor: pointer; }
+        .btn-action { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; cursor: pointer; }
         .btn-action:hover { background: rgba(16, 185, 129, 0.2); }
+        
+        .btn-action-alt { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: rgba(0, 163, 224, 0.1); border: 1px solid rgba(0, 163, 224, 0.4); color: var(--accent); padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; cursor: pointer; }
+        .btn-action-alt:hover { background: rgba(0, 163, 224, 0.2); }
+
         .btn-download { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(0, 163, 224, 0.1); border: 1px solid rgba(0, 163, 224, 0.4); color: var(--accent); padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
         .btn-download:hover { background: rgba(0, 163, 224, 0.2); }
         .signature-img { background: white; border-radius: 8px; padding: 0.5rem; max-width: 100%; height: auto; max-height: 120px; border: 2px solid var(--border); }
         .cert-list { display: flex; flex-direction: column; gap: 0.8rem; }
         .cert-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-input); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border); }
+
+        /* Review Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;}
+        .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease;}
+        .modal-content { background: var(--bg-card); width: 100%; max-width: 450px; border-radius: 12px; border: 1px solid var(--border); padding: 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        .modal-title { font-size: 1.4rem; color: var(--accent); font-weight: 700; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem;}
+        .modal-form-group { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .modal-form-group label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; }
+        .modal-input, .modal-select { width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: white; font-family: inherit; font-size: 0.95rem; outline: none;}
+        .modal-input:focus, .modal-select:focus { border-color: var(--accent); }
+        .modal-actions { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;}
+        .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--text-light); padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 600;}
+        .btn-cancel:hover { background: rgba(255,255,255,0.05); }
+        
+        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
     </style>
 </head>
 <body>
+
+    <!-- REVIEW MODAL -->
+    <div class="modal-overlay" id="reviewModal">
+        <div class="modal-content">
+            <div class="modal-title">Review Application</div>
+            <input type="hidden" id="reviewAppId">
+            
+            <div class="modal-form-group">
+                <label>Reviewer Name</label>
+                <input type="text" id="reviewerName" class="modal-input" placeholder="Enter your full name">
+            </div>
+
+            <div class="modal-form-group">
+                <label>Decision</label>
+                <select id="reviewDecision" class="modal-select">
+                    <option value="" disabled selected>Select a decision...</option>
+                    <option value="Proceed">Proceed with applicant</option>
+                    <option value="Hold">Place on hold</option>
+                    <option value="Do not proceed">Do not proceed</option>
+                </select>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeReviewModal()">Cancel</button>
+                <button class="btn-action-alt" id="submitReviewBtn" onclick="submitReview()">Save Review</button>
+            </div>
+        </div>
+    </div>
 
     <aside class="sidebar">
         <div class="sidebar-header">
@@ -118,6 +151,8 @@
     // --- INITIALIZE EMAILJS ---
     const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_REMINDER_TEMPLATE = 'template_b6zrvyk';
+    const EMAILJS_INTERNAL_NAME_CHECK = 'template_9m20itg';
+    const EMAILJS_EXTERNAL_NAME_CHECK = 'template_cuqwtx4';
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
@@ -142,7 +177,7 @@
         renderSidebar(); 
     });
 
-    // --- HELPER: Wait Time Calculator (Days & Hours explicitly) ---
+    // --- HELPER: Wait Time Calculator ---
     function calculateWaitTime(submittedAt) {
         if (!submittedAt) return '0 Days 0 Hrs';
         const past = submittedAt.toDate ? submittedAt.toDate() : new Date(submittedAt);
@@ -181,71 +216,71 @@
         applicationsData = [];
         snapshot.forEach(doc => applicationsData.push({ id: doc.id, ...doc.data() }));
         renderSidebar();
-        
-        // Background check to send automated reminders
         checkAndSendReminders(applicationsData);
     });
 
-    // --- REMINDER LOGIC ---
     function getNextWorkingDay8AM(dateObj) {
         let d = new Date(dateObj);
-        d.setDate(d.getDate() + 1); // Move to next day
-        
-        // Skip weekends
-        if (d.getDay() === 6) d.setDate(d.getDate() + 2); // Saturday -> Monday
-        if (d.getDay() === 0) d.setDate(d.getDate() + 1); // Sunday -> Monday
-        
-        d.setHours(8, 0, 0, 0); // Set to exactly 8:00 AM
+        d.setDate(d.getDate() + 1);
+        if (d.getDay() === 6) d.setDate(d.getDate() + 2);
+        if (d.getDay() === 0) d.setDate(d.getDate() + 1);
+        d.setHours(8, 0, 0, 0); 
         return d;
     }
 
     async function checkAndSendReminders(apps) {
         const now = new Date();
-        
         for (const app of apps) {
             const reviews = app.reviews || [];
-            if (reviews.length >= 2) continue; // It is fully reviewed. Stop checking.
+            if (reviews.length >= 2) continue;
 
             let reminderCount = app.reminderCount || 0;
-            if (reminderCount >= 3) continue; // Max 3 reminders already sent. Stop checking.
+            if (reminderCount >= 3) continue;
 
-            // Determine the baseline date to calculate the "Next Working Day" from
             let baseDate = app.submittedAt?.toDate ? app.submittedAt.toDate() : new Date(app.submittedAt);
-            if (reminderCount > 0 && app.lastReminderDate) {
-                baseDate = new Date(app.lastReminderDate);
-            }
+            if (reminderCount > 0 && app.lastReminderDate) baseDate = new Date(app.lastReminderDate);
 
             const targetReminderTime = getNextWorkingDay8AM(baseDate);
 
-            // If we have passed the target 8AM time, fire the email!
             if (now >= targetReminderTime) {
                 try {
                     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REMINDER_TEMPLATE, {
-                        applicant_name: app.fullName || 'Unknown',
-                        position: app.position || 'Unknown',
-                        wait_time: calculateWaitTime(app.submittedAt),
-                        url_link: window.location.href // Helps them jump right to the portal
+                        applicant_name: app.fullName || 'Unknown', position: app.position || 'Unknown',
+                        wait_time: calculateWaitTime(app.submittedAt), url_link: window.location.href 
                     });
-
-                    // Update DB to register that we sent it
                     const appRef = doc(db, "NGUO New Applicants", app.id);
-                    await updateDoc(appRef, {
-                        reminderCount: reminderCount + 1,
-                        lastReminderDate: now.toISOString()
-                    });
-                    
-                    console.log(`Automated Reminder #${reminderCount + 1} sent for ${app.fullName}`);
-                } catch (e) {
-                    console.error("Failed to send automated reminder:", e);
-                }
+                    await updateDoc(appRef, { reminderCount: reminderCount + 1, lastReminderDate: now.toISOString() });
+                } catch (e) { console.error("Failed to send automated reminder:", e); }
             }
         }
     }
 
-    // --- REVIEW LOGIC ---
-    window.markAsReviewed = async function(appId) {
-        const adminName = prompt("Please enter your name to confirm you have reviewed this application:");
-        if (!adminName || adminName.trim() === "") return;
+    // --- MODAL CONTROLS ---
+    window.openReviewModal = function(appId) {
+        document.getElementById('reviewAppId').value = appId;
+        document.getElementById('reviewerName').value = localStorage.getItem('ngu_portal_username') || '';
+        document.getElementById('reviewDecision').value = '';
+        document.getElementById('reviewModal').classList.add('active');
+    };
+
+    window.closeReviewModal = function() {
+        document.getElementById('reviewModal').classList.remove('active');
+    };
+
+    // --- REVIEW SUBMISSION LOGIC ---
+    window.submitReview = async function() {
+        const appId = document.getElementById('reviewAppId').value;
+        const adminName = document.getElementById('reviewerName').value.trim();
+        const decision = document.getElementById('reviewDecision').value;
+        const submitBtn = document.getElementById('submitReviewBtn');
+
+        if (!adminName || !decision) {
+            alert("Please enter your name and make a decision.");
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
 
         try {
             const appRef = doc(db, "NGUO New Applicants", appId);
@@ -257,22 +292,49 @@
                 
                 if (reviews.length >= 2) {
                     alert("This application has already been fully reviewed.");
+                    closeReviewModal();
                     return;
                 }
 
-                // Add new review object to array
-                reviews.push({
-                    name: adminName.trim(),
-                    timestamp: new Date().toISOString()
-                });
+                reviews.push({ name: adminName, decision: decision, timestamp: new Date().toISOString() });
 
-                await updateDoc(appRef, { reviews: reviews });
-                
-                // If the detail pane is open, refresh it manually to show the new review instantly
+                let updates = { reviews: reviews };
+                let triggerNameChecks = false;
+
+                // CHECK FOR 2 PROCEEDS
+                if (reviews.length === 2) {
+                    const bothProceed = reviews[0].decision === 'Proceed' && reviews[1].decision === 'Proceed';
+                    if (bothProceed && !data.nameChecksRequested) {
+                        triggerNameChecks = true;
+                        updates.nameChecksRequested = true;
+                    }
+                }
+
+                await updateDoc(appRef, updates);
+
+                // FIRE EMAILJS IF NEEDED
+                if (triggerNameChecks) {
+                    console.log("Both reviews are 'Proceed'. Triggering Name Check emails...");
+                    const emailParams = {
+                        applicant_name: data.fullName || 'Unknown',
+                        postcode: data.personalDetails?.postcode || 'No Postcode provided'
+                    };
+                    
+                    // Send to both templates concurrently
+                    await Promise.allSettled([
+                        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INTERNAL_NAME_CHECK, emailParams),
+                        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, emailParams)
+                    ]);
+                    console.log("Name Check emails sent successfully.");
+                }
+
+                closeReviewModal();
+                alert("Review submitted successfully!");
+
+                // Refresh UI
                 const currentAppIndex = applicationsData.findIndex(a => a.id === appId);
                 if (currentAppIndex !== -1) {
-                    applicationsData[currentAppIndex].reviews = reviews;
-                    // Find active match status to re-render identically
+                    applicationsData[currentAppIndex] = { ...data, ...updates }; // Apply updates locally
                     const matchStatus = isAreaMatch(applicationsData[currentAppIndex].position, applicationsData[currentAppIndex].personalDetails?.postcode);
                     const appArea = getPostcodeArea(applicationsData[currentAppIndex].personalDetails?.postcode);
                     renderDetails(applicationsData[currentAppIndex], matchStatus, appArea);
@@ -281,8 +343,43 @@
         } catch (error) {
             console.error("Error saving review:", error);
             alert("Error saving review. Please try again.");
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Save Review';
         }
     };
+
+    // --- NAME CHECK COMPLETION LOGIC ---
+    window.markNameChecksComplete = async function(appId) {
+        const adminName = prompt("Please enter your name to confirm Name Checks are complete:");
+        if (!adminName || adminName.trim() === "") return;
+
+        try {
+            const appRef = doc(db, "NGUO New Applicants", appId);
+            
+            const updates = {
+                nameChecksCompleted: true,
+                nameChecksCompletedBy: adminName.trim(),
+                nameChecksCompletedAt: new Date().toISOString()
+            };
+
+            await updateDoc(appRef, updates);
+            
+            const currentAppIndex = applicationsData.findIndex(a => a.id === appId);
+            if (currentAppIndex !== -1) {
+                applicationsData[currentAppIndex] = { ...applicationsData[currentAppIndex], ...updates };
+                const matchStatus = isAreaMatch(applicationsData[currentAppIndex].position, applicationsData[currentAppIndex].personalDetails?.postcode);
+                const appArea = getPostcodeArea(applicationsData[currentAppIndex].personalDetails?.postcode);
+                renderDetails(applicationsData[currentAppIndex], matchStatus, appArea);
+            }
+            
+            alert("Name checks marked as complete!");
+        } catch (error) {
+            console.error("Error saving name checks status:", error);
+            alert("Error saving status. Please try again.");
+        }
+    };
+
 
     function isAreaMatch(appPosition, appPostcode) {
         const appArea = getPostcodeArea(appPostcode);
@@ -319,9 +416,9 @@
             const matchStatus = isAreaMatch(app.position, appPostcode);
             const appArea = getPostcodeArea(appPostcode);
             
-            // Check if fully reviewed
             const reviewsCount = app.reviews ? app.reviews.length : 0;
-            const reviewStatus = reviewsCount >= 2 ? `<span style="color:var(--success); font-weight:700;">✓ Reviewed</span>` : `<span class="wait-time">⏱ ${waitTime}</span>`;
+            let reviewStatus = `<span class="wait-time">⏱ ${waitTime}</span>`;
+            if (reviewsCount >= 2) reviewStatus = `<span style="color:var(--success); font-weight:700;">✓ Reviewed</span>`;
 
             const div = document.createElement('div');
             div.className = 'applicant-item';
@@ -382,10 +479,17 @@
         if (reviews.length > 0) {
             reviews.forEach((rev, index) => {
                 const rDate = new Date(rev.timestamp).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+                // Determine color based on decision
+                let decColor = 'var(--accent)';
+                if(rev.decision === 'Proceed') decColor = 'var(--success)';
+                if(rev.decision === 'Do not proceed') decColor = 'var(--error)';
+                if(rev.decision === 'Hold') decColor = 'var(--warning)';
+
                 reviewsHtml += `
                     <div class="data-group" style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
                         <div class="data-label">Review ${index + 1}</div>
-                        <div class="data-value" style="color: var(--success); font-weight: 600;">✓ Reviewed by ${rev.name}</div>
+                        <div class="data-value" style="color: ${decColor}; font-weight: 600;">Decision: ${rev.decision}</div>
+                        <div style="font-size: 0.85rem; margin-top: 0.3rem;">Reviewed by ${rev.name}</div>
                         <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">${rDate}</div>
                     </div>
                 `;
@@ -395,8 +499,32 @@
         }
 
         const reviewActionHtml = reviews.length < 2 
-            ? `<button class="btn-action" style="margin-top:1.5rem;" onclick="markAsReviewed('${app.id}')">+ Mark as Reviewed</button>` 
+            ? `<button class="btn-action-alt" style="margin-top:1.5rem;" onclick="openReviewModal('${app.id}')">+ Perform Review</button>` 
             : `<div class="badge" style="margin-top:1.5rem; background:rgba(16,185,129,0.2); color:var(--success); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✓ Fully Reviewed (Completed)</div>`;
+
+
+        // --- NAME CHECKS HTML ---
+        let nameChecksHtml = '';
+        if (app.nameChecksRequested) {
+            if (app.nameChecksCompleted) {
+                const ncDate = new Date(app.nameChecksCompletedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+                nameChecksHtml = `
+                    <div style="margin-top:1rem; padding:1rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.4); border-radius:8px;">
+                        <div style="color:var(--success); font-weight:700; margin-bottom:0.2rem;">✓ Name Checks Complete</div>
+                        <div style="font-size:0.85rem; color:var(--text-light);">Confirmed by ${app.nameChecksCompletedBy}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted);">${ncDate}</div>
+                    </div>
+                `;
+            } else {
+                nameChecksHtml = `
+                    <div style="margin-top:1rem; padding:1rem; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); border-radius:8px;">
+                        <div style="color:var(--warning); font-weight:700; margin-bottom:0.5rem;">⏱ Name Checks Pending</div>
+                        <div style="font-size:0.85rem; color:var(--text-light); margin-bottom:0.8rem;">Automated emails have been sent out. Waiting for results to return.</div>
+                        <button class="btn-action" onclick="markNameChecksComplete('${app.id}')">Confirm Name Checks Complete</button>
+                    </div>
+                `;
+            }
+        }
 
 
         mainEl.innerHTML = `
@@ -407,6 +535,7 @@
                 <h3 style="color: var(--accent);">Applicant Review Status</h3>
                 <div class="grid-2">${reviewsHtml}</div>
                 ${reviewActionHtml}
+                ${nameChecksHtml}
             </div>
 
             <div class="section"><h3>Personal Details</h3><div class="grid-2">
