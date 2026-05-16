@@ -214,7 +214,7 @@
             const updates = {};
             let emailSent = false;
 
-            // 1. FTL UNCLAIMED REMINDER LOGIC (24, 48, 72 hours)
+            // 1. FTL UNCLAIMED REMINDER LOGIC
             if (!b.interviewer && b.bookedAt) {
                 const bookedTime = b.bookedAt.toDate ? b.bookedAt.toDate() : new Date(b.bookedAt);
                 const hoursWaiting = (now - bookedTime) / (1000 * 60 * 60);
@@ -262,6 +262,7 @@
                         interview_time: b.time,
                         interviewer_name: b.interviewer || 'a member of our team',
                         location_method: 'Microsoft Teams',
+                        meeting_link: b.meetingLink || 'A link will be provided by your interviewer shortly',
                         contact_email: 'recruitment@next-gen.uk'
                     });
                 }
@@ -275,21 +276,20 @@
 
     // --- ICS CALENDAR GENERATOR ---
     function generateICS(applicantName, position, dateStr, timeStr) {
-        // Build valid Javascript Date objects
         const startDate = new Date(`${dateStr}T${timeStr}`);
-        const endDate = new Date(startDate.getTime() + 30 * 60000); // Add 30 minutes to start time
+        const endDate = new Date(startDate.getTime() + 30 * 60000); 
 
-        // Format dates into ICS UTC format: YYYYMMDDTHHMMSSZ
-        const formatICSDate = (d) => {
-            return d.toISOString().replace(/-|:/g, '').split('.')[0] + 'Z';
-        };
+        const formatICSDate = (d) => d.toISOString().replace(/-|:/g, '').split('.')[0] + 'Z';
+        const uid = `${dateStr.replace(/-/g, '')}T${timeStr.replace(/:/g, '')}-${applicantName.replace(/\s+/g, '')}@ngu-portal`;
 
         const icsData = [
             "BEGIN:VCALENDAR",
             "VERSION:2.0",
             "PRODID:-//NGU Recruitment Portal//EN",
             "CALSCALE:GREGORIAN",
+            "METHOD:PUBLISH", 
             "BEGIN:VEVENT",
+            `UID:${uid}`,     
             `DTSTAMP:${formatICSDate(new Date())}`,
             `DTSTART:${formatICSDate(startDate)}`,
             `DTEND:${formatICSDate(endDate)}`,
@@ -300,7 +300,6 @@
             "END:VCALENDAR"
         ].join("\r\n");
 
-        // Trigger Download
         const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
         const link = document.createElement('a');
         link.href = window.URL.createObjectURL(blob);
@@ -311,14 +310,18 @@
         document.body.removeChild(link);
     }
 
-    // --- CLAIM INTERVIEW & DOWNLOAD INVITE ---
+    // --- CLAIM INTERVIEW & SAVE TEAMS LINK ---
     window.claimInterview = async function(docId) {
         if (!confirm("Are you sure you want to assign yourself as the interviewer for this timeslot?")) return;
+
+        // Prompt for the Teams Link so the system can save it for the 24hr reminder email
+        const teamsLink = prompt("Please paste your Microsoft Teams meeting link for this interview:\n\n(This link will be automatically sent to the applicant in their 24-hour reminder email)");
+        
+        if (teamsLink === null) return; // User clicked Cancel on the prompt
 
         try {
             const docRef = doc(db, "NGU Interview Times", docId);
             
-            // Fetch booking details directly to build calendar invite
             const snap = await getDoc(docRef);
             if (!snap.exists()) {
                 alert("Booking not found.");
@@ -326,8 +329,11 @@
             }
             const b = snap.data();
 
-            // Update Firebase
-            await updateDoc(docRef, { interviewer: currentUser });
+            // Update Firebase with Interviewer AND the Teams Link
+            await updateDoc(docRef, { 
+                interviewer: currentUser,
+                meetingLink: teamsLink.trim() || 'A link will be provided by your interviewer shortly'
+            });
 
             // Generate Calendar File
             generateICS(b.applicantName, b.position, b.date, b.time);
