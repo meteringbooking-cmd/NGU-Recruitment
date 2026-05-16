@@ -169,16 +169,16 @@
     const db = getFirestore(app);
     
     let applicationsData = [];
+    let interviewsData = []; // NEW: Store all interview schedules/packs
     let liveVacancies = [];
     let showOnlyMatches = false;
-    let selectedAppId = null; // Memorizes the active applicant during refreshes
+    let selectedAppId = null; 
 
     document.getElementById('filterMatchesToggle').addEventListener('change', (e) => {
         showOnlyMatches = e.target.checked;
         renderSidebar(); 
     });
 
-    // --- HELPER: Wait Time Calculator (Days & Hours explicitly) ---
     function calculateWaitTime(submittedAt) {
         if (!submittedAt) return '0 Days 0 Hrs';
         const past = submittedAt.toDate ? submittedAt.toDate() : new Date(submittedAt);
@@ -211,14 +211,31 @@
         renderSidebar();
     });
 
-    // --- APPLICANTS SYNC (Single Source of Truth) ---
+    // --- INTERVIEWS SYNC (NEW) ---
+    const qInt = query(collection(db, "NGU Interview Times"));
+    onSnapshot(qInt, (snapshot) => {
+        interviewsData = [];
+        snapshot.forEach(doc => interviewsData.push({ id: doc.id, ...doc.data() }));
+        renderSidebar();
+        
+        // If viewing an applicant, re-render to inject interview pack results in real-time
+        if (selectedAppId) {
+            const updatedApp = applicationsData.find(a => a.id === selectedAppId);
+            if (updatedApp) {
+                const matchStatus = isAreaMatch(updatedApp.position, updatedApp.personalDetails?.postcode);
+                const appArea = getPostcodeArea(updatedApp.personalDetails?.postcode);
+                renderDetails(updatedApp, matchStatus, appArea);
+            }
+        }
+    });
+
+    // --- APPLICANTS SYNC ---
     const qApp = query(collection(db, "NGUO New Applicants"), orderBy("submittedAt", "desc"));
     onSnapshot(qApp, (snapshot) => {
         applicationsData = [];
         snapshot.forEach(doc => applicationsData.push({ id: doc.id, ...doc.data() }));
         renderSidebar();
         
-        // If an applicant was already selected, instantly update their detail screen
         if (selectedAppId) {
             const updatedApp = applicationsData.find(a => a.id === selectedAppId);
             if (updatedApp) {
@@ -228,34 +245,27 @@
             }
         }
 
-        // Background check to send automated reminders
         checkAndSendReminders(applicationsData);
     });
 
-    // --- REMINDER LOGIC ---
     function getNextWorkingDay8AM(dateObj) {
         let d = new Date(dateObj);
-        d.setDate(d.getDate() + 1); // Move to next day
-        
-        // Skip weekends
-        if (d.getDay() === 6) d.setDate(d.getDate() + 2); // Saturday -> Monday
-        if (d.getDay() === 0) d.setDate(d.getDate() + 1); // Sunday -> Monday
-        
-        d.setHours(8, 0, 0, 0); // Set to exactly 8:00 AM
+        d.setDate(d.getDate() + 1); 
+        if (d.getDay() === 6) d.setDate(d.getDate() + 2); 
+        if (d.getDay() === 0) d.setDate(d.getDate() + 1); 
+        d.setHours(8, 0, 0, 0); 
         return d;
     }
 
     async function checkAndSendReminders(apps) {
         const now = new Date();
-        
         for (const app of apps) {
             const reviews = app.reviews || [];
-            if (reviews.length >= 2) continue; // It is fully reviewed. Stop checking.
+            if (reviews.length >= 2) continue; 
 
             let reminderCount = app.reminderCount || 0;
-            if (reminderCount >= 3) continue; // Max 3 reminders already sent. Stop checking.
+            if (reminderCount >= 3) continue; 
 
-            // Determine the baseline date to calculate the "Next Working Day" from
             let baseDate = app.submittedAt?.toDate ? app.submittedAt.toDate() : new Date(app.submittedAt);
             if (reminderCount > 0 && app.lastReminderDate) {
                 baseDate = new Date(app.lastReminderDate);
@@ -263,27 +273,21 @@
 
             const targetReminderTime = getNextWorkingDay8AM(baseDate);
 
-            // If we have passed the target 8AM time, fire the email!
             if (now >= targetReminderTime) {
                 try {
                     await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REMINDER_TEMPLATE, {
                         applicant_name: app.fullName || 'Unknown',
                         position: app.position || 'Unknown',
                         wait_time: calculateWaitTime(app.submittedAt),
-                        url_link: window.location.href // Helps them jump right to the portal
+                        url_link: window.location.href 
                     });
 
-                    // Update DB to register that we sent it
                     const appRef = doc(db, "NGUO New Applicants", app.id);
                     await updateDoc(appRef, {
                         reminderCount: reminderCount + 1,
                         lastReminderDate: now.toISOString()
                     });
-                    
-                    console.log(`Automated Reminder #${reminderCount + 1} sent for ${app.fullName}`);
-                } catch (e) {
-                    console.error("Failed to send automated reminder:", e);
-                }
+                } catch (e) { console.error("Failed to send automated reminder:", e); }
             }
         }
     }
@@ -301,7 +305,6 @@
         document.getElementById('reviewDecision').value = ''; 
     };
 
-    // --- REVIEW SUBMISSION LOGIC ---
     window.submitReview = async function() {
         const appId = document.getElementById('reviewAppId').value;
         const adminName = document.getElementById('reviewerName').value.trim();
@@ -330,7 +333,6 @@
                     return;
                 }
 
-                // Protect against the exact same person submitting both reviews
                 if (reviews.some(r => r.name.toLowerCase() === adminName.toLowerCase())) {
                     alert("You have already reviewed this application. The second review must be completed by a different person.");
                     closeReviewModal();
@@ -342,7 +344,6 @@
                 let updates = { reviews: reviews };
                 let triggerNameChecks = false;
 
-                // CHECK FOR 2 PROCEEDS
                 if (reviews.length === 2) {
                     const bothProceed = reviews[0].decision === 'Proceed' && reviews[1].decision === 'Proceed';
                     if (bothProceed && !data.nameChecksRequested) {
@@ -351,12 +352,9 @@
                     }
                 }
 
-                // Single Source of Truth Update (Triggers onSnapshot instantly)
                 await updateDoc(appRef, updates);
 
-                // FIRE EMAILJS IF NEEDED (Silent background process)
                 if (triggerNameChecks) {
-                    console.log("Both reviews are 'Proceed'. Triggering Name Check emails...");
                     const emailParams = {
                         applicant_name: data.fullName || 'Unknown',
                         postcode: data.personalDetails?.postcode || 'No Postcode provided'
@@ -367,7 +365,6 @@
                         emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, emailParams)
                     ]);
                 }
-
                 closeReviewModal();
             }
         } catch (error) {
@@ -379,7 +376,6 @@
         }
     };
 
-    // --- NAME CHECK COMPLETION LOGIC ---
     window.markNameChecksComplete = async function(appId) {
         const adminName = prompt("Please enter your name to confirm Name Checks are complete:");
         if (!adminName || adminName.trim() === "") return;
@@ -396,7 +392,6 @@
             alert("Error saving status. Please try again.");
         }
     };
-
 
     function isAreaMatch(appPosition, appPostcode) {
         const appArea = getPostcodeArea(appPostcode);
@@ -433,17 +428,36 @@
             const matchStatus = isAreaMatch(app.position, appPostcode);
             const appArea = getPostcodeArea(appPostcode);
             
-            // Check if fully reviewed
+            // --- Determine Status Badge (Includes Interviews Logic) ---
+            const appEmail = (app.personalDetails?.email || '').toLowerCase();
+            const matchedInterview = interviewsData.find(i => i.applicantEmail?.toLowerCase() === appEmail);
+
             const reviewsCount = app.reviews ? app.reviews.length : 0;
-            const reviewStatus = reviewsCount >= 2 ? `<span style="color:var(--success); font-weight:700;">✓ Reviewed</span>` : `<span class="wait-time">⏱ ${waitTime}</span>`;
+            let reviewStatus = `<span class="wait-time">⏱ ${waitTime}</span>`;
+            
+            if (reviewsCount >= 2) {
+                reviewStatus = `<span style="color:var(--success); font-weight:700;">✓ Reviewed</span>`;
+            }
+
+            // Override with Interview Status if booked
+            if (matchedInterview) {
+                if (matchedInterview.interviewCompleted) {
+                    const rec = matchedInterview.interviewData?.recommendation || 'Completed';
+                    // Style differently based on recommendation outcome
+                    let recColor = 'var(--success)';
+                    if (rec === 'Do Not Proceed') recColor = 'var(--error)';
+                    else if (rec.includes('Hold')) recColor = 'var(--warning)';
+                    
+                    reviewStatus = `<span style="color:${recColor}; font-weight:800;">✅ ${rec}</span>`;
+                } else {
+                    const displayDate = new Date(matchedInterview.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+                    reviewStatus = `<span style="color:var(--warning); font-weight:700;">🗓 ${displayDate} @ ${matchedInterview.time}</span>`;
+                }
+            }
 
             const div = document.createElement('div');
             div.className = 'applicant-item';
-            
-            // Re-apply active class if it is the currently selected applicant
-            if (selectedAppId === app.id) {
-                div.classList.add('active');
-            }
+            if (selectedAppId === app.id) div.classList.add('active');
 
             div.innerHTML = `
                 <div class="app-name">${app.fullName || 'Unnamed Applicant'}</div>
@@ -457,7 +471,7 @@
             `;
             
             div.onclick = () => {
-                selectedAppId = app.id; // Lock applicant in memory
+                selectedAppId = app.id; 
                 document.querySelectorAll('.applicant-item').forEach(el => el.classList.remove('active'));
                 div.classList.add('active');
                 renderDetails(app, matchStatus, appArea);
@@ -472,6 +486,10 @@
         const mainEl = document.getElementById('mainContent');
         const p = app.personalDetails || {}; const c = app.certificates || {};
         
+        // Match interview by email
+        const appEmail = (p.email || '').toLowerCase();
+        const matchedInterview = interviewsData.find(i => i.applicantEmail?.toLowerCase() === appEmail);
+
         let cvHtml = app.cv && app.cv.data 
             ? `<a href="${app.cv.data}" download="${app.cv.filename}" class="btn-download">📄 Download CV (${app.cv.filename})</a>`
             : `<div class="text-box">No CV uploaded</div>`;
@@ -504,7 +522,6 @@
         if (reviews.length > 0) {
             reviews.forEach((rev, index) => {
                 const rDate = new Date(rev.timestamp).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
-                // Determine color based on decision
                 let decColor = 'var(--accent)';
                 if(rev.decision === 'Proceed') decColor = 'var(--success)';
                 if(rev.decision === 'Do not proceed') decColor = 'var(--error)';
@@ -551,10 +568,75 @@
             }
         }
 
+        // --- INTERVIEW RESULTS HTML (NEW) ---
+        let interviewResultsHtml = '';
+        if (matchedInterview) {
+            const intv = matchedInterview;
+            const displayDate = new Date(intv.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            
+            let statusBanner = intv.interviewCompleted 
+                ? `<span style="color:var(--success); font-weight:bold;">✓ Completed by ${intv.interviewer}</span>`
+                : `<span style="color:var(--warning); font-weight:bold;">⏱ Scheduled for ${displayDate} @ ${intv.time} (Interviewer: ${intv.interviewer || 'Pending'})</span>`;
+
+            let packResultsHtml = '';
+            
+            // If the interview is actually finished, build out the detailed result pack!
+            if (intv.interviewCompleted && intv.interviewData) {
+                const data = intv.interviewData;
+                
+                // Color code the recommendation
+                let recColor = 'var(--success)';
+                if (data.recommendation === 'Do Not Proceed') recColor = 'var(--error)';
+                else if (data.recommendation.includes('Hold')) recColor = 'var(--warning)';
+
+                packResultsHtml += `
+                    <div class="grid-2" style="margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                        <div class="data-group">
+                            <div class="data-label">Final Recommendation</div>
+                            <div class="data-value" style="font-size:1.4rem; color:${recColor}; font-weight:800;">${data.recommendation}</div>
+                        </div>
+                        <div class="data-group">
+                            <div class="data-label">Total Scorecard Result</div>
+                            <div class="data-value" style="font-size:1.4rem; color:var(--accent); font-weight:800;">${data.totalScore}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid-2" style="margin-top: 1rem;">
+                        ${data.strengths ? `<div class="data-group"><div class="data-label">Key Strengths</div><div class="text-box" style="border-left: 3px solid var(--success);">${data.strengths}</div></div>` : ''}
+                        <div class="data-group"><div class="data-label">Risks / Concerns</div><div class="text-box" style="border-left: 3px solid var(--warning);">${data.concerns || 'None noted'}</div></div>
+                        <div class="data-group" style="grid-column: 1 / -1;"><div class="data-label">Additional Comments</div><div class="text-box">${data.additionalComments || 'None'}</div></div>
+                    </div>
+                `;
+
+                // Render the Scorecard Grid
+                if (data.scores && data.scores.length > 0) {
+                    let scoreRows = data.scores.map(s => `<tr><td><strong>${s.criteria}</strong></td><td style="text-align:center; font-weight:bold; color:var(--accent); font-size:1.1rem;">${s.score}</td><td>${s.comment || '<span style="color:var(--text-muted)">-</span>'}</td></tr>`).join('');
+                    packResultsHtml += `
+                        <h4 style="margin-top: 2rem; color: var(--text-light); margin-bottom: 0.8rem; font-size: 1rem;">Detailed Scorecard Breakdown</h4>
+                        <table class="data-table" style="background: rgba(0,0,0,0.15); border-radius: 8px; overflow: hidden;">
+                            <thead><tr><th style="width:30%;">Criteria</th><th style="text-align:center; width:15%;">Score</th><th>Interviewer Comments</th></tr></thead>
+                            <tbody>${scoreRows}</tbody>
+                        </table>
+                    `;
+                }
+            }
+
+            interviewResultsHtml = `
+                <div class="section" style="border: 2px solid ${intv.interviewCompleted ? 'var(--success)' : 'var(--warning)'}; background: rgba(0,0,0,0.2);">
+                    <h3 style="color: ${intv.interviewCompleted ? 'var(--success)' : 'var(--warning)'}; display:flex; justify-content:space-between; align-items:center; border-bottom:none; padding-bottom:0; margin-bottom:0;">
+                        <span>Interview Stage</span>
+                        <span style="font-size:0.85rem;">${statusBanner}</span>
+                    </h3>
+                    ${packResultsHtml}
+                </div>
+            `;
+        }
 
         mainEl.innerHTML = `
             <div class="app-header"><h1>${app.fullName} ${matchBadgeHtml}</h1><div style="width:100%; margin-top:10px;"><div class="badge">${app.position}</div></div></div>
             
+            ${interviewResultsHtml}
+
             <!-- ADMIN REVIEWS SECTION -->
             <div class="section" style="border: 1px solid var(--accent); background: rgba(0, 163, 224, 0.03);">
                 <h3 style="color: var(--accent);">Applicant Review Status</h3>
