@@ -236,6 +236,28 @@
         return match ? match[0].toUpperCase() : '';
     }
 
+    // --- HELPER: CURRENCY FORMATTER ---
+    function formatSalary(val) {
+        if (!val || val === 'TBC') return 'TBC';
+        
+        // Convert to string and remove spaces, commas, and £ signs to test if it's purely numerical
+        const strVal = String(val).trim();
+        const cleanVal = strVal.replace(/[£,\s]/g, '');
+        const num = Number(cleanVal);
+        
+        // If it successfully parses to a clean number (e.g., 40000), format it as currency
+        if (!isNaN(num) && cleanVal !== '') {
+            return new Intl.NumberFormat('en-GB', { 
+                style: 'currency', 
+                currency: 'GBP', 
+                maximumFractionDigits: 0 
+            }).format(num);
+        }
+        
+        // If it's a word/string (e.g. "Competitive"), just return the text
+        return strVal;
+    }
+
     // --- LOGIN LOGIC ---
     window.attemptLogin = async function() {
         const user = document.getElementById('loginUser').value.trim();
@@ -302,9 +324,12 @@
                 
                 // If it matches title and Area, map it!
                 if (vTitle === safeAppPos && vArea === appArea) {
+                    
+                    // Pull proposedSalary, fallback to base salary, and format it
+                    const rawSalary = data.budgetSalary?.proposedSalary || data.requestInformation?.salary || 'TBC';
+                    
                     currentVacancy = {
-                        // Look for the proposedSalary inside budgetSalary object first
-                        salary: data.budgetSalary?.proposedSalary || data.requestInformation?.salary || 'TBC',
+                        salary: formatSalary(rawSalary), // Apply the £ formatter here
                         type: data.requestInformation?.vacancyType || 'Full-Time',
                         location: data.requestInformation?.location || 'TBC'
                     };
