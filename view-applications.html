@@ -113,10 +113,10 @@
         renderSidebar(); 
     });
 
-    // --- LIGHTWEIGHT POSTCODE AREA EXTRACTOR ---
-    function getPostcodeArea(postcodeStr) {
-        if (!postcodeStr) return '';
-        const match = postcodeStr.trim().match(/^[a-zA-Z]+/);
+    // Exactly the original function to get the start of the postcode
+    function getPostcodePrefix(str) {
+        if (!str || typeof str !== 'string') return '';
+        const match = str.trim().match(/^[A-Za-z]+/);
         return match ? match[0].toUpperCase() : '';
     }
 
@@ -130,8 +130,8 @@
             const approvals = data.approvalSignOff || {};
             if (approvals.departmentHead?.decision === 'Approve' && approvals.finance?.decision === 'Approve' && approvals.finalApprover?.decision === 'Approve') {
                 liveVacancies.push({ 
-                    jobTitle: data.requestInformation?.jobTitle || '', 
-                    locationArea: getPostcodeArea(data.requestInformation?.location) 
+                    jobTitle: data.requestInformation?.jobTitle, 
+                    locationPrefix: getPostcodePrefix(data.requestInformation?.location) 
                 });
             }
         });
@@ -146,15 +146,14 @@
         renderSidebar();
     });
 
-    // --- RENDERING ---
+    // --- EXACT ORIGINAL MATCHING LOGIC ---
     function isAreaMatch(appPosition, appPostcode) {
-        const appArea = getPostcodeArea(appPostcode);
-        if (!appArea) return false;
+        const appPrefix = getPostcodePrefix(appPostcode);
+        if (!appPrefix) return false;
 
-        return liveVacancies.some(v => {
-            const isJobMatch = appPosition?.trim().toLowerCase() === v.jobTitle?.trim().toLowerCase();
-            return isJobMatch && v.locationArea === appArea;
-        });
+        return liveVacancies.some(v => 
+            v.jobTitle === appPosition && v.locationPrefix === appPrefix
+        );
     }
 
     function renderSidebar() {
@@ -179,7 +178,7 @@
 
             const appPostcode = app.personalDetails?.postcode || 'No Postcode';
             const matchStatus = isAreaMatch(app.position, appPostcode);
-            const appArea = getPostcodeArea(appPostcode);
+            const appPrefix = getPostcodePrefix(appPostcode);
 
             const div = document.createElement('div');
             div.className = 'applicant-item';
@@ -188,12 +187,12 @@
                 <div class="app-pos">${app.position || 'No Position Selected'}</div>
                 <div class="app-postcode">${appPostcode}</div><br>
                 <div class="app-date">${dateStr}</div>
-                ${matchStatus ? `<div class="match-badge">📍 Live Area Match (${appArea})</div>` : ''}
+                ${matchStatus ? `<div class="match-badge">📍 Area Match (${appPrefix})</div>` : ''}
             `;
             div.onclick = () => {
                 document.querySelectorAll('.applicant-item').forEach(el => el.classList.remove('active'));
                 div.classList.add('active');
-                renderDetails(app, matchStatus, appArea);
+                renderDetails(app, matchStatus, appPrefix);
             };
             listEl.appendChild(div);
         });
@@ -201,7 +200,7 @@
 
     function safeVal(val, defaultText = 'Not provided') { return val ? val : `<span style="color:var(--text-muted)">${defaultText}</span>`; }
 
-    function renderDetails(app, matchStatus, appArea) {
+    function renderDetails(app, matchStatus, appPrefix) {
         const mainEl = document.getElementById('mainContent');
         const p = app.personalDetails || {}; const c = app.certificates || {};
         
@@ -229,7 +228,7 @@
             ? `<table class="data-table"><thead><tr><th>Date</th><th>Time</th></tr></thead><tbody>` + app.unavailability.map(u => `<tr><td>${safeVal(u.date)}</td><td>${safeVal(u.time)}</td></tr>`).join('') + `</tbody></table>`
             : `<div class="text-box">No unavailable dates specified</div>`;
 
-        const matchBadgeHtml = matchStatus ? `<div class="match-badge-large">📍 Live Vacancy Area Match (${appArea})</div>` : '';
+        const matchBadgeHtml = matchStatus ? `<div class="match-badge-large">📍 Live Vacancy Area Match (${appPrefix})</div>` : '';
 
         mainEl.innerHTML = `
             <div class="app-header"><h1>${app.fullName} ${matchBadgeHtml}</h1><div style="width:100%; margin-top:10px;"><div class="badge">${app.position}</div></div></div>
