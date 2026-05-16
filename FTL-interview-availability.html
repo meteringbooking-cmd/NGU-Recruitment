@@ -65,7 +65,6 @@
             flex-wrap: wrap; gap: 15px;
         }
         .interview-card.claimed { border-left-color: var(--accent); }
-        .interview-card.completed { border-left-color: var(--success); opacity: 0.8; }
 
         .card-info { display: flex; flex-direction: column; gap: 5px; }
         .card-date { font-family: 'DM Mono', monospace; font-size: 1.1rem; color: #6ee7b7; font-weight: 600; }
@@ -82,7 +81,6 @@
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .claimed-badge { background: rgba(0,163,224,0.1); border: 1px solid rgba(0,163,224,0.3); color: var(--accent); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
-        .completed-badge { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: #6ee7b7; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
         
         .empty-state { text-align: center; padding: 40px; color: var(--text-muted); background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); font-size: 1.1rem; }
 
@@ -526,29 +524,27 @@
             return a.date.localeCompare(b.date);
         });
 
-        if (bookings.length === 0) {
-            scheduleGrid.innerHTML = '<div class="empty-state">There are currently no upcoming interviews booked.</div>';
+        // Filter out completed interviews so they vanish from the active board
+        const activeBookings = bookings.filter(b => !b.interviewCompleted);
+
+        if (activeBookings.length === 0) {
+            scheduleGrid.innerHTML = '<div class="empty-state">There are currently no active upcoming interviews.</div>';
             return;
         }
 
-        bookings.forEach(booking => {
+        activeBookings.forEach(booking => {
             const displayDate = new Date(booking.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
             
             let actionHtml = '';
             let cardClass = 'interview-card';
 
-            if (booking.interviewCompleted) {
-                cardClass += ' completed';
-                actionHtml = `<div class="completed-badge">✓ Interview Completed</div>`;
-            } 
-            else if (booking.interviewer) {
+            if (booking.interviewer) {
                 cardClass += ' claimed';
                 actionHtml = `
                     <div class="claimed-badge" style="margin-bottom: 5px;">👤 Claimed by ${booking.interviewer}</div>
+                    <button class="btn btn-primary" onclick="openInterviewModal('${booking.id}', '${booking.applicantName}', '${booking.date}', '${booking.time}', '${booking.interviewer}')">▶ Begin Interview</button>
                 `;
-                actionHtml += `<button class="btn btn-primary" onclick="openInterviewModal('${booking.id}', '${booking.applicantName}', '${booking.date}', '${booking.time}', '${booking.position}', '${booking.interviewer}')">▶ Begin Interview</button>`;
-            } 
-            else {
+            } else {
                 actionHtml = `<button class="btn btn-claim" onclick="claimInterview('${booking.id}')">Assign to Me</button>`;
             }
 
@@ -625,7 +621,7 @@
     };
 
     // --- INTERVIEW MODAL LOGIC ---
-    window.openInterviewModal = function(id, name, date, time, position, interviewer) {
+    window.openInterviewModal = function(id, name, date, time, interviewer) {
         document.getElementById('activeDocId').value = id;
         document.getElementById('hdrName').textContent = name;
         document.getElementById('hdrDateTime').textContent = `${date} @ ${time}`;
@@ -694,7 +690,6 @@
             if (input.value < 0) input.value = '';
             
             let grandTotal = 0;
-            // Calculate individual section totals and grand total
             for(let i=1; i<=6; i++) {
                 let secTotal = 0;
                 document.querySelectorAll(`.eng-s${i}`).forEach(el => { secTotal += Number(el.value) || 0; });
