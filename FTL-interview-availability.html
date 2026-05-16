@@ -116,8 +116,9 @@
 
         .score-grid { display: grid; grid-template-columns: 2fr 1fr 3fr; gap: 10px; align-items: center; margin-bottom: 10px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 6px; }
         .score-grid label { font-weight: 600; font-size: 0.9rem; }
-        .score-grid input[type="number"] { width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-dark); color: white; text-align: center; }
+        .score-grid input[type="number"] { width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-dark); color: white; text-align: center; font-weight: bold;}
         .score-grid input[type="text"] { margin-bottom: 0; padding: 0.6rem; }
+        .section-total { text-align: right; font-weight: 700; color: var(--accent); font-size: 1.1rem; margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 10px;}
         
         .grand-total { text-align: center; font-size: 1.8rem; font-weight: 800; color: #6ee7b7; background: rgba(16,185,129,0.1); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3); margin-bottom: 1.5rem; }
 
@@ -267,30 +268,85 @@
                 </div>
 
                 <div class="pack-section">
-                    <div class="pack-section-header">Scoring Matrix</div>
+                    <div class="pack-section-header">Section 1: Experience & Background</div>
                     <div class="pack-section-body">
-                        <div class="score-grid"><label>Relevant Experience</label><input type="number" min="1" max="5" class="eng-score" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
-                        <div class="score-grid"><label>Technical Competence</label><input type="number" min="1" max="5" class="eng-score" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
-                        <div class="score-grid"><label>Safety Awareness</label><input type="number" min="1" max="5" class="eng-score" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
-                        <div class="score-grid"><label>Customer Service</label><input type="number" min="1" max="5" class="eng-score" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
-                        <div class="score-grid"><label>Reliability / Flexibility</label><input type="number" min="1" max="5" class="eng-score" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
-                        <div class="score-grid"><label>Motivation</label><input type="number" min="1" max="5" class="eng-score" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Relevant smart metering experience</label><input type="number" min="1" max="5" class="eng-score eng-s1" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Previous contracts / employers</label><input type="number" min="1" max="5" class="eng-score eng-s1" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Career stability / reasons for leaving</label><input type="number" min="1" max="5" class="eng-score eng-s1" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Industry knowledge</label><input type="number" min="1" max="5" class="eng-score eng-s1" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="section-total">Section Total: <span id="eng_tot_1">0</span> / 20</div>
                     </div>
                 </div>
 
-                <div class="grand-total">OVERALL SCORE: <span id="eng_grand_total">0</span> / 30</div>
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 2: Qualifications & Compliance</div>
+                    <div class="pack-section-body">
+                        <div class="score-grid"><label>Core qualifications held</label><input type="number" min="1" max="5" class="eng-score eng-s2" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Additional accreditations (Solar / EV etc.)</label><input type="number" min="1" max="5" class="eng-score eng-s2" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Certifications in date</label><input type="number" min="1" max="5" class="eng-score eng-s2" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Compliance suitability</label><input type="number" min="1" max="5" class="eng-score eng-s2" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="section-total">Section Total: <span id="eng_tot_2">0</span> / 20</div>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 3: Motivation & Company Fit</div>
+                    <div class="pack-section-body">
+                        <div class="score-grid"><label>Knowledge of NGU</label><input type="number" min="1" max="5" class="eng-score eng-s3" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Reason for applying</label><input type="number" min="1" max="5" class="eng-score eng-s3" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Career motivation</label><input type="number" min="1" max="5" class="eng-score eng-s3" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Alignment with company values</label><input type="number" min="1" max="5" class="eng-score eng-s3" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="section-total">Section Total: <span id="eng_tot_3">0</span> / 20</div>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 4: Performance & Productivity</div>
+                    <div class="pack-section-body">
+                        <div class="score-grid"><label>Understanding of successful day / targets</label><input type="number" min="1" max="5" class="eng-score eng-s4" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Productivity mindset</label><input type="number" min="1" max="5" class="eng-score eng-s4" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Quality awareness</label><input type="number" min="1" max="5" class="eng-score eng-s4" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Safety focus</label><input type="number" min="1" max="5" class="eng-score eng-s4" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="section-total">Section Total: <span id="eng_tot_4">0</span> / 20</div>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 5: Customer Service & Behaviour</div>
+                    <div class="pack-section-body">
+                        <div class="score-grid"><label>Communication skills</label><input type="number" min="1" max="5" class="eng-score eng-s5" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Handling difficult customers</label><input type="number" min="1" max="5" class="eng-score eng-s5" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Professionalism</label><input type="number" min="1" max="5" class="eng-score eng-s5" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Customer-first mindset</label><input type="number" min="1" max="5" class="eng-score eng-s5" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="section-total">Section Total: <span id="eng_tot_5">0</span> / 20</div>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 6: Reliability & Flexibility</div>
+                    <div class="pack-section-body">
+                        <div class="score-grid"><label>Flexibility with working hours</label><input type="number" min="1" max="5" class="eng-score eng-s6" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Callout rota suitability</label><input type="number" min="1" max="5" class="eng-score eng-s6" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Attendance reliability</label><input type="number" min="1" max="5" class="eng-score eng-s6" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Adaptability</label><input type="number" min="1" max="5" class="eng-score eng-s6" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="section-total">Section Total: <span id="eng_tot_6">0</span> / 20</div>
+                    </div>
+                </div>
+
+                <div class="grand-total">OVERALL SCORE: <span id="eng_grand_total">0</span> / 120</div>
 
                 <div class="pack-section">
                     <div class="pack-section-header">Final Assessment</div>
                     <div class="pack-section-body">
-                        <label>Risks / Concerns</label><textarea id="eng_concerns" rows="3"></textarea>
-                        <label>Additional Comments</label><textarea id="eng_add_comments" rows="2"></textarea>
-                        <label>Final Recommendation</label>
+                        <label>Key Strengths</label><textarea id="eng_strengths" rows="3"></textarea>
+                        <label>Concerns / Risks</label><textarea id="eng_concerns" rows="3"></textarea>
+                        <label>Final Comments</label><textarea id="eng_add_comments" rows="2"></textarea>
+                        <label>Hiring Recommendation</label>
                         <select id="eng_recommendation">
                             <option value="" disabled selected>Select decision...</option>
                             <option value="Strong Hire">Strong Hire</option>
-                            <option value="Hire">Proceed to Offer</option>
-                            <option value="Hold">Hold / Further Review</option>
+                            <option value="Hire">Proceed to Offer (Hire)</option>
+                            <option value="Hold">Hold / Second Review</option>
                             <option value="Do Not Proceed">Do Not Proceed</option>
                         </select>
                     </div>
@@ -581,9 +637,13 @@
         document.getElementById('engineerPack').classList.remove('active');
         document.getElementById('officePack').classList.remove('active');
         
-        // Reset all inputs and phases
+        // Reset all inputs and totals
         document.querySelectorAll('input[type="number"], input[type="text"], textarea').forEach(el => el.value = '');
         document.querySelectorAll('#eng_grand_total, #off_grand_total').forEach(el => el.textContent = '0');
+        for(let i=1; i<=6; i++) {
+            const totEl = document.getElementById(`eng_tot_${i}`);
+            if(totEl) totEl.textContent = '0';
+        }
         
         document.getElementById('engPhase1').classList.add('active');
         document.getElementById('engPhase2').classList.remove('active');
@@ -604,7 +664,6 @@
         document.getElementById('engineerPack').classList.remove('active');
         document.getElementById('officePack').classList.remove('active');
         
-        // Always reset to Phase 1 when switching packs
         document.getElementById('engPhase1').classList.add('active');
         document.getElementById('engPhase2').classList.remove('active');
         document.getElementById('offPhase1').classList.add('active');
@@ -625,17 +684,24 @@
     window.proceedToPhase = function(hideId, showId) {
         document.getElementById(hideId).classList.remove('active');
         document.getElementById(showId).classList.add('active');
-        // Scroll back to the top of the modal content
         document.querySelector('.modal-content').scrollTop = 0;
     };
 
-    // --- REAL-TIME SCORE CALCULATORS ---
+    // --- REAL-TIME ENGINEER SCORE CALCULATORS ---
     document.querySelectorAll('.eng-score').forEach(input => {
         input.addEventListener('input', () => {
             if (input.value > 5) input.value = 5;
             if (input.value < 0) input.value = '';
+            
             let grandTotal = 0;
-            document.querySelectorAll('.eng-score').forEach(el => { grandTotal += Number(el.value) || 0; });
+            // Calculate individual section totals and grand total
+            for(let i=1; i<=6; i++) {
+                let secTotal = 0;
+                document.querySelectorAll(`.eng-s${i}`).forEach(el => { secTotal += Number(el.value) || 0; });
+                const totEl = document.getElementById(`eng_tot_${i}`);
+                if(totEl) totEl.textContent = secTotal;
+                grandTotal += secTotal;
+            }
             document.getElementById('eng_grand_total').textContent = grandTotal;
         });
     });
@@ -662,7 +728,8 @@
             if(!rec) return alert("Please select a Final Recommendation before submitting.");
 
             payload.recommendation = rec;
-            payload.totalScore = document.getElementById('eng_grand_total').textContent + " / 30";
+            payload.totalScore = document.getElementById('eng_grand_total').textContent + " / 120";
+            payload.strengths = document.getElementById('eng_strengths').value;
             payload.concerns = document.getElementById('eng_concerns').value;
             payload.additionalComments = document.getElementById('eng_add_comments').value;
             
@@ -678,7 +745,8 @@
             const scores = [];
             document.querySelectorAll('.eng-score').forEach((input, i) => {
                 const cmt = document.querySelectorAll('.eng-cmt')[i].value;
-                scores.push({ score: input.value, comment: cmt });
+                const criteria = input.closest('.score-grid').querySelector('label').innerText;
+                scores.push({ criteria: criteria, score: input.value, comment: cmt });
             });
             payload.scores = scores;
         } 
@@ -702,7 +770,8 @@
             const scores = [];
             document.querySelectorAll('.off-score').forEach((input, i) => {
                 const cmt = document.querySelectorAll('.off-cmt')[i].value;
-                scores.push({ score: input.value, comment: cmt });
+                const criteria = input.closest('.score-grid').querySelector('label').innerText;
+                scores.push({ criteria: criteria, score: input.value, comment: cmt });
             });
             payload.scores = scores;
         }
