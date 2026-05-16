@@ -186,7 +186,7 @@
         <div class="filter-container">
             <label class="filter-label">
                 <input type="checkbox" id="filterMatchesToggle">
-                Only show Area Matches (<30 mi)
+                Only show Area Matches
             </label>
         </div>
 
@@ -218,7 +218,6 @@
     let applicationsData = [];
     let liveVacancies = [];
     let showOnlyMatches = false;
-    const coordCache = {}; // Local memory for GPS coordinates
 
     // Listen for filter toggle
     document.getElementById('filterMatchesToggle').addEventListener('change', (e) => {
@@ -226,41 +225,11 @@
         renderSidebar(); // Re-render list when toggled
     });
 
-    // Extracts Outcode (e.g. "NE10 4AB" -> "NE10")
-    function getOutcode(str) {
+    // Helper to extract the first continuous letters from a postcode (e.g. "NE1 4AB" -> "NE")
+    function getPostcodePrefix(str) {
         if (!str) return '';
-        let cleaned = str.trim().toUpperCase().replace(/\s+/g, '');
-        if (cleaned.length <= 4 && cleaned.length > 0) return cleaned;
-        if (cleaned.length > 4) return cleaned.slice(0, -3);
-        return '';
-    }
-
-    // Fetches GPS coordinates for an Outcode from API
-    async function fetchOutcodeCoords(outcode) {
-        if (!outcode || coordCache[outcode]) return;
-        try {
-            const res = await fetch(`https://api.postcodes.io/outcodes/${outcode}`);
-            if (res.ok) {
-                const data = await res.json();
-                coordCache[outcode] = { lat: data.result.latitude, lon: data.result.longitude };
-            } else {
-                coordCache[outcode] = { error: true };
-            }
-        } catch(e) {
-            coordCache[outcode] = { error: true };
-        }
-    }
-
-    // Calculates distance between two GPS coordinates
-    function calcDistanceMiles(lat1, lon1, lat2, lon2) {
-        const R = 3956; // Radius of earth in miles
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
+        const match = str.trim().match(/^[A-Z]+/i);
+        return match ? match[0].toUpperCase() : '';
     }
 
     async function fetchLiveVacancies() {
@@ -268,9 +237,6 @@
             const q = query(collection(db, "NGU Recuitment Approval Form"), where("workflowClosed", "==", false));
             const snapshot = await getDocs(q);
             liveVacancies = [];
-            
-            const outcodesToFetch = new Set(); // Pre-load GPS data
-
             snapshot.forEach(doc => {
                 const data = doc.data();
                 const approvals = data.approvalSignOff || {};
@@ -278,48 +244,30 @@
                                approvals.finance?.decision === 'Approve' &&
                                approvals.finalApprover?.decision === 'Approve';
                 if (isLive) {
-                    const loc = data.requestInformation?.location;
                     liveVacancies.push({
                         jobTitle: data.requestInformation?.jobTitle || '',
-                        locationOutcode: getOutcode(loc)
+                        locationPrefix: getPostcodePrefix(data.requestInformation?.location || '')
                     });
-                    if(getOutcode(loc)) outcodesToFetch.add(getOutcode(loc));
                 }
             });
-
-            return Array.from(outcodesToFetch);
         } catch(error) {
             console.error("Error fetching vacancies:", error);
-            return [];
         }
     }
 
     async function fetchApplications() {
         try {
-            // First fetch the vacancies
-            const vacOutcodes = await fetchLiveVacancies();
+            // First fetch the vacancies to cross-reference
+            await fetchLiveVacancies();
 
             const q = query(collection(db, "NGUO New Applicants"), orderBy("submittedAt", "desc"));
             const snapshot = await getDocs(q);
             
             applicationsData = [];
-            const appOutcodesToFetch = new Set(vacOutcodes); // Combine all outcodes to load
-
             snapshot.forEach(doc => {
-                const appData = doc.data();
-                applicationsData.push({ id: doc.id, ...appData });
-                const oc = getOutcode(appData.personalDetails?.postcode);
-                if(oc) appOutcodesToFetch.add(oc);
+                applicationsData.push({ id: doc.id, ...doc.data() });
             });
             
-            // Wait for ALL GPS coordinates to download BEFORE drawing the screen
-            const fetchPromises = [];
-            appOutcodesToFetch.forEach(oc => {
-                if (!coordCache[oc]) fetchPromises.push(fetchOutcodeCoords(oc));
-            });
-            await Promise.all(fetchPromises);
-
-            // Everything is ready, run exact original synchronous logic
             renderSidebar();
         } catch (error) {
             console.error("Error fetching documents: ", error);
@@ -328,24 +276,12 @@
     }
 
     function isAreaMatch(appPosition, appPostcode) {
-        const appOutcode = getOutcode(appPostcode);
-        if (!appOutcode) return false;
+        const appPrefix = getPostcodePrefix(appPostcode);
+        if (!appPrefix) return false;
 
-        return liveVacancies.some(v => {
-            if (v.jobTitle !== appPosition) return false;
-            
-            // Fast String Fallback
-            if (v.locationOutcode === appOutcode && v.locationOutcode !== '') return true;
-
-            // GPS Distance Check
-            const vacCoords = coordCache[v.locationOutcode];
-            const appCoords = coordCache[appOutcode];
-            if (vacCoords && appCoords && !vacCoords.error && !appCoords.error) {
-                const dist = calcDistanceMiles(vacCoords.lat, vacCoords.lon, appCoords.lat, appCoords.lon);
-                return dist <= 30;
-            }
-            return false;
-        });
+        return liveVacancies.some(v => 
+            v.jobTitle === appPosition && v.locationPrefix === appPrefix
+        );
     }
 
     function renderSidebar() {
@@ -382,7 +318,7 @@
                 <div class="app-pos">${app.position || 'No Position Selected'}</div>
                 <div class="app-postcode">${appPostcode}</div><br>
                 <div class="app-date">${dateStr}</div>
-                ${matchStatus ? `<div class="match-badge">📍 Area Match (<30 mi)</div>` : ''}
+                ${matchStatus ? `<div class="match-badge">📍 Area Match</div>` : ''}
             `;
             div.onclick = () => {
                 document.querySelectorAll('.applicant-item').forEach(el => el.classList.remove('active'));
@@ -463,7 +399,7 @@
         }
 
         const matchBadgeHtml = matchStatus 
-            ? `<div class="match-badge-large">📍 Live Vacancy Area Match (<30 mi)</div>` 
+            ? `<div class="match-badge-large">📍 Live Vacancy Area Match</div>` 
             : '';
 
         mainEl.innerHTML = `
