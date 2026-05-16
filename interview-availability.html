@@ -110,7 +110,7 @@
         <p style="color:var(--text-muted); font-size:1.05rem; line-height:1.6;" id="successMsg"></p>
     </div>
 
-    <!-- BOOKING CONFIRMATION MODAL -->
+    <!-- BOOKING CONFIRMATION MODAL (Cleaned Up) -->
     <div class="modal-overlay" id="bookingModal">
         <div class="modal-content">
             <div class="modal-title">Confirm Booking</div>
@@ -124,14 +124,9 @@
                 <input type="text" id="applicantName" placeholder="e.g. Jane Doe">
             </div>
             
-            <div style="text-align: left; margin-bottom: 1rem;">
+            <div style="text-align: left; margin-bottom: 1.5rem;">
                 <label>Email Address <span style="color:var(--accent);">*</span></label>
                 <input type="email" id="applicantEmail" placeholder="To receive your confirmation">
-            </div>
-            
-            <div style="text-align: left; margin-bottom: 1.5rem;">
-                <label>Position Applied For <span style="color:var(--accent);">*</span></label>
-                <input type="text" id="applicantPosition" placeholder="e.g. Smart Meter Engineer">
             </div>
 
             <button class="btn btn-primary" id="confirmBtn" onclick="submitBooking()">Confirm Interview</button>
@@ -147,7 +142,7 @@
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
     const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_FTL_TEMPLATE = 'template_5cpb2mc';
-    const EMAILJS_APPLICANT_CONFIRM = 'template_xf6p7vc'; // New template
+    const EMAILJS_APPLICANT_CONFIRM = 'template_xf6p7vc'; 
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
     const firebaseConfig = {
@@ -167,9 +162,11 @@
     const slotsGrid = document.getElementById('slotsGrid');
     const loadingStatus = document.getElementById('loadingStatus');
 
+    // Restrict past dates
     const today = new Date().toISOString().split('T')[0];
     datePicker.setAttribute('min', today);
 
+    // Generate 30-min slots from 08:00 to 17:30
     const timeSlots = [];
     for (let h = 8; h <= 17; h++) {
         timeSlots.push(`${String(h).padStart(2, '0')}:00`);
@@ -180,6 +177,7 @@
         const selectedDate = e.target.value;
         if (!selectedDate) return;
 
+        // Block Weekends
         const day = new Date(selectedDate).getDay();
         if (day === 0 || day === 6) {
             alert("Please select a weekday (Monday - Friday).");
@@ -203,13 +201,22 @@
 
             loadingStatus.textContent = '';
 
+            // Calculate current time + 24 hours to enforce 24hr notice
+            const nowPlus24Hours = new Date().getTime() + (24 * 60 * 60 * 1000);
+
             timeSlots.forEach(time => {
                 const btn = document.createElement('button');
                 btn.className = 'slot-btn';
                 btn.textContent = time;
+
+                // Check if the slot is in the past or within the 24-hour buffer
+                const slotDateTime = new Date(`${selectedDate}T${time}:00`).getTime();
                 
-                if (bookedTimes.has(time)) {
+                if (bookedTimes.has(time) || slotDateTime <= nowPlus24Hours) {
                     btn.disabled = true;
+                    if (slotDateTime <= nowPlus24Hours && !bookedTimes.has(time)) {
+                        btn.title = "Interviews must be booked at least 24 hours in advance";
+                    }
                 } else {
                     btn.onclick = () => openModal(selectedDate, time);
                 }
@@ -217,9 +224,12 @@
                 slotsGrid.appendChild(btn);
             });
 
-            if (timeSlots.every(t => bookedTimes.has(t))) {
-                loadingStatus.textContent = 'No slots available on this date.';
+            // If all buttons are disabled, show a message
+            const allDisabled = Array.from(slotsGrid.querySelectorAll('.slot-btn')).every(btn => btn.disabled);
+            if (allDisabled) {
+                loadingStatus.textContent = 'No slots available on this date. Please select another date.';
             }
+
         } catch (error) {
             console.error("Error fetching slots:", error);
             loadingStatus.textContent = 'Error checking availability. Please try again.';
@@ -242,18 +252,16 @@
         document.getElementById('bookingModal').classList.remove('active');
         document.getElementById('applicantName').value = '';
         document.getElementById('applicantEmail').value = '';
-        document.getElementById('applicantPosition').value = '';
     };
 
     window.submitBooking = async function() {
         const name = document.getElementById('applicantName').value.trim();
         const email = document.getElementById('applicantEmail').value.trim();
-        const position = document.getElementById('applicantPosition').value.trim();
         const date = document.getElementById('selectedDate').value;
         const time = document.getElementById('selectedTime').value;
         const btn = document.getElementById('confirmBtn');
 
-        if (!name || !email || !position) return alert("Please complete all fields.");
+        if (!name || !email) return alert("Please complete all fields.");
 
         btn.disabled = true;
         btn.textContent = 'Booking...';
@@ -275,7 +283,6 @@
                 time: time,
                 applicantName: name,
                 applicantEmail: email,
-                position: position,
                 status: "Booked",
                 interviewer: null,
                 bookedAt: serverTimestamp(),
@@ -290,7 +297,7 @@
             const applicantParams = {
                 to_email: email,
                 first_name: firstName,
-                job_title: position,
+                job_title: 'the role you applied for', // Hardcoded safely here
                 interview_date: displayDate,
                 interview_time: time,
                 location_method: 'Microsoft Teams',
