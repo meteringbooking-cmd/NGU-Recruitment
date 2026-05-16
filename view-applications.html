@@ -39,7 +39,20 @@
         .app-postcode { font-size: 0.75rem; color: var(--text-light); background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 0.4rem; letter-spacing: 0.05em;}
         .app-date { font-size: 0.75rem; color: var(--text-muted); font-family: 'DM Mono', monospace; display: flex; justify-content: space-between; align-items: center;}
         
-        .wait-time { color: var(--warning); font-weight: 700; background: rgba(245, 158, 11, 0.1); padding: 2px 6px; border-radius: 4px; }
+        /* UPDATED WAIT TIME BADGE */
+        .wait-time { 
+            color: #fcd34d; 
+            font-weight: 700; 
+            background: rgba(245, 158, 11, 0.15); 
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            padding: 4px 8px; 
+            border-radius: 6px; 
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-family: 'Work Sans', sans-serif;
+        }
 
         .match-badge { display: inline-block; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
 
@@ -103,7 +116,7 @@
     import { getFirestore, collection, query, orderBy, onSnapshot, where, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     // --- INITIALIZE EMAILJS ---
-    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; // Update if needed
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_REMINDER_TEMPLATE = 'template_b6zrvyk';
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
     emailjs.init(EMAILJS_PUBLIC_KEY);
@@ -129,14 +142,14 @@
         renderSidebar(); 
     });
 
-    // --- HELPER: Wait Time Calculator (DD:HH) ---
+    // --- HELPER: Wait Time Calculator (Days & Hours explicitly) ---
     function calculateWaitTime(submittedAt) {
-        if (!submittedAt) return '00:00';
+        if (!submittedAt) return '0 Days 0 Hrs';
         const past = submittedAt.toDate ? submittedAt.toDate() : new Date(submittedAt);
         const diffMs = Math.max(0, new Date() - past);
         const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
-        return `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}`;
+        return `${days} Days ${hours} Hrs`;
     }
 
     function getPostcodeArea(str) {
@@ -308,7 +321,7 @@
             
             // Check if fully reviewed
             const reviewsCount = app.reviews ? app.reviews.length : 0;
-            const reviewStatus = reviewsCount >= 2 ? `<span style="color:var(--success);">✓ Reviewed</span>` : `<span class="wait-time">Wait: ${waitTime}</span>`;
+            const reviewStatus = reviewsCount >= 2 ? `<span style="color:var(--success); font-weight:700;">✓ Reviewed</span>` : `<span class="wait-time">⏱ ${waitTime}</span>`;
 
             const div = document.createElement('div');
             div.className = 'applicant-item';
