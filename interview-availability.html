@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Availability</title>
+    <style>
+        /* Replace with your own CSS */
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; }
+        .slot { display: inline-block; padding: 10px; margin: 5px; border: 1px solid #ccc; cursor: pointer; border-radius: 4px; }
+        .slot.booked { background-color: #f8d7da; color: #721c24; cursor: not-allowed; border-color: #f5c6cb; }
+        .slot.selected { background-color: #d4edda; border-color: #c3e6cb; }
+        input, button { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+    <h2>Book Your Interview</h2>
+    <input type="text" id="applicantName" placeholder="Enter your full name" required>
+    
+    <label for="interviewDate">Select Date (Weekdays Only):</label>
+    <input type="date" id="interviewDate" required>
+
+    <div id="timeContainer" style="display: none;">
+        <h3>Available Times:</h3>
+        <div id="slotsGrid"></div>
+    </div>
+
+    <button id="bookBtn" disabled>Book Interview</button>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // 1. PASTE YOUR FIREBASE CONFIG HERE
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const dateInput = document.getElementById('interviewDate');
+        const slotsGrid = document.getElementById('slotsGrid');
+        const timeContainer = document.getElementById('timeContainer');
+        const bookBtn = document.getElementById('bookBtn');
+        const applicantName = document.getElementById('applicantName');
+        
+        let selectedTime = null;
+
+        // Generate 30 min slots from 08:00 to 17:30 (giving an 8am - 6pm window)
+        const generateAllSlots = () => {
+            const slots = [];
+            for (let hour = 8; hour < 18; hour++) {
+                const h = hour.toString().padStart(2, '0');
+                slots.push(`${h}:00`, `${h}:30`);
+            }
+            return slots;
+        };
+
+        dateInput.addEventListener('change', async (e) => {
+            const dateStr = e.target.value;
+            const dayOfWeek = new Date(dateStr).getDay();
+
+            // Block weekends (0 = Sunday, 6 = Saturday)
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
+                alert("Please select a weekday.");
+                e.target.value = '';
+                timeContainer.style.display = 'none';
+                return;
+            }
+
+            timeContainer.style.display = 'block';
+            slotsGrid.innerHTML = 'Loading slots...';
+            bookBtn.disabled = true;
+            selectedTime = null;
+
+            // Fetch booked slots for this date
+            const q = query(collection(db, "NGU Interview Times"), where("date", "==", dateStr));
+            const querySnapshot = await getDocs(q);
+            const bookedTimes = querySnapshot.docs.map(doc => doc.data().time);
+
+            // Render slots
+            slotsGrid.innerHTML = '';
+            const allSlots = generateAllSlots();
+            
+            allSlots.forEach(time => {
+                const slotDiv = document.createElement('div');
+                slotDiv.className = 'slot';
+                slotDiv.innerText = time;
+
+                if (bookedTimes.includes(time)) {
+                    slotDiv.classList.add('booked');
+                } else {
+                    slotDiv.addEventListener('click', () => {
+                        document.querySelectorAll('.slot').forEach(el => el.classList.remove('selected'));
+                        slotDiv.classList.add('selected');
+                        selectedTime = time;
+                        bookBtn.disabled = applicantName.value.trim() === '';
+                    });
+                }
+                slotsGrid.appendChild(slotDiv);
+            });
+        });
+
+        applicantName.addEventListener('input', () => {
+            bookBtn.disabled = !selectedTime || applicantName.value.trim() === '';
+        });
+
+        bookBtn.addEventListener('click', async () => {
+            const name = applicantName.value.trim();
+            const date = dateInput.value;
+
+            try {
+                bookBtn.disabled = true;
+                bookBtn.innerText = "Booking...";
+
+                await addDoc(collection(db, "NGU Interview Times"), {
+                    applicantName: name,
+                    date: date,
+                    time: selectedTime,
+                    interviewerName: "" // Leave blank for FTL to pick up
+                });
+
+                // 2. TRIGGER EMAILJS HERE FOR APPLICANT CONFIRMATION
+                // emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", { name: name, date: date, time: selectedTime });
+
+                alert("Interview booked successfully!");
+                window.location.reload();
+            } catch (e) {
+                console.error("Error booking: ", e);
+                alert("Failed to book slot.");
+                bookBtn.disabled = false;
+                bookBtn.innerText = "Book Interview";
+            }
+        });
+    </script>
+</body>
+</html>
