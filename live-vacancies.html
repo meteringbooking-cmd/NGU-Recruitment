@@ -24,7 +24,7 @@
     
     <style>
         :root {
-            --body-bg: #141d26;
+            var(--body-bg): #141d26;
             --container-bg: #1c2938;
             --input-bg: #2d3d50;
             --panel-border: #38444d;
@@ -268,6 +268,7 @@
             background-color: rgba(239, 68, 68, 0.1);
         }
 
+        /* Applicant Counter Badge */
         .applicant-badge {
             background-color: rgba(46, 204, 113, 0.15);
             color: var(--success-color);
@@ -338,7 +339,6 @@
 
     let activeVacancies = [];
     let allApplications = [];
-    const coordCache = {}; // Local memory for GPS coordinates
 
     const safeStr = (val) => val || 'Not specified';
 
@@ -349,66 +349,11 @@
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
-    // Extracts Outcode (e.g. "NE10 4AB" -> "NE10")
-    function getOutcode(str) {
+    // Helper to extract the first continuous letters from a postcode (e.g. "NE1 4AB" -> "NE")
+    function getPostcodePrefix(str) {
         if (!str) return '';
-        let cleaned = str.trim().toUpperCase().replace(/\s+/g, '');
-        if (cleaned.length <= 4 && cleaned.length > 0) return cleaned;
-        if (cleaned.length > 4) return cleaned.slice(0, -3);
-        return '';
-    }
-
-    // Fetches GPS coordinates for an Outcode from API
-    async function fetchOutcodeCoords(outcode) {
-        if (!outcode || coordCache[outcode]) return;
-        try {
-            const res = await fetch(`https://api.postcodes.io/outcodes/${outcode}`);
-            if (res.ok) {
-                const data = await res.json();
-                coordCache[outcode] = { lat: data.result.latitude, lon: data.result.longitude };
-            } else {
-                coordCache[outcode] = { error: true };
-            }
-        } catch(e) {
-            coordCache[outcode] = { error: true };
-        }
-    }
-
-    // Calculates distance between two GPS coordinates
-    function calcDistanceMiles(lat1, lon1, lat2, lon2) {
-        const R = 3956; // Radius of earth in miles
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
-    }
-
-    // Coordinates the pre-loading to ensure rendering happens smoothly
-    async function triggerRenderProcess() {
-        const outcodesToFetch = new Set();
-        
-        activeVacancies.forEach(v => {
-            const oc = getOutcode(v.requestInformation?.location);
-            if (oc) outcodesToFetch.add(oc);
-        });
-        allApplications.forEach(app => {
-            const oc = getOutcode(app.personalDetails?.postcode);
-            if (oc) outcodesToFetch.add(oc);
-        });
-
-        const fetchPromises = [];
-        outcodesToFetch.forEach(oc => {
-            if (!coordCache[oc]) fetchPromises.push(fetchOutcodeCoords(oc));
-        });
-
-        // Wait for all missing GPS data to load
-        await Promise.all(fetchPromises);
-        
-        // Draw to screen
-        renderGrid();
+        const match = str.trim().match(/^[A-Z]+/i);
+        return match ? match[0].toUpperCase() : '';
     }
 
     // 1. Listen to Applications to get live counts
@@ -417,7 +362,7 @@
         snapshot.forEach(doc => {
             allApplications.push(doc.data());
         });
-        triggerRenderProcess(); 
+        renderGrid(); // Re-render grid when apps update
     });
 
     // 2. Listen to active workflows (Vacancies)
@@ -437,7 +382,7 @@
                   activeVacancies.push({ id: doc.id, ...data });
               }
           });
-          triggerRenderProcess(); 
+          renderGrid(); // Re-render grid when vacancies update
       }, (error) => {
           console.error("Error fetching live vacancies: ", error);
           statusMsg.innerHTML = `<span style="color:var(--danger-color)">Error loading data. Check console.</span>`;
@@ -462,27 +407,14 @@
             const dept = safeStr(vacancy.requestInformation?.department);
             const location = safeStr(vacancy.requestInformation?.location);
             
-            // Extract outcode from Vacancy
-            const vacOutcode = getOutcode(location);
+            // Calculate Matches
+            const vacPrefix = getPostcodePrefix(location);
             let matchCount = 0;
             
             allApplications.forEach(app => {
-                const appOutcode = getOutcode(app.personalDetails?.postcode);
-                
-                // Fast String Fallback: If they match exactly, we don't need GPS math
-                if (app.position === jobTitle && vacOutcode === appOutcode && vacOutcode !== '') {
+                const appPrefix = getPostcodePrefix(app.personalDetails?.postcode);
+                if (app.position === jobTitle && appPrefix === vacPrefix && vacPrefix !== '') {
                     matchCount++;
-                } else if (app.position === jobTitle && vacOutcode !== '' && appOutcode !== '') {
-                    // Check Cache for Distance
-                    const vacCoords = coordCache[vacOutcode];
-                    const appCoords = coordCache[appOutcode];
-                    
-                    if (vacCoords && appCoords && !vacCoords.error && !appCoords.error) {
-                        const dist = calcDistanceMiles(vacCoords.lat, vacCoords.lon, appCoords.lat, appCoords.lon);
-                        if (dist <= 30) {
-                            matchCount++;
-                        }
-                    }
                 }
             });
 
@@ -525,8 +457,9 @@
                 advertHtml = `<div style="color: var(--secondary-text); font-size: 0.9em; font-style: italic;">No advertising required specified on form.</div>`;
             }
 
+            // Determine badge styling based on count
             const badgeClass = matchCount > 0 ? 'applicant-badge' : 'applicant-badge empty';
-            const badgeText = matchCount === 1 ? '1 Local Applicant (<30 mi)' : `${matchCount} Local Applicants (<30 mi)`;
+            const badgeText = matchCount === 1 ? '1 Local Applicant Match' : `${matchCount} Local Applicant Matches`;
             const badgeIcon = matchCount > 0 ? '📍 ' : '';
 
             const cardHtml = `
