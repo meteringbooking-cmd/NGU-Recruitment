@@ -255,7 +255,7 @@
                 <div id="contractDocumentData" class="contract-viewer">Loading contract...</div>
                 
                 <div class="modal-actions row" id="contractActions">
-                    <button class="btn-outline" onclick="downloadContractPDF()">📄 Download PDF</button>
+                    <button class="btn-outline" id="btnDownloadPDF" onclick="downloadContractPDF()">📄 Download PDF</button>
                     <button class="btn-outline" onclick="toggleQuestionBlock('contract')">❓ Ask FTL a Question</button>
                     <button class="btn-success" onclick="goToContractStep(3)">✅ Accept Contract</button>
                 </div>
@@ -562,7 +562,6 @@
             block.style.display = 'block';
             actions.style.display = 'none';
             
-            // Set dynamic FTL name in contract question block label
             if(type === 'contract') {
                 const lbl = block.querySelector('label');
                 lbl.textContent = `Ask your Reporting Manager (${currentApplicant.assignedFTL || 'Management'}) a question:`;
@@ -588,7 +587,7 @@
                 msgEl.style.display = 'block';
 
             } else if (type === 'contract') {
-                const ftlEmail = ftlEmails[currentApplicant.assignedFTL] || 'recruitment@next-gen.uk'; // Fallback to rec
+                const ftlEmail = ftlEmails[currentApplicant.assignedFTL] || 'recruitment@next-gen.uk';
                 
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_Q_CONTRACT, {
                     ftl_email: ftlEmail,
@@ -616,7 +615,7 @@
         if(!canvas) return;
         const rect = canvas.parentElement.getBoundingClientRect();
         canvas.width = rect.width;
-        canvas.height = 200; // fixed height
+        canvas.height = 200; 
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.lineWidth = 3;
@@ -671,13 +670,11 @@
         document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
         document.getElementById(`contractStep${stepNum}`).classList.add('active');
 
-        // Step 2: Fetch and render contract
         if (stepNum === 2) {
             const docEl = document.getElementById('contractDocumentData');
             docEl.innerHTML = "<em>Fetching your personalized contract...</em>";
             
             try {
-                // Ensure case-insensitive match by pulling all and finding manually
                 const q = query(collection(db, "NGU Contacts & Policies"), where("type", "==", "contract"));
                 const snap = await getDocs(q);
                 
@@ -694,7 +691,6 @@
                 if (!contractText) {
                     docEl.innerHTML = "<span style='color:var(--error); font-weight:bold;'>Contract Document Missing.</span><br><br>Your contract is still being drafted by the recruitment team. Please use the 'Ask a Question' button to notify them.";
                 } else {
-                    // Dynamic Replacements
                     const empName = currentApplicant.fullName || '';
                     const empAddr = `${currentApplicant.personalDetails?.address || ''}, ${currentApplicant.personalDetails?.postcode || ''}`;
                     
@@ -709,7 +705,6 @@
             }
         }
 
-        // Step 3: Initialize Signature Pad
         if (stepNum === 3) {
             document.getElementById('sigDate').value = new Date().toISOString().split('T')[0];
             
@@ -717,37 +712,68 @@
                 canvas = document.getElementById('sigCanvas');
                 ctx = canvas.getContext('2d');
                 
-                // Mouse
                 canvas.addEventListener('mousedown', startDrawing);
                 canvas.addEventListener('mouseup', stopDrawing);
                 canvas.addEventListener('mousemove', draw);
                 canvas.addEventListener('mouseout', stopDrawing);
-                // Touch
                 canvas.addEventListener('touchstart', startDrawing, {passive: false});
                 canvas.addEventListener('touchend', stopDrawing, {passive: false});
                 canvas.addEventListener('touchmove', draw, {passive: false});
             }
-            // Add slight delay to allow CSS rendering before calculating width
             setTimeout(resizeCanvas, 100);
         }
     };
 
+    // --- FIX: RENDER FULL LENGTH PDF DOCUMENT ---
     window.downloadContractPDF = function() {
-        const element = document.getElementById('contractDocumentData');
+        const btn = document.getElementById('btnDownloadPDF');
+        btn.disabled = true;
+        btn.textContent = 'Generating PDF...';
+
+        const originalElement = document.getElementById('contractDocumentData');
+        
+        // Create an offline twin clone to avoid messing up the visible layout
+        const clone = originalElement.cloneNode(true);
+        
+        // Strip out scroll heights, max constraints, and overflow bindings completely
+        clone.style.width = '100%';
+        clone.style.height = 'auto';
+        clone.style.maxHeight = 'none';
+        clone.style.overflow = 'visible';
+        clone.style.position = 'absolute';
+        clone.style.left = '-9999px';
+        clone.style.top = '-9999px';
+        clone.style.backgroundColor = 'white';
+        clone.style.color = 'black';
+        clone.style.padding = '20px';
+        
+        document.body.appendChild(clone);
+
         const opt = {
-            margin:       1,
+            margin:       [0.5, 0.5, 0.5, 0.5],
             filename:     `${currentApplicant.fullName.replace(/\s+/g, '_')}_Contract.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+            html2canvas:  { scale: 2, useCORS: true, logging: false },
+            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
+            pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
         };
-        // Disable button briefly to prevent double clicks
-        html2pdf().set(opt).from(element).save();
+
+        html2pdf().set(opt).from(clone).save().then(() => {
+            // Clean up the DOM tree and restore the interactive button state
+            document.body.removeChild(clone);
+            btn.disabled = false;
+            btn.textContent = '📄 Download PDF';
+        }).catch((err) => {
+            console.error("PDF generation failed:", err);
+            document.body.removeChild(clone);
+            btn.disabled = false;
+            btn.textContent = '📄 Download PDF';
+            alert("Could not build the PDF document. Please try again.");
+        });
     };
 
     window.declineContract = function() {
         if(confirm("Are you sure you want to decline this contract? This will notify recruitment that you are rejecting the offer.")) {
-            // Optional: You could update DB here to "Offer Declined", but for now just close
             alert("Contract declined. Please contact recruitment if this was a mistake.");
             closeContractModal();
         }
@@ -762,7 +788,6 @@
         if(!chkRev || !chkTerm) return alert("You must check both boxes to confirm you have read and accept the terms.");
         if(!sName) return alert("Please print your full name.");
 
-        // Check if canvas is completely blank (all white pixels)
         const isBlank = !ctx.getImageData(0,0,canvas.width,canvas.height).data.some(channel => channel !== 255);
         if(isBlank) return alert("Please provide your digital signature in the box.");
 
@@ -772,7 +797,6 @@
         btn.textContent = 'Saving Document...';
 
         try {
-            // 1. Update Firebase
             await updateDoc(doc(db, "NGUO New Applicants", currentApplicant.id), {
                 offerAccepted: true,
                 offerAcceptedAt: new Date().toISOString(),
@@ -782,9 +806,8 @@
                 contractSignName: sName
             });
 
-            currentApplicant.contractAccepted = true; // Local update
+            currentApplicant.contractAccepted = true; 
 
-            // 2. Fire Emails
             const pRec = emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REC_CONFIRM, {
                 applicant_name: currentApplicant.fullName,
                 job_title: currentApplicant.position
@@ -796,8 +819,6 @@
             });
 
             await Promise.allSettled([pRec, pEmp]);
-
-            // 3. Move to Success Step
             goToContractStep(4);
 
         } catch (e) {
