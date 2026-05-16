@@ -169,16 +169,14 @@
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
-    // --- LIGHTWEIGHT POSTCODE AREA EXTRACTOR ---
-    // Extracts just the starting letters (e.g., "NE8 3TS" -> "NE", "B1 1AA" -> "B")
-    function getPostcodeArea(postcodeStr) {
-        if (!postcodeStr) return '';
-        const match = postcodeStr.trim().match(/^[a-zA-Z]+/);
+    // Exactly the original function to get the start of the postcode
+    function getPostcodePrefix(str) {
+        if (!str || typeof str !== 'string') return '';
+        const match = str.trim().match(/^[A-Za-z]+/);
         return match ? match[0].toUpperCase() : '';
     }
 
-    // --- DATA SYNC ---
-    // 1. Listen to Applications
+    // 1. Listen to Applications to get live counts
     db.collection("NGUO New Applicants").onSnapshot((snapshot) => {
         allApplications = [];
         snapshot.forEach(doc => allApplications.push(doc.data()));
@@ -206,7 +204,7 @@
           statusMsg.innerHTML = `<span style="color:var(--danger-color)">Error loading data. Check console.</span>`;
       });
 
-    // --- RENDERING ---
+    // Main Render Function
     function renderGrid() {
         gridContainer.innerHTML = '';
 
@@ -221,19 +219,18 @@
         gridContainer.style.display = 'grid';
 
         activeVacancies.forEach(vacancy => {
-            const jobTitle = safeStr(vacancy.requestInformation?.jobTitle);
+            const rawJobTitle = vacancy.requestInformation?.jobTitle;
+            const displayJobTitle = safeStr(rawJobTitle);
             const dept = safeStr(vacancy.requestInformation?.department);
             const locationStr = safeStr(vacancy.requestInformation?.location);
             
-            const vacArea = getPostcodeArea(locationStr);
+            // EXACT ORIGINAL MATCHING LOGIC
+            const vacPrefix = getPostcodePrefix(vacancy.requestInformation?.location);
             let matchCount = 0;
             
             allApplications.forEach(app => {
-                const appArea = getPostcodeArea(app.personalDetails?.postcode);
-                
-                // Case Insensitive Job Match AND Exact Area Match
-                const isJobMatch = app.position?.trim().toLowerCase() === jobTitle.trim().toLowerCase();
-                if (isJobMatch && vacArea === appArea && vacArea !== '') {
+                const appPrefix = getPostcodePrefix(app.personalDetails?.postcode);
+                if (app.position === rawJobTitle && appPrefix === vacPrefix && vacPrefix !== '') {
                     matchCount++;
                 }
             });
@@ -271,19 +268,19 @@
             }
 
             const badgeClass = matchCount > 0 ? 'applicant-badge' : 'applicant-badge empty';
-            const badgeText = matchCount === 1 ? `1 Area Match (${vacArea})` : `${matchCount} Area Matches (${vacArea})`;
+            const badgeText = matchCount === 1 ? `1 Match (${vacPrefix})` : `${matchCount} Matches (${vacPrefix})`;
 
             const cardHtml = `
                 <div class="vacancy-card" id="card-${vacancy.id}">
                     <div class="card-header">
-                        <div class="card-title">${jobTitle}</div>
+                        <div class="card-title">${displayJobTitle}</div>
                         <div class="card-dept">${dept}</div>
                         <div class="${badgeClass}">${matchCount > 0 ? '📍 ' : ''}${badgeText}</div>
                     </div>
                     <div class="card-body">
                         <div class="info-block full-width">
-                            <label>Desired Location (Area)</label>
-                            <div class="value">${vacArea || 'N/A'} <span style="font-size:0.8em; color:var(--secondary-text); font-weight:normal;">(From: ${locationStr})</span></div>
+                            <label>Desired Location</label>
+                            <div class="value">${locationStr}</div>
                         </div>
                         <div class="info-block">
                             <label>Date Approved</label>
