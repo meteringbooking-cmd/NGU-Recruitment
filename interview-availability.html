@@ -1,144 +1,281 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interview Availability</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>NGU — Book Your Interview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
     <style>
-        /* Replace with your own CSS */
-        body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; }
-        .slot { display: inline-block; padding: 10px; margin: 5px; border: 1px solid #ccc; cursor: pointer; border-radius: 4px; }
-        .slot.booked { background-color: #f8d7da; color: #721c24; cursor: not-allowed; border-color: #f5c6cb; }
-        .slot.selected { background-color: #d4edda; border-color: #c3e6cb; }
-        input, button { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
+        :root {
+            --primary: #005EB8; --accent: #00A3E0;
+            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
+            --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
+            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%);
+            color: var(--text-light); min-height: 100vh; padding: 2rem 1.5rem;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        body::before {
+            content: ''; position: fixed; inset: 0;
+            background: radial-gradient(circle at 15% 20%, rgba(0,163,224,0.08) 0%, transparent 55%),
+                        radial-gradient(circle at 85% 75%, rgba(0,94,184,0.07) 0%, transparent 55%);
+            pointer-events: none; z-index: -1;
+        }
+        
+        .container { width: 100%; max-width: 600px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; box-shadow: 0 8px 25px rgba(0,0,0,0.3); margin-top: 2rem; }
+        .logo { max-height: 60px; display: block; margin: 0 auto 1.5rem; }
+        .page-header { text-align: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
+        .page-header h1 { font-size: 1.8rem; font-weight: 800; color: var(--accent); margin-bottom: 0.5rem; }
+        .page-header p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; }
+
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; font-weight: 600; font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        
+        input[type="date"], input[type="text"] {
+            width: 100%; padding: 0.9rem 1rem; background: var(--bg-input);
+            border: 2px solid var(--border); border-radius: 10px; color: var(--text-light);
+            font-size: 1rem; font-family: inherit; transition: all 0.2s; outline: none;
+        }
+        input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,163,224,0.15); }
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.8); cursor: pointer; }
+
+        .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 1rem; }
+        
+        .slot-btn {
+            background: var(--bg-input); border: 2px solid var(--border);
+            color: var(--text-light); padding: 0.8rem; border-radius: 8px;
+            font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+            font-family: 'DM Mono', monospace;
+        }
+        .slot-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: rgba(0,163,224,0.1); }
+        .slot-btn:disabled { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.05); color: var(--text-muted); cursor: not-allowed; text-decoration: line-through; }
+        
+        .status-msg { text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem; font-style: italic; }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;}
+        .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease;}
+        .modal-content { background: var(--bg-card); width: 100%; max-width: 400px; border-radius: 16px; border: 1px solid var(--border); padding: 2.5rem; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; }
+        .modal-title { font-size: 1.4rem; color: var(--accent); font-weight: 700; margin-bottom: 0.5rem; }
+        .modal-subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        
+        .btn { padding: 0.85rem 1.5rem; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; width: 100%; margin-top: 1rem; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.35); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--text-light); margin-top: 0.5rem; }
+        .btn-cancel:hover { background: rgba(255,255,255,0.05); }
+
+        #successScreen { display: none; text-align: center; padding: 3rem 1rem; }
+        .success-icon { font-size: 4rem; margin-bottom: 1rem; }
+        
+        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
     </style>
 </head>
 <body>
 
-    <h2>Book Your Interview</h2>
-    <input type="text" id="applicantName" placeholder="Enter your full name" required>
+    <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
     
-    <label for="interviewDate">Select Date (Weekdays Only):</label>
-    <input type="date" id="interviewDate" required>
+    <div class="container" id="bookingContainer">
+        <div class="page-header">
+            <h1>Interview Booking</h1>
+            <p>Select an available date and time below to schedule your interview with Next Generation Utilities.</p>
+        </div>
 
-    <div id="timeContainer" style="display: none;">
-        <h3>Available Times:</h3>
-        <div id="slotsGrid"></div>
+        <div class="form-group">
+            <label>1. Select a Date</label>
+            <input type="date" id="datePicker">
+        </div>
+
+        <div class="form-group" id="slotsWrapper" style="display: none;">
+            <label>2. Select a Time Slot</label>
+            <div class="slots-grid" id="slotsGrid"></div>
+            <div id="loadingStatus" class="status-msg"></div>
+        </div>
     </div>
 
-    <button id="bookBtn" disabled>Book Interview</button>
+    <div class="container" id="successScreen">
+        <div class="success-icon">✅</div>
+        <h1 style="color:var(--success); margin-bottom:1rem;">Booking Confirmed!</h1>
+        <p style="color:var(--text-muted); font-size:1.05rem; line-height:1.6;" id="successMsg"></p>
+    </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    <!-- BOOKING CONFIRMATION MODAL -->
+    <div class="modal-overlay" id="bookingModal">
+        <div class="modal-content">
+            <div class="modal-title">Confirm Booking</div>
+            <div class="modal-subtitle" id="modalTimeDisplay"></div>
+            
+            <input type="hidden" id="selectedDate">
+            <input type="hidden" id="selectedTime">
 
-        // 1. PASTE YOUR FIREBASE CONFIG HERE
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
+            <div style="text-align: left; margin-bottom: 1.5rem;">
+                <label>Your Full Name</label>
+                <input type="text" id="applicantName" placeholder="e.g. Jane Doe">
+            </div>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+            <button class="btn btn-primary" id="confirmBtn" onclick="submitBooking()">Confirm Interview</button>
+            <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
 
-        const dateInput = document.getElementById('interviewDate');
-        const slotsGrid = document.getElementById('slotsGrid');
-        const timeContainer = document.getElementById('timeContainer');
-        const bookBtn = document.getElementById('bookBtn');
-        const applicantName = document.getElementById('applicantName');
-        
-        let selectedTime = null;
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, query, where, getDocs, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-        // Generate 30 min slots from 08:00 to 17:30 (giving an 8am - 6pm window)
-        const generateAllSlots = () => {
-            const slots = [];
-            for (let hour = 8; hour < 18; hour++) {
-                const h = hour.toString().padStart(2, '0');
-                slots.push(`${h}:00`, `${h}:30`);
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const datePicker = document.getElementById('datePicker');
+    const slotsWrapper = document.getElementById('slotsWrapper');
+    const slotsGrid = document.getElementById('slotsGrid');
+    const loadingStatus = document.getElementById('loadingStatus');
+
+    // Restrict past dates
+    const today = new Date().toISOString().split('T')[0];
+    datePicker.setAttribute('min', today);
+
+    // Generate 30-min slots from 08:00 to 17:30
+    const timeSlots = [];
+    for (let h = 8; h <= 17; h++) {
+        timeSlots.push(`${String(h).padStart(2, '0')}:00`);
+        timeSlots.push(`${String(h).padStart(2, '0')}:30`);
+    }
+
+    datePicker.addEventListener('change', async (e) => {
+        const selectedDate = e.target.value;
+        if (!selectedDate) return;
+
+        // Block Weekends
+        const day = new Date(selectedDate).getDay();
+        if (day === 0 || day === 6) {
+            alert("Please select a weekday (Monday - Friday).");
+            e.target.value = '';
+            slotsWrapper.style.display = 'none';
+            return;
+        }
+
+        slotsWrapper.style.display = 'block';
+        slotsGrid.innerHTML = '';
+        loadingStatus.textContent = 'Checking availability...';
+
+        try {
+            // Fetch booked slots for this exact date
+            const q = query(collection(db, "NGU Interview Times"), where("date", "==", selectedDate));
+            const snapshot = await getDocs(q);
+            
+            const bookedTimes = new Set();
+            snapshot.forEach(doc => {
+                bookedTimes.add(doc.data().time);
+            });
+
+            loadingStatus.textContent = '';
+
+            timeSlots.forEach(time => {
+                const btn = document.createElement('button');
+                btn.className = 'slot-btn';
+                btn.textContent = time;
+                
+                if (bookedTimes.has(time)) {
+                    btn.disabled = true;
+                } else {
+                    btn.onclick = () => openModal(selectedDate, time);
+                }
+                
+                slotsGrid.appendChild(btn);
+            });
+
+            if (timeSlots.every(t => bookedTimes.has(t))) {
+                loadingStatus.textContent = 'No slots available on this date.';
             }
-            return slots;
-        };
 
-        dateInput.addEventListener('change', async (e) => {
-            const dateStr = e.target.value;
-            const dayOfWeek = new Date(dateStr).getDay();
+        } catch (error) {
+            console.error("Error fetching slots:", error);
+            loadingStatus.textContent = 'Error checking availability. Please try again.';
+        }
+    });
 
-            // Block weekends (0 = Sunday, 6 = Saturday)
-            if (dayOfWeek === 0 || dayOfWeek === 6) {
-                alert("Please select a weekday.");
-                e.target.value = '';
-                timeContainer.style.display = 'none';
+    // --- MODAL CONTROLS ---
+    window.openModal = function(date, time) {
+        document.getElementById('selectedDate').value = date;
+        document.getElementById('selectedTime').value = time;
+        
+        const displayDate = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        document.getElementById('modalTimeDisplay').innerHTML = `<strong>${time}</strong> on <br>${displayDate}`;
+        
+        document.getElementById('bookingModal').classList.add('active');
+        document.getElementById('applicantName').focus();
+    };
+
+    window.closeModal = function() {
+        document.getElementById('bookingModal').classList.remove('active');
+        document.getElementById('applicantName').value = '';
+    };
+
+    window.submitBooking = async function() {
+        const name = document.getElementById('applicantName').value.trim();
+        const date = document.getElementById('selectedDate').value;
+        const time = document.getElementById('selectedTime').value;
+        const btn = document.getElementById('confirmBtn');
+
+        if (!name) return alert("Please enter your full name.");
+
+        btn.disabled = true;
+        btn.textContent = 'Booking...';
+
+        try {
+            // Document ID structure guarantees mathematical lock against double-booking
+            const docId = `${date}_${time}`; 
+            const docRef = doc(db, "NGU Interview Times", docId);
+
+            // Double Check no one stole it while they were typing their name
+            const existingDoc = await getDocs(query(collection(db, "NGU Interview Times"), where("date", "==", date), where("time", "==", time)));
+            if (!existingDoc.empty) {
+                alert("Sorry! Someone just booked this slot. Please select another time.");
+                closeModal();
+                datePicker.dispatchEvent(new Event('change')); // Refresh grid
                 return;
             }
 
-            timeContainer.style.display = 'block';
-            slotsGrid.innerHTML = 'Loading slots...';
-            bookBtn.disabled = true;
-            selectedTime = null;
-
-            // Fetch booked slots for this date
-            const q = query(collection(db, "NGU Interview Times"), where("date", "==", dateStr));
-            const querySnapshot = await getDocs(q);
-            const bookedTimes = querySnapshot.docs.map(doc => doc.data().time);
-
-            // Render slots
-            slotsGrid.innerHTML = '';
-            const allSlots = generateAllSlots();
-            
-            allSlots.forEach(time => {
-                const slotDiv = document.createElement('div');
-                slotDiv.className = 'slot';
-                slotDiv.innerText = time;
-
-                if (bookedTimes.includes(time)) {
-                    slotDiv.classList.add('booked');
-                } else {
-                    slotDiv.addEventListener('click', () => {
-                        document.querySelectorAll('.slot').forEach(el => el.classList.remove('selected'));
-                        slotDiv.classList.add('selected');
-                        selectedTime = time;
-                        bookBtn.disabled = applicantName.value.trim() === '';
-                    });
-                }
-                slotsGrid.appendChild(slotDiv);
+            await setDoc(docRef, {
+                date: date,
+                time: time,
+                applicantName: name,
+                status: "Booked",
+                interviewer: null,
+                bookedAt: serverTimestamp()
             });
-        });
 
-        applicantName.addEventListener('input', () => {
-            bookBtn.disabled = !selectedTime || applicantName.value.trim() === '';
-        });
+            closeModal();
+            document.getElementById('bookingContainer').style.display = 'none';
+            document.getElementById('successScreen').style.display = 'block';
+            
+            const displayDate = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+            document.getElementById('successMsg').innerHTML = `Your interview has been booked for <strong>${time}</strong> on <strong>${displayDate}</strong>.<br><br>We look forward to speaking with you, ${name}!`;
 
-        bookBtn.addEventListener('click', async () => {
-            const name = applicantName.value.trim();
-            const date = dateInput.value;
-
-            try {
-                bookBtn.disabled = true;
-                bookBtn.innerText = "Booking...";
-
-                await addDoc(collection(db, "NGU Interview Times"), {
-                    applicantName: name,
-                    date: date,
-                    time: selectedTime,
-                    interviewerName: "" // Leave blank for FTL to pick up
-                });
-
-                // 2. TRIGGER EMAILJS HERE FOR APPLICANT CONFIRMATION
-                // emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", { name: name, date: date, time: selectedTime });
-
-                alert("Interview booked successfully!");
-                window.location.reload();
-            } catch (e) {
-                console.error("Error booking: ", e);
-                alert("Failed to book slot.");
-                bookBtn.disabled = false;
-                bookBtn.innerText = "Book Interview";
-            }
-        });
-    </script>
+        } catch (error) {
+            console.error("Booking Error:", error);
+            alert("An error occurred. Please try again.");
+            btn.disabled = false;
+            btn.textContent = 'Confirm Interview';
+        }
+    };
+</script>
 </body>
 </html>
