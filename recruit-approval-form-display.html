@@ -346,7 +346,7 @@
                         const approvals = data.approvalSignOff || {};
                         const dHead = approvals.departmentHead?.decision || 'Pending';
                         const dFin = approvals.finance?.decision || 'Pending';
-                        const dDir = approvals.finalApprover?.decision || 'Pending'; // finalApprover db key used for Director
+                        const dDir = approvals.finalApprover?.decision || 'Pending'; 
 
                         // Determine Overall Status Banner
                         let statusText = 'Waiting';
@@ -587,8 +587,11 @@
             await docRef.update(updatedData);
             console.log("Document updated: ", reqId);
 
-            // EMAIL LOGIC: Check if all approvers have made a definitive choice AND an email hasn't been sent yet
-            const allDecided = (deptDecision !== 'Pending' && financeDecision !== 'Pending' && directorDecision !== 'Pending');
+            // STRICT EMAIL LOGIC: Ensure all three decisions are definitively made
+            const validDecisions = ['Approve', 'Reject', 'More Info Needed'];
+            const allDecided = validDecisions.includes(deptDecision) && 
+                               validDecisions.includes(financeDecision) && 
+                               validDecisions.includes(directorDecision);
             
             if (allDecided && originalData.workflowEmailSent !== true) {
                 const approvalSummaryText = `
