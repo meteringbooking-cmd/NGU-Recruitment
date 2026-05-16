@@ -8,6 +8,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
     <style>
         :root {
             --primary: #005EB8; --accent: #00A3E0;
@@ -129,6 +132,12 @@
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getFirestore, collection, query, where, getDocs, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    // --- INITIALIZE EMAILJS ---
+    const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
+    const EMAILJS_FTL_TEMPLATE = 'template_5cpb2mc';
+    emailjs.init(EMAILJS_PUBLIC_KEY);
 
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
@@ -253,6 +262,7 @@
                 return;
             }
 
+            // Save to Firebase
             await setDoc(docRef, {
                 date: date,
                 time: time,
@@ -262,11 +272,26 @@
                 bookedAt: serverTimestamp()
             });
 
+            // Format date nicely for the email & success screen
+            const displayDate = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+            // Send silent EmailJS notification to FTLs
+            const emailParams = {
+                applicant_name: name,
+                interview_date: displayDate,
+                interview_time: time,
+                portal_link: window.location.origin + "/FTL-interview-availability.html" // Generates relative link automatically
+            };
+
+            emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_TEMPLATE, emailParams)
+                .then(() => console.log("FTL Notification Sent!"))
+                .catch(err => console.error("FTL Notification Failed:", err));
+
+            // Show Success Screen
             closeModal();
             document.getElementById('bookingContainer').style.display = 'none';
             document.getElementById('successScreen').style.display = 'block';
             
-            const displayDate = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
             document.getElementById('successMsg').innerHTML = `Your interview has been booked for <strong>${time}</strong> on <strong>${displayDate}</strong>.<br><br>We look forward to speaking with you, ${name}!`;
 
         } catch (error) {
