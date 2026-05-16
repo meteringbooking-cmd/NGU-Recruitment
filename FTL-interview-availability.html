@@ -192,7 +192,7 @@
             card.innerHTML = `
                 <div class="card-info">
                     <div class="card-date">🗓 ${displayDate} @ ${booking.time}</div>
-                    <div class="card-name">${booking.applicantName} - <span style="font-size:0.9rem; font-weight:normal;">${booking.position || 'Applicant'}</span></div>
+                    <div class="card-name">${booking.applicantName} - <span style="font-size:0.9rem; font-weight:normal;">Applicant</span></div>
                     <div class="card-booked-at">System Booked: ${bookedDateStr}</div>
                 </div>
                 <div class="card-action">
@@ -214,7 +214,7 @@
             const updates = {};
             let emailSent = false;
 
-            // 1. FTL UNCLAIMED REMINDER LOGIC
+            // 1. FTL UNCLAIMED REMINDER LOGIC (24, 48, 72 hours)
             if (!b.interviewer && b.bookedAt) {
                 const bookedTime = b.bookedAt.toDate ? b.bookedAt.toDate() : new Date(b.bookedAt);
                 const hoursWaiting = (now - bookedTime) / (1000 * 60 * 60);
@@ -257,7 +257,7 @@
                     emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APP_REMINDER, {
                         to_email: b.applicantEmail,
                         first_name: firstName,
-                        job_title: b.position || 'the role',
+                        job_title: 'the role', // Position removed, using default
                         interview_date: displayDate,
                         interview_time: b.time,
                         interviewer_name: b.interviewer || 'a member of our team',
@@ -274,47 +274,11 @@
         }
     }
 
-    // --- ICS CALENDAR GENERATOR ---
-    function generateICS(applicantName, position, dateStr, timeStr) {
-        const startDate = new Date(`${dateStr}T${timeStr}`);
-        const endDate = new Date(startDate.getTime() + 30 * 60000); 
-
-        const formatICSDate = (d) => d.toISOString().replace(/-|:/g, '').split('.')[0] + 'Z';
-        const uid = `${dateStr.replace(/-/g, '')}T${timeStr.replace(/:/g, '')}-${applicantName.replace(/\s+/g, '')}@ngu-portal`;
-
-        const icsData = [
-            "BEGIN:VCALENDAR",
-            "VERSION:2.0",
-            "PRODID:-//NGU Recruitment Portal//EN",
-            "CALSCALE:GREGORIAN",
-            "METHOD:PUBLISH", 
-            "BEGIN:VEVENT",
-            `UID:${uid}`,     
-            `DTSTAMP:${formatICSDate(new Date())}`,
-            `DTSTART:${formatICSDate(startDate)}`,
-            `DTEND:${formatICSDate(endDate)}`,
-            `SUMMARY:Interview: ${applicantName} - ${position || 'Applicant'}`,
-            `DESCRIPTION:Candidate Interview for the ${position || 'role'} position.\\n\\nCandidate: ${applicantName}`,
-            "STATUS:CONFIRMED",
-            "END:VEVENT",
-            "END:VCALENDAR"
-        ].join("\r\n");
-
-        const blob = new Blob([icsData], { type: 'text/calendar;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
-        const safeName = applicantName.replace(/\s+/g, '_');
-        link.setAttribute('download', `Interview_${safeName}.ics`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
-    // --- CLAIM INTERVIEW & SAVE TEAMS LINK ---
+    // --- CLAIM INTERVIEW & SAVE TEAMS LINK (No .ics) ---
     window.claimInterview = async function(docId) {
         if (!confirm("Are you sure you want to assign yourself as the interviewer for this timeslot?")) return;
 
-        // Prompt for the Teams Link so the system can save it for the 24hr reminder email
+        // Prompt for the Teams Link
         const teamsLink = prompt("Please paste your Microsoft Teams meeting link for this interview:\n\n(This link will be automatically sent to the applicant in their 24-hour reminder email)");
         
         if (teamsLink === null) return; // User clicked Cancel on the prompt
@@ -327,7 +291,6 @@
                 alert("Booking not found.");
                 return;
             }
-            const b = snap.data();
 
             // Update Firebase with Interviewer AND the Teams Link
             await updateDoc(docRef, { 
@@ -335,10 +298,7 @@
                 meetingLink: teamsLink.trim() || 'A link will be provided by your interviewer shortly'
             });
 
-            // Generate Calendar File
-            generateICS(b.applicantName, b.position, b.date, b.time);
-
-            alert("Interview successfully assigned to you.\n\nA calendar invite (.ics) has been downloaded. Please open it to block out your Outlook calendar.");
+            alert("Interview successfully assigned to you!");
 
         } catch (error) {
             console.error("Error claiming interview:", error);
