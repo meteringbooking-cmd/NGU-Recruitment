@@ -349,11 +349,15 @@
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
-    // Helper to extract the first continuous letters from a postcode (e.g. "NE1 4AB" -> "NE")
-    function getPostcodePrefix(str) {
+    // Correctly extracts the outcode from a UK postcode (e.g. "NE10 4AB" -> "NE10")
+    function getOutcode(str) {
         if (!str) return '';
-        const match = str.trim().match(/^[A-Z]+/i);
-        return match ? match[0].toUpperCase() : '';
+        // Remove spaces and make uppercase
+        let cleaned = str.trim().toUpperCase().replace(/\s+/g, '');
+        // If it's 4 characters or less, it's just an outcode
+        if (cleaned.length <= 4) return cleaned;
+        // Standard UK postcode logic: remove the last 3 chars (incode) to get the outcode
+        return cleaned.slice(0, -3);
     }
 
     // 1. Listen to Applications to get live counts
@@ -408,12 +412,12 @@
             const location = safeStr(vacancy.requestInformation?.location);
             
             // Calculate Matches
-            const vacPrefix = getPostcodePrefix(location);
+            const vacOutcode = getOutcode(location);
             let matchCount = 0;
             
             allApplications.forEach(app => {
-                const appPrefix = getPostcodePrefix(app.personalDetails?.postcode);
-                if (app.position === jobTitle && appPrefix === vacPrefix && vacPrefix !== '') {
+                const appOutcode = getOutcode(app.personalDetails?.postcode);
+                if (app.position === jobTitle && appOutcode === vacOutcode && vacOutcode !== '') {
                     matchCount++;
                 }
             });
