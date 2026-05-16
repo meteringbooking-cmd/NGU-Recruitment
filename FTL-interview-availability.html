@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>NGU — Interview Schedule (FTL)</title>
+    <title>NGU — Interview Schedule & Packs (FTL)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -64,8 +64,8 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: all 0.2s;
             flex-wrap: wrap; gap: 15px;
         }
-        .interview-card:hover { border-color: var(--accent); transform: translateX(5px); }
-        .interview-card.claimed { border-left-color: var(--success); }
+        .interview-card.claimed { border-left-color: var(--accent); }
+        .interview-card.completed { border-left-color: var(--success); opacity: 0.8; }
 
         .card-info { display: flex; flex-direction: column; gap: 5px; }
         .card-date { font-family: 'DM Mono', monospace; font-size: 1.1rem; color: #6ee7b7; font-weight: 600; }
@@ -74,26 +74,55 @@
 
         .card-action { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
         
-        .btn-claim {
-            background: rgba(0,163,224,0.1); border: 1px solid rgba(0,163,224,0.4);
-            color: var(--accent); padding: 0.7rem 1.5rem; border-radius: 8px;
-            font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
-        }
+        .btn { padding: 0.7rem 1.5rem; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; border: none; font-family: inherit; }
+        .btn-claim { background: rgba(0,163,224,0.1); border: 1px solid rgba(0,163,224,0.4); color: var(--accent); }
         .btn-claim:hover { background: rgba(0,163,224,0.2); }
+        .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.35); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        .claimed-badge {
-            background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4);
-            color: #6ee7b7; padding: 0.5rem 1rem; border-radius: 8px;
-            font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;
-        }
+        .claimed-badge { background: rgba(0,163,224,0.1); border: 1px solid rgba(0,163,224,0.3); color: var(--accent); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        .completed-badge { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4); color: #6ee7b7; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
         
         .empty-state { text-align: center; padding: 40px; color: var(--text-muted); background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); font-size: 1.1rem; }
 
-        @media (max-width: 600px) {
-            .interview-card { flex-direction: column; align-items: flex-start; }
-            .card-action { align-items: flex-start; width: 100%; }
-            .btn-claim { width: 100%; }
-        }
+        /* INTERVIEW MODAL STYLES */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;}
+        .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease;}
+        .modal-content { background: var(--bg-card); width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; border-radius: 12px; border: 1px solid var(--border); padding: 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+        .modal-title { font-size: 1.5rem; color: var(--accent); font-weight: 700; }
+        .close-btn { background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+        .close-btn:hover { color: var(--error); }
+
+        .candidate-header { background: rgba(0,163,224,0.05); border: 1px solid rgba(0,163,224,0.2); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.95rem; }
+        .candidate-header div strong { color: var(--text-muted); display: inline-block; width: 140px; }
+
+        .type-selector { margin-bottom: 2rem; background: var(--bg-input); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+        .type-selector select { padding: 0.8rem; border-radius: 8px; border: 1px solid var(--accent); background: var(--bg-dark); color: white; font-size: 1rem; width: 100%; max-width: 350px; outline: none; }
+
+        .interview-pack { display: none; }
+        .interview-pack.active { display: block; animation: fadeIn 0.3s ease; }
+
+        .pack-section { border: 1px solid var(--border); background: var(--bg-input); border-radius: 8px; margin-bottom: 1.5rem; overflow: hidden; }
+        .pack-section-header { background: rgba(0,0,0,0.2); padding: 1rem 1.5rem; font-weight: 700; color: var(--accent); border-bottom: 1px solid var(--border); font-size: 1.1rem; }
+        .pack-section-body { padding: 1.5rem; }
+        
+        .prompt-list { margin-left: 1.5rem; color: var(--text-light); margin-bottom: 1rem; font-size: 0.95rem; line-height: 1.5; }
+        .prompt-list li { margin-bottom: 0.4rem; }
+        
+        textarea, select, input[type="text"] { width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-dark); color: white; font-family: inherit; font-size: 0.95rem; outline: none; margin-bottom: 1rem; resize: vertical;}
+        textarea:focus, select:focus, input:focus { border-color: var(--accent); }
+
+        .score-grid { display: grid; grid-template-columns: 2fr 1fr 3fr; gap: 10px; align-items: center; margin-bottom: 10px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 6px; }
+        .score-grid label { font-weight: 600; font-size: 0.9rem; }
+        .score-grid input[type="number"] { width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-dark); color: white; text-align: center; }
+        .score-grid input[type="text"] { margin-bottom: 0; padding: 0.6rem; }
+        .section-total { text-align: right; font-weight: 700; color: var(--accent); font-size: 1.1rem; margin-top: 10px; }
+        
+        .grand-total { text-align: center; font-size: 1.8rem; font-weight: 800; color: #6ee7b7; background: rgba(16,185,129,0.1); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3); margin-bottom: 1.5rem; }
+
+        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
     </style>
 </head>
 <body>
@@ -112,6 +141,235 @@
 
     <div id="scheduleGrid" class="schedule-grid">
         <div class="empty-state">⏳ Loading schedule...</div>
+    </div>
+</div>
+
+<!-- MASSIVE INTERVIEW MODAL -->
+<div class="modal-overlay" id="interviewModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">Live Interview Pack</div>
+            <button class="close-btn" onclick="closeInterviewModal()">✕</button>
+        </div>
+        
+        <input type="hidden" id="activeDocId">
+
+        <div class="candidate-header">
+            <div><strong>Candidate Name:</strong> <span id="hdrName"></span></div>
+            <div><strong>Date & Time:</strong> <span id="hdrDateTime"></span></div>
+            <div><strong>Interviewer:</strong> <span id="hdrInterviewer"></span></div>
+            <div><strong>Position:</strong> <span id="hdrPosition"></span></div>
+        </div>
+
+        <div class="type-selector">
+            <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:var(--text-muted);">Select Interview Pack Type:</label>
+            <select id="interviewTypeSelector" onchange="toggleInterviewType()">
+                <option value="" disabled selected>-- Select Pack --</option>
+                <option value="engineer">Smart Meter Engineer Pack</option>
+                <option value="office">Office Staff Pack</option>
+            </select>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- ENGINEER PACK -->
+        <!-- ============================================== -->
+        <div id="engineerPack" class="interview-pack">
+            <div style="background: rgba(245,158,11,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #fcd34d; font-size: 0.9rem; border: 1px solid rgba(245,158,11,0.3);">
+                <strong>Scoring Guide:</strong> 1 = Poor | 2 = Below Standard | 3 = Acceptable | 4 = Strong | 5 = Excellent
+            </div>
+
+            <div class="pack-section">
+                <div class="pack-section-header">Section 1: Experience & Background</div>
+                <div class="pack-section-body">
+                    <ul class="prompt-list">
+                        <li>Tell us about your background and recent roles.</li>
+                        <li>What smart metering contracts or utility providers have you worked on?</li>
+                        <li>Why are you looking to move roles? What interests you about joining NGU?</li>
+                    </ul>
+                    <textarea id="eng_notes_1" rows="3" placeholder="Discussion notes..."></textarea>
+                    
+                    <div class="score-grid"><label>Relevant smart metering experience</label><input type="number" min="1" max="5" class="eng-score eng-s1" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Previous contracts / employers</label><input type="number" min="1" max="5" class="eng-score eng-s1" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Career stability / reasons for leaving</label><input type="number" min="1" max="5" class="eng-score eng-s1" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Industry knowledge</label><input type="number" min="1" max="5" class="eng-score eng-s1" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="section-total">Section Total: <span id="eng_tot_1">0</span> / 20</div>
+                </div>
+            </div>
+
+            <div class="pack-section">
+                <div class="pack-section-header">Section 2: Qualifications & Compliance</div>
+                <div class="pack-section-body">
+                    <ul class="prompt-list">
+                        <li>What qualifications, registrations, or accreditations do you hold? Are they in date?</li>
+                        <li>Do you hold any additional training (EV, Solar, Utilities etc.)?</li>
+                    </ul>
+                    <textarea id="eng_notes_2" rows="3" placeholder="Discussion notes..."></textarea>
+                    
+                    <div class="score-grid"><label>Core qualifications held</label><input type="number" min="1" max="5" class="eng-score eng-s2" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Additional accreditations</label><input type="number" min="1" max="5" class="eng-score eng-s2" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Certifications in date</label><input type="number" min="1" max="5" class="eng-score eng-s2" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Compliance suitability</label><input type="number" min="1" max="5" class="eng-score eng-s2" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="section-total">Section Total: <span id="eng_tot_2">0</span> / 20</div>
+                </div>
+            </div>
+
+            <div class="pack-section">
+                <div class="pack-section-header">Section 3: Motivation & Company Fit</div>
+                <div class="pack-section-body">
+                    <div class="score-grid"><label>Knowledge of NGU</label><input type="number" min="1" max="5" class="eng-score eng-s3" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Reason for applying</label><input type="number" min="1" max="5" class="eng-score eng-s3" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Career motivation</label><input type="number" min="1" max="5" class="eng-score eng-s3" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Alignment with company values</label><input type="number" min="1" max="5" class="eng-score eng-s3" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="section-total">Section Total: <span id="eng_tot_3">0</span> / 20</div>
+                </div>
+            </div>
+
+            <div class="pack-section">
+                <div class="pack-section-header">Section 4: Performance, Safety & Productivity</div>
+                <div class="pack-section-body">
+                    <ul class="prompt-list">
+                        <li>What does a productive and compliant working day look like to you?</li>
+                        <li>Describe a time you solved a technical issue independently.</li>
+                        <li>What would you do if you identified a safety risk at a property?</li>
+                    </ul>
+                    <textarea id="eng_notes_4" rows="3" placeholder="Discussion notes..."></textarea>
+                    
+                    <div class="score-grid"><label>Understanding of successful day</label><input type="number" min="1" max="5" class="eng-score eng-s4" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Productivity mindset</label><input type="number" min="1" max="5" class="eng-score eng-s4" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Quality awareness</label><input type="number" min="1" max="5" class="eng-score eng-s4" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Safety focus</label><input type="number" min="1" max="5" class="eng-score eng-s4" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="section-total">Section Total: <span id="eng_tot_4">0</span> / 20</div>
+                </div>
+            </div>
+
+            <div class="pack-section">
+                <div class="pack-section-header">Section 5: Customer Service & Behaviour</div>
+                <div class="pack-section-body">
+                    <ul class="prompt-list">
+                        <li>Tell us about a difficult customer situation and how you handled it.</li>
+                        <li>How do you manage a job overrunning with a frustrated customer?</li>
+                    </ul>
+                    <textarea id="eng_notes_5" rows="3" placeholder="Discussion notes..."></textarea>
+
+                    <div class="score-grid"><label>Communication skills</label><input type="number" min="1" max="5" class="eng-score eng-s5" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Handling difficult customers</label><input type="number" min="1" max="5" class="eng-score eng-s5" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Professionalism</label><input type="number" min="1" max="5" class="eng-score eng-s5" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Customer-first mindset</label><input type="number" min="1" max="5" class="eng-score eng-s5" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="section-total">Section Total: <span id="eng_tot_5">0</span> / 20</div>
+                </div>
+            </div>
+
+            <div class="pack-section">
+                <div class="pack-section-header">Section 6: Reliability & Flexibility</div>
+                <div class="pack-section-body">
+                    <ul class="prompt-list">
+                        <li>We operate a 1 in 6 callout rota. Any issues with this?</li>
+                        <li>Do you have any pre-booked holidays? How soon could you start?</li>
+                    </ul>
+                    <textarea id="eng_notes_6" rows="3" placeholder="Discussion notes..."></textarea>
+
+                    <div class="score-grid"><label>Flexibility with working hours</label><input type="number" min="1" max="5" class="eng-score eng-s6" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Callout rota suitability</label><input type="number" min="1" max="5" class="eng-score eng-s6" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Attendance reliability</label><input type="number" min="1" max="5" class="eng-score eng-s6" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="score-grid"><label>Adaptability</label><input type="number" min="1" max="5" class="eng-score eng-s6" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                    <div class="section-total">Section Total: <span id="eng_tot_6">0</span> / 20</div>
+                </div>
+            </div>
+
+            <div class="grand-total">OVERALL SCORE: <span id="eng_grand_total">0</span> / 120</div>
+
+            <div class="pack-section">
+                <div class="pack-section-header">Final Assessment</div>
+                <div class="pack-section-body">
+                    <label>Key Strengths</label><textarea id="eng_strengths" rows="2"></textarea>
+                    <label>Concerns / Risks</label><textarea id="eng_concerns" rows="2"></textarea>
+                    <label>Candidate Questions</label><textarea id="eng_questions" rows="2"></textarea>
+                    <label>Final Recommendation</label>
+                    <select id="eng_recommendation">
+                        <option value="" disabled selected>Select decision...</option>
+                        <option value="Strong Hire">Strong Hire</option>
+                        <option value="Hire">Proceed to Offer (Hire)</option>
+                        <option value="Hold">Hold / Second Review</option>
+                        <option value="Do Not Proceed">Do Not Proceed</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="submitInterviewData('engineer')" style="width: 100%;">Complete & Save Interview</button>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- OFFICE PACK -->
+        <!-- ============================================== -->
+        <div id="officePack" class="interview-pack">
+            <div style="background: rgba(245,158,11,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #fcd34d; font-size: 0.9rem; border: 1px solid rgba(245,158,11,0.3);">
+                <strong>Scoring Guide:</strong> 1 = Poor | 2 = Below Standard | 3 = Acceptable | 4 = Strong | 5 = Excellent
+            </div>
+
+            <div class="pack-section">
+                <div class="pack-section-header">Section 1: Background & Career History</div>
+                <div class="pack-section-body">
+                    <ul class="prompt-list">
+                        <li>Tell us about your background and recent roles.</li>
+                        <li>What attracted you to this opportunity with NGU?</li>
+                    </ul>
+                    <textarea id="off_notes_1" rows="3" placeholder="Discussion notes..."></textarea>
+                </div>
+            </div>
+
+            <div class="pack-section">
+                <div class="pack-section-header">Section 2: Skills & Systems Competence</div>
+                <div class="pack-section-body">
+                    <ul class="prompt-list">
+                        <li>What systems, software, or CRM platforms have you used?</li>
+                        <li>How do you prioritise multiple tasks and deadlines?</li>
+                    </ul>
+                    <textarea id="off_notes_2" rows="3" placeholder="Discussion notes..."></textarea>
+                </div>
+            </div>
+
+            <div class="pack-section">
+                <div class="pack-section-header">Section 3: Customer Service & Teamwork</div>
+                <div class="pack-section-body">
+                    <ul class="prompt-list">
+                        <li>Tell us about a time you dealt with a difficult customer or colleague.</li>
+                        <li>Describe your approach to working as part of a team.</li>
+                    </ul>
+                    <textarea id="off_notes_3" rows="3" placeholder="Discussion notes..."></textarea>
+                </div>
+            </div>
+
+            <div class="pack-section">
+                <div class="pack-section-header">Office Scorecard</div>
+                <div class="pack-section-body">
+                    <div class="score-grid"><label>Relevant Experience</label><input type="number" min="1" max="5" class="off-score" placeholder="1-5"><input type="text" placeholder="Comments" class="off-cmt"></div>
+                    <div class="score-grid"><label>Systems / Technical Skills</label><input type="number" min="1" max="5" class="off-score" placeholder="1-5"><input type="text" placeholder="Comments" class="off-cmt"></div>
+                    <div class="score-grid"><label>Communication</label><input type="number" min="1" max="5" class="off-score" placeholder="1-5"><input type="text" placeholder="Comments" class="off-cmt"></div>
+                    <div class="score-grid"><label>Accuracy / Attention to Detail</label><input type="number" min="1" max="5" class="off-score" placeholder="1-5"><input type="text" placeholder="Comments" class="off-cmt"></div>
+                    <div class="score-grid"><label>Teamwork</label><input type="number" min="1" max="5" class="off-score" placeholder="1-5"><input type="text" placeholder="Comments" class="off-cmt"></div>
+                    <div class="score-grid"><label>Motivation</label><input type="number" min="1" max="5" class="off-score" placeholder="1-5"><input type="text" placeholder="Comments" class="off-cmt"></div>
+                </div>
+            </div>
+
+            <div class="pack-section">
+                <div class="pack-section-header">Final Assessment</div>
+                <div class="pack-section-body">
+                    <label>Risks / Concerns / Additional Comments</label><textarea id="off_comments" rows="4"></textarea>
+                    <label>Candidate Questions</label><textarea id="off_questions" rows="2"></textarea>
+                    <label>Final Recommendation</label>
+                    <select id="off_recommendation">
+                        <option value="" disabled selected>Select decision...</option>
+                        <option value="Strong Hire">Strong Hire</option>
+                        <option value="Proceed to Offer">Proceed to Offer</option>
+                        <option value="Hold">Hold / Further Review</option>
+                        <option value="Do Not Proceed">Do Not Proceed</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="submitInterviewData('office')" style="width: 100%;">Complete & Save Interview</button>
+        </div>
+
     </div>
 </div>
 
@@ -154,7 +412,6 @@
             bookings.push({ id: doc.id, ...doc.data() });
         });
 
-        // Background script to process email reminders silently
         processAutomatedReminders(bookings);
 
         bookings.sort((a, b) => {
@@ -169,22 +426,24 @@
 
         bookings.forEach(booking => {
             const displayDate = new Date(booking.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-            const bookedDateStr = booking.bookedAt?.toDate ? booking.bookedAt.toDate().toLocaleString('en-GB') : 'Unknown';
-
+            
             let actionHtml = '';
             let cardClass = 'interview-card';
 
-            if (booking.interviewer) {
+            if (booking.interviewCompleted) {
+                cardClass += ' completed';
+                actionHtml = `<div class="completed-badge">✓ Interview Completed</div>`;
+            } 
+            else if (booking.interviewer) {
                 cardClass += ' claimed';
                 actionHtml = `
-                    <div class="claimed-badge">
-                        <span>👤 Claimed by ${booking.interviewer}</span>
-                    </div>
+                    <div class="claimed-badge" style="margin-bottom: 5px;">👤 Claimed by ${booking.interviewer}</div>
                 `;
-            } else {
-                actionHtml = `
-                    <button class="btn-claim" onclick="claimInterview('${booking.id}')">Assign to Me</button>
-                `;
+                // Add "Begin Interview" button if the current user claimed it (or let any FTL open it)
+                actionHtml += `<button class="btn btn-primary" onclick="openInterviewModal('${booking.id}', '${booking.applicantName}', '${booking.date}', '${booking.time}', '${booking.position}', '${booking.interviewer}')">▶ Begin Interview</button>`;
+            } 
+            else {
+                actionHtml = `<button class="btn btn-claim" onclick="claimInterview('${booking.id}')">Assign to Me</button>`;
             }
 
             const card = document.createElement('div');
@@ -192,117 +451,178 @@
             card.innerHTML = `
                 <div class="card-info">
                     <div class="card-date">🗓 ${displayDate} @ ${booking.time}</div>
-                    <div class="card-name">${booking.applicantName} - <span style="font-size:0.9rem; font-weight:normal;">Applicant</span></div>
-                    <div class="card-booked-at">System Booked: ${bookedDateStr}</div>
+                    <div class="card-name">${booking.applicantName} - <span style="font-size:0.9rem; font-weight:normal;">${booking.position || 'Applicant'}</span></div>
                 </div>
-                <div class="card-action">
-                    ${actionHtml}
-                </div>
+                <div class="card-action">${actionHtml}</div>
             `;
             scheduleGrid.appendChild(card);
         });
-    }, (error) => {
-        console.error("Error loading schedule:", error);
     });
 
-    // --- BACKGROUND AUTOMATION SCRIPT ---
     async function processAutomatedReminders(bookings) {
         const now = new Date();
-
         for (const b of bookings) {
+            if (b.interviewCompleted) continue; // Skip completed interviews
+
             const docRef = doc(db, "NGU Interview Times", b.id);
             const updates = {};
-            let emailSent = false;
-
-            // 1. FTL UNCLAIMED REMINDER LOGIC (24, 48, 72 hours)
+            
             if (!b.interviewer && b.bookedAt) {
                 const bookedTime = b.bookedAt.toDate ? b.bookedAt.toDate() : new Date(b.bookedAt);
                 const hoursWaiting = (now - bookedTime) / (1000 * 60 * 60);
                 const level = b.unclaimedReminderLevel || 0;
+                let emailSent = false;
 
-                if (hoursWaiting >= 72 && level < 3) {
-                    updates.unclaimedReminderLevel = 3;
-                    emailSent = true;
-                } else if (hoursWaiting >= 48 && level < 2) {
-                    updates.unclaimedReminderLevel = 2;
-                    emailSent = true;
-                } else if (hoursWaiting >= 24 && level < 1) {
-                    updates.unclaimedReminderLevel = 1;
-                    emailSent = true;
-                }
+                if (hoursWaiting >= 72 && level < 3) { updates.unclaimedReminderLevel = 3; emailSent = true; } 
+                else if (hoursWaiting >= 48 && level < 2) { updates.unclaimedReminderLevel = 2; emailSent = true; } 
+                else if (hoursWaiting >= 24 && level < 1) { updates.unclaimedReminderLevel = 1; emailSent = true; }
 
                 if (emailSent) {
                     const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_REMINDER, {
-                        applicant_name: b.applicantName,
-                        hours_waiting: Math.floor(hoursWaiting),
-                        interview_date: displayDate,
-                        interview_time: b.time,
-                        portal_link: window.location.href
-                    });
+                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_REMINDER, { applicant_name: b.applicantName, hours_waiting: Math.floor(hoursWaiting), interview_date: displayDate, interview_time: b.time, portal_link: window.location.href });
                 }
             }
 
-            // 2. APPLICANT 24HR REMINDER LOGIC
             if (b.applicantEmail && !b.applicantReminderSent) {
                 const interviewDateTime = new Date(`${b.date}T${b.time}`);
                 const hoursUntilInterview = (interviewDateTime - now) / (1000 * 60 * 60);
 
                 if (hoursUntilInterview > 0 && hoursUntilInterview <= 24) {
                     updates.applicantReminderSent = true;
-
                     const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                    const firstName = b.applicantName ? b.applicantName.split(' ')[0] : 'Applicant';
-
                     emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APP_REMINDER, {
-                        to_email: b.applicantEmail,
-                        first_name: firstName,
-                        job_title: 'the role', // Position removed, using default
-                        interview_date: displayDate,
-                        interview_time: b.time,
-                        interviewer_name: b.interviewer || 'a member of our team',
-                        location_method: 'Microsoft Teams',
-                        meeting_link: b.meetingLink || 'A link will be provided by your interviewer shortly',
-                        contact_email: 'recruitment@next-gen.uk'
+                        to_email: b.applicantEmail, first_name: b.applicantName ? b.applicantName.split(' ')[0] : 'Applicant',
+                        job_title: 'the role', interview_date: displayDate, interview_time: b.time, interviewer_name: b.interviewer || 'a member of our team',
+                        location_method: 'Microsoft Teams', meeting_link: b.meetingLink || 'A link will be provided shortly', contact_email: 'recruitment@next-gen.uk'
                     });
                 }
             }
-
-            if (Object.keys(updates).length > 0) {
-                await updateDoc(docRef, updates);
-            }
+            if (Object.keys(updates).length > 0) await updateDoc(docRef, updates);
         }
     }
 
-    // --- CLAIM INTERVIEW & SAVE TEAMS LINK (No .ics) ---
     window.claimInterview = async function(docId) {
         if (!confirm("Are you sure you want to assign yourself as the interviewer for this timeslot?")) return;
-
-        // Prompt for the Teams Link
         const teamsLink = prompt("Please paste your Microsoft Teams meeting link for this interview:\n\n(This link will be automatically sent to the applicant in their 24-hour reminder email)");
-        
-        if (teamsLink === null) return; // User clicked Cancel on the prompt
+        if (teamsLink === null) return; 
 
         try {
-            const docRef = doc(db, "NGU Interview Times", docId);
-            
-            const snap = await getDoc(docRef);
-            if (!snap.exists()) {
-                alert("Booking not found.");
-                return;
-            }
-
-            // Update Firebase with Interviewer AND the Teams Link
-            await updateDoc(docRef, { 
+            await updateDoc(doc(db, "NGU Interview Times", docId), { 
                 interviewer: currentUser,
-                meetingLink: teamsLink.trim() || 'A link will be provided by your interviewer shortly'
+                meetingLink: teamsLink.trim() || 'A link will be provided shortly'
             });
-
             alert("Interview successfully assigned to you!");
-
         } catch (error) {
-            console.error("Error claiming interview:", error);
-            alert("Error assigning interview. Please try again.");
+            console.error("Error claiming:", error);
+            alert("Error assigning interview.");
+        }
+    };
+
+    // --- INTERVIEW MODAL LOGIC ---
+    window.openInterviewModal = function(id, name, date, time, position, interviewer) {
+        document.getElementById('activeDocId').value = id;
+        document.getElementById('hdrName').textContent = name;
+        document.getElementById('hdrDateTime').textContent = `${date} @ ${time}`;
+        document.getElementById('hdrInterviewer').textContent = interviewer;
+        document.getElementById('hdrPosition').textContent = position || 'Applicant';
+        
+        document.getElementById('interviewTypeSelector').value = "";
+        document.getElementById('engineerPack').classList.remove('active');
+        document.getElementById('officePack').classList.remove('active');
+        
+        // Reset all inputs
+        document.querySelectorAll('input[type="number"], input[type="text"], textarea').forEach(el => el.value = '');
+        document.querySelectorAll('.section-total span, #eng_grand_total').forEach(el => el.textContent = '0');
+
+        document.getElementById('interviewModal').classList.add('active');
+    };
+
+    window.closeInterviewModal = function() {
+        document.getElementById('interviewModal').classList.remove('active');
+    };
+
+    window.toggleInterviewType = function() {
+        const val = document.getElementById('interviewTypeSelector').value;
+        document.getElementById('engineerPack').classList.remove('active');
+        document.getElementById('officePack').classList.remove('active');
+        if(val === 'engineer') document.getElementById('engineerPack').classList.add('active');
+        if(val === 'office') document.getElementById('officePack').classList.add('active');
+    };
+
+    // --- REAL-TIME ENGINEER SCORE CALCULATOR ---
+    document.querySelectorAll('.eng-score').forEach(input => {
+        input.addEventListener('input', () => {
+            if (input.value > 5) input.value = 5;
+            if (input.value < 0) input.value = '';
+            
+            let grandTotal = 0;
+            for(let i=1; i<=6; i++) {
+                let secTotal = 0;
+                document.querySelectorAll(`.eng-s${i}`).forEach(el => { secTotal += Number(el.value) || 0; });
+                document.getElementById(`eng_tot_${i}`).textContent = secTotal;
+                grandTotal += secTotal;
+            }
+            document.getElementById('eng_grand_total').textContent = grandTotal;
+        });
+    });
+
+    window.submitInterviewData = async function(type) {
+        if (!confirm("Are you sure you want to submit this interview pack? This cannot be undone.")) return;
+        
+        const docId = document.getElementById('activeDocId').value;
+        let payload = { type: type, submittedAt: new Date().toISOString() };
+
+        if (type === 'engineer') {
+            const rec = document.getElementById('eng_recommendation').value;
+            if(!rec) return alert("Please select a Final Recommendation before submitting.");
+
+            payload.recommendation = rec;
+            payload.totalScore = document.getElementById('eng_grand_total').textContent;
+            payload.strengths = document.getElementById('eng_strengths').value;
+            payload.concerns = document.getElementById('eng_concerns').value;
+            payload.questions = document.getElementById('eng_questions').value;
+            
+            // Collect all scores and notes
+            payload.sections = {};
+            for(let i=1; i<=6; i++) {
+                const notes = document.getElementById(`eng_notes_${i}`) ? document.getElementById(`eng_notes_${i}`).value : '';
+                const scores = [];
+                const inputs = document.querySelectorAll(`.eng-s${i}`);
+                const cmts = inputs[0].parentElement.parentElement.querySelectorAll('.eng-cmt'); // Fetch adjacent comments
+                
+                inputs.forEach((input, index) => {
+                    scores.push({ score: input.value, comment: cmts[index].value });
+                });
+                payload.sections[`section_${i}`] = { notes, scores };
+            }
+        } 
+        else if (type === 'office') {
+            const rec = document.getElementById('off_recommendation').value;
+            if(!rec) return alert("Please select a Final Recommendation before submitting.");
+
+            payload.recommendation = rec;
+            payload.comments = document.getElementById('off_comments').value;
+            payload.questions = document.getElementById('off_questions').value;
+            
+            const scores = [];
+            document.querySelectorAll('.off-score').forEach((input, i) => {
+                const cmt = document.querySelectorAll('.off-cmt')[i].value;
+                scores.push({ score: input.value, comment: cmt });
+            });
+            payload.scores = scores;
+        }
+
+        try {
+            await updateDoc(doc(db, "NGU Interview Times", docId), {
+                interviewCompleted: true,
+                interviewData: payload,
+                status: "Completed"
+            });
+            alert("Interview successfully saved and completed!");
+            closeInterviewModal();
+        } catch (error) {
+            console.error("Error saving interview data:", error);
+            alert("Error saving data. Please check connection.");
         }
     };
 </script>
