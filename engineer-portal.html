@@ -1,468 +1,666 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>NGU — Engineer Onboarding Portal</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recruitment Workflow Manager - NGU Portal</title>
     
-    <!-- EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- 
+      --- PROTOTYPE SECURITY SCRIPT ---
+    -->
+    <script>
+        (function() {
+            const username = localStorage.getItem('ngu_portal_username');
+            const hasAccess = localStorage.getItem('ngu_portal_access_management');
 
+            if (!username) {
+                console.log("No session found, redirecting to login.");
+                window.location.href = 'login.html';
+                return; 
+            }
+
+            if (hasAccess !== 'true') {
+                console.log("User lacks management permission.");
+                alert("Access Denied: You do not have permission to access the Workflow Manager.");
+                window.location.href = 'homepage.html';
+                return; 
+            }
+        })();
+    </script>
+    
     <style>
         :root {
-            --primary: #005EB8; --accent: #00A3E0;
-            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
-            --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
-            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
-        }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: 'Work Sans', sans-serif; background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%); color: var(--text-light); min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
-        body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(circle at 15% 20%, rgba(0,163,224,0.08) 0%, transparent 55%), radial-gradient(circle at 85% 75%, rgba(0,94,184,0.07) 0%, transparent 55%); pointer-events: none; z-index: -1; }
-
-        /* --- LOGIN SCREEN --- */
-        #loginScreen { width: 100%; max-width: 400px; padding: 2rem; margin-top: 10vh; }
-        .login-card { background: var(--bg-card); padding: 2.5rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; }
-        .logo { max-height: 50px; margin-bottom: 1.5rem; }
-        .login-card h2 { color: var(--accent); margin-bottom: 0.5rem; font-size: 1.4rem; }
-        .login-card p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
-        .input-group { margin-bottom: 1.5rem; text-align: left; }
-        .input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        .input-group input { width: 100%; padding: 0.9rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: white; font-family: inherit; font-size: 1rem; outline: none; transition: border-color 0.2s;}
-        .input-group input:focus { border-color: var(--accent); }
-        .btn-primary { width: 100%; padding: 0.9rem; border: none; border-radius: 8px; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; font-weight: 700; font-size: 1rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; font-family: inherit; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.3); }
-
-        /* --- PORTAL SCREEN --- */
-        #portalScreen { width: 100%; max-width: 1000px; padding: 2rem; display: none; animation: fadeIn 0.4s ease; }
-        .portal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 15px;}
-        .portal-header h1 { font-size: 1.8rem; color: white; }
-        .portal-header span { color: var(--accent); }
-        
-        .pulse-btn { background: rgba(16, 185, 129, 0.15); border: 2px solid var(--success); color: #6ee7b7; padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; animation: pulse 2s infinite; transition: all 0.2s; }
-        .pulse-btn:hover { background: rgba(16, 185, 129, 0.3); }
-        @keyframes pulse { 
-            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 
-            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 
-            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } 
+            --body-bg: #141d26;
+            --container-bg: #1c2938;
+            --input-bg: #2d3d50;
+            --panel-border: #38444d;
+            --primary-text: #e1e8ed;
+            --secondary-text: #8899a6;
+            --accent-color: #00d4ff; 
+            --success-color: #2ecc71;
+            --danger-color: #ef4444;
+            --pending-color: #f39c12; /* Warning/Waiting color */
         }
 
-        .section { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); padding: 1.8rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .section h3 { color: var(--accent); font-size: 1.2rem; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
-        
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
-        .data-item { background: var(--bg-input); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
-        .data-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; font-weight: 600; }
-        .data-value { font-size: 1.05rem; font-weight: 500; color: white; word-break: break-word; }
-        .data-value.mono { font-family: 'DM Mono', monospace; font-size: 0.95rem; color: #6ee7b7; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .cert-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 0.5rem; }
-        .cert-name { font-weight: 600; }
-        .cert-status { font-size: 0.85rem; padding: 3px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.1); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--body-bg);
+            color: var(--primary-text);
+            line-height: 1.6;
+            padding: 20px;
+        }
 
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; background: var(--bg-input); border-radius: 8px; overflow: hidden; }
-        .data-table th, .data-table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
-        .data-table th { color: var(--accent); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; background: rgba(0,0,0,0.3); }
-        .data-table tr:last-child td { border-bottom: none; }
+        .main-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
 
-        /* --- OFFER MODAL --- */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;}
-        .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease;}
-        .modal-content { background: var(--bg-card); width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; border-radius: 12px; border: 1px solid var(--border); padding: 2.5rem; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
-        .modal-title { font-size: 1.6rem; color: var(--accent); font-weight: 800; margin-bottom: 1.5rem; text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem;}
-        
-        .offer-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 2rem; }
-        .offer-item { display: flex; justify-content: space-between; padding: 12px; background: var(--bg-input); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
-        .offer-item span:first-child { color: var(--text-muted); font-weight: 600; }
-        .offer-item span:last-child { color: white; font-weight: 700; text-align: right; }
+        /* Header Styling */
+        .page-header {
+            background-color: var(--container-bg);
+            padding: 20px 30px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            flex-wrap: wrap; 
+            gap: 15px;
+        }
 
-        .modal-actions { display: flex; gap: 10px; flex-direction: column; }
-        .btn-success { background: rgba(16, 185, 129, 0.15); border: 2px solid var(--success); color: #6ee7b7; padding: 1rem; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; transition: all 0.2s; }
-        .btn-success:hover { background: rgba(16, 185, 129, 0.3); transform: translateY(-2px); }
-        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 1rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s; }
-        .btn-outline:hover { border-color: var(--accent); color: var(--accent); background: rgba(0, 163, 224, 0.05); }
+        .header-brand-container { display: flex; align-items: center; gap: 20px; }
+        .header-brand { display: flex; align-items: center; gap: 15px; }
+        .logo { height: 40px; width: auto; }
 
-        #questionBlock { display: none; margin-top: 1.5rem; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); }
-        #questionBlock textarea { width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: white; font-family: inherit; font-size: 0.95rem; outline: none; resize: vertical; margin-bottom: 1rem; }
-        #questionBlock textarea:focus { border-color: var(--warning); }
+        .page-header h1 {
+            font-size: 1.4em; color: var(--primary-text); text-transform: uppercase; letter-spacing: 0.1em; margin: 0;
+        }
 
-        #successMessage { display: none; text-align: center; color: #6ee7b7; font-weight: 700; padding: 1.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; margin-top: 1.5rem; }
+        .header-controls { text-align: right; display: flex; align-items: center; gap: 15px; }
+        .header-controls span { color: var(--secondary-text); font-size: 0.9em; }
 
-        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+        button, .btn-link {
+            border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: all 0.2s;
+            text-decoration: none; display: inline-flex; align-items: center; font-weight: 600; border: none;
+        }
+
+        .btn-logout-header { background: none; border: 1px solid var(--panel-border); color: var(--primary-text); padding: 8px 15px; }
+        .btn-logout-header:hover { border-color: var(--danger-color); color: var(--danger-color); background-color: rgba(239, 68, 68, 0.05);}
+
+        .btn-secondary { background-color: var(--input-bg); color: var(--primary-text); border: 1px solid var(--panel-border); padding: 8px 15px; }
+        .btn-secondary:hover { background-color: #38444d; border-color: #4f5b66; }
+
+        .view-toggle {
+            display: flex; background-color: rgba(0,0,0,0.2); border-radius: 8px; padding: 4px; border: 1px solid var(--panel-border);
+        }
+
+        .toggle-btn {
+            background: none; color: var(--secondary-text); padding: 8px 20px; border-radius: 6px; font-size: 0.85em;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s; display: flex; align-items: center; gap: 8px;
+        }
+
+        .toggle-btn:hover { color: var(--primary-text); }
+        .toggle-btn.active { background-color: var(--container-bg); color: var(--accent-color); border: 1px solid var(--panel-border); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .toggle-btn.active svg { stroke: var(--accent-color); }
+        .toggle-btn svg { width: 14px; height: 14px; stroke: var(--secondary-text); stroke-width: 2.5; fill: none; }
+
+        #status-message {
+            text-align: center; padding: 40px; color: var(--secondary-text); background-color: var(--container-bg);
+            border-radius: 8px; border: 1px solid var(--panel-border); max-width: 800px; margin: 0 auto;
+        }
+
+        .request-list { display: flex; flex-direction: column; gap: 10px; }
+        .request-item { background-color: var(--container-bg); border: 1px solid var(--panel-border); border-radius: 8px; overflow: hidden; transition: all 0.2s ease; }
+
+        .request-summary {
+            padding: 15px 20px; cursor: pointer; display: grid; grid-template-columns: 2fr 1.5fr 1fr 1.2fr 40px;
+            align-items: center; gap: 10px; transition: background-color 0.2s;
+        }
+        .request-summary:hover { background-color: rgba(255,255,255,0.03); }
+
+        .summary-cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.95em; display: flex; align-items: center; gap: 10px; }
+        .cell-label { display: none; color: var(--secondary-text); font-size: 0.8em; text-transform: uppercase; margin-bottom: 2px; }
+        .summary-job-title { color: var(--accent-color); font-weight: 600; }
+        .summary-date { color: var(--secondary-text); font-family: monospace; }
+
+        /* --- STATUS BADGE STYLING --- */
+        .dynamic-badge {
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .badge-approved { background-color: rgba(46, 204, 113, 0.15); color: var(--success-color); border: 1px solid var(--success-color); }
+        .badge-rejected { background-color: rgba(239, 68, 68, 0.15); color: var(--danger-color); border: 1px solid var(--danger-color); }
+        .badge-waiting { background-color: rgba(243, 156, 18, 0.15); color: var(--pending-color); border: 1px solid var(--pending-color); }
+
+        .badge-status { font-size: 0.7em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 4px; display: none; }
+        .is-closed .badge-closed-summary { display: inline-block; background-color: rgba(239, 68, 68, 0.15); color: var(--danger-color); border: 1px solid var(--danger-color); }
+
+        .expand-icon { text-align: center; color: var(--secondary-text); transition: transform 0.3s ease; }
+        .request-details { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; border-top: 0 solid var(--panel-border); background-color: rgba(0,0,0,0.15); }
+        .request-item.active { border-color: var(--accent-color); box-shadow: 0 4px 15px rgba(0,212,255,0.1); }
+        .request-item.active .request-details { max-height: 5000px; border-top-width: 1px; padding: 30px; }
+        .request-item.active .expand-icon { transform: rotate(180deg); color: var(--accent-color); }
+
+        .detail-section { margin-bottom: 30px; }
+        .detail-section-title {
+            font-size: 0.9em; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.1em;
+            margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid var(--panel-border); display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .full-width { grid-column: 1 / -1; }
+
+        .detail-block label { display: block; color: var(--secondary-text); font-size: 0.8em; text-transform: uppercase; margin-bottom: 5px; }
+        .detail-value { color: var(--primary-text); font-size: 1em; background-color: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 4px; min-height: 38px; }
+        .detail-value.empty { color: #555; font-style: italic; }
+        textarea.detail-value { width: 100%; height: auto; resize: none; font-family: inherit; border: none; }
+        .signature-value { font-style: italic; font-family: 'Georgia', serif; color: var(--accent-color); font-size: 1.1em; }
+
+        .edit-input, .edit-select { width: 100%; padding: 8px 12px; background-color: var(--input-bg); border: 1px solid var(--panel-border); border-radius: 4px; font-family: inherit; color: var(--primary-text); font-size: 1em; transition: all 0.2s ease; }
+        .edit-input:focus, .edit-select:focus { outline: none; border-color: var(--accent-color); background-color: #314358; }
+        ::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+
+        .approval-table { width: 100%; border-collapse: collapse; margin-top: 10px; background-color: rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
+        .approval-table th, .approval-table td { border: 1px solid var(--panel-border); padding: 10px; text-align: left; }
+        .approval-table th { background-color: rgba(0,0,0,0.2); color: var(--secondary-text); font-size: 0.8em; text-transform: uppercase; }
+        strong.approver-label { color: var(--primary-text); font-weight: 600; font-size: 0.95em;}
+
+        .admin-actions { display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--panel-border); }
+        button.btn-save { padding: 10px 20px; font-size: 0.9em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background-color: var(--success-color); color: #000; }
+        button.btn-close-workflow { background-color: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); padding: 10px 20px; font-size: 0.9em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: none; }
+        button.btn-close-workflow:hover { background-color: var(--danger-color); color: #fff; }
+        button:hover:not(:disabled) { filter: brightness(1.1); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        @media (max-width: 768px) {
+            .page-header { flex-direction: column; text-align: center; gap: 15px; padding: 20px;}
+            .header-brand-container { flex-direction: column; gap: 10px; width: 100%;}
+            .header-controls { flex-direction: column; gap: 5px; width: 100%; text-align: center;}
+            .request-summary { grid-template-columns: 1fr 40px; gap: 5px; padding: 15px; }
+            .summary-cell { grid-column: 1 / 2; white-space: normal; display: flex; flex-direction: column; margin-bottom: 8px; }
+            .cell-label { display: block; }
+            .request-summary .expand-icon { grid-column: 2 / 3; grid-row: 1 / 5; }
+            .request-item.active .request-details { padding: 20px; }
+            .detail-grid { grid-template-columns: 1fr; }
+            .admin-actions { flex-direction: column-reverse; align-items: stretch;}
+            .view-toggle { width: 100%; justify-content: center; }
+        }
     </style>
 </head>
 <body>
 
-    <!-- 1. LOGIN SCREEN -->
-    <div id="loginScreen">
-        <div class="login-card">
-            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
-            <h2>Welcome to NGU</h2>
-            <p>Please enter your provisioned credentials to access your onboarding portal.</p>
-            
-            <div class="input-group">
-                <label>Username</label>
-                <input type="text" id="loginUser" placeholder="e.g. john.doe42">
+<div class="main-container">
+    <header class="page-header">
+        <div class="header-brand-container">
+            <a href="homepage.html" class="btn-link btn-secondary">← Hub</a>
+            <div class="header-brand">
+                <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
+                <h1>Workflow Manager</h1>
             </div>
-            <div class="input-group">
-                <label>Password</label>
-                <input type="password" id="loginPass" placeholder="••••••••">
-            </div>
-            <button class="btn-primary" id="loginBtn" onclick="attemptLogin()">Access Portal</button>
-            <div id="loginError" style="color: var(--error); margin-top: 1rem; font-size: 0.9rem; display: none;">Invalid username or password.</div>
         </div>
+
+        <div class="view-toggle">
+            <button class="toggle-btn active" id="toggle-active" onclick="switchView('active')">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Active
+            </button>
+            <button class="toggle-btn" id="toggle-closed" onclick="switchView('closed')">
+                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Closed Archive
+            </button>
+        </div>
+
+        <div class="header-controls">
+            <span>Logged in: <strong style="color:white;" id="display-username">User</strong></span>
+            <button class="btn-logout-header" id="logout-btn">Sign Out</button>
+        </div>
+    </header>
+
+    <div id="status-message">⏳ Loading requests...</div>
+    
+    <div id="request-list-container" class="request-list" style="display: none;">
+        <!-- Dynamically populated via JS -->
     </div>
+</div>
 
-    <!-- 2. PORTAL SCREEN -->
-    <div id="portalScreen">
-        <div class="portal-header">
-            <div>
-                <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo" style="margin-bottom:0;">
-                <h1 style="margin-top: 10px;">Hello, <span id="welcomeName"></span>!</h1>
-                <p style="color: var(--text-muted); font-size: 0.95rem;">Review your details and finalize your onboarding below.</p>
-            </div>
-            <button class="pulse-btn" onclick="openOfferModal()">📄 View Offer Summary</button>
-        </div>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
-        <div class="section">
-            <h3>Personal & Contact Information</h3>
-            <div class="grid-2">
-                <div class="data-item"><div class="data-label">Title</div><div class="data-value" id="pTitle"></div></div>
-                <div class="data-item"><div class="data-label">Full Name</div><div class="data-value" id="pName"></div></div>
-                <div class="data-item"><div class="data-label">Email Address</div><div class="data-value" id="pEmail"></div></div>
-                <div class="data-item"><div class="data-label">Telephone</div><div class="data-value" id="pPhone"></div></div>
-                <div class="data-item" style="grid-column: 1 / -1;"><div class="data-label">Full Address</div><div class="data-value" id="pAddress"></div></div>
-                <div class="data-item"><div class="data-label">Home Postcode</div><div class="data-value" id="pPostcode"></div></div>
-            </div>
-        </div>
+<script>
+    // --- Initialize EmailJS ---
+    (function() {
+        emailjs.init({
+          publicKey: "ziLnha91scpGjFABh",
+        });
+    })();
 
-        <div class="section">
-            <h3>Licences & Registrations</h3>
-            <div class="grid-2">
-                <div class="data-item"><div class="data-label">Driving Licence</div><div class="data-value" id="pDvlaDetail"></div></div>
-                <div class="data-item"><div class="data-label">EUSR Card</div><div class="data-value" id="pEusrDetail"></div></div>
-                <div class="data-item"><div class="data-label">Gas Safe Registration</div><div class="data-value" id="pGasSafe"></div></div>
-            </div>
-        </div>
-
-        <div class="section">
-            <h3>Compliance & Right to Work</h3>
-            <div class="grid-2">
-                <div class="data-item"><div class="data-label">Right to Work in UK</div><div class="data-value" id="pRightToWork"></div></div>
-                <div class="data-item"><div class="data-label">Unspent Criminal Convictions</div><div class="data-value" id="pConvictions"></div></div>
-                <div class="data-item"><div class="data-label">Medical Adjustments Needed</div><div class="data-value" id="pMedical"></div></div>
-            </div>
-        </div>
-
-        <div class="section">
-            <h3>Employment History</h3>
-            <div id="employmentContainer">
-                <!-- Dynamically Populated -->
-            </div>
-        </div>
-
-        <div class="section">
-            <h3>Uploaded Certificates</h3>
-            <div id="certContainer">
-                <!-- Dynamically Populated -->
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. OFFER SUMMARY MODAL -->
-    <div class="modal-overlay" id="offerModal">
-        <div class="modal-content">
-            <div class="modal-title">Your Job Offer Summary</div>
-            
-            <div class="offer-list">
-                <div class="offer-item"><span>Job Title</span><span id="offTitle"></span></div>
-                <div class="offer-item"><span>Proposed Salary</span><span id="offSalary" style="color: #6ee7b7;"></span></div>
-                <div class="offer-item"><span>Hours</span><span id="offHours">Monday to Friday 8am to 5pm, 1 in 6 callout rota where applicable</span></div>
-                <div class="offer-item"><span>Proposed Start Date</span><span id="offStartDate"></span></div>
-                <div class="offer-item"><span>Location / Area</span><span id="offLocation"></span></div>
-                <div class="offer-item"><span>Contract Type</span><span id="offContract"></span></div>
-                <div class="offer-item"><span>Reporting Manager</span><span id="offManager" style="color: var(--accent);"></span></div>
-            </div>
-
-            <div class="modal-actions" id="actionButtons">
-                <button class="btn-success" onclick="acceptOffer()">✅ Accept and Continue</button>
-                <button class="btn-outline" onclick="toggleQuestionBlock()">❓ Ask a Question</button>
-            </div>
-
-            <div id="questionBlock">
-                <label style="display:block; color:var(--text-light); margin-bottom:0.5rem; font-weight:600;">How can we help?</label>
-                <textarea id="questionText" rows="4" placeholder="Type your question for the recruitment team here..."></textarea>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-outline" style="flex:1; padding:0.8rem;" onclick="toggleQuestionBlock()">Cancel</button>
-                    <button class="btn-primary" style="flex:2; padding:0.8rem; background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);" onclick="submitQuestion()">Submit Question</button>
-                </div>
-            </div>
-
-            <div id="successMessage"></div>
-        </div>
-    </div>
-
-<script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-
-    // --- EMAILJS CONFIG ---
-    const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
-    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
-    const EMAILJS_QUESTION_TEMPLATE = 'template_vzmdy3a';
-    emailjs.init(EMAILJS_PUBLIC_KEY);
-
+    // --- Firebase Configuration ---
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
         authDomain: "oesperformance-a54c0.firebaseapp.com",
         projectId: "oesperformance-a54c0",
         storageBucket: "oesperformance-a54c0.firebasestorage.app",
         messagingSenderId: "484894102454",
-        appId: "1:484894102454:web:17535ee497eac2d90d6717"
+        appId: "1:484894102454:web:17535ee497eac2d90d6717",
+        measurementId: "G-R56BGZYV8N"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const collectionName = "NGU Recuitment Approval Form";
 
-    let currentApplicant = null;
-    let currentVacancy = null;
+    const container = document.getElementById('request-list-container');
+    const statusMsg = document.getElementById('status-message');
 
-    // --- HELPER: POSTCODE AREA MATCHING ---
-    function getPostcodeArea(str) {
-        if (!str || typeof str !== 'string') return '';
-        const match = str.trim().match(/^[a-zA-Z]+/);
-        return match ? match[0].toUpperCase() : '';
+    let currentListener = null; 
+    let currentView = 'active'; 
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const username = localStorage.getItem('ngu_portal_username');
+        if(document.getElementById('display-username')) document.getElementById('display-username').textContent = username;
+        fetchRequests('active'); 
+    });
+
+    if(document.getElementById('logout-btn')) {
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        });
     }
 
-    // --- LOGIN LOGIC ---
-    window.attemptLogin = async function() {
-        const user = document.getElementById('loginUser').value.trim();
-        const pass = document.getElementById('loginPass').value.trim();
-        const btn = document.getElementById('loginBtn');
-        const err = document.getElementById('loginError');
+    function switchView(viewType) {
+        if (currentView === viewType) return; 
 
-        if (!user || !pass) return;
+        currentView = viewType;
+        document.getElementById('toggle-active').classList.toggle('active', viewType === 'active');
+        document.getElementById('toggle-closed').classList.toggle('active', viewType === 'closed');
 
-        btn.disabled = true;
-        btn.textContent = 'Authenticating...';
-        err.style.display = 'none';
+        if (currentListener) { currentListener(); }
+        fetchRequests(viewType);
+    }
 
-        try {
-            // Query Applicant Database
-            const q = query(collection(db, "NGUO New Applicants"), where("portalUsername", "==", user), where("portalPassword", "==", pass));
-            const querySnapshot = await getDocs(q);
+    const formatTimestamp = (timestamp) => {
+        if (!timestamp) return "N/A";
+        const date = timestamp.toDate();
+        return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + 
+               ', ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    };
 
-            if (querySnapshot.empty) {
-                err.style.display = 'block';
-                btn.disabled = false;
-                btn.textContent = 'Access Portal';
-                return;
-            }
+    const getReadOnlyValue = (val) => {
+        if (val === null || val === undefined || val === "") return '<span class="empty">Not provided</span>';
+        if (Array.isArray(val)) return val.length > 0 ? val.join(', ') : '<span class="empty">None</span>';
+        return val;
+    };
 
-            // Set Current Applicant
-            querySnapshot.forEach((doc) => {
-                currentApplicant = { id: doc.id, ...doc.data() };
-            });
-
-            // Fetch Corresponding Vacancy (Workflow Manager)
-            await fetchVacancyData(currentApplicant.position, currentApplicant.personalDetails?.postcode);
-
-            // Populate & Swap UI
-            populatePortalData();
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('portalScreen').style.display = 'block';
-
-        } catch (error) {
-            console.error("Login Error:", error);
-            alert("Connection error. Please try again.");
-            btn.disabled = false;
-            btn.textContent = 'Access Portal';
+    function fetchRequests(viewType) {
+        if(statusMsg) {
+            statusMsg.textContent = `⏳ Loading ${viewType} requests...`;
+            statusMsg.style.display = 'block';
+            statusMsg.style.color = 'var(--secondary-text)';
         }
-    };
+        if(container) container.style.display = 'none';
 
-    // --- FETCH VACANCY LOGIC ---
-    async function fetchVacancyData(jobTitle, postcode) {
-        currentVacancy = { salary: 'TBC', type: 'Full-Time', location: 'TBC' }; // Fallback defaults
-        
-        if (!jobTitle) return;
-        const appArea = getPostcodeArea(postcode);
-        const safeAppPos = jobTitle.trim().toLowerCase();
+        const closedStatusToLookFor = (viewType === 'closed');
 
-        try {
-            // Query all open vacancies
-            const vacQ = query(collection(db, "NGU Recuitment Approval Form"), where("workflowClosed", "==", false));
-            const vacSnap = await getDocs(vacQ);
-            
-            vacSnap.forEach(doc => {
-                const data = doc.data();
-                const vTitle = (data.requestInformation?.jobTitle || '').trim().toLowerCase();
-                const vArea = getPostcodeArea(data.requestInformation?.location);
-                
-                // If it matches title and Area, map it!
-                if (vTitle === safeAppPos && vArea === appArea) {
-                    currentVacancy = {
-                        // Look for proposedSalary first, fallback to standard salary
-                        salary: data.requestInformation?.proposedSalary || data.proposedSalary || data.requestInformation?.salary || 'TBC',
-                        type: data.requestInformation?.vacancyType || 'Full-Time',
-                        location: data.requestInformation?.location || 'TBC'
-                    };
+        currentListener = db.collection(collectionName)
+          .where('workflowClosed', '==', closedStatusToLookFor)
+          .orderBy('submittedAt', 'desc') 
+          .onSnapshot(
+            (snapshot) => {
+                if (snapshot.empty) {
+                    if(statusMsg) {
+                        statusMsg.textContent = `No ${viewType} recruitment requests found.`;
+                        statusMsg.style.display = 'block';
+                    }
+                    if(container) container.style.display = 'none';
+                    return;
                 }
-            });
-        } catch (e) { console.error("Failed to fetch vacancy details:", e); }
+
+                if(statusMsg) statusMsg.style.display = 'none';
+                if(container) {
+                    container.style.display = 'flex';
+                    const expandedIds = Array.from(document.querySelectorAll('.request-item.active')).map(el => el.id.replace('item-',''));
+                    container.innerHTML = ''; 
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const reqId = doc.id;
+                        
+                        const jobTitle = data.requestInformation?.jobTitle || 'Unknown Title';
+                        const dept = data.requestInformation?.department || 'Unknown Dept';
+                        const location = data.requestInformation?.location || 'Unknown';
+                        const submitDate = formatTimestamp(data.submittedAt);
+
+                        const approvals = data.approvalSignOff || {};
+                        const dHead = approvals.departmentHead?.decision || 'Pending';
+                        const dFin = approvals.finance?.decision || 'Pending';
+                        const dDir = approvals.finalApprover?.decision || 'Pending'; 
+
+                        // Determine Overall Status Banner
+                        let statusText = 'Waiting';
+                        let statusClass = 'badge-waiting';
+                        let isLive = false;
+
+                        if (dHead === 'Reject' || dFin === 'Reject' || dDir === 'Reject') {
+                            statusText = 'Rejected';
+                            statusClass = 'badge-rejected';
+                        } else if (dHead === 'Approve' && dFin === 'Approve' && dDir === 'Approve') {
+                            statusText = 'Approved';
+                            statusClass = 'badge-approved';
+                            isLive = true;
+                        }
+                        
+                        const isClosed = data.workflowClosed === true;
+
+                        const itemHtml = `
+                            <div class="request-item ${expandedIds.includes(reqId) ? 'active' : ''} ${isClosed ? 'is-closed' : ''}" id="item-${reqId}">
+                                <div class="request-summary" onclick="toggleAccordion('${reqId}')">
+                                    <div class="summary-cell summary-job-title">
+                                        <div class="cell-label">Job Title</div>
+                                        ${jobTitle}
+                                    </div>
+                                    <div class="summary-cell">
+                                        <div class="cell-label">Department</div>
+                                        ${dept}
+                                    </div>
+                                    <div class="summary-cell">
+                                        <div class="cell-label">Status</div>
+                                        <div style="display:flex; align-items:center; gap:10px;">
+                                            <span class="dynamic-badge ${statusClass}">${statusText}</span>
+                                            <span class="badge-status badge-closed-summary">Archived</span>
+                                        </div>
+                                    </div>
+                                    <div class="summary-cell summary-date">
+                                        <div class="cell-label">Submitted</div>
+                                        ${submitDate}
+                                    </div>
+                                    <div class="expand-icon">▼</div>
+                                </div>
+                                
+                                <div class="request-details" id="details-${reqId}">
+                                    ${generateDetailedView(reqId, data, submitDate, isLive, isClosed, statusText, statusClass)}
+                                </div>
+                            </div>
+                        `;
+                        container.insertAdjacentHTML('beforeend', itemHtml);
+                    });
+                }
+            },
+            (error) => { 
+                console.error("Firestore Snapshot Error: ", error);
+                if(statusMsg) {
+                    statusMsg.innerHTML = `⚠️ <strong>Error: Firestore Composite Index Missing.</strong><br><br>
+                                           The new Archive view requires a unique Firestore Index.<br>
+                                           Open your browser developer console (F12) to find the unique link generated by Firebase. Following that link will create the index automatically.`;
+                    statusMsg.style.color = 'var(--danger-color)';
+                    statusMsg.style.display = 'block';
+                }
+                if(container) container.style.display = 'none';
+            }
+        );
     }
 
-    // --- RENDER PORTAL DATA ---
-    function populatePortalData() {
-        const a = currentApplicant;
-        const p = a.personalDetails || {};
-        const c = a.certificates || {};
+    function generateDetailedView(reqId, data, formattedSubmitDate, isLive, isClosed, statusText, statusClass) {
+        
+        const getSelectHtml = (name, currentVal, options) => {
+            if (isClosed) return `<div class="detail-value">${currentVal || 'N/A'}</div>`;
+            let html = `<select class="edit-select" name="${name}" data-req-id="${reqId}">`;
+            options.forEach(opt => {
+                const selected = opt === currentVal ? 'selected' : '';
+                html += `<option value="${opt}" ${selected}>${opt}</option>`;
+            });
+            html += `</select>`;
+            return html;
+        };
 
-        document.getElementById('welcomeName').textContent = a.fullName ? a.fullName.split(' ')[0] : 'Engineer';
+        const getInputHtml = (name, type, currentVal) => {
+            if (isClosed) return `<div class="detail-value">${currentVal || 'N/A'}</div>`;
+            return `<input type="${type}" class="edit-input" name="${name}" value="${currentVal || ''}" data-req-id="${reqId}">`;
+        }
 
-        // 1. Personal Info
-        document.getElementById('pTitle').textContent = p.title || 'N/A';
-        document.getElementById('pName').textContent = a.fullName || 'N/A';
-        document.getElementById('pEmail').textContent = p.email || 'N/A';
-        document.getElementById('pPhone').textContent = p.phone || 'N/A';
-        document.getElementById('pAddress').textContent = p.address || 'N/A';
-        document.getElementById('pPostcode').textContent = p.postcode || 'N/A';
+        const decisionOptions = ['Pending', 'Approve', 'Reject', 'More Info Needed'];
 
-        // 2. Licences & Registrations
-        document.getElementById('pDvlaDetail').innerHTML = c.drivinglicence?.confirmed 
-            ? `Confirmed<br><span style="font-size:0.85rem; color:var(--text-muted)">Expires: ${c.drivinglicence.expiry || 'N/A'}</span>` 
-            : '<span style="color:var(--text-muted)">Not provided</span>';
-            
-        document.getElementById('pEusrDetail').innerHTML = c.eusr?.has 
-            ? `Registered<br><span style="font-size:0.85rem; color:var(--text-muted)">No: ${c.eusr.number || 'N/A'}</span>` 
-            : '<span style="color:var(--text-muted)">Not provided</span>';
-            
-        document.getElementById('pGasSafe').textContent = c.gassafe?.number || 'Not provided';
+        return `
+            <!-- Read-Only Request Info -->
+            <div class="detail-section">
+                <div class="detail-section-title">
+                    Request Information (Read-Only)
+                    <span class="dynamic-badge ${statusClass}" style="margin-left: auto;">${statusText}</span>
+                </div>
+                <div class="detail-grid">
+                    <div class="detail-block"><label>Date Requested</label><div class="detail-value">${getReadOnlyValue(data.requestInformation?.dateOfRequest)}</div></div>
+                    <div class="detail-block"><label>Requested By</label><div class="detail-value">${getReadOnlyValue(data.requestInformation?.requestedBy)}</div></div>
+                    <div class="detail-block"><label>Hiring Manager</label><div class="detail-value">${getReadOnlyValue(data.requestInformation?.hiringManager)}</div></div>
+                    <div class="detail-block"><label>System Submit Date</label><div class="detail-value">${formattedSubmitDate}</div></div>
+                    <div class="detail-block full-width"><label>Vacancy Type(s)</label><div class="detail-value">${getReadOnlyValue(data.vacancyType)}</div></div>
+                    
+                    <div class="detail-block"><label>Cost Centre</label><div class="detail-value">${getReadOnlyValue(data.budgetSalary?.costCentre)}</div></div>
+                    <div class="detail-block"><label>Additional Costs</label><div class="detail-value">${getReadOnlyValue(data.budgetSalary?.additionalCosts)}</div></div>
+                    <div class="detail-block"><label>Desired Start Date</label><div class="detail-value">${getReadOnlyValue(data.recruitmentRequirements?.desiredStartDate)}</div></div>
+                    <div class="detail-block"><label>Latest Start Date</label><div class="detail-value">${getReadOnlyValue(data.recruitmentRequirements?.latestStartDate)}</div></div>
+                    
+                    <div class="detail-block"><label>Urgency</label><div class="detail-value">${getReadOnlyValue(data.recruitmentRequirements?.urgency)}</div></div>
+                    <div class="detail-block"><label>Proposed Salary</label><div class="detail-value">${getReadOnlyValue(data.budgetSalary?.proposedSalary)}</div></div>
+                    
+                    <div class="detail-block full-width">
+                        <label>Why is this role required?</label>
+                        <textarea class="detail-value" rows="3" readonly>${data.businessCase?.whyRoleRequired || 'N/A'}</textarea>
+                    </div>
 
-        // 3. Compliance
-        document.getElementById('pRightToWork').innerHTML = a.workPermit === 'no' ? '<span style="color:var(--success)">Valid (UK Citizen/No Permit Req)</span>' : '<span style="color:var(--warning)">Requires Permit</span>';
-        document.getElementById('pConvictions').innerHTML = a.convictions === 'no' ? '<span style="color:var(--success)">Clear</span>' : '<span style="color:var(--error)">Declared</span>';
-        document.getElementById('pMedical').innerHTML = (a.reasonableAdjustments?.medical === 'yes' || a.reasonableAdjustments?.disability === 'yes') ? '<span style="color:var(--warning)">Adjustments Requested</span>' : '<span style="color:var(--success)">None Declared</span>';
+                    <div class="detail-block full-width">
+                        <label>Essential Qualifications</label>
+                        <textarea class="detail-value" rows="3" readonly>${data.recruitmentRequirements?.qualifications || 'N/A'}</textarea>
+                    </div>
 
-        // 4. Employment History
-        const empContainer = document.getElementById('employmentContainer');
-        if (a.employment && a.employment.length > 0) {
-            let empHtml = `
-                <table class="data-table">
+                    <div class="detail-block full-width">
+                        <label>Experience Required</label>
+                        <textarea class="detail-value" rows="3" readonly>${data.recruitmentRequirements?.experience || 'N/A'}</textarea>
+                    </div>
+
+                    <div class="detail-block">
+                        <label>Declaration Name</label>
+                        <div class="detail-value">${getReadOnlyValue(data.declaration?.name)}</div>
+                    </div>
+                    <div class="detail-block full-width">
+                        <label>Requestor Signature</label>
+                        <div class="detail-value signature-value">${getReadOnlyValue(data.declaration?.signature)}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CLOSED AUDIT TRAIL -->
+            ${isClosed ? `
+            <div class="detail-section" style="border: 1px solid var(--danger-color); padding: 20px; border-radius: 8px; background-color: rgba(239, 68, 68, 0.05);">
+                <div class="detail-section-title" style="color: var(--danger-color); border-bottom-color: var(--danger-color);">Archived Workflow Audit</div>
+                <div class="detail-grid">
+                    <div class="detail-block">
+                        <label>Closed By (Admin)</label>
+                        <div class="detail-value">${getReadOnlyValue(data.workflowClosedBy)}</div>
+                    </div>
+                    <div class="detail-block">
+                        <label>Date Archived</label>
+                        <div class="detail-value">${formatTimestamp(data.workflowClosedAt)}</div>
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+
+            <!-- Approval Sign Off Section -->
+            <div class="detail-section" id="approval-form-${reqId}">
+                <div class="detail-section-title">
+                    Approval Sign Off ${isClosed ? '(Archived)' : '(Action Required)'}
+                </div>
+                <table class="approval-table">
                     <thead>
-                        <tr><th>Company</th><th>Position</th><th>Reason for Leaving</th></tr>
+                        <tr><th>Approver</th><th>Decision</th><th>Comments</th><th>Date</th></tr>
                     </thead>
                     <tbody>
-            `;
-            a.employment.forEach(e => {
-                empHtml += `<tr><td>${e.company || '-'}</td><td>${e.position || '-'}</td><td>${e.reason || '-'}</td></tr>`;
-            });
-            empHtml += `</tbody></table>`;
-            empContainer.innerHTML = empHtml;
-        } else {
-            empContainer.innerHTML = '<div style="color:var(--text-muted); font-style:italic;">No employment history provided.</div>';
-        }
+                        <tr>
+                            <td data-label="Approver"><strong class="approver-label">Dept Head</strong></td>
+                            <td data-label="Decision">${getSelectHtml('dept-head-decision', data.approvalSignOff?.departmentHead?.decision, decisionOptions)}</td>
+                            <td data-label="Comments">${getInputHtml('dept-head-comments', 'text', data.approvalSignOff?.departmentHead?.comments)}</td>
+                            <td data-label="Date">${getInputHtml('dept-head-date', 'date', data.approvalSignOff?.departmentHead?.date)}</td>
+                        </tr>
+                        <tr>
+                            <td data-label="Approver"><strong class="approver-label">Finance</strong></td>
+                            <td data-label="Decision">${getSelectHtml('finance-decision', data.approvalSignOff?.finance?.decision, decisionOptions)}</td>
+                            <td data-label="Comments">${getInputHtml('finance-comments', 'text', data.approvalSignOff?.finance?.comments)}</td>
+                            <td data-label="Date">${getInputHtml('finance-date', 'date', data.approvalSignOff?.finance?.date)}</td>
+                        </tr>
+                        <tr>
+                            <td data-label="Approver"><strong class="approver-label">Director</strong></td>
+                            <td data-label="Decision">${getSelectHtml('final-decision', data.approvalSignOff?.finalApprover?.decision, decisionOptions)}</td>
+                            <td data-label="Comments">${getInputHtml('final-comments', 'text', data.approvalSignOff?.finalApprover?.comments)}</td>
+                            <td data-label="Date">${getInputHtml('final-date', 'date', data.approvalSignOff?.finalApprover?.date)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-        // 5. Uploaded Certificates
-        const certContainer = document.getElementById('certContainer');
-        let certHtml = '';
-        
-        const coreCerts = [
-            { key: 'mocopa', label: 'MOCOPA Certification' },
-            { key: 'gasl3', label: 'Level 3 Gas Diploma' },
-            { key: 'cmagas', label: 'CMA1 / CMA3 Gas' }
-        ];
-
-        coreCerts.forEach(cert => {
-            if (c[cert.key] && c[cert.key].filename) {
-                certHtml += `<div class="cert-item"><span class="cert-name">📄 ${cert.label}</span><span class="cert-status">Verified on File</span></div>`;
-            }
-        });
-
-        if (c.eusr && c.eusr.has) {
-            certHtml += `<div class="cert-item"><span class="cert-name">🪪 EUSR Card (No: ${c.eusr.number})</span><span class="cert-status">Verified on File</span></div>`;
-        }
-
-        if (certHtml === '') certHtml = '<div style="color:var(--text-muted); font-style:italic;">No formal certificates uploaded during application.</div>';
-        certContainer.innerHTML = certHtml;
-
-        // 6. PREPARE OFFER MODAL DATA
-        const rawDate = a.startDate || '';
-        const formatStart = rawDate ? new Date(rawDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'TBC';
-
-        document.getElementById('offTitle').textContent = a.position || 'Unknown';
-        document.getElementById('offSalary').textContent = currentVacancy.salary;
-        document.getElementById('offStartDate').textContent = formatStart;
-        document.getElementById('offLocation').textContent = currentVacancy.location;
-        document.getElementById('offContract').textContent = currentVacancy.type;
-        document.getElementById('offManager').textContent = a.assignedFTL || 'TBC';
+            <!-- Action Buttons -->
+            ${isClosed ? '' : `
+            <div class="admin-actions">
+                <button type="button" class="btn-close-workflow" id="close-btn-${reqId}" 
+                        style="${isLive ? 'display:inline-flex;' : ''}"
+                        onclick="closeWorkflow('${reqId}', '${data.requestInformation?.jobTitle || 'Request'}')">
+                    Archive / Close Workflow
+                </button>
+                
+                <button type="button" class="btn-save" id="save-btn-${reqId}" onclick="saveApprovals('${reqId}')">Save Changes / Update Status</button>
+            </div>
+            `}
+        `;
     }
 
-    // --- MODAL CONTROLS ---
-    window.openOfferModal = function() {
-        document.getElementById('offerModal').classList.add('active');
-    };
+    function toggleAccordion(reqId) {
+        const item = document.getElementById(`item-${reqId}`);
+        if(item) item.classList.toggle('active');
+    }
 
-    window.toggleQuestionBlock = function() {
-        const block = document.getElementById('questionBlock');
-        const actions = document.getElementById('actionButtons');
+    // --- SAVE LOGIC ---
+    async function saveApprovals(reqId) {
+        const saveBtn = document.getElementById(`save-btn-${reqId}`);
+        const detailsPanel = document.getElementById(`details-${reqId}`);
         
-        if (block.style.display === 'block') {
-            block.style.display = 'none';
-            actions.style.display = 'flex';
-            document.getElementById('questionText').value = '';
-        } else {
-            block.style.display = 'block';
-            actions.style.display = 'none';
+        if(saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
         }
-    };
 
-    // --- ACTIONS ---
-    window.acceptOffer = async function() {
-        if (!confirm("Are you sure you want to formally accept this offer?")) return;
+        const getElVal = (name) => detailsPanel ? (detailsPanel.querySelector(`[name="${name}"]`)?.value || '') : '';
+        const adminUsername = localStorage.getItem('ngu_portal_username');
+
+        // Extract decisions for validation logic
+        const deptDecision = getElVal('dept-head-decision');
+        const financeDecision = getElVal('finance-decision');
+        const directorDecision = getElVal('final-decision');
+
+        const updatedData = {
+            approvalSignOff: { 
+                departmentHead: { decision: deptDecision, comments: getElVal('dept-head-comments'), date: getElVal('dept-head-date') },
+                finance: { decision: financeDecision, comments: getElVal('finance-comments'), date: getElVal('finance-date') },
+                finalApprover: { decision: directorDecision, comments: getElVal('final-comments'), date: getElVal('final-date') }
+            },
+            lastUpdatedByAdmin: adminUsername,
+            lastWorkflowUpdateAt: firebase.firestore.FieldValue.serverTimestamp() 
+        };
 
         try {
-            await updateDoc(doc(db, "NGUO New Applicants", currentApplicant.id), {
-                offerAccepted: true,
-                offerAcceptedAt: new Date().toISOString()
-            });
+            // Fetch current document strictly to get baseline request info for email & verify if an email was already sent
+            const docRef = db.collection(collectionName).doc(reqId);
+            const docSnap = await docRef.get();
+            const originalData = docSnap.data();
 
-            const msgEl = document.getElementById('successMessage');
-            document.getElementById('actionButtons').style.display = 'none';
-            document.getElementById('questionBlock').style.display = 'none';
+            // Save updates to Firebase
+            await docRef.update(updatedData);
+            console.log("Document updated: ", reqId);
+
+            // STRICT EMAIL LOGIC: Ensure all three decisions are definitively made
+            const validDecisions = ['Approve', 'Reject', 'More Info Needed'];
+            const allDecided = validDecisions.includes(deptDecision) && 
+                               validDecisions.includes(financeDecision) && 
+                               validDecisions.includes(directorDecision);
             
-            msgEl.innerHTML = "🎉 Offer Accepted!<br><br>Welcome to the team! Your Reporting Manager will be in touch shortly regarding your first day.";
-            msgEl.style.display = 'block';
-        } catch (e) {
-            console.error(e);
-            alert("Error saving acceptance. Please try again.");
-        }
-    };
+            if (allDecided && originalData.workflowEmailSent !== true) {
+                const approvalSummaryText = `
+Department Head: ${deptDecision} (Date: ${getElVal('dept-head-date')})
+Comments: ${getElVal('dept-head-comments') || 'N/A'}
 
-    window.submitQuestion = async function() {
-        const text = document.getElementById('questionText').value.trim();
-        if (!text) return alert("Please type a question.");
+Finance: ${financeDecision} (Date: ${getElVal('finance-date')})
+Comments: ${getElVal('finance-comments') || 'N/A'}
+
+Director: ${directorDecision} (Date: ${getElVal('final-date')})
+Comments: ${getElVal('final-comments') || 'N/A'}
+                `.trim();
+
+                const emailParams = {
+                    date_requested: originalData.requestInformation?.dateOfRequest || 'N/A',
+                    vacancy_type: originalData.vacancyType ? originalData.vacancyType.join(', ') : 'N/A',
+                    proposed_salary: originalData.budgetSalary?.proposedSalary || 'N/A',
+                    approval_summary: approvalSummaryText
+                };
+
+                console.log("Triggering Final Decision EmailJS Notification...");
+                await emailjs.send('service_t9mebjl', 'template_bhou98a', emailParams);
+                
+                // Flag database to prevent duplicate emails upon future saves
+                await docRef.update({ workflowEmailSent: true });
+                console.log("Email sent successfully and flagged in database.");
+            }
+
+            alert('Approvals and status updated successfully.');
+        } catch (error) {
+            console.error("Error updating document or sending email: ", error);
+            alert('Error saving changes. Verify permissions and try again.');
+        } finally {
+            if(saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Changes / Update Status';
+            }
+        }
+    }
+
+    // --- CLOSE/ARCHIVE LOGIC ---
+    async function closeWorkflow(reqId, jobTitle) {
+        if (!confirm(`Are you sure you want to archive the workflow for:\n"${jobTitle}"?\n\nThis will remove it from the active manager list.`)) {
+            return; 
+        }
+
+        const closeBtn = document.getElementById(`close-btn-${reqId}`);
+        const saveBtn = document.getElementById(`save-btn-${reqId}`);
+        const adminUsername = localStorage.getItem('ngu_portal_username');
+
+        if(closeBtn) { closeBtn.disabled = true; closeBtn.textContent = 'Closing...'; }
+        if(saveBtn) saveBtn.disabled = true;
 
         try {
-            await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_QUESTION_TEMPLATE, {
-                applicant_name: currentApplicant.fullName,
-                question: text,
-                reply_to: currentApplicant.personalDetails?.email
+            await db.collection(collectionName).doc(reqId).update({
+                workflowClosed: true,
+                workflowClosedBy: adminUsername,
+                workflowClosedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-
-            const msgEl = document.getElementById('successMessage');
-            document.getElementById('questionBlock').style.display = 'none';
-            
-            msgEl.innerHTML = "✅ Your enquiry has been sent to recruitment.<br><br>We will respond to you via email shortly.";
-            msgEl.style.display = 'block';
-
-        } catch (e) {
-            console.error(e);
-            alert("Failed to send question. Please check your connection.");
+            console.log("Document archived: ", reqId);
+            alert('Workflow archived successfully.');
+        } catch (error) {
+            console.error("Error closing document: ", error);
+            alert('Error archiving workflow. Check console for details.');
+            if(closeBtn) { closeBtn.disabled = false; closeBtn.textContent = 'Archive / Close Workflow'; }
+            if(saveBtn) saveBtn.disabled = false;
         }
-    };
-
+    }
 </script>
+
 </body>
 </html>
