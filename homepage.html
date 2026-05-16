@@ -48,7 +48,7 @@
         }
 
         .main-container {
-            max-width: 1000px;
+            max-width: 1400px; /* Expanded for widescreen use */
             margin: 0 auto;
         }
 
@@ -99,11 +99,11 @@
             font-size: 1.05em;
         }
 
-        /* App Grid */
+        /* App Grid - Strictly 4 across */
         .app-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
+            grid-template-columns: repeat(4, 1fr); /* Forces exactly 4 columns */
+            gap: 25px;
             padding-bottom: 40px;
         }
 
@@ -112,7 +112,7 @@
             background-color: var(--container-bg);
             border: 1px solid var(--panel-border);
             border-radius: 12px;
-            padding: 40px 30px;
+            padding: 30px 20px; 
             text-decoration: none;
             color: var(--primary-text);
             display: flex;
@@ -136,15 +136,15 @@
             margin-bottom: 10px;
         }
         .app-icon svg {
-            width: 50px;
-            height: 50px;
+            width: 45px;
+            height: 45px;
             stroke: var(--accent-color); 
             stroke-width: 1.5;
             fill: none;
         }
 
         .app-title {
-            font-size: 1.15em;
+            font-size: 1.1em;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.12em;
@@ -152,7 +152,7 @@
         }
 
         .app-desc {
-            font-size: 0.95em;
+            font-size: 0.9em;
             color: var(--secondary-text);
             flex-grow: 1; 
             margin-bottom: 10px;
@@ -164,7 +164,7 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.9em;
+            font-size: 0.85em;
             font-weight: 700;
             text-transform: uppercase;
             color: var(--accent-color);
@@ -201,9 +201,7 @@
             100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
-        /* 
-           --- LOCKED CARD STYLING ---
-        */
+        /* --- LOCKED CARD STYLING --- */
         .app-card.locked {
             opacity: 0.3;
             cursor: not-allowed;
@@ -233,7 +231,16 @@
             display: flex;
         }
 
-        @media (max-width: 768px) {
+        /* Responsive Breakpoints */
+        @media (max-width: 1100px) {
+            .app-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 850px) {
+            .app-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 600px) {
             .page-header { flex-direction: column; text-align: center; gap: 10px; padding: 20px;}
             .header-user-info { flex-direction: column; gap: 5px;}
             .app-grid { grid-template-columns: 1fr; }
@@ -257,7 +264,7 @@
     </header>
 
     <div class="hub-welcome">
-        <h2>Corporate Applications</h2>
+        <h2>Operational Applications</h2>
         <p>Select an operational module below. Modules marked as restricted are locked based on your current security profile.</p>
     </div>
 
