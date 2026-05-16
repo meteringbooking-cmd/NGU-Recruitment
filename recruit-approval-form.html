@@ -7,59 +7,49 @@
     
     <!-- 
       --- PROTOTYPE SECURITY SCRIPT ---
-      Executes immediately to check 'session' data in localStorage before rendering body.
     -->
     <script>
         (function() {
             const username = localStorage.getItem('ngu_portal_username');
             const hasAccess = localStorage.getItem('ngu_portal_access_submission');
 
-            // 1. Check if user is logged in at all
             if (!username) {
                 console.log("No session found, redirecting to login.");
                 window.location.href = 'login.html';
-                return; // Stop execution
+                return; 
             }
 
-            // 2. Check specific page permission
             if (hasAccess !== 'true') {
                 console.log("User lacks submission permission.");
                 alert("Access Denied: You do not have permission to submit requests.");
-                // Redirect back to hub
                 window.location.href = 'homepage.html';
-                return; // Stop execution
+                return; 
             }
 
-            // If we get here, user is allowed. Body will render normally.
             console.log("Access granted to user: ", username);
         })();
     </script>
     
     <style>
         :root {
-            /* NGU Dark Theme Color Palette */
-            --body-bg: #141d26;      /* Very dark background */
-            --container-bg: #1c2938; /* Slightly lighter surface color */
-            --input-bg: #2d3d50;     /* Darker background for inputs */
-            --panel-border: #38444d; /* Muted border color */
+            var(--body-bg): #141d26;
+            --container-bg: #1c2938; 
+            --input-bg: #2d3d50;     
+            --panel-border: #38444d; 
             
-            --primary-text: #e1e8ed;   /* Near white main text */
-            --secondary-text: #8899a6; /* Muted grey text */
+            --primary-text: #e1e8ed;   
+            --secondary-text: #8899a6; 
             
-            --accent-color: #00d4ff;   /* NGU Cyan */
-            --danger-color: #ef4444;   /* Alert/Warning */
+            --accent-color: #00d4ff;   
+            --danger-color: #ef4444;   
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--body-bg);
-            color: var(--primary-text);
+            background-color: #141d26;
+            color: #e1e8ed;
             line-height: 1.6;
             padding: 20px;
         }
@@ -74,12 +64,7 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
         }
 
-        /* Action Bar for Navigation */
-        .action-bar {
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: flex-start;
-        }
+        .action-bar { margin-bottom: 20px; display: flex; justify-content: flex-start; }
 
         .header {
             text-align: center;
@@ -92,209 +77,98 @@
             gap: 15px;
         }
 
-        .header img.logo {
-            height: 60px;
-            width: auto;
-        }
+        .header img.logo { height: 60px; width: auto; }
 
         .header h1 {
-            margin: 10px 0 0;
-            color: var(--primary-text);
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            font-size: 1.8em;
+            margin: 10px 0 0; color: var(--primary-text); font-weight: 800;
+            text-transform: uppercase; letter-spacing: 0.15em; font-size: 1.8em;
         }
 
         .header h2 {
-            margin: 5px 0 0;
-            color: var(--secondary-text);
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-size: 1em;
+            margin: 5px 0 0; color: var(--secondary-text); font-weight: 500;
+            text-transform: uppercase; letter-spacing: 0.05em; font-size: 1em;
         }
 
         .info-box {
-            margin: 20px 0 0;
-            color: var(--primary-text);
-            font-weight: 500;
-            background-color: rgba(0, 212, 255, 0.1); /* Transparent Accent */
-            border: 1px solid var(--accent-color);
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 0.95em;
-            max-width: 700px;
+            margin: 20px 0 0; color: var(--primary-text); font-weight: 500;
+            background-color: rgba(0, 212, 255, 0.1); border: 1px solid var(--accent-color);
+            padding: 15px; border-radius: 8px; font-size: 0.95em; max-width: 700px;
         }
 
         fieldset {
-            border: 1px solid var(--panel-border);
-            border-radius: 8px;
-            padding: 25px;
-            margin-bottom: 30px;
-            background-color: rgba(255,255,255,0.01);
+            border: 1px solid var(--panel-border); border-radius: 8px;
+            padding: 25px; margin-bottom: 30px; background-color: rgba(255,255,255,0.01);
         }
 
         legend {
-            font-size: 0.95em;
-            font-weight: 700;
-            color: var(--accent-color);
-            padding: 0 15px;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
+            font-size: 0.95em; font-weight: 700; color: var(--accent-color);
+            padding: 0 15px; text-transform: uppercase; letter-spacing: 0.1em;
         }
 
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .full-width {
-            grid-column: 1 / -1;
-        }
-
-        .field-container {
-            margin-bottom: 5px;
-        }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .full-width { grid-column: 1 / -1; }
+        .field-container { margin-bottom: 5px; }
 
         label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--secondary-text);
-            font-size: 0.85em;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            display: block; font-weight: 600; margin-bottom: 8px;
+            color: var(--secondary-text); font-size: 0.85em;
+            text-transform: uppercase; letter-spacing: 0.05em;
         }
 
-        input[type="text"],
-        input[type="date"],
-        select,
-        textarea {
-            width: 100%;
-            padding: 12px 15px;
-            background-color: var(--input-bg);
-            border: 1px solid var(--panel-border);
-            border-radius: 6px;
-            font-family: inherit;
-            color: var(--primary-text);
-            font-size: 1em;
+        input[type="text"], input[type="date"], select, textarea {
+            width: 100%; padding: 12px 15px; background-color: var(--input-bg);
+            border: 1px solid var(--panel-border); border-radius: 6px;
+            font-family: inherit; color: var(--primary-text); font-size: 1em;
             transition: all 0.2s ease;
         }
 
-        input:hover, select:hover, textarea:hover {
-            border-color: #4f5b66;
-        }
-
+        input:hover, select:hover, textarea:hover { border-color: #4f5b66; }
         input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            background-color: #314358;
-            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
+            outline: none; border-color: var(--accent-color);
+            background-color: #314358; box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
         }
 
-        ::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            cursor: pointer;
-        }
+        ::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
 
         .checkbox-group, .radio-group {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-            padding: 10px;
-            background-color: rgba(0,0,0,0.1);
-            border-radius: 6px;
+            display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px;
+            padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 6px;
         }
 
         .checkbox-group label, .radio-group label {
-            font-weight: normal;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            color: var(--primary-text);
-            text-transform: none;
-            letter-spacing: normal;
-            font-size: 0.95em;
+            font-weight: normal; display: flex; align-items: center; gap: 10px;
+            cursor: pointer; color: var(--primary-text); text-transform: none;
+            letter-spacing: normal; font-size: 0.95em;
         }
 
         .checkbox-group input, .radio-group input {
-            cursor: pointer;
-            width: 18px;
-            height: 18px;
-            margin: 0;
-            accent-color: var(--accent-color);
+            cursor: pointer; width: 18px; height: 18px; margin: 0; accent-color: var(--accent-color);
         }
 
         .actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 15px;
-            margin-top: 30px;
-            padding-top: 30px;
-            border-top: 1px solid var(--panel-border);
-            align-items: center;
+            display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px;
+            padding-top: 30px; border-top: 1px solid var(--panel-border); align-items: center;
         }
 
         button, .btn-link {
-            padding: 14px 30px;
-            border: none;
-            border-radius: 6px;
-            font-size: 1em;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
+            padding: 14px 30px; border: none; border-radius: 6px; font-size: 1em;
+            font-weight: 700; cursor: pointer; transition: all 0.2s ease;
+            text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none;
+            display: inline-flex; align-items: center;
         }
 
-        .btn-submit {
-            background-color: var(--accent-color);
-            color: #000;
-        }
+        .btn-submit { background-color: var(--accent-color); color: #000; }
+        .btn-submit:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-submit:disabled { background-color: var(--secondary-text); cursor: not-allowed; opacity: 0.5; }
 
-        .btn-submit:hover {
-            filter: brightness(1.1);
-            transform: translateY(-1px);
-        }
-        
-        .btn-submit:disabled {
-            background-color: var(--secondary-text);
-            cursor: not-allowed;
-            opacity: 0.5;
-        }
+        .btn-secondary { background-color: var(--input-bg); color: var(--primary-text); border: 1px solid var(--panel-border); font-size: 0.9em; padding: 10px 20px; }
+        .btn-secondary:hover { background-color: #38444d; }
 
-        .btn-secondary {
-            background-color: var(--input-bg);
-            color: var(--primary-text);
-            border: 1px solid var(--panel-border);
-            font-size: 0.9em;
-            padding: 10px 20px;
-        }
-        .btn-secondary:hover {
-            background-color: #38444d;
-        }
-
-        .btn-logout {
-            background: none;
-            color: var(--secondary-text);
-            text-transform: none;
-            letter-spacing: normal;
-            font-weight: normal;
-            font-size: 0.9em;
-            padding: 10px;
-        }
+        .btn-logout { background: none; color: var(--secondary-text); text-transform: none; letter-spacing: normal; font-weight: normal; font-size: 0.9em; padding: 10px; }
         .btn-logout:hover { color: var(--danger-color); text-decoration: underline; }
 
         @media (max-width: 768px) {
-            .container { padding: 20px; }
-            .form-grid { grid-template-columns: 1fr; }
+            .container { padding: 20px; } .form-grid { grid-template-columns: 1fr; }
             .checkbox-group, .radio-group { gap: 10px; }
             .actions { flex-direction: column-reverse; gap: 10px; align-items: stretch;}
             .btn-link { justify-content: center; }
@@ -304,7 +178,6 @@
 <body>
 
 <div class="container">
-    <!-- Action Bar -->
     <div class="action-bar">
         <a href="homepage.html" class="btn-link btn-secondary">← Back to Hub</a>
     </div>
@@ -537,13 +410,10 @@
         measurementId: "G-R56BGZYV8N"
     };
 
-    // --- Initialize Firebase ---
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Setup page based on logged in user
     document.addEventListener('DOMContentLoaded', () => {
-        // 1. Set dates to today
         const now = new Date();
         const day = ("0" + now.getDate()).slice(-2);
         const month = ("0" + (now.getMonth() + 1)).slice(-2);
@@ -555,21 +425,16 @@
             if(field) field.value = today;
         });
 
-        // 2. Fetch username from localStorage (set by safety script in head)
         const username = localStorage.getItem('ngu_portal_username');
-        
-        // 3. Update Header Info
         const displayUsername = document.getElementById('display-username');
         if(displayUsername) displayUsername.textContent = username;
 
-        // 4. Pre-fill Requestor Name fields and make read-only
         const requestedByField = document.getElementById('requested-by');
         const declNameField = document.getElementById('decl-name');
         if(requestedByField) requestedByField.value = username;
         if(declNameField) declNameField.value = username;
     });
 
-    // Logout Logic
     const logoutBtn = document.getElementById('logout-btn');
     if(logoutBtn) {
         logoutBtn.addEventListener('click', () => {
@@ -578,15 +443,12 @@
         });
     }
 
-    // --- Form Submission Logic ---
     document.getElementById('recruitAuthorisationForm').addEventListener('submit', function(e) {
-        e.preventDefault(); // Prevent default page refresh
+        e.preventDefault(); 
 
-        // Prototype Security Check: Ensure signature matches logged in name exactly
         const username = localStorage.getItem('ngu_portal_username');
         const signatureField = document.getElementById('decl-signature');
         const signature = signatureField ? signatureField.value.trim() : '';
-
         const submitButton = this.querySelector('.btn-submit');
 
         if (signature !== username) {
@@ -595,7 +457,7 @@
                 submitButton.disabled = false;
                 submitButton.textContent = 'Submit Request';
             }
-            return; // Stop submission
+            return; 
         }
 
         if(submitButton) {
@@ -603,20 +465,17 @@
             submitButton.textContent = 'Submitting...';
         }
 
-        // Collect form data
         const formData = new FormData(this);
         
-        // Helper function for radio buttons
         const getRadioValue = (name) => {
             const radio = document.querySelector(`input[name="${name}"]:checked`);
             return radio ? radio.value : null;
         };
 
-        // Construct object for Firestore saving.
         const dataToSave = {
             requestInformation: {
                 dateOfRequest: formData.get('date-of-request'),
-                requestedBy: formData.get('requested-by'), // Locked to username
+                requestedBy: formData.get('requested-by'),
                 department: formData.get('department'),
                 jobTitle: formData.get('job-title'),
                 location: formData.get('location'),
@@ -650,37 +509,34 @@
                 experience: formData.get('experience')
             },
             declaration: {
-                name: formData.get('decl-name'), // Locked to username
+                name: formData.get('decl-name'),
                 date: formData.get('decl-date'),
-                signature: signature // Verified match to username
+                signature: signature 
             },
-            // --- Workflow Initialization ---
             approvalSignOff: { 
                 departmentHead: { decision: 'Pending', comments: '', date: '' },
                 finance: { decision: 'Pending', comments: '', date: '' },
                 finalApprover: { decision: 'Pending', comments: '', date: '' }
             },
             finalOutcome: {
-                approvedToRecruit: null, // null, 'Yes', 'No'
+                approvedToRecruit: null, 
                 dateApproved: '',
                 recruitmentReference: '',
                 recruitmentTeamNotified: null
             },
-            
-            // --- WORKFLOW STATUS ADDED HERE ---
             workflowClosed: false,
-            
             submittedAt: firebase.firestore.FieldValue.serverTimestamp() 
         };
 
-        // --- Save Data to Firestore Collection ---
         db.collection("NGU Recuitment Approval Form").add(dataToSave)
         .then((docRef) => {
             console.log("Document written to Firebase with ID: ", docRef.id);
             
-            // --- Trigger EmailJS Notification ---
-            // Package up the key details we want to send in the email
-            const templateParams = {
+            const internalAdVal = getRadioValue('internal-ad');
+            const promises = [];
+
+            // Email 1: Standard Approval Notification (template_qfkx1r6)
+            const approvalParams = {
                 requested_by: formData.get('requested-by'),
                 date_of_request: formData.get('date-of-request'),
                 department: formData.get('department'),
@@ -691,14 +547,30 @@
                 vacancy_type: formData.getAll('vacancy-type').join(', ') || 'N/A',
                 why_required: formData.get('why-required'),
                 proposed_salary: formData.get('proposed-salary') || 'N/A',
-                firebase_id: docRef.id // Send the database ID just in case
+                firebase_id: docRef.id,
+                workflow_link: "https://ngu-recruitment-portal.vercel.app/recruit-approval-form-display.html"
             };
 
-            return emailjs.send('service_t9mebjl', 'template_qfkx1r6', templateParams);
+            promises.push(emailjs.send('service_t9mebjl', 'template_qfkx1r6', approvalParams));
+
+            // Email 2: Internal Advert Notification (template_w04kxy8) - Conditional
+            if (internalAdVal === 'Yes') {
+                const internalAdParams = {
+                    job_title: formData.get('job-title'),
+                    location: formData.get('location') || 'N/A',
+                    vacancy_type: formData.getAll('vacancy-type').join(', ') || 'N/A',
+                    qualifications: formData.get('qualifications') || 'None specified',
+                    experience: formData.get('experience') || 'None specified',
+                    referral_link: "https://ngu-recruitment-portal.vercel.app/candidate-referral-bonus.html"
+                };
+                promises.push(emailjs.send('service_t9mebjl', 'template_w04kxy8', internalAdParams));
+            }
+
+            return Promise.all(promises);
         })
-        .then((response) => {
-            console.log("EmailJS SUCCESS!", response.status, response.text);
-            alert('Request submitted and notification sent successfully!');
+        .then((responses) => {
+            console.log("EmailJS SUCCESS!");
+            alert('Request submitted and notification(s) sent successfully!');
             location.reload(); 
         })
         .catch((error) => {
