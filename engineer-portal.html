@@ -71,7 +71,11 @@
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;}
         .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease;}
         .modal-content { background: var(--bg-card); width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; border-radius: 12px; border: 1px solid var(--border); padding: 2.5rem; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
-        .modal-title { font-size: 1.6rem; color: var(--accent); font-weight: 800; margin-bottom: 1.5rem; text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem;}
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+        .modal-title { font-size: 1.6rem; color: var(--accent); font-weight: 800; margin: 0; }
+        .close-btn { background: transparent; border: none; color: var(--text-muted); font-size: 1.8rem; cursor: pointer; transition: color 0.2s; padding: 0; line-height: 1; }
+        .close-btn:hover { color: var(--error); }
         
         .offer-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 2rem; }
         .offer-item { display: flex; justify-content: space-between; padding: 12px; background: var(--bg-input); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
@@ -174,7 +178,10 @@
     <!-- 3. OFFER SUMMARY MODAL -->
     <div class="modal-overlay" id="offerModal">
         <div class="modal-content">
-            <div class="modal-title">Your Job Offer Summary</div>
+            <div class="modal-header">
+                <div class="modal-title">Your Job Offer Summary</div>
+                <button class="close-btn" onclick="closeOfferModal()">×</button>
+            </div>
             
             <div class="offer-list">
                 <div class="offer-item"><span>Job Title</span><span id="offTitle"></span></div>
@@ -186,7 +193,8 @@
                 <div class="offer-item"><span>Reporting Manager</span><span id="offManager" style="color: var(--accent);"></span></div>
             </div>
 
-            <div class="modal-actions" id="actionButtons">
+            <!-- Action buttons hidden by default until JS decides state -->
+            <div class="modal-actions" id="actionButtons" style="display: none;">
                 <button class="btn-success" onclick="acceptOffer()">✅ Accept and Continue</button>
                 <button class="btn-outline" onclick="toggleQuestionBlock()">❓ Ask a Question</button>
             </div>
@@ -240,12 +248,10 @@
     function formatSalary(val) {
         if (!val || val === 'TBC') return 'TBC';
         
-        // Convert to string and remove spaces, commas, and £ signs to test if it's purely numerical
         const strVal = String(val).trim();
         const cleanVal = strVal.replace(/[£,\s]/g, '');
         const num = Number(cleanVal);
         
-        // If it successfully parses to a clean number (e.g., 40000), format it as currency
         if (!isNaN(num) && cleanVal !== '') {
             return new Intl.NumberFormat('en-GB', { 
                 style: 'currency', 
@@ -254,7 +260,6 @@
             }).format(num);
         }
         
-        // If it's a word/string (e.g. "Competitive"), just return the text
         return strVal;
     }
 
@@ -325,11 +330,10 @@
                 // If it matches title and Area, map it!
                 if (vTitle === safeAppPos && vArea === appArea) {
                     
-                    // Pull proposedSalary, fallback to base salary, and format it
                     const rawSalary = data.budgetSalary?.proposedSalary || data.requestInformation?.salary || 'TBC';
                     
                     currentVacancy = {
-                        salary: formatSalary(rawSalary), // Apply the £ formatter here
+                        salary: formatSalary(rawSalary),
                         type: data.requestInformation?.vacancyType || 'Full-Time',
                         location: data.requestInformation?.location || 'TBC'
                     };
@@ -424,9 +428,28 @@
         document.getElementById('offManager').textContent = a.assignedFTL || 'TBC';
     }
 
-    // --- MODAL CONTROLS ---
+    // --- MODAL CONTROLS & STATE RESET ---
     window.openOfferModal = function() {
+        // Automatically check if they have already accepted the offer previously
+        if (currentApplicant && currentApplicant.offerAccepted) {
+            document.getElementById('actionButtons').style.display = 'none';
+            document.getElementById('questionBlock').style.display = 'none';
+            const msgEl = document.getElementById('successMessage');
+            msgEl.innerHTML = "🎉 Offer Accepted!<br><br>Welcome to the team! Your Reporting Manager will be in touch shortly regarding your first day.";
+            msgEl.style.display = 'block';
+        } else {
+            // Reset the UI to fresh "Accept" / "Ask" state
+            document.getElementById('actionButtons').style.display = 'flex';
+            document.getElementById('questionBlock').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+            document.getElementById('questionText').value = '';
+        }
+        
         document.getElementById('offerModal').classList.add('active');
+    };
+
+    window.closeOfferModal = function() {
+        document.getElementById('offerModal').classList.remove('active');
     };
 
     window.toggleQuestionBlock = function() {
@@ -452,6 +475,9 @@
                 offerAccepted: true,
                 offerAcceptedAt: new Date().toISOString()
             });
+
+            // Update local memory so if they close and reopen it remembers
+            currentApplicant.offerAccepted = true;
 
             const msgEl = document.getElementById('successMessage');
             document.getElementById('actionButtons').style.display = 'none';
