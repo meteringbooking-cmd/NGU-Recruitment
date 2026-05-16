@@ -1,117 +1,212 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FTL Interview Dashboard</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>NGU — Interview Schedule (FTL)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script>
+        (function() {
+            const username = localStorage.getItem('ngu_portal_username');
+            if (!username) {
+                window.location.href = 'login.html';
+                return;
+            }
+        })();
+    </script>
+
     <style>
-        /* Replace with your own CSS */
-        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; }
-        .card { border: 1px solid #ccc; padding: 15px; margin-bottom: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;}
-        .card.assigned { background-color: #e2e3e5; }
-        input, button { padding: 10px; }
-        .controls { margin-bottom: 20px; }
+        :root {
+            --primary: #005EB8; --accent: #00A3E0;
+            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
+            --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
+            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: var(--bg-dark); color: var(--text-light);
+            min-height: 100vh; padding: 20px;
+        }
+        
+        .main-container { max-width: 1000px; margin: 0 auto; }
+
+        .page-header {
+            background-color: var(--bg-card); padding: 20px 30px; border-radius: 12px;
+            border: 1px solid var(--border); margin-bottom: 30px; display: flex;
+            justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            flex-wrap: wrap; gap: 15px;
+        }
+
+        .header-brand { display: flex; align-items: center; gap: 15px; }
+        .logo { height: 40px; width: auto; }
+        .page-header h1 { font-size: 1.4em; color: var(--primary-text); text-transform: uppercase; letter-spacing: 0.1em; margin: 0; }
+
+        .btn-link {
+            border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: all 0.2s;
+            text-decoration: none; display: inline-flex; align-items: center; font-weight: 600;
+            border: 1px solid var(--border); background-color: var(--bg-input); color: var(--text-light); padding: 8px 15px;
+        }
+        .btn-link:hover { background-color: #38444d; border-color: #4f5b66; }
+
+        .schedule-grid { display: flex; flex-direction: column; gap: 15px; }
+
+        .interview-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-left: 5px solid var(--accent); border-radius: 10px;
+            padding: 20px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: all 0.2s;
+            flex-wrap: wrap; gap: 15px;
+        }
+        .interview-card:hover { border-color: var(--accent); transform: translateX(5px); }
+        .interview-card.claimed { border-left-color: var(--success); }
+
+        .card-info { display: flex; flex-direction: column; gap: 5px; }
+        .card-date { font-family: 'DM Mono', monospace; font-size: 1.1rem; color: #6ee7b7; font-weight: 600; }
+        .card-name { font-size: 1.3rem; font-weight: 700; color: var(--text-light); }
+        .card-booked-at { font-size: 0.8rem; color: var(--text-muted); font-style: italic; }
+
+        .card-action { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+        
+        .btn-claim {
+            background: rgba(0,163,224,0.1); border: 1px solid rgba(0,163,224,0.4);
+            color: var(--accent); padding: 0.7rem 1.5rem; border-radius: 8px;
+            font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-claim:hover { background: rgba(0,163,224,0.2); }
+        
+        .claimed-badge {
+            background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.4);
+            color: #6ee7b7; padding: 0.5rem 1rem; border-radius: 8px;
+            font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;
+        }
+        
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); font-size: 1.1rem; }
+
+        @media (max-width: 600px) {
+            .interview-card { flex-direction: column; align-items: flex-start; }
+            .card-action { align-items: flex-start; width: 100%; }
+            .btn-claim { width: 100%; }
+        }
     </style>
 </head>
 <body>
 
-    <h2>FTL Interview Dashboard</h2>
-    
-    <div class="controls">
-        <label for="ftlName"><strong>Your Name (Interviewer):</strong></label>
-        <input type="text" id="ftlName" placeholder="Enter your name to claim slots" required>
+<div class="main-container">
+    <header class="page-header">
+        <a href="homepage.html" class="btn-link">← Hub</a>
+        <div class="header-brand">
+            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
+            <h1>Interview Schedule</h1>
+        </div>
+        <div style="font-size: 0.9rem; color: var(--text-muted);">
+            Logged in: <strong id="displayName" style="color: white;"></strong>
+        </div>
+    </header>
+
+    <div id="scheduleGrid" class="schedule-grid">
+        <div class="empty-state">⏳ Loading schedule...</div>
     </div>
+</div>
 
-    <div id="dashboardGrid">Loading interviews...</div>
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, updateDoc, where } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, updateDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717"
+    };
 
-        // 1. PASTE YOUR FIREBASE CONFIG HERE
-        const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
-        };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const currentUser = localStorage.getItem('ngu_portal_username') || 'Unknown User';
+    
+    document.getElementById('displayName').textContent = currentUser;
+    const scheduleGrid = document.getElementById('scheduleGrid');
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    // Fetch all bookings from today onwards
+    const today = new Date().toISOString().split('T')[0];
+    const q = query(collection(db, "NGU Interview Times"), where("date", ">=", today));
 
-        const dashboardGrid = document.getElementById('dashboardGrid');
-        const ftlNameInput = document.getElementById('ftlName');
+    onSnapshot(q, (snapshot) => {
+        scheduleGrid.innerHTML = '';
+        
+        const bookings = [];
+        snapshot.forEach(doc => {
+            bookings.push({ id: doc.id, ...doc.data() });
+        });
 
-        const loadInterviews = async () => {
-            dashboardGrid.innerHTML = '';
-            // Query all times, ideally ordered by date
-            const q = query(collection(db, "NGU Interview Times"), orderBy("date"));
-            const querySnapshot = await getDocs(q);
+        // Sort chronologically (Date then Time)
+        bookings.sort((a, b) => {
+            if (a.date === b.date) return a.time.localeCompare(b.time);
+            return a.date.localeCompare(b.date);
+        });
 
-            if (querySnapshot.empty) {
-                dashboardGrid.innerHTML = '<p>No interviews booked yet.</p>';
-                return;
-            }
+        if (bookings.length === 0) {
+            scheduleGrid.innerHTML = '<div class="empty-state">There are currently no upcoming interviews booked.</div>';
+            return;
+        }
 
-            querySnapshot.forEach((documentSnapshot) => {
-                const data = documentSnapshot.data();
-                const docId = documentSnapshot.id;
+        bookings.forEach(booking => {
+            const displayDate = new Date(booking.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+            const bookedDateStr = booking.bookedAt?.toDate ? booking.bookedAt.toDate().toLocaleString('en-GB') : 'Unknown';
 
-                const card = document.createElement('div');
-                card.className = 'card' + (data.interviewerName ? ' assigned' : '');
+            let actionHtml = '';
+            let cardClass = 'interview-card';
 
-                const info = document.createElement('div');
-                info.innerHTML = `
-                    <strong>Applicant:</strong> ${data.applicantName} <br>
-                    <strong>Date & Time:</strong> ${data.date} at ${data.time} <br>
-                    <strong>Interviewer:</strong> <span style="color: ${data.interviewerName ? 'green' : 'red'}">${data.interviewerName || 'Unassigned'}</span>
+            if (booking.interviewer) {
+                cardClass += ' claimed';
+                actionHtml = `
+                    <div class="claimed-badge">
+                        <span>👤 Claimed by ${booking.interviewer}</span>
+                    </div>
                 `;
+            } else {
+                actionHtml = `
+                    <button class="btn-claim" onclick="claimInterview('${booking.id}')">Assign to Me</button>
+                `;
+            }
 
-                const actionDiv = document.createElement('div');
-                
-                if (!data.interviewerName) {
-                    const assignBtn = document.createElement('button');
-                    assignBtn.innerText = "Assign to Me";
-                    assignBtn.addEventListener('click', () => assignInterview(docId, data));
-                    actionDiv.appendChild(assignBtn);
-                } else {
-                    actionDiv.innerText = "Claimed";
-                }
+            const card = document.createElement('div');
+            card.className = cardClass;
+            card.innerHTML = `
+                <div class="card-info">
+                    <div class="card-date">🗓 ${displayDate} @ ${booking.time}</div>
+                    <div class="card-name">${booking.applicantName}</div>
+                    <div class="card-booked-at">System Booked: ${bookedDateStr}</div>
+                </div>
+                <div class="card-action">
+                    ${actionHtml}
+                </div>
+            `;
+            scheduleGrid.appendChild(card);
+        });
+    }, (error) => {
+        console.error("Error loading schedule:", error);
+        scheduleGrid.innerHTML = '<div class="empty-state" style="color:var(--error); border-color:var(--error);">Failed to load schedule. Check permissions.</div>';
+    });
 
-                card.appendChild(info);
-                card.appendChild(actionDiv);
-                dashboardGrid.appendChild(card);
+    window.claimInterview = async function(docId) {
+        if (!confirm("Are you sure you want to assign yourself as the interviewer for this timeslot?")) return;
+
+        try {
+            const docRef = doc(db, "NGU Interview Times", docId);
+            await updateDoc(docRef, {
+                interviewer: currentUser
             });
-        };
-
-        const assignInterview = async (docId, interviewData) => {
-            const ftlName = ftlNameInput.value.trim();
-            if (!ftlName) {
-                alert("Please enter your name at the top before claiming an interview.");
-                return;
-            }
-
-            try {
-                const docRef = doc(db, "NGU Interview Times", docId);
-                await updateDoc(docRef, {
-                    interviewerName: ftlName
-                });
-
-                // 2. TRIGGER EMAILJS HERE TO NOTIFY APPLICANT/INTERVIEWER
-                // emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", { applicant: interviewData.applicantName, interviewer: ftlName, date: interviewData.date, time: interviewData.time });
-
-                alert("Interview successfully assigned to you!");
-                loadInterviews(); // Refresh UI
-            } catch (e) {
-                console.error("Error assigning interview: ", e);
-                alert("Failed to assign interview.");
-            }
-        };
-
-        // Initialize dashboard
-        loadInterviews();
-    </script>
+        } catch (error) {
+            console.error("Error claiming interview:", error);
+            alert("Error assigning interview. Please try again.");
+        }
+    };
+</script>
 </body>
 </html>
