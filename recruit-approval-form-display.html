@@ -7,47 +7,39 @@
     
     <!-- 
       --- PROTOTYPE SECURITY SCRIPT ---
-      Executes immediately to check 'session' data in localStorage before rendering body.
     -->
     <script>
         (function() {
             const username = localStorage.getItem('ngu_portal_username');
             const hasAccess = localStorage.getItem('ngu_portal_access_management');
 
-            // 1. Check if user is logged in at all
             if (!username) {
                 console.log("No session found, redirecting to login.");
                 window.location.href = 'login.html';
-                return; // Stop execution
+                return; 
             }
 
-            // 2. Check specific page permission
             if (hasAccess !== 'true') {
                 console.log("User lacks management permission.");
                 alert("Access Denied: You do not have permission to access the Workflow Manager.");
-                // Redirect back to hub
                 window.location.href = 'homepage.html';
-                return; // Stop execution
+                return; 
             }
-
-            // If we get here, user is allowed. Body will render normally.
-            console.log("Access granted to user: ", username);
         })();
     </script>
     
     <style>
         :root {
-            /* Shared NGU Dark Theme */
             --body-bg: #141d26;
             --container-bg: #1c2938;
             --input-bg: #2d3d50;
             --panel-border: #38444d;
             --primary-text: #e1e8ed;
             --secondary-text: #8899a6;
-            --accent-color: #00d4ff; /* NGU Cyan */
+            --accent-color: #00d4ff; 
             --success-color: #2ecc71;
             --danger-color: #ef4444;
-            --pending-color: #f1c40f;
+            --pending-color: #f39c12; /* Warning/Waiting color */
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -76,403 +68,129 @@
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            flex-wrap: wrap; /* Allows wrapping on mobile */
+            flex-wrap: wrap; 
             gap: 15px;
         }
 
-        .header-brand-container {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .header-brand {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
+        .header-brand-container { display: flex; align-items: center; gap: 20px; }
+        .header-brand { display: flex; align-items: center; gap: 15px; }
         .logo { height: 40px; width: auto; }
 
         .page-header h1 {
-            font-size: 1.4em;
-            color: var(--primary-text);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin: 0;
+            font-size: 1.4em; color: var(--primary-text); text-transform: uppercase; letter-spacing: 0.1em; margin: 0;
         }
 
-        .header-controls {
-            text-align: right;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
+        .header-controls { text-align: right; display: flex; align-items: center; gap: 15px; }
         .header-controls span { color: var(--secondary-text); font-size: 0.9em; }
 
-        /* Button Styling */
         button, .btn-link {
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85em;
-            transition: all 0.2s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            font-weight: 600;
-            border: none;
+            border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: all 0.2s;
+            text-decoration: none; display: inline-flex; align-items: center; font-weight: 600; border: none;
         }
 
-        .btn-logout-header {
-            background: none;
-            border: 1px solid var(--panel-border);
-            color: var(--primary-text);
-            padding: 8px 15px;
-        }
+        .btn-logout-header { background: none; border: 1px solid var(--panel-border); color: var(--primary-text); padding: 8px 15px; }
         .btn-logout-header:hover { border-color: var(--danger-color); color: var(--danger-color); background-color: rgba(239, 68, 68, 0.05);}
 
-        .btn-secondary {
-            background-color: var(--input-bg);
-            color: var(--primary-text);
-            border: 1px solid var(--panel-border);
-            padding: 8px 15px;
-        }
-        .btn-secondary:hover {
-            background-color: #38444d;
-            border-color: #4f5b66;
-        }
+        .btn-secondary { background-color: var(--input-bg); color: var(--primary-text); border: 1px solid var(--panel-border); padding: 8px 15px; }
+        .btn-secondary:hover { background-color: #38444d; border-color: #4f5b66; }
 
-        /* --- NEW VIEW TOGGLE STYLING --- */
         .view-toggle {
-            display: flex;
-            background-color: rgba(0,0,0,0.2);
-            border-radius: 8px;
-            padding: 4px;
-            border: 1px solid var(--panel-border);
+            display: flex; background-color: rgba(0,0,0,0.2); border-radius: 8px; padding: 4px; border: 1px solid var(--panel-border);
         }
 
         .toggle-btn {
-            background: none;
-            color: var(--secondary-text);
-            padding: 8px 20px;
-            border-radius: 6px;
-            font-size: 0.85em;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.2s;
-            display: flex; align-items: center; gap: 8px;
+            background: none; color: var(--secondary-text); padding: 8px 20px; border-radius: 6px; font-size: 0.85em;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.2s; display: flex; align-items: center; gap: 8px;
         }
 
         .toggle-btn:hover { color: var(--primary-text); }
-
-        .toggle-btn.active {
-            background-color: var(--container-bg);
-            color: var(--accent-color);
-            border: 1px solid var(--panel-border);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
+        .toggle-btn.active { background-color: var(--container-bg); color: var(--accent-color); border: 1px solid var(--panel-border); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .toggle-btn.active svg { stroke: var(--accent-color); }
+        .toggle-btn svg { width: 14px; height: 14px; stroke: var(--secondary-text); stroke-width: 2.5; fill: none; }
 
-        .toggle-btn svg {
-            width: 14px; height: 14px;
-            stroke: var(--secondary-text);
-            stroke-width: 2.5; fill: none;
-        }
-
-        /* Loading/Error States */
         #status-message {
-            text-align: center;
-            padding: 40px;
-            color: var(--secondary-text);
-            background-color: var(--container-bg);
-            border-radius: 8px;
-            border: 1px solid var(--panel-border);
-            max-width: 800px; margin: 0 auto;
+            text-align: center; padding: 40px; color: var(--secondary-text); background-color: var(--container-bg);
+            border-radius: 8px; border: 1px solid var(--panel-border); max-width: 800px; margin: 0 auto;
         }
 
-        /* Accordion List Styling */
-        .request-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
+        .request-list { display: flex; flex-direction: column; gap: 10px; }
+        .request-item { background-color: var(--container-bg); border: 1px solid var(--panel-border); border-radius: 8px; overflow: hidden; transition: all 0.2s ease; }
 
-        .request-item {
-            background-color: var(--container-bg);
-            border: 1px solid var(--panel-border);
-            border-radius: 8px;
-            overflow: hidden;
-            transition: all 0.2s ease;
-        }
-
-        /* Accordion Summary Header (The non-expanded view) */
         .request-summary {
-            padding: 15px 20px;
-            cursor: pointer;
-            display: grid;
-            grid-template-columns: 2fr 1.5fr 1fr 1.2fr 40px;
-            align-items: center;
-            gap: 10px;
-            transition: background-color 0.2s;
+            padding: 15px 20px; cursor: pointer; display: grid; grid-template-columns: 2fr 1.5fr 1fr 1.2fr 40px;
+            align-items: center; gap: 10px; transition: background-color 0.2s;
         }
+        .request-summary:hover { background-color: rgba(255,255,255,0.03); }
 
-        .request-summary:hover {
-            background-color: rgba(255,255,255,0.03);
-        }
+        .summary-cell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.95em; display: flex; align-items: center; gap: 10px; }
+        .cell-label { display: none; color: var(--secondary-text); font-size: 0.8em; text-transform: uppercase; margin-bottom: 2px; }
+        .summary-job-title { color: var(--accent-color); font-weight: 600; }
+        .summary-date { color: var(--secondary-text); font-family: monospace; }
 
-        .summary-cell {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            font-size: 0.95em;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .cell-label {
-            display: none; /* Hide labels in desktop view */
-            color: var(--secondary-text);
-            font-size: 0.8em;
-            text-transform: uppercase;
-            margin-bottom: 2px;
-        }
-
-        .summary-job-title {
-            color: var(--accent-color);
-            font-weight: 600;
-        }
-
-        .summary-date {
-            color: var(--secondary-text);
-            font-family: monospace;
-        }
-
-        /* --- BADGE STYLING --- */
-        .badge-status {
-            font-size: 0.7em;
+        /* --- STATUS BADGE STYLING --- */
+        .dynamic-badge {
+            font-size: 0.75em;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            padding: 2px 7px;
+            padding: 4px 8px;
             border-radius: 4px;
-            display: none; /* Hidden by default */
-        }
-        
-        /* Show badge in summary only when applied via JS */
-        .is-live .badge-live-summary {
             display: inline-block;
-            background-color: rgba(0, 212, 255, 0.15); /* Transparent Cyan */
-            color: var(--accent-color);
-            border: 1px solid var(--accent-color);
         }
+        .badge-approved { background-color: rgba(46, 204, 113, 0.15); color: var(--success-color); border: 1px solid var(--success-color); }
+        .badge-rejected { background-color: rgba(239, 68, 68, 0.15); color: var(--danger-color); border: 1px solid var(--danger-color); }
+        .badge-waiting { background-color: rgba(243, 156, 18, 0.15); color: var(--pending-color); border: 1px solid var(--pending-color); }
 
-        /* NEW CLOSED BADGE */
-        .is-closed .badge-closed-summary {
-            display: inline-block;
-            background-color: rgba(239, 68, 68, 0.15); /* Transparent Red */
-            color: var(--danger-color);
-            border: 1px solid var(--danger-color);
-        }
+        .badge-status { font-size: 0.7em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 4px; display: none; }
+        .is-closed .badge-closed-summary { display: inline-block; background-color: rgba(239, 68, 68, 0.15); color: var(--danger-color); border: 1px solid var(--danger-color); }
 
-        .expand-icon {
-            text-align: center;
-            color: var(--secondary-text);
-            transition: transform 0.3s ease;
-        }
+        .expand-icon { text-align: center; color: var(--secondary-text); transition: transform 0.3s ease; }
+        .request-details { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; border-top: 0 solid var(--panel-border); background-color: rgba(0,0,0,0.15); }
+        .request-item.active { border-color: var(--accent-color); box-shadow: 0 4px 15px rgba(0,212,255,0.1); }
+        .request-item.active .request-details { max-height: 5000px; border-top-width: 1px; padding: 30px; }
+        .request-item.active .expand-icon { transform: rotate(180deg); color: var(--accent-color); }
 
-        /* Accordion Content (The expanded detailed view) */
-        .request-details {
-            max-height: 0; /* Hidden by default */
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            border-top: 0 solid var(--panel-border);
-            background-color: rgba(0,0,0,0.15);
-        }
-
-        /* Active State for Accordion */
-        .request-item.active {
-            border-color: var(--accent-color);
-            box-shadow: 0 4px 15px rgba(0,212,255,0.1);
-        }
-
-        .request-item.active .request-details {
-            max-height: 3000px; /* Arbitrary large height for expansion transition */
-            border-top-width: 1px;
-            padding: 30px;
-        }
-
-        .request-item.active .expand-icon {
-            transform: rotate(180deg);
-            color: var(--accent-color);
-        }
-
-        /* Detailed View Inner Styling */
-        .detail-section {
-            margin-bottom: 30px;
-        }
-
+        .detail-section { margin-bottom: 30px; }
         .detail-section-title {
-            font-size: 0.9em;
-            color: var(--accent-color);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 15px;
-            padding-bottom: 5px;
-            border-bottom: 1px solid var(--panel-border);
-            display: flex; align-items: center; justify-content: space-between;
+            font-size: 0.9em; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.1em;
+            margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid var(--panel-border); display: flex; align-items: center; justify-content: space-between;
         }
 
-        .detail-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-
+        .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
         .full-width { grid-column: 1 / -1; }
 
-        .detail-block label {
-            display: block;
-            color: var(--secondary-text);
-            font-size: 0.8em;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-
-        /* Styling for read-only values */
-        .detail-value {
-            color: var(--primary-text);
-            font-size: 1em;
-            background-color: rgba(255,255,255,0.05);
-            padding: 8px 12px;
-            border-radius: 4px;
-            min-height: 38px;
-        }
-
+        .detail-block label { display: block; color: var(--secondary-text); font-size: 0.8em; text-transform: uppercase; margin-bottom: 5px; }
+        .detail-value { color: var(--primary-text); font-size: 1em; background-color: rgba(255,255,255,0.05); padding: 8px 12px; border-radius: 4px; min-height: 38px; }
         .detail-value.empty { color: #555; font-style: italic; }
+        textarea.detail-value { width: 100%; height: auto; resize: none; font-family: inherit; border: none; }
+        .signature-value { font-style: italic; font-family: 'Georgia', serif; color: var(--accent-color); font-size: 1.1em; }
 
-        textarea.detail-value {
-            width: 100%;
-            height: auto;
-            resize: none;
-            font-family: inherit;
-            border: none;
-        }
+        .edit-input, .edit-select { width: 100%; padding: 8px 12px; background-color: var(--input-bg); border: 1px solid var(--panel-border); border-radius: 4px; font-family: inherit; color: var(--primary-text); font-size: 1em; transition: all 0.2s ease; }
+        .edit-input:focus, .edit-select:focus { outline: none; border-color: var(--accent-color); background-color: #314358; }
+        ::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
 
-        /* Signature style */
-        .signature-value {
-            font-style: italic;
-            font-family: 'Georgia', serif;
-            color: var(--accent-color);
-            font-size: 1.1em;
-        }
-
-        /* --- Styling for EDITABLE fields --- */
-        .edit-input, .edit-select {
-            width: 100%;
-            padding: 8px 12px;
-            background-color: var(--input-bg);
-            border: 1px solid var(--panel-border);
-            border-radius: 4px;
-            font-family: inherit;
-            color: var(--primary-text);
-            font-size: 1em;
-            transition: all 0.2s ease;
-        }
-
-        .edit-input:focus, .edit-select:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            background-color: #314358;
-        }
-
-        ::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            cursor: pointer;
-        }
-
-        .edit-radio-group {
-            display: flex;
-            gap: 15px;
-            margin-top: 5px;
-        }
-
-        .edit-radio-group label {
-            text-transform: none; font-weight: normal; color: var(--primary-text);
-            display: flex; align-items: center; gap: 5px; font-size: 0.95em;
-            cursor: pointer;
-        }
-
-        .edit-radio-group input { accent-color: var(--accent-color); cursor: pointer; }
-
-        /* Approval Table (editable) */
-        .approval-table {
-            width: 100%; border-collapse: collapse; margin-top: 10px;
-            background-color: rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;
-        }
+        .approval-table { width: 100%; border-collapse: collapse; margin-top: 10px; background-color: rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden; }
         .approval-table th, .approval-table td { border: 1px solid var(--panel-border); padding: 10px; text-align: left; }
         .approval-table th { background-color: rgba(0,0,0,0.2); color: var(--secondary-text); font-size: 0.8em; text-transform: uppercase; }
         strong.approver-label { color: var(--primary-text); font-weight: 600; font-size: 0.95em;}
 
-        /* Action Buttons */
-        .admin-actions {
-            display: flex; justify-content: flex-end; gap: 15px;
-            margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--panel-border);
-        }
-
-        button.btn-save {
-            padding: 10px 20px;
-            font-size: 0.9em; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.05em;
-            background-color: var(--success-color); color: #000;
-        }
-
-        button.btn-close-workflow {
-            background-color: transparent;
-            color: var(--danger-color);
-            border: 1px solid var(--danger-color);
-            padding: 10px 20px;
-            font-size: 0.9em; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.05em;
-            display: none; /* Only show when Live and NOT already closed */
-        }
+        .admin-actions { display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--panel-border); }
+        button.btn-save { padding: 10px 20px; font-size: 0.9em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; background-color: var(--success-color); color: #000; }
+        button.btn-close-workflow { background-color: transparent; color: var(--danger-color); border: 1px solid var(--danger-color); padding: 10px 20px; font-size: 0.9em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: none; }
         button.btn-close-workflow:hover { background-color: var(--danger-color); color: #fff; }
-        
         button:hover:not(:disabled) { filter: brightness(1.1); }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        /* Mobile Responsive adjustments */
         @media (max-width: 768px) {
             .page-header { flex-direction: column; text-align: center; gap: 15px; padding: 20px;}
             .header-brand-container { flex-direction: column; gap: 10px; width: 100%;}
             .header-controls { flex-direction: column; gap: 5px; width: 100%; text-align: center;}
-            
-            .request-summary {
-                grid-template-columns: 1fr 40px;
-                gap: 5px;
-                padding: 15px;
-            }
-
-            .summary-cell {
-                grid-column: 1 / 2;
-                white-space: normal;
-                display: flex;
-                flex-direction: column;
-                margin-bottom: 8px;
-            }
-
+            .request-summary { grid-template-columns: 1fr 40px; gap: 5px; padding: 15px; }
+            .summary-cell { grid-column: 1 / 2; white-space: normal; display: flex; flex-direction: column; margin-bottom: 8px; }
             .cell-label { display: block; }
-            
-            .request-summary .expand-icon {
-                grid-column: 2 / 3;
-                grid-row: 1 / 5;
-            }
-
+            .request-summary .expand-icon { grid-column: 2 / 3; grid-row: 1 / 5; }
             .request-item.active .request-details { padding: 20px; }
             .detail-grid { grid-template-columns: 1fr; }
-            
             .admin-actions { flex-direction: column-reverse; align-items: stretch;}
             .view-toggle { width: 100%; justify-content: center; }
         }
@@ -483,7 +201,6 @@
 <div class="main-container">
     <header class="page-header">
         <div class="header-brand-container">
-            <!-- Back Button -->
             <a href="homepage.html" class="btn-link btn-secondary">← Hub</a>
             <div class="header-brand">
                 <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
@@ -491,7 +208,6 @@
             </div>
         </div>
 
-        <!-- --- NEW VIEW TOGGLE UI --- -->
         <div class="view-toggle">
             <button class="toggle-btn active" id="toggle-active" onclick="switchView('active')">
                 <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
@@ -519,8 +235,17 @@
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<!-- EmailJS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
 <script>
+    // --- Initialize EmailJS ---
+    (function() {
+        emailjs.init({
+          publicKey: "ziLnha91scpGjFABh",
+        });
+    })();
+
     // --- Firebase Configuration ---
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
@@ -532,7 +257,6 @@
         measurementId: "G-R56BGZYV8N"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const collectionName = "NGU Recuitment Approval Form";
@@ -540,15 +264,12 @@
     const container = document.getElementById('request-list-container');
     const statusMsg = document.getElementById('status-message');
 
-    // State
-    let currentListener = null; // Holds the real-time unsubscribe function
-    let currentView = 'active'; // 'active' or 'closed'
+    let currentListener = null; 
+    let currentView = 'active'; 
 
-    // Setup Header & Logout
     document.addEventListener('DOMContentLoaded', () => {
         const username = localStorage.getItem('ngu_portal_username');
         if(document.getElementById('display-username')) document.getElementById('display-username').textContent = username;
-        // Start by fetching active requests
         fetchRequests('active'); 
     });
 
@@ -559,28 +280,17 @@
         });
     }
 
-    // --- NEW SWITCH VIEW LOGIC ---
     function switchView(viewType) {
-        if (currentView === viewType) return; // Do nothing if already on this view
+        if (currentView === viewType) return; 
 
         currentView = viewType;
-
-        // Update UI Toggle Buttons
         document.getElementById('toggle-active').classList.toggle('active', viewType === 'active');
         document.getElementById('toggle-closed').classList.toggle('active', viewType === 'closed');
 
-        // Unsubscribe from current listener before starting a new one
-        if (currentListener) {
-            console.log("Unsubscribing from current snapshot listener.");
-            currentListener(); 
-        }
-
-        // Fetch new data based on view
+        if (currentListener) { currentListener(); }
         fetchRequests(viewType);
     }
 
-
-    // Helper: format Firestore timestamp to readable date/time
     const formatTimestamp = (timestamp) => {
         if (!timestamp) return "N/A";
         const date = timestamp.toDate();
@@ -588,14 +298,12 @@
                ', ' + date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     };
 
-    // Helper: Safely get read-only value or return placeholder
     const getReadOnlyValue = (val) => {
         if (val === null || val === undefined || val === "") return '<span class="empty">Not provided</span>';
         if (Array.isArray(val)) return val.length > 0 ? val.join(', ') : '<span class="empty">None</span>';
         return val;
     };
 
-    // Fetch data from Firestore (Real-time listener)
     function fetchRequests(viewType) {
         if(statusMsg) {
             statusMsg.textContent = `⏳ Loading ${viewType} requests...`;
@@ -604,15 +312,12 @@
         }
         if(container) container.style.display = 'none';
 
-        // Define query based on viewType ('active' means workflowClosed == false, 'closed' means workflowClosed == true)
         const closedStatusToLookFor = (viewType === 'closed');
 
-        // REFACTOR: Assign listener to state variable so we can unsubscribe later
         currentListener = db.collection(collectionName)
-          .where('workflowClosed', '==', closedStatusToLookFor) // Dynamic Filter
-          .orderBy('submittedAt', 'desc') // Newest first
+          .where('workflowClosed', '==', closedStatusToLookFor)
+          .orderBy('submittedAt', 'desc') 
           .onSnapshot(
-            // 1. SUCCESS CALLBACK
             (snapshot) => {
                 if (snapshot.empty) {
                     if(statusMsg) {
@@ -626,11 +331,8 @@
                 if(statusMsg) statusMsg.style.display = 'none';
                 if(container) {
                     container.style.display = 'flex';
-                    
-                    // Store IDs of items currently expanded to re-expand them after render
                     const expandedIds = Array.from(document.querySelectorAll('.request-item.active')).map(el => el.id.replace('item-',''));
-
-                    container.innerHTML = ''; // Clear container
+                    container.innerHTML = ''; 
 
                     snapshot.forEach(doc => {
                         const data = doc.data();
@@ -641,20 +343,29 @@
                         const location = data.requestInformation?.location || 'Unknown';
                         const submitDate = formatTimestamp(data.submittedAt);
 
-                        // --- BADGE CALCULATIONS ---
-                        // 1. Fully Approved/Live
                         const approvals = data.approvalSignOff || {};
-                        const isLive =  approvals.departmentHead?.decision === 'Approve' &&
-                                        approvals.finance?.decision === 'Approve' &&
-                                        approvals.finalApprover?.decision === 'Approve';
+                        const dHead = approvals.departmentHead?.decision || 'Pending';
+                        const dFin = approvals.finance?.decision || 'Pending';
+                        const dDir = approvals.finalApprover?.decision || 'Pending'; // finalApprover db key used for Director
+
+                        // Determine Overall Status Banner
+                        let statusText = 'Waiting';
+                        let statusClass = 'badge-waiting';
+                        let isLive = false;
+
+                        if (dHead === 'Reject' || dFin === 'Reject' || dDir === 'Reject') {
+                            statusText = 'Rejected';
+                            statusClass = 'badge-rejected';
+                        } else if (dHead === 'Approve' && dFin === 'Approve' && dDir === 'Approve') {
+                            statusText = 'Approved';
+                            statusClass = 'badge-approved';
+                            isLive = true;
+                        }
                         
-                        // 2. Closed/Archived (comes directly from the data)
                         const isClosed = data.workflowClosed === true;
 
-                        // Create Item HTML
-                        // .is-live and .is-closed classes applied for summary styling
                         const itemHtml = `
-                            <div class="request-item ${expandedIds.includes(reqId) ? 'active' : ''} ${isLive ? 'is-live' : ''} ${isClosed ? 'is-closed' : ''}" id="item-${reqId}">
+                            <div class="request-item ${expandedIds.includes(reqId) ? 'active' : ''} ${isClosed ? 'is-closed' : ''}" id="item-${reqId}">
                                 <div class="request-summary" onclick="toggleAccordion('${reqId}')">
                                     <div class="summary-cell summary-job-title">
                                         <div class="cell-label">Job Title</div>
@@ -665,11 +376,10 @@
                                         ${dept}
                                     </div>
                                     <div class="summary-cell">
-                                        <div class="cell-label">Location</div>
+                                        <div class="cell-label">Status</div>
                                         <div style="display:flex; align-items:center; gap:10px;">
-                                            ${location}
-                                            <span class="badge-status badge-live-summary">Live</span>
-                                            <span class="badge-status badge-closed-summary">Closed</span>
+                                            <span class="dynamic-badge ${statusClass}">${statusText}</span>
+                                            <span class="badge-status badge-closed-summary">Archived</span>
                                         </div>
                                     </div>
                                     <div class="summary-cell summary-date">
@@ -680,7 +390,7 @@
                                 </div>
                                 
                                 <div class="request-details" id="details-${reqId}">
-                                    ${generateDetailedView(reqId, data, submitDate, isLive, isClosed)}
+                                    ${generateDetailedView(reqId, data, submitDate, isLive, isClosed, statusText, statusClass)}
                                 </div>
                             </div>
                         `;
@@ -688,15 +398,12 @@
                     });
                 }
             },
-            // 2. ERROR CALLBACK (Handle missing index)
             (error) => { 
                 console.error("Firestore Snapshot Error: ", error);
                 if(statusMsg) {
-                    // Helpful error message for the prototype missing index
                     statusMsg.innerHTML = `⚠️ <strong>Error: Firestore Composite Index Missing.</strong><br><br>
                                            The new Archive view requires a unique Firestore Index.<br>
-                                           Open your browser developer console (F12) to find the unique link generated by Firebase. Following that link will create the index automatically.<br><br>
-                                           <em>Or manually create it:</em> Collection <code>NGU Recuitment Approval Form</code>, fields <code>workflowClosed</code> (Asc) & <code>submittedAt</code> (Desc).`;
+                                           Open your browser developer console (F12) to find the unique link generated by Firebase. Following that link will create the index automatically.`;
                     statusMsg.style.color = 'var(--danger-color)';
                     statusMsg.style.display = 'block';
                 }
@@ -705,14 +412,10 @@
         );
     }
 
-    // Function to generate HTML. 
-    // Closed requests are rendered entirely read-only.
-    function generateDetailedView(reqId, data, formattedSubmitDate, isLive, isClosed) {
+    function generateDetailedView(reqId, data, formattedSubmitDate, isLive, isClosed, statusText, statusClass) {
         
-        // Helper: Generate editable select ONLY IF NOT CLOSED
         const getSelectHtml = (name, currentVal, options) => {
-            if (isClosed) return `<div class="detail-value">${currentVal || 'N/A'}</div>`; // Read-only div for archived
-
+            if (isClosed) return `<div class="detail-value">${currentVal || 'N/A'}</div>`;
             let html = `<select class="edit-select" name="${name}" data-req-id="${reqId}">`;
             options.forEach(opt => {
                 const selected = opt === currentVal ? 'selected' : '';
@@ -722,36 +425,19 @@
             return html;
         };
 
-        // Helper: Generate editable input ONLY IF NOT CLOSED
         const getInputHtml = (name, type, currentVal) => {
-            if (isClosed) return `<div class="detail-value">${currentVal || 'N/A'}</div>`; // Read-only div
+            if (isClosed) return `<div class="detail-value">${currentVal || 'N/A'}</div>`;
             return `<input type="${type}" class="edit-input" name="${name}" value="${currentVal || ''}" data-req-id="${reqId}">`;
-        }
-
-        // Helper: Generate editable radio ONLY IF NOT CLOSED
-        const getRadioHtml = (baseName, value) => {
-            if (isClosed) {
-                // Just return a standard read-only value display
-                const finalStatus = data.finalOutcome?.approvedToRecruit;
-                return `<div class="detail-value">${finalStatus || 'N/A'}</div>`;
-            }
-            // Standard editable radio group
-            return `
-                <div class="edit-radio-group">
-                    <label><input type="radio" name="${baseName}-${reqId}" value="Yes" ${data.finalOutcome?.approvedToRecruit === 'Yes' ? 'checked' : ''}> Yes</label>
-                    <label><input type="radio" name="${baseName}-${reqId}" value="No" ${data.finalOutcome?.approvedToRecruit === 'No' ? 'checked' : ''}> No</label>
-                </div>
-            `;
         }
 
         const decisionOptions = ['Pending', 'Approve', 'Reject', 'More Info Needed'];
 
         return `
-            <!-- 1. Read-Only Request Info (Submitted by user) -->
+            <!-- Read-Only Request Info -->
             <div class="detail-section">
                 <div class="detail-section-title">
                     Request Information (Read-Only)
-                    <span class="badge-status" style="${isClosed ? 'display:inline-block;' : ''}">Closed Workflow</span>
+                    <span class="dynamic-badge ${statusClass}" style="margin-left: auto;">${statusText}</span>
                 </div>
                 <div class="detail-grid">
                     <div class="detail-block"><label>Date Requested</label><div class="detail-value">${getReadOnlyValue(data.requestInformation?.dateOfRequest)}</div></div>
@@ -759,14 +445,30 @@
                     <div class="detail-block"><label>Hiring Manager</label><div class="detail-value">${getReadOnlyValue(data.requestInformation?.hiringManager)}</div></div>
                     <div class="detail-block"><label>System Submit Date</label><div class="detail-value">${formattedSubmitDate}</div></div>
                     <div class="detail-block full-width"><label>Vacancy Type(s)</label><div class="detail-value">${getReadOnlyValue(data.vacancyType)}</div></div>
+                    
+                    <div class="detail-block"><label>Cost Centre</label><div class="detail-value">${getReadOnlyValue(data.budgetSalary?.costCentre)}</div></div>
+                    <div class="detail-block"><label>Additional Costs</label><div class="detail-value">${getReadOnlyValue(data.budgetSalary?.additionalCosts)}</div></div>
+                    <div class="detail-block"><label>Desired Start Date</label><div class="detail-value">${getReadOnlyValue(data.recruitmentRequirements?.desiredStartDate)}</div></div>
+                    <div class="detail-block"><label>Latest Start Date</label><div class="detail-value">${getReadOnlyValue(data.recruitmentRequirements?.latestStartDate)}</div></div>
+                    
+                    <div class="detail-block"><label>Urgency</label><div class="detail-value">${getReadOnlyValue(data.recruitmentRequirements?.urgency)}</div></div>
+                    <div class="detail-block"><label>Proposed Salary</label><div class="detail-value">${getReadOnlyValue(data.budgetSalary?.proposedSalary)}</div></div>
+                    
                     <div class="detail-block full-width">
                         <label>Why is this role required?</label>
                         <textarea class="detail-value" rows="3" readonly>${data.businessCase?.whyRoleRequired || 'N/A'}</textarea>
                     </div>
-                    <div class="detail-block">
-                        <label>Proposed Salary</label>
-                        <div class="detail-value">${getReadOnlyValue(data.budgetSalary?.proposedSalary)}</div>
+
+                    <div class="detail-block full-width">
+                        <label>Essential Qualifications</label>
+                        <textarea class="detail-value" rows="3" readonly>${data.recruitmentRequirements?.qualifications || 'N/A'}</textarea>
                     </div>
+
+                    <div class="detail-block full-width">
+                        <label>Experience Required</label>
+                        <textarea class="detail-value" rows="3" readonly>${data.recruitmentRequirements?.experience || 'N/A'}</textarea>
+                    </div>
+
                     <div class="detail-block">
                         <label>Declaration Name</label>
                         <div class="detail-value">${getReadOnlyValue(data.declaration?.name)}</div>
@@ -778,7 +480,7 @@
                 </div>
             </div>
 
-            <!-- --- CLOSED AUDIT TRAIL SECTION --- -->
+            <!-- CLOSED AUDIT TRAIL -->
             ${isClosed ? `
             <div class="detail-section" style="border: 1px solid var(--danger-color); padding: 20px; border-radius: 8px; background-color: rgba(239, 68, 68, 0.05);">
                 <div class="detail-section-title" style="color: var(--danger-color); border-bottom-color: var(--danger-color);">Archived Workflow Audit</div>
@@ -795,11 +497,10 @@
             </div>
             ` : ''}
 
-            <!-- 2. Approval Sign Off Section (Editable if not closed) -->
+            <!-- Approval Sign Off Section -->
             <div class="detail-section" id="approval-form-${reqId}">
                 <div class="detail-section-title">
                     Approval Sign Off ${isClosed ? '(Archived)' : '(Action Required)'}
-                    <span class="badge-status" style="${isLive ? 'display:inline-block;' : ''}">Fully Approved & Live</span>
                 </div>
                 <table class="approval-table">
                     <thead>
@@ -819,7 +520,7 @@
                             <td data-label="Date">${getInputHtml('finance-date', 'date', data.approvalSignOff?.finance?.date)}</td>
                         </tr>
                         <tr>
-                            <td data-label="Approver"><strong class="approver-label">Final</strong></td>
+                            <td data-label="Approver"><strong class="approver-label">Director</strong></td>
                             <td data-label="Decision">${getSelectHtml('final-decision', data.approvalSignOff?.finalApprover?.decision, decisionOptions)}</td>
                             <td data-label="Comments">${getInputHtml('final-comments', 'text', data.approvalSignOff?.finalApprover?.comments)}</td>
                             <td data-label="Date">${getInputHtml('final-date', 'date', data.approvalSignOff?.finalApprover?.date)}</td>
@@ -828,33 +529,9 @@
                 </table>
             </div>
 
-            <!-- 3. Final Outcome Section (Editable if not closed) -->
-            <div class="detail-section" id="outcome-form-${reqId}">
-                <div class="detail-section-title">Final Outcome ${isClosed ? '(Archived)' : '(Admin Use)'}</div>
-                <div class="detail-grid">
-                    <div class="detail-block">
-                        <label>Approved to Recruit?</label>
-                        ${getRadioHtml('approved', data.finalOutcome?.approvedToRecruit)}
-                    </div>
-                    <div class="detail-block">
-                        <label>Date Actioned</label>
-                        ${getInputHtml(`date-approved-${reqId}`, 'date', data.finalOutcome?.dateApproved)}
-                    </div>
-                    <div class="detail-block">
-                        <label>Recruitment Ref #</label>
-                        ${getInputHtml(`recruitment-ref-${reqId}`, 'text', data.finalOutcome?.recruitmentReference)}
-                    </div>
-                    <div class="detail-block">
-                        <label>Team Notified?</label>
-                        ${getRadioHtml('team-notified', data.finalOutcome?.recruitmentTeamNotified)}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Action Buttons - HIDE IF CLOSED -->
+            <!-- Action Buttons -->
             ${isClosed ? '' : `
             <div class="admin-actions">
-                <!-- CLOSE WORKFLOW BUTTON (Visible only when Live) -->
                 <button type="button" class="btn-close-workflow" id="close-btn-${reqId}" 
                         style="${isLive ? 'display:inline-flex;' : ''}"
                         onclick="closeWorkflow('${reqId}', '${data.requestInformation?.jobTitle || 'Request'}')">
@@ -883,43 +560,66 @@
         }
 
         const getElVal = (name) => detailsPanel ? (detailsPanel.querySelector(`[name="${name}"]`)?.value || '') : '';
-        const getRadioVal = (name) => detailsPanel ? (detailsPanel.querySelector(`input[name="${name}"]:checked`)?.value || null) : null;
         const adminUsername = localStorage.getItem('ngu_portal_username');
+
+        // Extract decisions for validation logic
+        const deptDecision = getElVal('dept-head-decision');
+        const financeDecision = getElVal('finance-decision');
+        const directorDecision = getElVal('final-decision');
 
         const updatedData = {
             approvalSignOff: { 
-                departmentHead: {
-                    decision: getElVal('dept-head-decision'),
-                    comments: getElVal('dept-head-comments'),
-                    date: getElVal('dept-head-date')
-                },
-                finance: {
-                    decision: getElVal('finance-decision'),
-                    comments: getElVal('finance-comments'),
-                    date: getElVal('finance-date')
-                },
-                finalApprover: {
-                    decision: getElVal('final-decision'),
-                    comments: getElVal('final-comments'),
-                    date: getElVal('final-date')
-                }
-            },
-            finalOutcome: {
-                approvedToRecruit: getRadioVal('approved'),
-                dateApproved: getElVal(`date-approved-${reqId}`),
-                recruitmentReference: getElVal(`recruitment-ref-${reqId}`),
-                recruitmentTeamNotified: getRadioVal('team-notified')
+                departmentHead: { decision: deptDecision, comments: getElVal('dept-head-comments'), date: getElVal('dept-head-date') },
+                finance: { decision: financeDecision, comments: getElVal('finance-comments'), date: getElVal('finance-date') },
+                finalApprover: { decision: directorDecision, comments: getElVal('final-comments'), date: getElVal('final-date') }
             },
             lastUpdatedByAdmin: adminUsername,
             lastWorkflowUpdateAt: firebase.firestore.FieldValue.serverTimestamp() 
         };
 
         try {
-            await db.collection(collectionName).doc(reqId).update(updatedData);
+            // Fetch current document strictly to get baseline request info for email & verify if an email was already sent
+            const docRef = db.collection(collectionName).doc(reqId);
+            const docSnap = await docRef.get();
+            const originalData = docSnap.data();
+
+            // Save updates to Firebase
+            await docRef.update(updatedData);
             console.log("Document updated: ", reqId);
+
+            // EMAIL LOGIC: Check if all approvers have made a definitive choice AND an email hasn't been sent yet
+            const allDecided = (deptDecision !== 'Pending' && financeDecision !== 'Pending' && directorDecision !== 'Pending');
+            
+            if (allDecided && originalData.workflowEmailSent !== true) {
+                const approvalSummaryText = `
+Department Head: ${deptDecision} (Date: ${getElVal('dept-head-date')})
+Comments: ${getElVal('dept-head-comments') || 'N/A'}
+
+Finance: ${financeDecision} (Date: ${getElVal('finance-date')})
+Comments: ${getElVal('finance-comments') || 'N/A'}
+
+Director: ${directorDecision} (Date: ${getElVal('final-date')})
+Comments: ${getElVal('final-comments') || 'N/A'}
+                `.trim();
+
+                const emailParams = {
+                    date_requested: originalData.requestInformation?.dateOfRequest || 'N/A',
+                    vacancy_type: originalData.vacancyType ? originalData.vacancyType.join(', ') : 'N/A',
+                    proposed_salary: originalData.budgetSalary?.proposedSalary || 'N/A',
+                    approval_summary: approvalSummaryText
+                };
+
+                console.log("Triggering Final Decision EmailJS Notification...");
+                await emailjs.send('service_t9mebjl', 'template_bhou98a', emailParams);
+                
+                // Flag database to prevent duplicate emails upon future saves
+                await docRef.update({ workflowEmailSent: true });
+                console.log("Email sent successfully and flagged in database.");
+            }
+
             alert('Approvals and status updated successfully.');
         } catch (error) {
-            console.error("Error updating document: ", error);
+            console.error("Error updating document or sending email: ", error);
             alert('Error saving changes. Verify permissions and try again.');
         } finally {
             if(saveBtn) {
@@ -931,7 +631,7 @@
 
     // --- CLOSE/ARCHIVE LOGIC ---
     async function closeWorkflow(reqId, jobTitle) {
-        if (!confirm(`Are you sure you want to close the workflow for:\n"${jobTitle}"?\n\nThis will remove it from the active manager list and archive it.`)) {
+        if (!confirm(`Are you sure you want to archive the workflow for:\n"${jobTitle}"?\n\nThis will remove it from the active manager list.`)) {
             return; 
         }
 
@@ -939,10 +639,7 @@
         const saveBtn = document.getElementById(`save-btn-${reqId}`);
         const adminUsername = localStorage.getItem('ngu_portal_username');
 
-        if(closeBtn) {
-            closeBtn.disabled = true;
-            closeBtn.textContent = 'Closing...';
-        }
+        if(closeBtn) { closeBtn.disabled = true; closeBtn.textContent = 'Closing...'; }
         if(saveBtn) saveBtn.disabled = true;
 
         try {
@@ -951,15 +648,12 @@
                 workflowClosedBy: adminUsername,
                 workflowClosedAt: firebase.firestore.FieldValue.serverTimestamp()
             });
-            console.log("Document closed/archived: ", reqId);
-            alert('Workflow closed and archived successfully.');
+            console.log("Document archived: ", reqId);
+            alert('Workflow archived successfully.');
         } catch (error) {
             console.error("Error closing document: ", error);
-            alert('Error closing workflow. Check console for details.');
-            if(closeBtn) {
-                closeBtn.disabled = false;
-                closeBtn.textContent = 'Archive / Close Workflow';
-            }
+            alert('Error archiving workflow. Check console for details.');
+            if(closeBtn) { closeBtn.disabled = false; closeBtn.textContent = 'Archive / Close Workflow'; }
             if(saveBtn) saveBtn.disabled = false;
         }
     }
