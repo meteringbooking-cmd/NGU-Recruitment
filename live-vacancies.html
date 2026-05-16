@@ -107,7 +107,6 @@
         }
         .btn-close-vacancy:hover { background-color: rgba(239, 68, 68, 0.1); }
 
-        /* Applicant Counter Badge */
         .applicant-badge {
             background-color: rgba(46, 204, 113, 0.15); color: var(--success-color); border: 1px solid rgba(46, 204, 113, 0.4);
             padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
@@ -134,7 +133,7 @@
         </div>
     </header>
 
-    <div id="status-message">⏳ Loading live vacancies & calculating locations...</div>
+    <div id="status-message">⏳ Loading live vacancies...</div>
     
     <div id="vacancy-grid" class="vacancy-grid" style="display: none;"></div>
 </div>
@@ -149,8 +148,7 @@
         projectId: "oesperformance-a54c0",
         storageBucket: "oesperformance-a54c0.firebasestorage.app",
         messagingSenderId: "484894102454",
-        appId: "1:484894102454:web:17535ee497eac2d90d6717",
-        measurementId: "G-R56BGZYV8N"
+        appId: "1:484894102454:web:17535ee497eac2d90d6717"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -161,14 +159,9 @@
 
     let activeVacancies = [];
     let allApplications = [];
-    
-    // Global cache to prevent duplicate API requests
-    const coordCache = {}; 
 
     // Formatting helpers
     const safeStr = (val) => val || 'Not specified';
-    const cleanFormat = (str) => str ? str.toString().trim().toUpperCase().replace(/\s+/g, '') : '';
-    
     const formatDate = (dateString) => {
         if (!dateString) return 'Not specified';
         const d = new Date(dateString);
@@ -176,80 +169,20 @@
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
-    // --- BULLETPROOF GEOCODING ENGINE ---
-    async function geocodeLocation(inputLocation) {
-        const clean = cleanFormat(inputLocation);
-        
-        // Skip obvious invalid inputs
-        if (clean.length < 2 || clean === 'NOTSPECIFIED') return null;
-
-        // Return from cache if we already checked it (even if it failed previously, prevents infinite loops)
-        if (coordCache.hasOwnProperty(clean)) return coordCache[clean];
-
-        try {
-            // Attempt 1: Assume it's a full postcode
-            let res = await fetch(`https://api.postcodes.io/postcodes/${clean}`);
-            if (res.ok) {
-                const data = await res.json();
-                coordCache[clean] = { lat: data.result.latitude, lon: data.result.longitude };
-                return coordCache[clean];
-            }
-
-            // Attempt 2: If attempt 1 failed, maybe it's just an outcode (or needs stripping down)
-            const fallbackOutcode = clean.length > 4 ? clean.slice(0, -3) : clean;
-            res = await fetch(`https://api.postcodes.io/outcodes/${fallbackOutcode}`);
-            if (res.ok) {
-                const data = await res.json();
-                coordCache[clean] = { lat: data.result.latitude, lon: data.result.longitude };
-                return coordCache[clean];
-            }
-            
-        } catch (e) {
-            console.warn("Geocode API failed for:", inputLocation);
-        }
-
-        // If both fail (e.g. user typed a city like "London"), cache it as null to stop checking
-        coordCache[clean] = null;
-        return null;
+    // --- LIGHTWEIGHT POSTCODE AREA EXTRACTOR ---
+    // Extracts just the starting letters (e.g., "NE8 3TS" -> "NE", "B1 1AA" -> "B")
+    function getPostcodeArea(postcodeStr) {
+        if (!postcodeStr) return '';
+        const match = postcodeStr.trim().match(/^[a-zA-Z]+/);
+        return match ? match[0].toUpperCase() : '';
     }
 
-    // Haversine formula (as the crow flies)
-    function calcDistanceMiles(coords1, coords2) {
-        if (!coords1 || !coords2) return Infinity;
-        const R = 3956; // Radius of Earth in Miles
-        const dLat = (coords2.lat - coords1.lat) * Math.PI / 180;
-        const dLon = (coords2.lon - coords1.lon) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(coords1.lat * Math.PI / 180) * Math.cos(coords2.lat * Math.PI / 180) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
-    }
-
-    // --- DATA LOADERS & SYNC ---
-    async function syncLocationsAndRender() {
-        // Collect every unique location string from both databases
-        const uniqueLocations = new Set();
-        
-        activeVacancies.forEach(v => {
-            if(v.requestInformation?.location) uniqueLocations.add(v.requestInformation.location);
-        });
-        allApplications.forEach(app => {
-            if(app.personalDetails?.postcode) uniqueLocations.add(app.personalDetails.postcode);
-        });
-
-        // Fire off geocode checks simultaneously
-        await Promise.all(Array.from(uniqueLocations).map(loc => geocodeLocation(loc)));
-        
-        // Once coordinates are mapped, draw the screen
-        renderGrid();
-    }
-
-    // 1. Listen to Applications to get live counts
+    // --- DATA SYNC ---
+    // 1. Listen to Applications
     db.collection("NGUO New Applicants").onSnapshot((snapshot) => {
         allApplications = [];
         snapshot.forEach(doc => allApplications.push(doc.data()));
-        syncLocationsAndRender(); 
+        renderGrid(); 
     });
 
     // 2. Listen to active workflows (Vacancies)
@@ -267,7 +200,7 @@
                   activeVacancies.push({ id: doc.id, ...data });
               }
           });
-          syncLocationsAndRender();
+          renderGrid();
       }, (error) => {
           console.error("Error fetching live vacancies: ", error);
           statusMsg.innerHTML = `<span style="color:var(--danger-color)">Error loading data. Check console.</span>`;
@@ -292,20 +225,15 @@
             const dept = safeStr(vacancy.requestInformation?.department);
             const locationStr = safeStr(vacancy.requestInformation?.location);
             
-            // Look up coordinates from our populated cache
-            const vacCoords = coordCache[cleanFormat(locationStr)];
-            
+            const vacArea = getPostcodeArea(locationStr);
             let matchCount = 0;
             
             allApplications.forEach(app => {
-                const appPostcode = safeStr(app.personalDetails?.postcode);
-                const appCoords = coordCache[cleanFormat(appPostcode)];
+                const appArea = getPostcodeArea(app.personalDetails?.postcode);
                 
-                const distance = calcDistanceMiles(vacCoords, appCoords);
-                
-                // Case Insensitive Job Match AND <= 30 miles
+                // Case Insensitive Job Match AND Exact Area Match
                 const isJobMatch = app.position?.trim().toLowerCase() === jobTitle.trim().toLowerCase();
-                if (isJobMatch && distance <= 30) {
+                if (isJobMatch && vacArea === appArea && vacArea !== '') {
                     matchCount++;
                 }
             });
@@ -343,10 +271,7 @@
             }
 
             const badgeClass = matchCount > 0 ? 'applicant-badge' : 'applicant-badge empty';
-            
-            // Add a warning icon if the location couldn't be mapped to GPS
-            const locationWarning = vacCoords === null ? ` <span title="Could not map to GPS" style="color:var(--danger-color)">⚠️</span>` : '';
-            const badgeText = vacCoords === null ? 'Location Invalid' : (matchCount === 1 ? '1 Local Applicant Match' : `${matchCount} Local Applicant Matches`);
+            const badgeText = matchCount === 1 ? `1 Area Match (${vacArea})` : `${matchCount} Area Matches (${vacArea})`;
 
             const cardHtml = `
                 <div class="vacancy-card" id="card-${vacancy.id}">
@@ -357,8 +282,8 @@
                     </div>
                     <div class="card-body">
                         <div class="info-block full-width">
-                            <label>Desired Location</label>
-                            <div class="value">${locationStr}${locationWarning}</div>
+                            <label>Desired Location (Area)</label>
+                            <div class="value">${vacArea || 'N/A'} <span style="font-size:0.8em; color:var(--secondary-text); font-weight:normal;">(From: ${locationStr})</span></div>
                         </div>
                         <div class="info-block">
                             <label>Date Approved</label>
@@ -394,7 +319,7 @@
         indicator.classList.add('show');
 
         try {
-            await db.collection(collectionName).doc(reqId).set({
+            await db.collection("NGU Recuitment Approval Form").doc(reqId).set({
                 advertStatus: { [fieldName]: isChecked }
             }, { merge: true });
 
@@ -416,7 +341,7 @@
         if (!confirm("Are you sure you want to close this vacancy? This will archive the role and remove it from the live board.")) return;
 
         try {
-            await db.collection(collectionName).doc(reqId).update({
+            await db.collection("NGU Recuitment Approval Form").doc(reqId).update({
                 workflowClosed: true,
                 vacancyClosedAt: new Date().toISOString(),
                 vacancyClosedBy: localStorage.getItem('ngu_portal_username') || 'Unknown User'
