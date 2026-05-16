@@ -39,253 +39,79 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #141d26;
+            background-color: var(--body-bg);
             color: var(--primary-text);
             line-height: 1.6;
             padding: 20px;
         }
 
-        .main-container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        .main-container { max-width: 1200px; margin: 0 auto; }
 
         .page-header {
-            background-color: var(--container-bg);
-            padding: 20px 30px;
-            border-radius: 12px;
-            border: 1px solid var(--panel-border);
-            margin-bottom: 30px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            flex-wrap: wrap;
-            gap: 15px;
+            background-color: var(--container-bg); padding: 20px 30px; border-radius: 12px;
+            border: 1px solid var(--panel-border); margin-bottom: 30px; display: flex;
+            justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            flex-wrap: wrap; gap: 15px;
         }
 
-        .header-brand-container {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .header-brand {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
+        .header-brand-container { display: flex; align-items: center; gap: 20px; }
+        .header-brand { display: flex; align-items: center; gap: 15px; }
         .logo { height: 40px; width: auto; }
 
-        .page-header h1 {
-            font-size: 1.4em;
-            color: var(--primary-text);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin: 0;
-        }
+        .page-header h1 { font-size: 1.4em; color: var(--primary-text); text-transform: uppercase; letter-spacing: 0.1em; margin: 0; }
 
         .btn-link {
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85em;
-            transition: all 0.2s;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            font-weight: 600;
-            border: 1px solid var(--panel-border);
-            background-color: var(--input-bg);
-            color: var(--primary-text);
-            padding: 8px 15px;
+            border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: all 0.2s;
+            text-decoration: none; display: inline-flex; align-items: center; font-weight: 600;
+            border: 1px solid var(--panel-border); background-color: var(--input-bg); color: var(--primary-text); padding: 8px 15px;
         }
-        .btn-link:hover {
-            background-color: #38444d;
-            border-color: #4f5b66;
-        }
+        .btn-link:hover { background-color: #38444d; border-color: #4f5b66; }
 
         #status-message {
-            text-align: center;
-            padding: 40px;
-            color: var(--secondary-text);
-            background-color: var(--container-bg);
-            border-radius: 8px;
-            border: 1px solid var(--panel-border);
-            max-width: 800px; margin: 0 auto;
+            text-align: center; padding: 40px; color: var(--secondary-text); background-color: var(--container-bg);
+            border-radius: 8px; border: 1px solid var(--panel-border); max-width: 800px; margin: 0 auto;
         }
 
-        .vacancy-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
-        }
+        .vacancy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
 
         .vacancy-card {
-            background-color: var(--container-bg);
-            border: 1px solid var(--panel-border);
-            border-top: 4px solid var(--success-color);
-            border-radius: 8px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            transition: transform 0.2s ease;
+            background-color: var(--container-bg); border: 1px solid var(--panel-border); border-top: 4px solid var(--success-color);
+            border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: transform 0.2s ease;
         }
+        .vacancy-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
 
-        .vacancy-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-        }
+        .card-header { padding: 20px; border-bottom: 1px solid var(--panel-border); background-color: rgba(0,0,0,0.1); position: relative; }
+        .card-title { font-size: 1.2em; color: var(--accent-color); font-weight: 700; margin-bottom: 5px; padding-right: 40px; }
+        .card-dept { font-size: 0.9em; color: var(--secondary-text); text-transform: uppercase; letter-spacing: 0.05em; }
 
-        .card-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--panel-border);
-            background-color: rgba(0,0,0,0.1);
-            position: relative;
-        }
-
-        .card-title {
-            font-size: 1.2em;
-            color: var(--accent-color);
-            font-weight: 700;
-            margin-bottom: 5px;
-            padding-right: 40px;
-        }
-
-        .card-dept {
-            font-size: 0.9em;
-            color: var(--secondary-text);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .card-body {
-            padding: 20px;
-            flex-grow: 1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .info-block label {
-            display: block;
-            color: var(--secondary-text);
-            font-size: 0.75em;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 3px;
-        }
-
-        .info-block .value {
-            color: var(--primary-text);
-            font-size: 0.95em;
-            font-weight: 500;
-        }
-
+        .card-body { padding: 20px; flex-grow: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .info-block label { display: block; color: var(--secondary-text); font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+        .info-block .value { color: var(--primary-text); font-size: 0.95em; font-weight: 500; }
         .full-width { grid-column: 1 / -1; }
 
-        .card-footer {
-            padding: 20px;
-            border-top: 1px solid var(--panel-border);
-            background-color: rgba(255,255,255,0.02);
-            display: flex;
-            flex-direction: column;
-        }
+        .card-footer { padding: 20px; border-top: 1px solid var(--panel-border); background-color: rgba(255,255,255,0.02); display: flex; flex-direction: column; }
+        .footer-title { font-size: 0.85em; color: var(--primary-text); font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.05em; }
 
-        .footer-title {
-            font-size: 0.85em;
-            color: var(--primary-text);
-            font-weight: 600;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
+        .advert-toggles { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; background-color: var(--input-bg); padding: 10px 15px; border-radius: 6px; border: 1px solid var(--panel-border); }
+        .toggle-row label { font-size: 0.9em; color: var(--primary-text); cursor: pointer; user-select: none; display: flex; align-items: center; gap: 10px; }
+        input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--success-color); cursor: pointer; }
 
-        .advert-toggles {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .toggle-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: var(--input-bg);
-            padding: 10px 15px;
-            border-radius: 6px;
-            border: 1px solid var(--panel-border);
-        }
-
-        .toggle-row label {
-            font-size: 0.9em;
-            color: var(--primary-text);
-            cursor: pointer;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--success-color);
-            cursor: pointer;
-        }
-
-        .saving-indicator {
-            font-size: 0.75em;
-            color: var(--accent-color);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
+        .saving-indicator { font-size: 0.75em; color: var(--accent-color); opacity: 0; transition: opacity 0.3s; }
         .saving-indicator.show { opacity: 1; }
 
         .btn-close-vacancy {
-            width: 100%;
-            padding: 10px;
-            background-color: transparent;
-            border: 1px solid var(--danger-color);
-            color: var(--danger-color);
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.85em;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            width: 100%; padding: 10px; background-color: transparent; border: 1px solid var(--danger-color); color: var(--danger-color);
+            border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.05em;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-
-        .btn-close-vacancy:hover {
-            background-color: rgba(239, 68, 68, 0.1);
-        }
+        .btn-close-vacancy:hover { background-color: rgba(239, 68, 68, 0.1); }
 
         .applicant-badge {
-            background-color: rgba(46, 204, 113, 0.15);
-            color: var(--success-color);
-            border: 1px solid rgba(46, 204, 113, 0.4);
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 0.85em;
-            font-weight: 700;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            margin-top: 10px;
+            background-color: rgba(46, 204, 113, 0.15); color: var(--success-color); border: 1px solid rgba(46, 204, 113, 0.4);
+            padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
         }
-        .applicant-badge.empty {
-            background-color: rgba(136, 153, 166, 0.1);
-            color: var(--secondary-text);
-            border-color: rgba(136, 153, 166, 0.3);
-        }
+        .applicant-badge.empty { background-color: rgba(136, 153, 166, 0.1); color: var(--secondary-text); border-color: rgba(136, 153, 166, 0.3); }
 
         @media (max-width: 768px) {
             .page-header { flex-direction: column; text-align: center; justify-content: center;}
@@ -309,9 +135,7 @@
 
     <div id="status-message">⏳ Loading live vacancies...</div>
     
-    <div id="vacancy-grid" class="vacancy-grid" style="display: none;">
-        <!-- Populated via JS -->
-    </div>
+    <div id="vacancy-grid" class="vacancy-grid" style="display: none;"></div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -338,10 +162,8 @@
 
     let activeVacancies = [];
     let allApplications = [];
-    const coordCache = {}; // Local memory for GPS coordinates
 
     const safeStr = (val) => val || 'Not specified';
-
     const formatDate = (dateString) => {
         if (!dateString) return 'Not specified';
         const d = new Date(dateString);
@@ -349,75 +171,19 @@
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
-    // Extracts Outcode (e.g. "NE10 4AB" -> "NE10")
-    function getOutcode(str) {
-        if (!str) return '';
-        let cleaned = str.trim().toUpperCase().replace(/\s+/g, '');
-        if (cleaned.length <= 4 && cleaned.length > 0) return cleaned;
-        if (cleaned.length > 4) return cleaned.slice(0, -3);
-        return '';
+    // --- AREA PREFIX EXTRACTOR ---
+    // Grabs ONLY the starting letters (e.g. "NE8 3TS" -> "NE", "B1 1AA" -> "B")
+    function getPostcodeArea(str) {
+        if (!str || typeof str !== 'string') return '';
+        const match = str.trim().match(/^[a-zA-Z]+/);
+        return match ? match[0].toUpperCase() : '';
     }
 
-    // Fetches GPS coordinates for an Outcode from API
-    async function fetchOutcodeCoords(outcode) {
-        if (!outcode || coordCache[outcode]) return;
-        try {
-            const res = await fetch(`https://api.postcodes.io/outcodes/${outcode}`);
-            if (res.ok) {
-                const data = await res.json();
-                coordCache[outcode] = { lat: data.result.latitude, lon: data.result.longitude };
-            } else {
-                coordCache[outcode] = { error: true };
-            }
-        } catch(e) {
-            coordCache[outcode] = { error: true };
-        }
-    }
-
-    // Calculates distance between two GPS coordinates
-    function calcDistanceMiles(lat1, lon1, lat2, lon2) {
-        const R = 3956; // Radius of earth in miles
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                  Math.sin(dLon/2) * Math.sin(dLon/2);
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return R * c;
-    }
-
-    // Coordinates the pre-loading to ensure rendering happens smoothly
-    async function triggerRenderProcess() {
-        const outcodesToFetch = new Set();
-        
-        activeVacancies.forEach(v => {
-            const oc = getOutcode(v.requestInformation?.location);
-            if (oc) outcodesToFetch.add(oc);
-        });
-        allApplications.forEach(app => {
-            const oc = getOutcode(app.personalDetails?.postcode);
-            if (oc) outcodesToFetch.add(oc);
-        });
-
-        const fetchPromises = [];
-        outcodesToFetch.forEach(oc => {
-            if (!coordCache[oc]) fetchPromises.push(fetchOutcodeCoords(oc));
-        });
-
-        // Wait for all missing GPS data to load
-        await Promise.all(fetchPromises);
-        
-        // Draw to screen
-        renderGrid();
-    }
-
-    // 1. Listen to Applications to get live counts
+    // 1. Listen to Applications
     db.collection(appsCollection).onSnapshot((snapshot) => {
         allApplications = [];
-        snapshot.forEach(doc => {
-            allApplications.push(doc.data());
-        });
-        triggerRenderProcess(); 
+        snapshot.forEach(doc => allApplications.push(doc.data()));
+        renderGrid(); 
     });
 
     // 2. Listen to active workflows (Vacancies)
@@ -428,7 +194,6 @@
           snapshot.forEach(doc => {
               const data = doc.data();
               const approvals = data.approvalSignOff || {};
-              
               const isLive = approvals.departmentHead?.decision === 'Approve' &&
                              approvals.finance?.decision === 'Approve' &&
                              approvals.finalApprover?.decision === 'Approve';
@@ -437,7 +202,7 @@
                   activeVacancies.push({ id: doc.id, ...data });
               }
           });
-          triggerRenderProcess(); 
+          renderGrid(); 
       }, (error) => {
           console.error("Error fetching live vacancies: ", error);
           statusMsg.innerHTML = `<span style="color:var(--danger-color)">Error loading data. Check console.</span>`;
@@ -458,89 +223,71 @@
         gridContainer.style.display = 'grid';
 
         activeVacancies.forEach(vacancy => {
-            const jobTitle = safeStr(vacancy.requestInformation?.jobTitle);
+            const rawJobTitle = vacancy.requestInformation?.jobTitle || '';
             const dept = safeStr(vacancy.requestInformation?.department);
-            const location = safeStr(vacancy.requestInformation?.location);
+            const locationStr = safeStr(vacancy.requestInformation?.location);
             
-            // Extract outcode from Vacancy
-            const vacOutcode = getOutcode(location);
+            // Format for safe matching
+            const safeVacPos = rawJobTitle.trim().toLowerCase();
+            const vacArea = getPostcodeArea(locationStr);
             let matchCount = 0;
             
             allApplications.forEach(app => {
-                const appOutcode = getOutcode(app.personalDetails?.postcode);
+                const appArea = getPostcodeArea(app.personalDetails?.postcode);
+                const safeAppPos = (app.position || '').trim().toLowerCase();
                 
-                // Fast String Fallback: If they match exactly, we don't need GPS math
-                if (app.position === jobTitle && vacOutcode === appOutcode && vacOutcode !== '') {
+                // MATCH: Job Titles match (ignoring case) AND Postcode Letters match exactly
+                if (safeAppPos === safeVacPos && appArea === vacArea && vacArea !== '') {
                     matchCount++;
-                } else if (app.position === jobTitle && vacOutcode !== '' && appOutcode !== '') {
-                    // Check Cache for Distance
-                    const vacCoords = coordCache[vacOutcode];
-                    const appCoords = coordCache[appOutcode];
-                    
-                    if (vacCoords && appCoords && !vacCoords.error && !appCoords.error) {
-                        const dist = calcDistanceMiles(vacCoords.lat, vacCoords.lon, appCoords.lat, appCoords.lon);
-                        if (dist <= 30) {
-                            matchCount++;
-                        }
-                    }
                 }
             });
 
             const dateApproved = vacancy.finalOutcome?.dateApproved || vacancy.approvalSignOff?.finalApprover?.date;
             const desiredStart = vacancy.recruitmentRequirements?.desiredStartDate;
-
             const externalReq = vacancy.recruitmentRequirements?.externalAdvertRequired === 'Yes';
             const internalReq = vacancy.recruitmentRequirements?.internalAdvertRequired === 'Yes';
-
             const advertStatus = vacancy.advertStatus || {};
-            const isLinkedinLive = advertStatus.linkedinLive || false;
-            const isIndeedLive = advertStatus.indeedLive || false;
-            const isInternalEmailSent = advertStatus.internalEmailSent || false;
 
             let advertHtml = '';
-            
             if (externalReq) {
                 advertHtml += `
                     <div class="toggle-row">
-                        <label><input type="checkbox" onchange="updateAdvert(this, '${vacancy.id}', 'linkedinLive')" ${isLinkedinLive ? 'checked' : ''}> LinkedIn Advert Live</label>
+                        <label><input type="checkbox" onchange="updateAdvert(this, '${vacancy.id}', 'linkedinLive')" ${advertStatus.linkedinLive ? 'checked' : ''}> LinkedIn Advert Live</label>
                         <span class="saving-indicator" id="save-ind-linkedinLive-${vacancy.id}">Saved ✓</span>
                     </div>
                     <div class="toggle-row">
-                        <label><input type="checkbox" onchange="updateAdvert(this, '${vacancy.id}', 'indeedLive')" ${isIndeedLive ? 'checked' : ''}> Indeed Advert Live</label>
+                        <label><input type="checkbox" onchange="updateAdvert(this, '${vacancy.id}', 'indeedLive')" ${advertStatus.indeedLive ? 'checked' : ''}> Indeed Advert Live</label>
                         <span class="saving-indicator" id="save-ind-indeedLive-${vacancy.id}">Saved ✓</span>
                     </div>
                 `;
             }
-
             if (internalReq) {
                 advertHtml += `
                     <div class="toggle-row">
-                        <label><input type="checkbox" onchange="updateAdvert(this, '${vacancy.id}', 'internalEmailSent')" ${isInternalEmailSent ? 'checked' : ''}> Internal Email Distributed</label>
+                        <label><input type="checkbox" onchange="updateAdvert(this, '${vacancy.id}', 'internalEmailSent')" ${advertStatus.internalEmailSent ? 'checked' : ''}> Internal Email Distributed</label>
                         <span class="saving-indicator" id="save-ind-internalEmailSent-${vacancy.id}">Saved ✓</span>
                     </div>
                 `;
             }
-
             if (!externalReq && !internalReq) {
                 advertHtml = `<div style="color: var(--secondary-text); font-size: 0.9em; font-style: italic;">No advertising required specified on form.</div>`;
             }
 
             const badgeClass = matchCount > 0 ? 'applicant-badge' : 'applicant-badge empty';
-            const badgeText = matchCount === 1 ? '1 Local Applicant (<30 mi)' : `${matchCount} Local Applicants (<30 mi)`;
+            const badgeText = matchCount === 1 ? `1 Area Match (${vacArea})` : `${matchCount} Area Matches (${vacArea})`;
             const badgeIcon = matchCount > 0 ? '📍 ' : '';
 
             const cardHtml = `
                 <div class="vacancy-card" id="card-${vacancy.id}">
                     <div class="card-header">
-                        <div class="card-title">${jobTitle}</div>
+                        <div class="card-title">${safeStr(rawJobTitle)}</div>
                         <div class="card-dept">${dept}</div>
                         <div class="${badgeClass}">${badgeIcon}${badgeText}</div>
                     </div>
-                    
                     <div class="card-body">
                         <div class="info-block full-width">
                             <label>Desired Location</label>
-                            <div class="value">${location}</div>
+                            <div class="value">${locationStr}</div>
                         </div>
                         <div class="info-block">
                             <label>Date Approved</label>
@@ -551,7 +298,6 @@
                             <div class="value">${formatDate(desiredStart)}</div>
                         </div>
                     </div>
-
                     <div class="card-footer">
                         <div class="footer-title">Advert Tracking</div>
                         <div class="advert-toggles">
@@ -571,47 +317,24 @@
     async function updateAdvert(checkboxElement, reqId, fieldName) {
         const isChecked = checkboxElement.checked;
         const indicator = document.getElementById(`save-ind-${fieldName}-${reqId}`);
-        
-        indicator.textContent = 'Saving...';
-        indicator.classList.add('show');
-
+        indicator.textContent = 'Saving...'; indicator.classList.add('show');
         try {
-            await db.collection(collectionName).doc(reqId).set({
-                advertStatus: {
-                    [fieldName]: isChecked
-                }
-            }, { merge: true });
-
-            indicator.textContent = 'Saved ✓';
-            setTimeout(() => { indicator.classList.remove('show'); }, 2000);
+            await db.collection(collectionName).doc(reqId).set({ advertStatus: { [fieldName]: isChecked } }, { merge: true });
+            indicator.textContent = 'Saved ✓'; setTimeout(() => { indicator.classList.remove('show'); }, 2000);
         } catch (error) {
-            console.error("Error updating advert status: ", error);
-            indicator.textContent = 'Error!';
-            indicator.style.color = 'var(--danger-color)';
-            checkboxElement.checked = !isChecked; 
-            setTimeout(() => { 
-                indicator.classList.remove('show'); 
-                indicator.style.color = 'var(--accent-color)';
-            }, 3000);
+            indicator.textContent = 'Error!'; indicator.style.color = 'var(--danger-color)';
+            checkboxElement.checked = !isChecked; setTimeout(() => { indicator.classList.remove('show'); indicator.style.color = 'var(--accent-color)'; }, 3000);
         }
     }
 
     async function closeVacancy(reqId) {
-        const confirmClose = confirm("Are you sure you want to close this vacancy? This will archive the role and remove it from the live board.");
-        if (!confirmClose) return;
-
+        if (!confirm("Are you sure you want to close this vacancy? This will archive the role and remove it from the live board.")) return;
         try {
             await db.collection(collectionName).doc(reqId).update({
-                workflowClosed: true,
-                vacancyClosedAt: new Date().toISOString(),
-                vacancyClosedBy: localStorage.getItem('ngu_portal_username') || 'Unknown User'
+                workflowClosed: true, vacancyClosedAt: new Date().toISOString(), vacancyClosedBy: localStorage.getItem('ngu_portal_username') || 'Unknown User'
             });
-        } catch (error) {
-            console.error("Error closing vacancy: ", error);
-            alert("Failed to close vacancy. Please check your connection and try again.");
-        }
+        } catch (error) { alert("Failed to close vacancy. Please check your connection and try again."); }
     }
 </script>
-
 </body>
 </html>
