@@ -107,6 +107,8 @@
         .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--text-light); padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-weight: 600;}
         .btn-cancel:hover { background: rgba(255,255,255,0.05); }
         
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        
         @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
     </style>
 </head>
@@ -182,7 +184,7 @@
     const EMAILJS_REJECT = 'template_un6lrqi';
     const EMAILJS_APPROVED = 'template_sp8n3pp';
     const EMAILJS_HOLD = 'template_l29dir8';
-    const EMAILJS_FTL_CALL = 'template_ehh2xt6'; // FTL Assigned Call Notification
+    const EMAILJS_FTL_CALL = 'template_ehh2xt6';
 
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
@@ -285,6 +287,8 @@
             const updatedApp = applicationsData.find(a => a.id === selectedAppId);
             if (updatedApp) renderDetails(updatedApp, isAreaMatch(updatedApp.position, updatedApp.personalDetails?.postcode), getPostcodeArea(updatedApp.personalDetails?.postcode));
         }
+
+        checkAndSendReminders(applicationsData);
     });
 
     function getNextWorkingDay8AM(dateObj) {
@@ -330,6 +334,7 @@
 
     window.closeReviewModal = function() {
         document.getElementById('reviewModal').classList.remove('active');
+        document.getElementById('reviewDecision').value = ''; 
     };
 
     window.submitReview = async function() {
@@ -408,6 +413,7 @@
         let holdReason = '';
         let assignedFTL = '';
         let ftlName = '';
+        let formattedStartDate = '';
 
         if (decision === 'Hold') {
             holdReason = document.getElementById('holdReasonSelect').value;
@@ -419,6 +425,10 @@
             assignedFTL = ftlSelect.value;
             if (!assignedFTL) return alert("Please assign an FTL to call the candidate.");
             ftlName = ftlSelect.options[ftlSelect.selectedIndex].text;
+
+            const startDateVal = document.getElementById('offerStartDate').value;
+            if (!startDateVal) return alert("Please select a Proposed Start Date.");
+            formattedStartDate = new Date(startDateVal).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         }
 
         if (!confirm(`Are you sure you want to confirm this action: ${decision}?`)) return;
@@ -453,6 +463,7 @@
             updates.portalPassword = newPassword;
             updates.portalLink = portalLink;
             updates.assignedFTL = ftlName;
+            updates.startDate = document.getElementById('offerStartDate').value; // Save raw date to DB
 
             emailParams.portal_link = portalLink;
             emailParams.username = newUsername;
@@ -478,7 +489,8 @@
                     ftl_name: ftlName,
                     applicant_name: appData.fullName || 'Applicant',
                     applicant_phone: appData.personalDetails?.phone || 'Not provided',
-                    applicant_postcode: appData.personalDetails?.postcode || 'Not provided'
+                    applicant_postcode: appData.personalDetails?.postcode || 'Not provided',
+                    start_date: formattedStartDate
                 });
             }
             
@@ -501,12 +513,17 @@
     window.submitPostHoldDecision = async function(appId, decision) {
         let assignedFTL = '';
         let ftlName = '';
+        let formattedStartDate = '';
 
         if (decision === 'Approved') {
             const ftlSelect = document.getElementById('postHoldFtlSelect');
             assignedFTL = ftlSelect.value;
             if (!assignedFTL) return alert("Please assign an FTL to call the candidate before offering the role.");
             ftlName = ftlSelect.options[ftlSelect.selectedIndex].text;
+
+            const startDateVal = document.getElementById('postHoldStartDate').value;
+            if (!startDateVal) return alert("Please select a Proposed Start Date.");
+            formattedStartDate = new Date(startDateVal).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         }
 
         if (!confirm(`Are you sure you want to finalize this applicant as: ${decision}?`)) return;
@@ -538,6 +555,7 @@
             updates.portalPassword = newPassword;
             updates.portalLink = portalLink;
             updates.assignedFTL = ftlName;
+            updates.startDate = document.getElementById('postHoldStartDate').value; // Save raw to DB
 
             emailParams.portal_link = portalLink;
             emailParams.username = newUsername;
@@ -555,7 +573,8 @@
                     ftl_name: ftlName,
                     applicant_name: appData.fullName || 'Applicant',
                     applicant_phone: appData.personalDetails?.phone || 'Not provided',
-                    applicant_postcode: appData.personalDetails?.postcode || 'Not provided'
+                    applicant_postcode: appData.personalDetails?.postcode || 'Not provided',
+                    start_date: formattedStartDate
                 });
             }
 
@@ -762,16 +781,19 @@
                             </select>
                         </div>
 
-                        <!-- FTL ASSIGN DROPDOWN (ONLY SHOWS IF APPROVED) -->
+                        <!-- FTL ASSIGN & START DATE (ONLY SHOWS IF APPROVED) -->
                         <div id="ftlAssignDiv" style="display:none; margin-bottom: 1rem;">
                             <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Assign an FTL to Call the Candidate:</label>
-                            <select id="ftlAssignSelect" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none;">
+                            <select id="ftlAssignSelect" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; margin-bottom:1rem;">
                                 <option value="" disabled selected>Select an FTL...</option>
                                 <option value="richard.wiecko@next-gen.uk">Richard Wiecko</option>
                                 <option value="scott.carson@next-gen.uk">Scott Carson</option>
                                 <option value="stuart.whyte@next-gen.uk">Stuart Whyte</option>
                                 <option value="tom.green@next-gen.uk">Tom Green</option>
                             </select>
+
+                            <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Proposed Start Date:</label>
+                            <input type="date" id="offerStartDate" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit;">
                         </div>
 
                         <button class="btn-action-alt" style="width:100%; justify-content:center; padding:0.8rem;" onclick="submitFinalDecision('${app.id}')">Submit Decision & Trigger Actions</button>
@@ -797,15 +819,18 @@
 
                     if (isAllChecked) {
                         packResultsHtml += `
-                            <div id="postHoldFtlDiv" style="margin-bottom: 1rem;">
-                                <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Assign an FTL to Call the Candidate (Required for Offer):</label>
-                                <select id="postHoldFtlSelect" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none;">
+                            <div id="postHoldFtlDiv" style="margin-bottom: 1.5rem;">
+                                <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Assign an FTL to Call the Candidate:</label>
+                                <select id="postHoldFtlSelect" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; margin-bottom:1rem;">
                                     <option value="" disabled selected>Select an FTL...</option>
                                     <option value="richard.wiecko@next-gen.uk">Richard Wiecko</option>
                                     <option value="scott.carson@next-gen.uk">Scott Carson</option>
                                     <option value="stuart.whyte@next-gen.uk">Stuart Whyte</option>
                                     <option value="tom.green@next-gen.uk">Tom Green</option>
                                 </select>
+
+                                <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Proposed Start Date:</label>
+                                <input type="date" id="postHoldStartDate" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit;">
                             </div>
                             <div style="display:flex; gap:10px;">
                                 <button class="btn-danger" style="flex:1;" onclick="submitPostHoldDecision('${app.id}', 'Rejected')">Reject</button>
@@ -818,10 +843,18 @@
                 } else {
                     const finalColor = app.finalRecruitmentDecision === 'Approved' ? 'var(--success)' : 'var(--error)';
                     const finalIcon = app.finalRecruitmentDecision === 'Approved' ? '🎉' : '❌';
+                    
+                    let startDateDisplay = '';
+                    if (app.finalRecruitmentDecision === 'Approved' && app.startDate) {
+                        const sDateFormatted = new Date(app.startDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                        startDateDisplay = `<div style="font-size:0.9rem; color:white; font-weight:bold; margin-top:0.5rem;">Start Date: ${sDateFormatted}</div>`;
+                    }
+
                     packResultsHtml += `
                         <div style="text-align:center; padding: 1rem;">
                             <div style="font-size:2rem; margin-bottom:0.5rem;">${finalIcon}</div>
                             <div style="font-size:1.4rem; font-weight:800; color:${finalColor};">${app.finalRecruitmentDecision === 'Approved' ? 'Offer Sent' : 'Applicant Rejected'}</div>
+                            ${startDateDisplay}
                             <div style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;">Actioned by ${app.finalRecruitmentDecisionBy || 'System'}</div>
                             ${app.assignedFTL ? `<div style="font-size:0.85rem; color:var(--accent); font-weight:bold; margin-top:0.5rem;">Assigned Call: ${app.assignedFTL}</div>` : ''}
                         </div>
