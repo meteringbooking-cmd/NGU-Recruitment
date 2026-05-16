@@ -42,6 +42,17 @@
         .wait-time { color: #fcd34d; font-weight: 700; background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 2px 4px rgba(0,0,0,0.2); font-family: 'Work Sans', sans-serif;}
         .match-badge { display: inline-block; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
 
+        /* PULSING AMBER ANIMATION */
+        .pulse-amber {
+            border-color: var(--warning) !important;
+            animation: pulseAmber 2s infinite;
+        }
+        @keyframes pulseAmber {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.6); }
+            70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+
         .main-content { flex: 1; overflow-y: auto; padding: 2rem 3rem; background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%); }
         .empty-state { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 1.2rem; }
         .loading { text-align: center; padding: 2rem; color: var(--accent); font-weight: 600; }
@@ -66,15 +77,24 @@
 
         .btn-action { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; cursor: pointer; }
         .btn-action:hover { background: rgba(16, 185, 129, 0.2); }
+        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; }
         
         .btn-action-alt { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: rgba(0, 163, 224, 0.1); border: 1px solid rgba(0, 163, 224, 0.4); color: var(--accent); padding: 0.6rem 1.2rem; border-radius: 8px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; cursor: pointer; }
         .btn-action-alt:hover { background: rgba(0, 163, 224, 0.2); }
+        
+        .btn-danger { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 0.6rem 1.2rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-danger:hover { background: rgba(239, 68, 68, 0.2); }
 
         .btn-download { display: inline-flex; align-items: center; gap: 0.5rem; background: rgba(0, 163, 224, 0.1); border: 1px solid rgba(0, 163, 224, 0.4); color: var(--accent); padding: 0.5rem 1rem; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: all 0.2s; }
         .btn-download:hover { background: rgba(0, 163, 224, 0.2); }
         .signature-img { background: white; border-radius: 8px; padding: 0.5rem; max-width: 100%; height: auto; max-height: 120px; border: 2px solid var(--border); }
         .cert-list { display: flex; flex-direction: column; gap: 0.8rem; }
         .cert-item { display: flex; justify-content: space-between; align-items: center; background: var(--bg-input); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border); }
+
+        .checklist-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background: rgba(0,0,0,0.15); padding: 12px; border-radius: 8px; border: 1px solid var(--border); }
+        .checklist-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+        .checklist-item label { cursor: pointer; font-size: 0.95rem; user-select: none; width: 100%;}
+        .checklist-item.checked { border-color: var(--success); background: rgba(16, 185, 129, 0.05); color: #6ee7b7; text-decoration: line-through;}
 
         /* Review Modal Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;}
@@ -149,11 +169,17 @@
     import { getFirestore, collection, query, orderBy, onSnapshot, where, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     // --- INITIALIZE EMAILJS ---
+    const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
     const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_REMINDER_TEMPLATE = 'template_b6zrvyk';
     const EMAILJS_INTERNAL_NAME_CHECK = 'template_9m20itg';
     const EMAILJS_EXTERNAL_NAME_CHECK = 'template_cuqwtx4';
-    const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
+    
+    // Final Decision Templates
+    const EMAILJS_REJECT = 'template_un6lrqi';
+    const EMAILJS_APPROVED = 'template_sp8n3pp';
+    const EMAILJS_HOLD = 'template_l29dir8';
+
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
     const firebaseConfig = {
@@ -169,7 +195,7 @@
     const db = getFirestore(app);
     
     let applicationsData = [];
-    let interviewsData = []; // NEW: Store all interview schedules/packs
+    let interviewsData = []; 
     let liveVacancies = [];
     let showOnlyMatches = false;
     let selectedAppId = null; 
@@ -211,14 +237,13 @@
         renderSidebar();
     });
 
-    // --- INTERVIEWS SYNC (NEW) ---
+    // --- INTERVIEWS SYNC ---
     const qInt = query(collection(db, "NGU Interview Times"));
     onSnapshot(qInt, (snapshot) => {
         interviewsData = [];
         snapshot.forEach(doc => interviewsData.push({ id: doc.id, ...doc.data() }));
         renderSidebar();
         
-        // If viewing an applicant, re-render to inject interview pack results in real-time
         if (selectedAppId) {
             const updatedApp = applicationsData.find(a => a.id === selectedAppId);
             if (updatedApp) {
@@ -393,6 +418,109 @@
         }
     };
 
+    // --- FINAL RECRUITMENT DECISION LOGIC ---
+    window.handleRecDecisionChange = function() {
+        const val = document.getElementById('finalRecDecision').value;
+        const holdDiv = document.getElementById('holdReasonDiv');
+        if (val === 'Hold') {
+            holdDiv.style.display = 'block';
+        } else {
+            holdDiv.style.display = 'none';
+        }
+    };
+
+    window.submitFinalDecision = async function(appId) {
+        const decision = document.getElementById('finalRecDecision').value;
+        if (!decision) return alert("Please select a decision.");
+
+        let holdReason = '';
+        if (decision === 'Hold') {
+            holdReason = document.getElementById('holdReasonSelect').value;
+            if (!holdReason) return alert("Please select a reason for placing this on hold.");
+        }
+
+        if (!confirm(`Are you sure you want to confirm this action: ${decision}?`)) return;
+
+        const appData = applicationsData.find(a => a.id === appId);
+        const firstName = appData.fullName ? appData.fullName.split(' ')[0] : 'Applicant';
+
+        const updates = {
+            finalRecruitmentDecision: decision,
+            finalRecruitmentDecisionAt: new Date().toISOString(),
+            finalRecruitmentDecisionBy: localStorage.getItem('ngu_portal_username') || 'Recruiter'
+        };
+
+        let templateId = '';
+        if (decision === 'Approved') templateId = EMAILJS_APPROVED;
+        if (decision === 'Rejected') templateId = EMAILJS_REJECT;
+        if (decision === 'Hold') {
+            templateId = EMAILJS_HOLD;
+            updates.holdReason = holdReason;
+            updates.holdChecklist = {
+                notes: false,
+                checks: false,
+                manager: false,
+                compare: false,
+                outcome: false
+            };
+        }
+
+        try {
+            await updateDoc(doc(db, "NGUO New Applicants", appId), updates);
+
+            // Send Email
+            await emailjs.send(EMAILJS_SERVICE_ID, templateId, {
+                to_email: appData.personalDetails?.email,
+                first_name: firstName,
+                job_title: appData.position || 'the role'
+            });
+
+            alert(`Decision saved and email sent to ${appData.personalDetails?.email}`);
+        } catch (error) {
+            console.error("Error saving final decision:", error);
+            alert("Error processing decision.");
+        }
+    };
+
+    window.updateHoldChecklist = async function(appId, taskKey, isChecked) {
+        try {
+            const appRef = doc(db, "NGUO New Applicants", appId);
+            const updateObj = {};
+            updateObj[`holdChecklist.${taskKey}`] = isChecked;
+            await updateDoc(appRef, updateObj);
+        } catch (error) {
+            console.error("Error updating checklist:", error);
+            alert("Failed to save checklist status.");
+        }
+    };
+
+    window.submitPostHoldDecision = async function(appId, decision) {
+        if (!confirm(`Are you sure you want to finalize this applicant as: ${decision}?`)) return;
+
+        const appData = applicationsData.find(a => a.id === appId);
+        const firstName = appData.fullName ? appData.fullName.split(' ')[0] : 'Applicant';
+        const templateId = decision === 'Approved' ? EMAILJS_APPROVED : EMAILJS_REJECT;
+
+        try {
+            await updateDoc(doc(db, "NGUO New Applicants", appId), {
+                finalRecruitmentDecision: decision,
+                finalRecruitmentDecisionAt: new Date().toISOString(),
+                finalRecruitmentDecisionBy: localStorage.getItem('ngu_portal_username') || 'Recruiter'
+            });
+
+            await emailjs.send(EMAILJS_SERVICE_ID, templateId, {
+                to_email: appData.personalDetails?.email,
+                first_name: firstName,
+                job_title: appData.position || 'the role'
+            });
+
+            alert(`Final outcome saved and email sent!`);
+        } catch (error) {
+            console.error("Error saving post-hold decision:", error);
+            alert("Error processing decision.");
+        }
+    };
+
     function isAreaMatch(appPosition, appPostcode) {
         const appArea = getPostcodeArea(appPostcode);
         if (!appArea) return false;
@@ -434,6 +562,7 @@
 
             const reviewsCount = app.reviews ? app.reviews.length : 0;
             let reviewStatus = `<span class="wait-time">⏱ ${waitTime}</span>`;
+            let pulseClass = '';
             
             if (reviewsCount >= 2) {
                 reviewStatus = `<span style="color:var(--success); font-weight:700;">✓ Reviewed</span>`;
@@ -443,6 +572,12 @@
             if (matchedInterview) {
                 if (matchedInterview.interviewCompleted) {
                     const rec = matchedInterview.interviewData?.recommendation || 'Completed';
+                    
+                    // If recruitment hasn't fully approved/rejected yet, pulse!
+                    if (app.finalRecruitmentDecision !== 'Approved' && app.finalRecruitmentDecision !== 'Rejected') {
+                        pulseClass = 'pulse-amber';
+                    }
+
                     // Style differently based on recommendation outcome
                     let recColor = 'var(--success)';
                     if (rec === 'Do Not Proceed') recColor = 'var(--error)';
@@ -455,8 +590,12 @@
                 }
             }
 
+            // Final Override if Recruitment has completely closed the file
+            if (app.finalRecruitmentDecision === 'Approved') reviewStatus = `<span style="color:var(--success); font-weight:800;">🎉 Offer Sent</span>`;
+            if (app.finalRecruitmentDecision === 'Rejected') reviewStatus = `<span style="color:var(--error); font-weight:800;">❌ Rejected</span>`;
+
             const div = document.createElement('div');
-            div.className = 'applicant-item';
+            div.className = `applicant-item ${pulseClass}`;
             if (selectedAppId === app.id) div.classList.add('active');
 
             div.innerHTML = `
@@ -568,7 +707,7 @@
             }
         }
 
-        // --- INTERVIEW RESULTS HTML (NEW) ---
+        // --- INTERVIEW RESULTS & FINAL ACTIONS HTML ---
         let interviewResultsHtml = '';
         if (matchedInterview) {
             const intv = matchedInterview;
@@ -580,11 +719,10 @@
 
             let packResultsHtml = '';
             
-            // If the interview is actually finished, build out the detailed result pack!
+            // If interview is finished, build out the detailed result pack and Recruitment Actions!
             if (intv.interviewCompleted && intv.interviewData) {
                 const data = intv.interviewData;
                 
-                // Color code the recommendation
                 let recColor = 'var(--success)';
                 if (data.recommendation === 'Do Not Proceed') recColor = 'var(--error)';
                 else if (data.recommendation.includes('Hold')) recColor = 'var(--warning)';
@@ -608,17 +746,110 @@
                     </div>
                 `;
 
-                // Render the Scorecard Grid
                 if (data.scores && data.scores.length > 0) {
                     let scoreRows = data.scores.map(s => `<tr><td><strong>${s.criteria}</strong></td><td style="text-align:center; font-weight:bold; color:var(--accent); font-size:1.1rem;">${s.score}</td><td>${s.comment || '<span style="color:var(--text-muted)">-</span>'}</td></tr>`).join('');
                     packResultsHtml += `
                         <h4 style="margin-top: 2rem; color: var(--text-light); margin-bottom: 0.8rem; font-size: 1rem;">Detailed Scorecard Breakdown</h4>
-                        <table class="data-table" style="background: rgba(0,0,0,0.15); border-radius: 8px; overflow: hidden;">
+                        <table class="data-table" style="background: rgba(0,0,0,0.15); border-radius: 8px; overflow: hidden; margin-bottom: 2rem;">
                             <thead><tr><th style="width:30%;">Criteria</th><th style="text-align:center; width:15%;">Score</th><th>Interviewer Comments</th></tr></thead>
                             <tbody>${scoreRows}</tbody>
                         </table>
                     `;
                 }
+
+                // ==========================================
+                // RECRUITMENT DECISION ACTION BLOCK
+                // ==========================================
+                packResultsHtml += `<div style="margin-top:2rem; padding:1.5rem; background:var(--bg-card); border:2px solid var(--warning); border-radius:12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">`;
+                packResultsHtml += `<h3 style="color:var(--warning); margin-bottom:1rem; font-size:1.3rem;">Final Recruitment Action</h3>`;
+
+                if (!app.finalRecruitmentDecision) {
+                    // No decision made yet
+                    packResultsHtml += `
+                        <div style="margin-bottom: 1rem;">
+                            <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold;">Select Final Outcome:</label>
+                            <select id="finalRecDecision" onchange="handleRecDecisionChange()" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--border); background:var(--bg-input); color:white; font-size:1rem; outline:none;">
+                                <option value="" disabled selected>Select an outcome...</option>
+                                <option value="Approved">Approved to Offer</option>
+                                <option value="Hold">Hold for Further Review</option>
+                                <option value="Rejected">Reject Candidate</option>
+                            </select>
+                        </div>
+                        <div id="holdReasonDiv" style="display:none; margin-bottom: 1rem;">
+                            <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--accent);">Select Reason for Hold:</label>
+                            <select id="holdReasonSelect" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--accent); background:var(--bg-input); color:white; font-size:1rem; outline:none;">
+                                <option value="" disabled selected>Select internal reason...</option>
+                                <option value="Comparing final applicants">Comparing final applicants</option>
+                                <option value="Awaiting references">Awaiting references</option>
+                                <option value="Qualification verification">Qualification verification</option>
+                                <option value="Role Paused">Role Paused</option>
+                                <option value="Internal discussion required">Internal discussion required</option>
+                                <option value="Need additional checks">Need additional checks</option>
+                            </select>
+                        </div>
+                        <button class="btn-action-alt" style="width:100%; justify-content:center; padding:0.8rem;" onclick="submitFinalDecision('${app.id}')">Submit Decision & Trigger Email</button>
+                    `;
+                } else if (app.finalRecruitmentDecision === 'Hold') {
+                    // Currently On Hold - Display Checklist
+                    const hc = app.holdChecklist || {};
+                    const isAllChecked = (hc.notes && hc.checks && hc.manager && hc.compare && hc.outcome);
+                    
+                    packResultsHtml += `
+                        <div style="margin-bottom:1.5rem; font-size:1rem; color:var(--text-light);">
+                            <strong>Status:</strong> <span style="color:var(--warning);">On Hold</span><br>
+                            <strong>Reason:</strong> ${app.holdReason || 'Review Pending'}
+                        </div>
+                        <div style="margin-bottom:1.5rem;">
+                            <label style="display:block; margin-bottom:0.8rem; font-size:0.95rem; font-weight:bold; color:var(--accent);">Internal Hold Tasks:</label>
+                            
+                            <div class="checklist-item ${hc.notes ? 'checked' : ''}">
+                                <input type="checkbox" id="chk_notes" onchange="updateHoldChecklist('${app.id}', 'notes', this.checked)" ${hc.notes ? 'checked' : ''}>
+                                <label for="chk_notes">Review interview notes</label>
+                            </div>
+                            <div class="checklist-item ${hc.checks ? 'checked' : ''}">
+                                <input type="checkbox" id="chk_checks" onchange="updateHoldChecklist('${app.id}', 'checks', this.checked)" ${hc.checks ? 'checked' : ''}>
+                                <label for="chk_checks">Complete checks</label>
+                            </div>
+                            <div class="checklist-item ${hc.manager ? 'checked' : ''}">
+                                <input type="checkbox" id="chk_manager" onchange="updateHoldChecklist('${app.id}', 'manager', this.checked)" ${hc.manager ? 'checked' : ''}>
+                                <label for="chk_manager">Get manager decision</label>
+                            </div>
+                            <div class="checklist-item ${hc.compare ? 'checked' : ''}">
+                                <input type="checkbox" id="chk_compare" onchange="updateHoldChecklist('${app.id}', 'compare', this.checked)" ${hc.compare ? 'checked' : ''}>
+                                <label for="chk_compare">Compare shortlisted applicants</label>
+                            </div>
+                            <div class="checklist-item ${hc.outcome ? 'checked' : ''}">
+                                <input type="checkbox" id="chk_outcome" onchange="updateHoldChecklist('${app.id}', 'outcome', this.checked)" ${hc.outcome ? 'checked' : ''}>
+                                <label for="chk_outcome">Final outcome by due date</label>
+                            </div>
+                        </div>
+                    `;
+
+                    if (isAllChecked) {
+                        packResultsHtml += `
+                            <div style="display:flex; gap:10px;">
+                                <button class="btn-danger" style="flex:1;" onclick="submitPostHoldDecision('${app.id}', 'Rejected')">Reject</button>
+                                <button class="btn-action" style="flex:2; font-size:1rem;" onclick="submitPostHoldDecision('${app.id}', 'Approved')">Approved to Offer</button>
+                            </div>
+                        `;
+                    } else {
+                        packResultsHtml += `<div style="text-align:center; color:var(--text-muted); font-size:0.9rem; font-style:italic;">Complete all tasks above to unlock final decisions.</div>`;
+                    }
+
+                } else {
+                    // Approved or Rejected permanently
+                    const finalColor = app.finalRecruitmentDecision === 'Approved' ? 'var(--success)' : 'var(--error)';
+                    const finalIcon = app.finalRecruitmentDecision === 'Approved' ? '🎉' : '❌';
+                    packResultsHtml += `
+                        <div style="text-align:center; padding: 1rem;">
+                            <div style="font-size:2rem; margin-bottom:0.5rem;">${finalIcon}</div>
+                            <div style="font-size:1.4rem; font-weight:800; color:${finalColor};">${app.finalRecruitmentDecision === 'Approved' ? 'Offer Sent' : 'Applicant Rejected'}</div>
+                            <div style="font-size:0.85rem; color:var(--text-muted); margin-top:0.5rem;">Actioned by ${app.finalRecruitmentDecisionBy || 'System'}</div>
+                        </div>
+                    `;
+                }
+
+                packResultsHtml += `</div>`;
             }
 
             interviewResultsHtml = `
