@@ -313,7 +313,6 @@
                 <p style="color: var(--text-light); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
                     Congratulations! Your signed contract has been securely saved and emailed to recruitment.
                 </p>
-                <!-- This triggers the Welcome Popup instead of closing -->
                 <button class="btn-primary" style="width: 200px;" onclick="transitionToOnboarding()">Continue ➔</button>
             </div>
 
@@ -399,14 +398,17 @@
             }
 
             querySnapshot.forEach((doc) => { currentApplicant = { id: doc.id, ...doc.data() }; });
+            
+            // SAVE SESSION TO THE BROWSER
+            localStorage.setItem('ngu_applicant_user', user);
+            
             await fetchVacancyData(currentApplicant.position, currentApplicant.personalDetails?.postcode);
 
             populatePortalData();
             
-            // Check if contract already accepted upon login
             if(currentApplicant.contractAccepted) {
-                document.getElementById('btnViewOffer').style.display = 'none'; // Hide offer button
-                transitionToOnboarding(); // Skip directly to onboarding flow
+                document.getElementById('btnViewOffer').style.display = 'none';
+                transitionToOnboarding();
             }
 
             document.getElementById('loginScreen').style.display = 'none';
@@ -691,7 +693,6 @@
                     contractText = contractText.replace(/\[Employee Name\]/gi, `<strong style="color:var(--primary);">${empName}</strong>`);
                     contractText = contractText.replace(/\[Employee Address\]/gi, `<strong style="color:var(--primary);">${empAddr}</strong>`);
                     
-                    // Convert line breaks to HTML breaks so PDF engine reads them properly
                     contractText = contractText.replace(/\n/g, '<br>');
                     
                     docEl.innerHTML = contractText;
@@ -727,10 +728,8 @@
         btn.disabled = true;
         btn.textContent = 'Generating PDF...';
 
-        // 1. Grab the raw HTML content from the viewer
         const rawHTML = document.getElementById('contractDocumentData').innerHTML;
         
-        // 2. Wrap it in a clean, print-friendly container string
         const printContent = `
             <div style="font-family: 'Times New Roman', serif; font-size: 14px; line-height: 1.6; color: black; background: white; padding: 20px; white-space: pre-wrap;">
                 ${rawHTML}
@@ -746,7 +745,6 @@
             pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
         };
 
-        // 3. Feed the string directly into html2pdf
         html2pdf().set(opt).from(printContent).save().then(() => {
             btn.disabled = false;
             btn.textContent = '📄 Download PDF';
