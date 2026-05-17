@@ -312,7 +312,7 @@
     const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_DBS_YES = 'template_azauav5';
     const EMAILJS_DBS_NO = 'template_1aay8zl';
-    const EMAILJS_FINAL_VERIFY = 'template_ada5v6u'; // Fallback generic or create a new one for onboarding complete
+    const EMAILJS_FINAL_VERIFY = 'template_3qmq3bb';
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
     const firebaseConfig = {
@@ -350,7 +350,6 @@
         const p = currentApplicant.personalDetails || {};
         document.getElementById('pdTitle').value = p.title || '';
         
-        // Split name rudimentarily if needed, or rely on them filling it out
         const nameParts = (currentApplicant.fullName || '').split(' ');
         document.getElementById('pdFirst').value = nameParts[0] || '';
         document.getElementById('pdLast').value = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
@@ -494,19 +493,28 @@
 
             // Fire Emails
             const emails = [];
+            const safeStart = currentApplicant.startDate ? new Date(currentApplicant.startDate).toLocaleDateString('en-GB') : 'TBC';
             
             // 1. Notify Recruitment Onboarding is Complete
             emails.push(emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FINAL_VERIFY, {
                 applicant_name: currentApplicant.fullName,
                 job_title: currentApplicant.position,
-                message: "has completed their onboarding file. Please review their uploaded documents and uniform requests."
+                start_date: safeStart
             }));
 
             // 2. Fire DBS Specific Email
             if(dbsChoice === 'yes') {
-                emails.push(emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DBS_YES, { applicant_name: currentApplicant.fullName }));
+                emails.push(emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DBS_YES, { 
+                    applicant_name: currentApplicant.fullName,
+                    job_title: currentApplicant.position,
+                    start_date: safeStart
+                }));
             } else {
-                emails.push(emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DBS_NO, { applicant_name: currentApplicant.fullName }));
+                emails.push(emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DBS_NO, { 
+                    applicant_name: currentApplicant.fullName,
+                    job_title: currentApplicant.position,
+                    start_date: safeStart
+                }));
             }
 
             await Promise.allSettled(emails);
