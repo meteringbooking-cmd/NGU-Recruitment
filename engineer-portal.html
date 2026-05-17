@@ -724,48 +724,37 @@
         }
     };
 
-    // --- FIX: RENDER FULL LENGTH PDF DOCUMENT ---
+    // --- FIX: RENDER FULL LENGTH PDF DOCUMENT NATIVELY ---
     window.downloadContractPDF = function() {
         const btn = document.getElementById('btnDownloadPDF');
         btn.disabled = true;
         btn.textContent = 'Generating PDF...';
 
-        const originalElement = document.getElementById('contractDocumentData');
+        // 1. Grab the raw HTML content from the viewer
+        const rawHTML = document.getElementById('contractDocumentData').innerHTML;
         
-        // Create an offline twin clone to avoid messing up the visible layout
-        const clone = originalElement.cloneNode(true);
-        
-        // Strip out scroll heights, max constraints, and overflow bindings completely
-        clone.style.width = '100%';
-        clone.style.height = 'auto';
-        clone.style.maxHeight = 'none';
-        clone.style.overflow = 'visible';
-        clone.style.position = 'absolute';
-        clone.style.left = '-9999px';
-        clone.style.top = '-9999px';
-        clone.style.backgroundColor = 'white';
-        clone.style.color = 'black';
-        clone.style.padding = '20px';
-        
-        document.body.appendChild(clone);
+        // 2. Wrap it in a clean, print-friendly container string
+        const printContent = `
+            <div style="font-family: 'Times New Roman', serif; font-size: 14px; line-height: 1.6; color: black; background: white; padding: 20px;">
+                ${rawHTML}
+            </div>
+        `;
 
         const opt = {
-            margin:       [0.5, 0.5, 0.5, 0.5],
+            margin:       0.5,
             filename:     `${currentApplicant.fullName.replace(/\s+/g, '_')}_Contract.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true, logging: false },
+            html2canvas:  { scale: 2, useCORS: true },
             jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
             pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
         };
 
-        html2pdf().set(opt).from(clone).save().then(() => {
-            // Clean up the DOM tree and restore the interactive button state
-            document.body.removeChild(clone);
+        // 3. Feed the string directly into html2pdf (bypasses screen rendering bugs entirely)
+        html2pdf().set(opt).from(printContent).save().then(() => {
             btn.disabled = false;
             btn.textContent = '📄 Download PDF';
         }).catch((err) => {
             console.error("PDF generation failed:", err);
-            document.body.removeChild(clone);
             btn.disabled = false;
             btn.textContent = '📄 Download PDF';
             alert("Could not build the PDF document. Please try again.");
