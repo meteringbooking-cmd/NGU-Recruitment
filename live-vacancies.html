@@ -179,10 +179,22 @@
         return match ? match[0].toUpperCase() : '';
     }
 
-    // 1. Listen to Applications
+    // 1. Listen to Applications (Filter to ACTIVE ONLY)
     db.collection(appsCollection).onSnapshot((snapshot) => {
         allApplications = [];
-        snapshot.forEach(doc => allApplications.push(doc.data()));
+        snapshot.forEach(doc => {
+            const app = doc.data();
+            
+            // Define what makes an application "Inactive"
+            const isArchived = app.archived === true || app.isArchived === true || app.status === 'Archived';
+            const isRejected = app.status === 'Rejected' || app.status === 'Declined';
+            const isHired = app.contractAccepted === true || app.offerAccepted === true || app.onboardingCompleted === true;
+            
+            // Only push to array if they are an active candidate looking for a role
+            if (!isArchived && !isRejected && !isHired) {
+                allApplications.push(app);
+            }
+        });
         renderGrid(); 
     });
 
@@ -274,7 +286,7 @@
             }
 
             const badgeClass = matchCount > 0 ? 'applicant-badge' : 'applicant-badge empty';
-            const badgeText = matchCount === 1 ? `1 Area Match (${vacArea})` : `${matchCount} Area Matches (${vacArea})`;
+            const badgeText = matchCount === 1 ? `1 Active Area Match (${vacArea})` : `${matchCount} Active Area Matches (${vacArea})`;
             const badgeIcon = matchCount > 0 ? '📍 ' : '';
 
             const cardHtml = `
