@@ -145,7 +145,7 @@
                 <h1 style="margin-top: 10px;">Hello, <span id="welcomeName"></span>!</h1>
                 <p style="color: var(--text-muted); font-size: 0.95rem;">Review your details and finalize your onboarding below.</p>
             </div>
-            <button class="pulse-btn" onclick="openOfferModal()">📄 View Offer Summary</button>
+            <button class="pulse-btn" id="btnViewOffer" onclick="openOfferModal()">📄 View Offer Summary</button>
         </div>
 
         <div class="section">
@@ -311,10 +311,10 @@
                 <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
                 <h2 style="color: var(--success); margin-bottom: 1rem;">Contract Accepted!</h2>
                 <p style="color: var(--text-light); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
-                    Congratulations! Your signed contract has been securely saved and emailed to recruitment.<br><br>
-                    Your Reporting Manager will be in touch with you shortly to finalize details for your first day.
+                    Congratulations! Your signed contract has been securely saved and emailed to recruitment.
                 </p>
-                <button class="btn-primary" style="width: 200px;" onclick="closeContractModal()">Close Portal</button>
+                <!-- This triggers the Welcome Popup instead of closing -->
+                <button class="btn-primary" style="width: 200px;" onclick="transitionToOnboarding()">Continue ➔</button>
             </div>
 
         </div>
@@ -327,10 +327,10 @@
     // --- EMAILJS CONFIG ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
     const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
-    const EMAILJS_Q_OFFER = 'template_vzmdy3a'; 
-    const EMAILJS_Q_CONTRACT = 'template_z4p2v26'; 
-    const EMAILJS_REC_CONFIRM = 'template_ada5v6u'; 
-    const EMAILJS_EMP_CONFIRM = 'template_qqpzv88'; 
+    const EMAILJS_Q_OFFER = 'template_vzmdy3a'; // Rec Query
+    const EMAILJS_Q_CONTRACT = 'template_z4p2v26'; // FTL Query
+    const EMAILJS_REC_CONFIRM = 'template_ada5v6u'; // Recruitment Accept Confirm
+    const EMAILJS_EMP_CONFIRM = 'template_qqpzv88'; // Employee Accept Confirm
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
     const firebaseConfig = {
@@ -402,6 +402,13 @@
             await fetchVacancyData(currentApplicant.position, currentApplicant.personalDetails?.postcode);
 
             populatePortalData();
+            
+            // Check if contract already accepted upon login
+            if(currentApplicant.contractAccepted) {
+                document.getElementById('btnViewOffer').style.display = 'none'; // Hide offer button
+                transitionToOnboarding(); // Skip directly to onboarding flow
+            }
+
             document.getElementById('loginScreen').style.display = 'none';
             document.getElementById('portalScreen').style.display = 'block';
 
@@ -523,18 +530,10 @@
 
     // --- OFFER MODAL CONTROLS ---
     window.openOfferModal = function() {
-        if (currentApplicant && currentApplicant.contractAccepted) {
-            document.getElementById('actionButtons').style.display = 'none';
-            document.getElementById('offerQuestionBlock').style.display = 'none';
-            const msgEl = document.getElementById('successMessage');
-            msgEl.innerHTML = "🎉 Contract Already Accepted!<br><br>Welcome to the team! Your Reporting Manager will be in touch shortly regarding your first day.";
-            msgEl.style.display = 'block';
-        } else {
-            document.getElementById('actionButtons').style.display = 'flex';
-            document.getElementById('offerQuestionBlock').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'none';
-            document.getElementById('offerQuestionText').value = '';
-        }
+        document.getElementById('actionButtons').style.display = 'flex';
+        document.getElementById('offerQuestionBlock').style.display = 'none';
+        document.getElementById('successMessage').style.display = 'none';
+        document.getElementById('offerQuestionText').value = '';
         document.getElementById('offerModal').classList.add('active');
     };
 
@@ -722,7 +721,7 @@
         }
     };
 
-    // --- FIX: RENDER FULL LENGTH PDF DOCUMENT NATIVELY ---
+    // --- RENDER FULL LENGTH PDF DOCUMENT NATIVELY ---
     window.downloadContractPDF = function() {
         const btn = document.getElementById('btnDownloadPDF');
         btn.disabled = true;
@@ -747,7 +746,7 @@
             pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
         };
 
-        // 3. Feed the string directly into html2pdf (bypasses screen rendering bugs entirely)
+        // 3. Feed the string directly into html2pdf
         html2pdf().set(opt).from(printContent).save().then(() => {
             btn.disabled = false;
             btn.textContent = '📄 Download PDF';
@@ -794,6 +793,7 @@
             });
 
             currentApplicant.contractAccepted = true; 
+            document.getElementById('btnViewOffer').style.display = 'none';
 
             const pRec = emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REC_CONFIRM, {
                 applicant_name: currentApplicant.fullName,
@@ -814,6 +814,28 @@
             btn.disabled = false;
             btn.textContent = '✅ Submit Signed Contract';
         }
+    };
+
+    // --- ONBOARDING TRANSITION ---
+    window.transitionToOnboarding = function() {
+        closeContractModal();
+        
+        const formatStart = currentApplicant.startDate 
+            ? new Date(currentApplicant.startDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) 
+            : 'TBC';
+
+        const welcomeHtml = `
+            <div class="modal-overlay active" id="onboardingWelcomeModal">
+                <div class="modal-content" style="text-align:center;">
+                    <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU" style="max-height: 50px; margin-bottom: 1rem;">
+                    <h2 style="color: var(--accent); margin-bottom: 1rem;">Welcome to Next Generation Utilities!</h2>
+                    <p style="color: var(--text-light); margin-bottom: 1rem;">Your target start date is: <strong style="color:var(--success);">${formatStart}</strong></p>
+                    <p style="color: var(--text-muted); margin-bottom: 2rem;">We are thrilled to have you. To ensure everything is ready for your first day, including your uniform and fleet setup, let's complete your onboarding file.</p>
+                    <button class="btn-primary" style="width:100%;" onclick="window.location.href='complete-onboarding.html'">Let's Complete Your Onboarding Journey</button>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', welcomeHtml);
     };
 
 </script>
