@@ -5,35 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NGU Recruitment Portal</title>
     
-    <!-- 
-      --- PROTOTYPE SECURITY SCRIPT ---
-      Executes immediately to check 'session' data in localStorage before rendering body.
-      All users must be logged in to see the hub.
-    -->
     <script>
         (function() {
             const username = localStorage.getItem('ngu_portal_username');
-            // 1. Check if user is logged in at all
             if (!username) {
                 console.log("No session found, redirecting to login.");
                 window.location.href = 'login.html';
-                return; // Stop execution
+                return;
             }
-            // If we get here, user is allowed. Body will render normally.
-            console.log("Access granted to user: ", username);
         })();
     </script>
     
     <style>
         :root {
-            /* Shared NGU Dark Theme */
-            --body-bg: #141d26;
+            var(--body-bg): #141d26;
             --container-bg: #1c2938;
             --input-bg: #2d3d50;
             --panel-border: #38444d;
             --primary-text: #e1e8ed;
             --secondary-text: #8899a6;
-            --accent-color: #00d4ff; /* NGU Cyan */
+            --accent-color: #00d4ff; 
             --danger-color: #ef4444;
         }
 
@@ -47,12 +38,8 @@
             padding: 20px;
         }
 
-        .main-container {
-            max-width: 1400px; /* Expanded for widescreen use */
-            margin: 0 auto;
-        }
+        .main-container { max-width: 1400px; margin: 0 auto; }
 
-        /* Header Styling */
         .page-header {
             background-color: var(--container-bg);
             padding: 20px 30px;
@@ -78,36 +65,12 @@
         }
         .btn-logout-header:hover { border-color: var(--danger-color); color: var(--danger-color); background-color: rgba(239, 68, 68, 0.05);}
 
-        /* Hub Section */
-        .hub-welcome {
-            text-align: center;
-            margin-bottom: 50px;
-            padding: 0 20px;
-        }
-        .hub-welcome h2 {
-            font-size: 2em;
-            color: var(--primary-text);
-            font-weight: 800;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        .hub-welcome p {
-            color: var(--secondary-text);
-            max-width: 650px;
-            margin: 0 auto;
-            font-size: 1.05em;
-        }
+        .hub-welcome { text-align: center; margin-bottom: 50px; padding: 0 20px; }
+        .hub-welcome h2 { font-size: 2em; color: var(--primary-text); font-weight: 800; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .hub-welcome p { color: var(--secondary-text); max-width: 650px; margin: 0 auto; font-size: 1.05em; }
 
-        /* App Grid - Strictly 4 across */
-        .app-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr); /* Forces exactly 4 columns */
-            gap: 25px;
-            padding-bottom: 40px;
-        }
+        .app-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; padding-bottom: 40px; }
 
-        /* App Card styling */
         .app-card {
             background-color: var(--container-bg);
             border: 1px solid var(--panel-border);
@@ -115,84 +78,30 @@
             padding: 30px 20px; 
             text-decoration: none;
             color: var(--primary-text);
-            display: flex;
-            flex-direction: column;
-            align-items: center; 
-            text-align: center;
-            gap: 15px;
-            transition: all 0.25s ease;
-            position: relative;
-            cursor: pointer;
+            display: flex; flex-direction: column; align-items: center; text-align: center; gap: 15px;
+            transition: all 0.25s ease; position: relative; cursor: pointer;
         }
 
-        .app-card:hover:not(.locked) {
-            border-color: var(--accent-color);
-            box-shadow: 0 10px 30px rgba(0,212,255,0.15);
-            transform: translateY(-3px);
-        }
+        .app-card:hover:not(.locked) { border-color: var(--accent-color); box-shadow: 0 10px 30px rgba(0,212,255,0.15); transform: translateY(-3px); }
 
-        /* Professional Icon Styling */
-        .app-icon {
-            margin-bottom: 10px;
-        }
-        .app-icon svg {
-            width: 45px;
-            height: 45px;
-            stroke: var(--accent-color); 
-            stroke-width: 1.5;
-            fill: none;
-        }
+        .app-icon { margin-bottom: 10px; }
+        .app-icon svg { width: 45px; height: 45px; stroke: var(--accent-color); stroke-width: 1.5; fill: none; }
 
-        .app-title {
-            font-size: 1.1em;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-            color: var(--primary-text);
-        }
-
-        .app-desc {
-            font-size: 0.9em;
-            color: var(--secondary-text);
-            flex-grow: 1; 
-            margin-bottom: 10px;
-            line-height: 1.5;
-        }
+        .app-title { font-size: 1.1em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--primary-text); }
+        .app-desc { font-size: 0.9em; color: var(--secondary-text); flex-grow: 1; margin-bottom: 10px; line-height: 1.5; }
 
         .btn-go {
-            margin-top: auto;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.85em;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--accent-color);
-            padding: 8px 16px;
-            border: 1px solid rgba(0, 212, 255, 0.3);
-            border-radius: 4px;
-            transition: background 0.2s;
+            margin-top: auto; display: inline-flex; align-items: center; gap: 8px; font-size: 0.85em; font-weight: 700;
+            text-transform: uppercase; color: var(--accent-color); padding: 8px 16px; border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 4px; transition: background 0.2s;
         }
 
-        .app-card:hover:not(.locked) .btn-go {
-            background-color: rgba(0, 212, 255, 0.1);
-        }
+        .app-card:hover:not(.locked) .btn-go { background-color: rgba(0, 212, 255, 0.1); }
 
-        /* NEW Badge Styling */
         .new-badge {
-            position: absolute;
-            top: -12px;
-            left: -12px;
-            background-color: var(--danger-color);
-            color: white;
-            font-size: 0.75em;
-            font-weight: 800;
-            padding: 5px 12px;
-            border-radius: 20px;
-            letter-spacing: 0.05em;
-            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
-            animation: pulse-red 2s infinite;
-            z-index: 10;
+            position: absolute; top: -12px; left: -12px; background-color: var(--danger-color); color: white;
+            font-size: 0.75em; font-weight: 800; padding: 5px 12px; border-radius: 20px; letter-spacing: 0.05em;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4); animation: pulse-red 2s infinite; z-index: 10;
         }
 
         @keyframes pulse-red {
@@ -202,34 +111,13 @@
         }
 
         /* --- LOCKED CARD STYLING --- */
-        .app-card.locked {
-            opacity: 0.3;
-            cursor: not-allowed;
-            pointer-events: none; 
-            filter: grayscale(100%);
-        }
-
-        /* Lock Overlay Text */
+        .app-card.locked { opacity: 0.3; cursor: not-allowed; pointer-events: none; filter: grayscale(100%); }
         .lock-overlay {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background-color: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--panel-border);
-            color: var(--secondary-text);
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.7em;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            display: none; 
-            align-items: center; gap: 5px;
+            position: absolute; top: 15px; right: 15px; background-color: rgba(0, 0, 0, 0.3); border: 1px solid var(--panel-border);
+            color: var(--secondary-text); padding: 4px 10px; border-radius: 20px; font-size: 0.7em; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.05em; display: none; align-items: center; gap: 5px;
         }
-
-        .app-card.locked .lock-overlay {
-            display: flex;
-        }
+        .app-card.locked .lock-overlay { display: flex; }
 
         /* --- SECONDARY LINKS SECTION --- */
         .other-links-container { background: var(--container-bg); border: 1px solid var(--panel-border); border-radius: 12px; overflow: hidden; margin-bottom: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
@@ -244,15 +132,8 @@
         .secondary-link:hover { border-color: var(--accent-color); color: var(--accent-color); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,212,255,0.1); }
         .secondary-icon { font-size: 1.2em; }
 
-        /* Responsive Breakpoints */
-        @media (max-width: 1100px) {
-            .app-grid { grid-template-columns: repeat(3, 1fr); }
-        }
-
-        @media (max-width: 850px) {
-            .app-grid { grid-template-columns: repeat(2, 1fr); }
-        }
-
+        @media (max-width: 1100px) { .app-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 850px) { .app-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 600px) {
             .page-header { flex-direction: column; text-align: center; gap: 10px; padding: 20px;}
             .header-user-info { flex-direction: column; gap: 5px;}
@@ -283,190 +164,83 @@
 
     <div class="app-grid">
         
-        <!-- App 1: Recruitment Submission -->
         <a href="recruit-approval-form.html" class="app-card" id="card-submission">
-            <div class="lock-overlay">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                Restricted
-            </div>
-            <div class="app-icon">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
-                </svg>
-            </div>
+            <div class="lock-overlay"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Restricted</div>
+            <div class="app-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></div>
             <div class="app-title">Personnel Requisition</div>
             <div class="app-desc">Initiate a formal Recruitment Authorisation Request for new headcount or replacement roles.</div>
             <div class="btn-go">Open Request →</div>
         </a>
 
-        <!-- App 2: Recruitment Form Display (Workflow Manager) -->
         <a href="recruit-approval-form-display.html" class="app-card" id="card-manager">
-            <div class="lock-overlay">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                Restricted
-            </div>
-            <div class="app-icon">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="3" y1="9" x2="21" y2="9"></line>
-                    <line x1="9" y1="21" x2="9" y2="9"></line>
-                </svg>
-            </div>
+            <div class="lock-overlay"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Restricted</div>
+            <div class="app-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg></div>
             <div class="app-title">Workflow Manager</div>
             <div class="app-desc">Review submitted requests, manage approval sign-offs, and track active recruitment workflows.</div>
             <div class="btn-go">Open Manager →</div>
         </a>
 
-        <!-- App 3: Live Vacancies -->
         <a href="live-vacancies.html" class="app-card" id="card-live-vacancies">
-            <div class="lock-overlay">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                Restricted
-            </div>
-            <div class="app-icon">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="6"></line>
-                    <line x1="8" y1="2" x2="8" y2="6"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                </svg>
-            </div>
+            <div class="lock-overlay"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Restricted</div>
+            <div class="app-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></div>
             <div class="app-title">Live Vacancies</div>
             <div class="app-desc">View currently approved roles, job descriptions, and active recruitment requirements.</div>
             <div class="btn-go">View Vacancies →</div>
         </a>
 
-        <!-- App 4: View Applications -->
-        <a href="https://ngu-recruitment-portal.vercel.app/view-applications.html" class="app-card" id="card-applications">
+        <a href="view-applications.html" class="app-card" id="card-applications">
             <div class="new-badge" id="badge-applications" style="display: none;">NEW</div>
-            <div class="lock-overlay">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                Restricted
-            </div>
-            <div class="app-icon">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <circle cx="10" cy="13" r="1"></circle>
-                    <circle cx="10" cy="17" r="1"></circle>
-                </svg>
-            </div>
+            <div class="lock-overlay"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Restricted</div>
+            <div class="app-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><circle cx="10" cy="13" r="1"></circle><circle cx="10" cy="17" r="1"></circle></svg></div>
             <div class="app-title">View Applications</div>
             <div class="app-desc">Review submitted external job applications, candidate files, and uploaded credentials.</div>
             <div class="btn-go">View Applications →</div>
         </a>
 
-        <!-- App 5: FTL Interview Dashboard -->
         <a href="FTL-interview-availability.html" class="app-card" id="card-ftl-interviews">
-            <div class="lock-overlay">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                Restricted
-            </div>
-            <div class="app-icon">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="9" cy="7" r="4"></circle>
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                </svg>
-            </div>
+            <div class="lock-overlay"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Restricted</div>
+            <div class="app-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>
             <div class="app-title">FTL Interviews</div>
             <div class="app-desc">Dashboard for Field Team Leaders to claim candidate interviews and submit scorecards.</div>
             <div class="btn-go">Open Dashboard →</div>
         </a>
 
-        <!-- App 6: Admin Onboarding Review -->
         <a href="admin-review.html" class="app-card" id="card-admin-review">
-            <div class="lock-overlay">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                Restricted
-            </div>
-            <div class="app-icon">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    <polyline points="9 12 11 14 15 10"></polyline>
-                </svg>
-            </div>
+            <div class="lock-overlay"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Restricted</div>
+            <div class="app-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><polyline points="9 12 11 14 15 10"></polyline></svg></div>
             <div class="app-title">Admin Review</div>
             <div class="app-desc">Review submitted onboarding files. Verify uploaded documents, uniforms, and bank details.</div>
             <div class="btn-go">Open Review →</div>
         </a>
 
-        <!-- App 7: Contracts & Policies -->
         <a href="contract.html" class="app-card" id="card-contracts">
-            <div class="lock-overlay">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                Restricted
-            </div>
-            <div class="app-icon">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                </svg>
-            </div>
+            <div class="lock-overlay"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Restricted</div>
+            <div class="app-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></div>
             <div class="app-title">Contracts & Policies</div>
             <div class="app-desc">Manage system-wide employment contract templates mapped directly to approved job titles.</div>
             <div class="btn-go">Manage Contracts →</div>
         </a>
 
-        <!-- App 8: View Referrals -->
-        <a href="https://ngu-recruitment-portal.vercel.app/referral-submissions.html" class="app-card" id="card-referrals">
+        <a href="referral-submissions.html" class="app-card" id="card-referrals">
             <div class="new-badge" id="badge-referrals" style="display: none;">NEW</div>
-            <div class="lock-overlay">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                Restricted
-            </div>
-            <div class="app-icon">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="8.5" cy="7" r="4"></circle>
-                    <line x1="20" y1="8" x2="20" y2="14"></line>
-                    <line x1="23" y1="11" x2="17" y2="11"></line>
-                </svg>
-            </div>
+            <div class="lock-overlay"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Restricted</div>
+            <div class="app-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg></div>
             <div class="app-title">View Referrals</div>
             <div class="app-desc">Review internal employee referral submissions and candidate recommendations.</div>
             <div class="btn-go">View Referrals →</div>
         </a>
 
-        <!-- App 9: User Database -->
         <a href="user-database.html" class="app-card" id="card-userdb">
-            <div class="lock-overlay">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                Restricted
-            </div>
-            <div class="app-icon">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 20h9"></path>
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                </svg>
-            </div>
+            <div class="lock-overlay"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Restricted</div>
+            <div class="app-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></div>
             <div class="app-title">Access Control</div>
             <div class="app-desc">Administer portal user accounts, manage security credentials, and configure permissions.</div>
             <div class="btn-go">Open Database →</div>
         </a>
 
-        <!-- App 10: Archived Vacancies -->
         <a href="archived-vacancies.html" class="app-card" id="card-archives">
-            <div class="lock-overlay">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                Restricted
-            </div>
-            <div class="app-icon">
-                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="16" y1="2" x2="16" y2="4"></line>
-                    <line x1="8" y1="2" x2="8" y2="4"></line>
-                    <circle cx="12" cy="14" r="3"></circle>
-                    <path d="M12 11v-2"></path>
-                </svg>
-            </div>
+            <div class="lock-overlay"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>Restricted</div>
+            <div class="app-icon"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="4"></line><line x1="8" y1="2" x2="8" y2="4"></line><circle cx="12" cy="14" r="3"></circle><path d="M12 11v-2"></path></svg></div>
             <div class="app-title">Archived Roles</div>
             <div class="app-desc">View historical recruitment workflows and closed vacancies across the organization.</div>
             <div class="btn-go">View Archives →</div>
@@ -507,27 +281,17 @@
         const username = localStorage.getItem('ngu_portal_username');
         if(username) document.getElementById('display-username').textContent = username;
 
-        // --- Permission Logic ---
-        const accessSubStr = localStorage.getItem('ngu_portal_access_submission');
-        const accessMgmtStr = localStorage.getItem('ngu_portal_access_management');
-        const accessUserDbStr = localStorage.getItem('ngu_portal_access_userdb');
-
-        // Apply visual lock and disable interaction if permission is NOT 'true'
-        if (accessSubStr !== 'true') lockCard('card-submission');
-        
-        // Add all management-level cards to the management lock group
-        if (accessMgmtStr !== 'true') {
-            lockCard('card-manager');
-            lockCard('card-applications');
-            lockCard('card-referrals');
-            lockCard('card-archives');
-            lockCard('card-live-vacancies');
-            lockCard('card-ftl-interviews');
-            lockCard('card-admin-review');
-            lockCard('card-contracts');
-        }
-
-        if (accessUserDbStr !== 'true') lockCard('card-userdb');
+        // Apply visual locks based on specific granular permissions
+        if (localStorage.getItem('ngu_portal_access_submission') !== 'true') lockCard('card-submission');
+        if (localStorage.getItem('ngu_portal_access_manager') !== 'true') lockCard('card-manager');
+        if (localStorage.getItem('ngu_portal_access_livevacancies') !== 'true') lockCard('card-live-vacancies');
+        if (localStorage.getItem('ngu_portal_access_applications') !== 'true') lockCard('card-applications');
+        if (localStorage.getItem('ngu_portal_access_ftl') !== 'true') lockCard('card-ftl-interviews');
+        if (localStorage.getItem('ngu_portal_access_adminreview') !== 'true') lockCard('card-admin-review');
+        if (localStorage.getItem('ngu_portal_access_contracts') !== 'true') lockCard('card-contracts');
+        if (localStorage.getItem('ngu_portal_access_referrals') !== 'true') lockCard('card-referrals');
+        if (localStorage.getItem('ngu_portal_access_archives') !== 'true') lockCard('card-archives');
+        if (localStorage.getItem('ngu_portal_access_userdb') !== 'true') lockCard('card-userdb');
     });
 
     // Logout Logic
@@ -582,7 +346,6 @@
         const appsLastViewed = parseInt(localStorage.getItem('apps_last_viewed')) || 0;
         const refsLastViewed = parseInt(localStorage.getItem('refs_last_viewed')) || 0;
 
-        // Determine the actual cutoff date (whichever is more recent: 24h ago OR the last viewed time)
         const appsCompareDate = new Date(Math.max(yesterday.getTime(), appsLastViewed));
         const refsCompareDate = new Date(Math.max(yesterday.getTime(), refsLastViewed));
 
