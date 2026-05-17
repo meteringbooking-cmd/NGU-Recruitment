@@ -546,6 +546,7 @@
     };
 
     // --- FINAL SUBMIT ---
+    // --- FINAL SUBMIT ---
     window.submitOnboarding = async function() {
         const btn = document.getElementById('btnFinalSubmit');
         const chkConfirm = document.getElementById('chkDetailsConfirm').checked;
@@ -610,34 +611,43 @@
 
             await updateDoc(doc(db, "NGUO New Applicants", currentAppId), updates);
 
-            // Fire Emails
-            const emails = [];
+            // --- FIRE EMAILS SEQUENTIALLY TO PREVENT EMAILJS RATE LIMITING ---
             const safeStart = currentApplicant.startDate ? new Date(currentApplicant.startDate).toLocaleDateString('en-GB') : 'TBC';
             
-            // 1. Notify Recruitment
-            emails.push(emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FINAL_VERIFY, {
-                applicant_name: currentApplicant.fullName,
-                job_title: currentApplicant.position,
-                start_date: safeStart
-            }));
-
-            // 2. Notify about DBS
-            if(dbsChoice === 'yes') {
-                emails.push(emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DBS_YES, { 
+            try {
+                // 1. Notify Recruitment First
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FINAL_VERIFY, {
                     applicant_name: currentApplicant.fullName,
                     job_title: currentApplicant.position,
                     start_date: safeStart
-                }));
-            } else {
-                emails.push(emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DBS_NO, { 
-                    applicant_name: currentApplicant.fullName,
-                    job_title: currentApplicant.position,
-                    start_date: safeStart
-                }));
+                });
+                console.log("Onboarding completion email sent.");
+            } catch (err) {
+                console.error("Failed to send General Verify Email:", err);
             }
 
-            await Promise.allSettled(emails);
+            try {
+                // 2. Wait, then Fire DBS Specific Email
+                if(dbsChoice === 'yes') {
+                    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DBS_YES, { 
+                        applicant_name: currentApplicant.fullName,
+                        job_title: currentApplicant.position,
+                        start_date: safeStart
+                    });
+                    console.log("DBS YES email sent.");
+                } else {
+                    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DBS_NO, { 
+                        applicant_name: currentApplicant.fullName,
+                        job_title: currentApplicant.position,
+                        start_date: safeStart
+                    });
+                    console.log("DBS NO email sent.");
+                }
+            } catch (err) {
+                console.error("Failed to send DBS Email:", err);
+            }
 
+            // Move to final success screen
             document.getElementById('onboardingContainer').innerHTML = `
                 <div style="text-align:center; padding: 4rem 2rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
                     <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
