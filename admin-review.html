@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>NGU — Onboarding Review</title>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+    <script>
+        (function() {
+            const username = localStorage.getItem('ngu_portal_username');
+            if (!username) { window.location.href = 'login.html'; }
+        })();
+    </script>
+
+    <style>
+        :root {
+            --primary: #005EB8; --accent: #00A3E0;
+            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
+            --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
+            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
+            --sidebar-width: 360px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Work Sans', sans-serif; background: var(--bg-dark); color: var(--text-light); height: 100vh; display: flex; overflow: hidden; }
+
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border); background: #111d31; }
+        .logo { max-height: 40px; display: block; margin-bottom: 1rem; }
+        .sidebar-header h2 { font-size: 1.2rem; color: var(--accent); }
+
+        .sidebar-tabs { display: flex; background: var(--bg-dark); border-bottom: 1px solid var(--border); }
+        .tab-btn { flex: 1; padding: 0.8rem; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); cursor: pointer; font-weight: 600; font-family: inherit; font-size: 0.9rem; transition: all 0.2s; }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: rgba(0, 163, 224, 0.05); }
+
+        .applicant-list { flex: 1; overflow-y: auto; padding: 1rem; }
+        .applicant-item { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; cursor: pointer; transition: all 0.2s; position: relative; }
+        .applicant-item:hover, .applicant-item.active { border-color: var(--accent); background: rgba(0, 163, 224, 0.1); }
+        .app-name { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.2rem; }
+        .app-pos { font-size: 0.85rem; color: var(--accent); margin-bottom: 0.4rem; }
+        .status-badge { display: inline-block; font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+        .status-pending { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.4); }
+        .status-rejected { background: rgba(239, 68, 68, 0.15); color: var(--error); border: 1px solid rgba(239, 68, 68, 0.4); }
+        .status-verified { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.4); }
+
+        .main-content { flex: 1; overflow-y: auto; padding: 2rem 3rem; background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%); }
+        .empty-state { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 1.2rem; }
+
+        .app-header { margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
+        .app-header h1 { font-size: 2.2rem; margin-bottom: 0.5rem; }
+
+        .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.8rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .section h3 { color: var(--accent); font-size: 1.2rem; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+
+        .doc-review-list { display: flex; flex-direction: column; gap: 1rem; }
+        .doc-item { background: var(--bg-input); border: 1px solid var(--border); padding: 1.2rem; border-radius: 8px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .doc-info { flex: 1; min-width: 250px; }
+        .doc-title { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 10px; }
+        .doc-filename { font-family: 'DM Mono', monospace; font-size: 0.85rem; color: var(--text-muted); }
+        
+        .doc-actions { display: flex; gap: 10px; align-items: center; }
+        .btn-view { background: rgba(0, 163, 224, 0.1); border: 1px solid rgba(0, 163, 224, 0.4); color: var(--accent); padding: 0.6rem 1rem; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; }
+        .btn-view:hover { background: rgba(0, 163, 224, 0.2); }
+
+        .select-status { padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-dark); color: white; outline: none; font-weight: 600; cursor: pointer; }
+        .select-status:focus { border-color: var(--accent); }
+        .select-reason { padding: 0.6rem; border-radius: 6px; border: 1px solid var(--error); background: rgba(239, 68, 68, 0.1); color: #fca5a5; outline: none; display: none; }
+
+        .btn-primary { width: 100%; background: linear-gradient(135deg, var(--success) 0%, #059669 100%); color: white; padding: 1rem; border: none; border-radius: 8px; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: all 0.2s; margin-top: 1rem; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(16,185,129,0.3); }
+
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem 2rem; }
+        .data-block { margin-bottom: 1rem; }
+        .data-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-bottom: 0.3rem; }
+        .data-value { font-size: 1rem; color: white; background: var(--bg-input); padding: 0.8rem; border-radius: 6px; border: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
+            <h2>Onboarding Review</h2>
+        </div>
+        
+        <div class="sidebar-tabs">
+            <button id="tabPending" class="tab-btn active" onclick="switchTab('pending')">Pending Review</button>
+            <button id="tabVerified" class="tab-btn" onclick="switchTab('verified')">Processed</button>
+        </div>
+
+        <div class="applicant-list" id="applicantList">
+            <div style="text-align:center; padding: 2rem; color: var(--accent);">Loading...</div>
+        </div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+        <div class="empty-state">Select an onboarding profile to review.</div>
+    </main>
+
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, query, where, onSnapshot, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    // --- EMAILJS CONFIG ---
+    const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
+    const EMAILJS_VERIFIED = 'template_kd8840q';
+    const EMAILJS_REJECTED = 'template_efx0zfe';
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let applicantsData = [];
+    let currentTab = 'pending';
+    let selectedAppId = null;
+
+    const docLabels = {
+        'passport': 'Passport / Right to Work',
+        'idphoto': 'ID Photo (Badge)',
+        'dlfront': 'Driving Licence (Front)',
+        'dlback': 'Driving Licence (Back)',
+        'poa': 'Proof of Address',
+        'p45': 'P45 Document'
+    };
+
+    window.switchTab = function(tab) {
+        currentTab = tab;
+        document.getElementById('tabPending').classList.toggle('active', tab === 'pending');
+        document.getElementById('tabVerified').classList.toggle('active', tab === 'verified');
+        selectedAppId = null;
+        document.getElementById('mainContent').innerHTML = '<div class="empty-state">Select an onboarding profile to review.</div>';
+        renderSidebar();
+    };
+
+    // Sync only completed onboarding
+    const qApp = query(collection(db, "NGUO New Applicants"), where("onboardingCompleted", "==", true));
+    onSnapshot(qApp, (snapshot) => {
+        applicantsData = [];
+        snapshot.forEach(d => applicantsData.push({ id: d.id, ...d.data() }));
+        renderSidebar();
+        if(selectedAppId) {
+            const appData = applicantsData.find(a => a.id === selectedAppId);
+            if(appData) renderDetails(appData);
+        }
+    });
+
+    function renderSidebar() {
+        const listEl = document.getElementById('applicantList');
+        listEl.innerHTML = '';
+
+        let filteredApps = applicantsData.filter(app => {
+            const status = app.onboardingVerificationStatus || 'Pending';
+            if (currentTab === 'pending') return status === 'Pending' || status === 'Rejected';
+            return status === 'Verified';
+        });
+
+        if(filteredApps.length === 0) {
+            listEl.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--text-muted);">No profiles found.</div>`;
+            return;
+        }
+
+        filteredApps.forEach(app => {
+            const status = app.onboardingVerificationStatus || 'Pending';
+            let badgeClass = 'status-pending';
+            if (status === 'Verified') badgeClass = 'status-verified';
+            if (status === 'Rejected') badgeClass = 'status-rejected';
+
+            const div = document.createElement('div');
+            div.className = `applicant-item ${selectedAppId === app.id ? 'active' : ''}`;
+            div.innerHTML = `
+                <div class="app-name">${app.fullName}</div>
+                <div class="app-pos">${app.position || 'Unknown Role'}</div>
+                <div class="status-badge ${badgeClass}">${status}</div>
+            `;
+            div.onclick = () => {
+                selectedAppId = app.id;
+                document.querySelectorAll('.applicant-item').forEach(el => el.classList.remove('active'));
+                div.classList.add('active');
+                renderDetails(app);
+            };
+            listEl.appendChild(div);
+        });
+    }
+
+    window.toggleReason = function(key) {
+        const status = document.getElementById(`verify-${key}`).value;
+        const reasonSelect = document.getElementById(`reason-${key}`);
+        reasonSelect.style.display = (status === 'rejected') ? 'block' : 'none';
+    };
+
+    function renderDetails(app) {
+        const main = document.getElementById('mainContent');
+        const docs = app.onboardingDocs || {};
+        const verification = app.documentVerification || {};
+        const p = app.onboardingDetails || {};
+        const bd = app.bankDetails || {};
+        const ec = app.emergencyContact || {};
+
+        let docsHtml = '';
+        if(Object.keys(docs).length === 0) {
+            docsHtml = '<div style="color:var(--text-muted); font-style:italic;">No documents uploaded.</div>';
+        } else {
+            Object.keys(docs).forEach(key => {
+                const fileData = docs[key];
+                const label = docLabels[key] || key;
+                const prevStatus = verification[key]?.status || 'pending';
+                const prevReason = verification[key]?.reason || '';
+
+                docsHtml += `
+                    <div class="doc-item">
+                        <div class="doc-info">
+                            <div class="doc-title">📄 ${label}</div>
+                            <div class="doc-filename">${fileData.filename}</div>
+                        </div>
+                        <div class="doc-actions">
+                            <a href="${fileData.url}" target="_blank" class="btn-view">View File</a>
+                            <select class="select-status" id="verify-${key}" onchange="toggleReason('${key}')">
+                                <option value="pending" ${prevStatus === 'pending' ? 'selected' : ''}>Select Status...</option>
+                                <option value="verified" ${prevStatus === 'verified' ? 'selected' : ''}>Verified ✓</option>
+                                <option value="rejected" ${prevStatus === 'rejected' ? 'selected' : ''}>Reject ❌</option>
+                            </select>
+                            <select class="select-reason" id="reason-${key}" style="display: ${prevStatus === 'rejected' ? 'block' : 'none'};">
+                                <option value="Expired Document" ${prevReason === 'Expired Document' ? 'selected' : ''}>Expired Document</option>
+                                <option value="Image Unclear" ${prevReason === 'Image Unclear' ? 'selected' : ''}>Image Unclear</option>
+                                <option value="Wrong File Uploaded" ${prevReason === 'Wrong File Uploaded' ? 'selected' : ''}>Wrong File Uploaded</option>
+                                <option value="Missing Page" ${prevReason === 'Missing Page' ? 'selected' : ''}>Missing Page</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        const isFullyVerified = app.onboardingVerificationStatus === 'Verified';
+
+        main.innerHTML = `
+            <div class="app-header">
+                <h1>${app.fullName}</h1>
+                <div style="color:var(--accent); font-weight:600;">System Email: ${p.systemEmail || 'N/A'}</div>
+            </div>
+
+            <div class="section" style="border-color: var(--accent);">
+                <h3>1. Document Verification</h3>
+                <div class="doc-review-list">${docsHtml}</div>
+                ${!isFullyVerified ? `<button class="btn-primary" onclick="submitVerification('${app.id}')">Save Verification & Notify Candidate</button>` : `<div style="margin-top:1.5rem; color:var(--success); font-weight:bold;">✅ All documents verified. Candidate notified.</div>`}
+            </div>
+
+            <div class="section">
+                <h3>2. Bank Details</h3>
+                <div class="grid-2">
+                    <div class="data-block"><div class="data-label">Bank Name</div><div class="data-value">${bd.bankName || 'N/A'}</div></div>
+                    <div class="data-block"><div class="data-label">Account Name</div><div class="data-value">${bd.accountName || 'N/A'}</div></div>
+                    <div class="data-block"><div class="data-label">Sort Code</div><div class="data-value">${bd.sortCode || 'N/A'}</div></div>
+                    <div class="data-block"><div class="data-label">Account Number</div><div class="data-value">${bd.accountNumber || 'N/A'}</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>3. Emergency Contact</h3>
+                <div class="grid-2">
+                    <div class="data-block"><div class="data-label">Name</div><div class="data-value">${ec.name || 'N/A'}</div></div>
+                    <div class="data-block"><div class="data-label">Relationship</div><div class="data-value">${ec.relationship || 'N/A'}</div></div>
+                    <div class="data-block"><div class="data-label">Phone</div><div class="data-value">${ec.phone || 'N/A'}</div></div>
+                    <div class="data-block"><div class="data-label">Alt Phone</div><div class="data-value">${ec.altPhone || 'N/A'}</div></div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h3>4. General Information</h3>
+                <div class="grid-2">
+                    <div class="data-block"><div class="data-label">DOB</div><div class="data-value">${p.dob || 'N/A'}</div></div>
+                    <div class="data-block"><div class="data-label">NI Number</div><div class="data-value">${p.niNumber || 'N/A'}</div></div>
+                    <div class="data-block"><div class="data-label">Address</div><div class="data-value">${p.address || 'N/A'}</div></div>
+                    <div class="data-block"><div class="data-label">Postcode</div><div class="data-value">${p.postcode || 'N/A'}</div></div>
+                    <div class="data-block"><div class="data-label">Personal Email</div><div class="data-value">${p.personalEmail || 'N/A'}</div></div>
+                    <div class="data-block"><div class="data-label">Phone</div><div class="data-value">${p.phone || 'N/A'}</div></div>
+                </div>
+            </div>
+        `;
+    }
+
+    window.submitVerification = async function(appId) {
+        const app = applicantsData.find(a => a.id === appId);
+        const docs = app.onboardingDocs || {};
+        
+        let verificationData = {};
+        let isRejected = false;
+        let rejectionDetails = "";
+
+        for (const key of Object.keys(docs)) {
+            const status = document.getElementById(`verify-${key}`).value;
+            if (status === 'pending') {
+                return alert("Please select a status for every uploaded document before submitting.");
+            }
+            
+            const reason = status === 'rejected' ? document.getElementById(`reason-${key}`).value : null;
+            verificationData[key] = { status, reason };
+
+            if (status === 'rejected') {
+                isRejected = true;
+                const label = docLabels[key] || key;
+                rejectionDetails += `- ${label}: ${reason}\n`;
+            }
+        }
+
+        const overallStatus = isRejected ? 'Rejected' : 'Verified';
+        if (!confirm(`Are you sure you want to mark this profile as ${overallStatus}? An email will be sent to the candidate.`)) return;
+
+        try {
+            await updateDoc(doc(db, "NGUO New Applicants", appId), {
+                documentVerification: verificationData,
+                onboardingVerificationStatus: overallStatus,
+                onboardingVerificationAt: new Date().toISOString(),
+                onboardingVerificationBy: localStorage.getItem('ngu_portal_username') || 'Admin'
+            });
+
+            const emailParams = {
+                to_email: app.personalDetails?.email,
+                first_name: app.fullName.split(' ')[0],
+                portal_link: "https://ngu-recruitment-portal.vercel.app/complete-onboarding.html"
+            };
+
+            if (isRejected) {
+                emailParams.rejection_details = rejectionDetails;
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REJECTED, emailParams);
+                alert("Profile marked as Rejected. Candidate has been notified to resubmit.");
+            } else {
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_VERIFIED, emailParams);
+                alert("Profile fully verified! Candidate notified.");
+            }
+
+        } catch (error) {
+            console.error("Error saving verification:", error);
+            alert("Failed to save verification. Check connection.");
+        }
+    };
+
+</script>
+</body>
+</html>
