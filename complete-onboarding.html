@@ -20,9 +20,25 @@
         body { font-family: 'Work Sans', sans-serif; background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%); color: var(--text-light); min-height: 100vh; padding: 2rem; }
         .container { max-width: 900px; margin: 0 auto; }
         
-        .header { text-align: center; margin-bottom: 3rem; }
+        /* Loading Screen */
+        #loadingScreen { height: 80vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .spinner { width: 50px; height: 50px; border: 5px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 1.5rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .header { text-align: center; margin-bottom: 2rem; }
         .header img { max-height: 50px; margin-bottom: 1rem; }
-        .header h1 { font-size: 2rem; color: var(--accent); }
+        .header h1 { font-size: 2rem; color: var(--accent); margin-bottom: 0.5rem; }
+        .header p { color: var(--text-muted); font-size: 1rem; }
+
+        /* Progress Wizard */
+        .progress-container { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 2.5rem; background: var(--bg-card); padding: 1rem; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 4px 15px rgba(0,0,0,0.2); overflow-x: auto; }
+        .step-item { flex: 1; text-align: center; padding: 0.8rem 0.5rem; border-radius: 8px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; transition: all 0.3s; white-space: nowrap; }
+        .step-item.active { background: rgba(0, 163, 224, 0.15); color: var(--accent); border: 1px solid var(--accent); }
+        .step-item.completed { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+
+        .wizard-step { display: none; animation: fadeIn 0.4s ease; }
+        .wizard-step.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .section-title { font-size: 1.4rem; color: white; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; }
@@ -46,260 +62,312 @@
         .checkbox-group { display: flex; align-items: flex-start; gap: 10px; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); }
         .checkbox-group input { width: 18px; height: 18px; accent-color: var(--accent); margin-top: 2px; }
 
-        .btn-primary { width: 100%; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; padding: 1rem; border: none; border-radius: 8px; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: all 0.2s; margin-top: 2rem; }
+        .nav-buttons { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1rem; }
+        .btn-primary { width: 100%; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; padding: 1rem; border: none; border-radius: 8px; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: all 0.2s; font-family: inherit; }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.3); }
+        .btn-outline { width: 100%; background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 1rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+        .btn-outline:hover { border-color: var(--accent); color: var(--accent); background: rgba(0, 163, 224, 0.05); }
 
         .previous-docs { margin-bottom: 2rem; background: rgba(0,0,0,0.15); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); }
-        .doc-chip { display: inline-block; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; margin: 4px; }
+        .doc-chip { display: inline-block; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; margin: 4px; }
         .external-link { color: var(--accent); text-decoration: underline; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div class="container" id="onboardingContainer">
+    <!-- Loading Screen prevents the visual "kick out" flash -->
+    <div id="loadingScreen">
+        <div class="spinner"></div>
+        <h2 style="color: var(--accent);">Verifying your secure session...</h2>
+    </div>
+
+    <div class="container" id="onboardingContainer" style="display: none;">
         <div class="header">
             <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo">
             <h1 id="welcomeTitle">Welcome! Let's get you set up.</h1>
+            <p>Please complete all 5 steps below to finalize your HR profile.</p>
         </div>
 
-        <!-- Section 1: Documents -->
-        <div class="section">
-            <div class="section-title">1. Upload Documents</div>
-            
-            <div class="previous-docs">
-                <label style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase;">Previously Uploaded Certificates:</label>
-                <div id="prevDocsList">Loading...</div>
-            </div>
+        <div class="progress-container">
+            <div class="step-item active" id="ind-1">1. Documents</div>
+            <div class="step-item" id="ind-2">2. Details</div>
+            <div class="step-item" id="ind-3">3. Compliance</div>
+            <div class="step-item" id="ind-4">4. Setup</div>
+            <div class="step-item" id="ind-5">5. Review</div>
+        </div>
 
-            <div class="grid-2">
-                <div class="form-group">
-                    <label>Passport / Right to Work ID</label>
-                    <div class="file-upload-box">
-                        <span id="label-doc-passport">Click or drag file here to upload</span>
-                        <input type="file" id="file-passport" onchange="handleFileUpload(this, 'passport')">
-                        <div class="file-status" id="status-passport"></div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>ID Photo (Passport Style for Badge)</label>
-                    <div class="file-upload-box">
-                        <span id="label-doc-idphoto">Click or drag file here to upload</span>
-                        <input type="file" id="file-idphoto" accept="image/*" onchange="handleFileUpload(this, 'idphoto')">
-                        <div class="file-status" id="status-idphoto"></div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Driving Licence (Front)</label>
-                    <div class="file-upload-box">
-                        <span id="label-doc-dlfront">Click or drag file here to upload</span>
-                        <input type="file" id="file-dlfront" onchange="handleFileUpload(this, 'dlfront')">
-                        <div class="file-status" id="status-dlfront"></div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Driving Licence (Back)</label>
-                    <div class="file-upload-box">
-                        <span id="label-doc-dlback">Click or drag file here to upload</span>
-                        <input type="file" id="file-dlback" onchange="handleFileUpload(this, 'dlback')">
-                        <div class="file-status" id="status-dlback"></div>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Proof of Address (Utility Bill, Bank Statement)</label>
-                    <div class="file-upload-box">
-                        <span id="label-doc-poa">Click or drag file here to upload</span>
-                        <input type="file" id="file-poa" onchange="handleFileUpload(this, 'poa')">
-                        <div class="file-status" id="status-poa"></div>
-                    </div>
-                </div>
+        <!-- ================= STEP 1 ================= -->
+        <div id="step1" class="wizard-step active">
+            <div class="section">
+                <div class="section-title">1. Upload Documents</div>
                 
-                <div class="form-group" style="grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 1rem;">
-                    <label>Do you have a P45 from your most recent employer?</label>
-                    <div class="radio-group" style="margin-bottom:1rem;">
-                        <label><input type="radio" name="hasP45" value="yes" onchange="toggleP45(true)"> Yes</label>
-                        <label><input type="radio" name="hasP45" value="no" onchange="toggleP45(false)" checked> No (I will need a new starter checklist)</label>
-                    </div>
-                    <div id="p45UploadDiv" style="display:none;">
+                <div class="previous-docs">
+                    <label style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase;">Previously Uploaded Certificates:</label>
+                    <div id="prevDocsList">Loading...</div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Passport / Right to Work ID</label>
                         <div class="file-upload-box">
-                            <span id="label-doc-p45">Upload your P45 here</span>
-                            <input type="file" id="file-p45" onchange="handleFileUpload(this, 'p45')">
-                            <div class="file-status" id="status-p45"></div>
+                            <span id="label-doc-passport">Click or drag file here to upload</span>
+                            <input type="file" id="file-passport" onchange="handleFileUpload(this, 'passport')">
+                            <div class="file-status" id="status-passport"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>ID Photo (Passport Style for Badge)</label>
+                        <div class="file-upload-box">
+                            <span id="label-doc-idphoto">Click or drag file here to upload</span>
+                            <input type="file" id="file-idphoto" accept="image/*" onchange="handleFileUpload(this, 'idphoto')">
+                            <div class="file-status" id="status-idphoto"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Driving Licence (Front)</label>
+                        <div class="file-upload-box">
+                            <span id="label-doc-dlfront">Click or drag file here to upload</span>
+                            <input type="file" id="file-dlfront" onchange="handleFileUpload(this, 'dlfront')">
+                            <div class="file-status" id="status-dlfront"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Driving Licence (Back)</label>
+                        <div class="file-upload-box">
+                            <span id="label-doc-dlback">Click or drag file here to upload</span>
+                            <input type="file" id="file-dlback" onchange="handleFileUpload(this, 'dlback')">
+                            <div class="file-status" id="status-dlback"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Proof of Address (Utility Bill, Bank Statement)</label>
+                        <div class="file-upload-box">
+                            <span id="label-doc-poa">Click or drag file here to upload</span>
+                            <input type="file" id="file-poa" onchange="handleFileUpload(this, 'poa')">
+                            <div class="file-status" id="status-poa"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group" style="grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 1rem;">
+                        <label>Do you have a P45 from your most recent employer?</label>
+                        <div class="radio-group" style="margin-bottom:1rem;">
+                            <label><input type="radio" name="hasP45" value="yes" onchange="toggleP45(true)"> Yes</label>
+                            <label><input type="radio" name="hasP45" value="no" onchange="toggleP45(false)" checked> No (I will need a new starter checklist)</label>
+                        </div>
+                        <div id="p45UploadDiv" style="display:none;">
+                            <div class="file-upload-box">
+                                <span id="label-doc-p45">Upload your P45 here</span>
+                                <input type="file" id="file-p45" onchange="handleFileUpload(this, 'p45')">
+                                <div class="file-status" id="status-p45"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Section 2: Personal Details -->
-        <div class="section">
-            <div class="section-title">2. Personal & Bank Details</div>
-            <div class="grid-2">
-                <div class="form-group"><label>Title</label><input type="text" id="pdTitle" class="form-control"></div>
-                <div class="form-group"><label>Legal First Name</label><input type="text" id="pdFirst" class="form-control" onkeyup="generateSysEmail()"></div>
-                <div class="form-group"><label>Preferred Name</label><input type="text" id="pdPref" class="form-control" onkeyup="generateSysEmail()"></div>
-                <div class="form-group"><label>Legal Surname</label><input type="text" id="pdLast" class="form-control" onkeyup="generateSysEmail()"></div>
-                <div class="form-group"><label>Date of Birth</label><input type="date" id="pdDob" class="form-control"></div>
-                <div class="form-group"><label>National Insurance Number</label><input type="text" id="pdNi" class="form-control" placeholder="AA123456C"></div>
-                
-                <div class="form-group" style="grid-column: 1 / -1;"><label>Generated NGU System Email (For IT Setup)</label><input type="text" id="pdSysEmail" class="form-control" readonly></div>
-
-                <div class="form-group"><label>Phone Number</label><input type="text" id="pdPhone" class="form-control"></div>
-                <div class="form-group"><label>Personal Email</label><input type="email" id="pdEmail" class="form-control"></div>
-                
-                <div class="form-group" style="grid-column: 1 / -1;"><label>Current Address</label><input type="text" id="pdAddress" class="form-control"></div>
-                <div class="form-group"><label>Postcode</label><input type="text" id="pdPostcode" class="form-control"></div>
-                <div class="form-group"><label>Time at Current Address</label><input type="text" id="pdTimeAtAddr" class="form-control" placeholder="e.g. 2 Years, 4 Months"></div>
-                
-                <div class="form-group" style="grid-column: 1 / -1;">
-                    <label>Address History (Please provide any previous addresses in the last 5 years)</label>
-                    <textarea id="pdAddrHist" class="form-control" placeholder="Address 1, Dates..."></textarea>
-                </div>
-            </div>
-
-            <h4 style="color:var(--accent); margin: 2rem 0 1rem 0; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Emergency Contact</h4>
-            <div class="grid-2">
-                <div class="form-group"><label>Contact Name</label><input type="text" id="ecName" class="form-control"></div>
-                <div class="form-group"><label>Relationship</label><input type="text" id="ecRel" class="form-control"></div>
-                <div class="form-group"><label>Primary Number</label><input type="text" id="ecPhone" class="form-control"></div>
-                <div class="form-group"><label>Alternative Number</label><input type="text" id="ecAlt" class="form-control"></div>
-            </div>
-
-            <h4 style="color:var(--accent); margin: 2rem 0 1rem 0; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Bank Details (For Payroll)</h4>
-            <div class="grid-2">
-                <div class="form-group"><label>Name of Bank</label><input type="text" id="bkName" class="form-control"></div>
-                <div class="form-group"><label>Name on Account</label><input type="text" id="bkAccName" class="form-control"></div>
-                <div class="form-group"><label>Sort Code</label><input type="text" id="bkSort" class="form-control" placeholder="12-34-56"></div>
-                <div class="form-group"><label>Account Number</label><input type="text" id="bkAccNum" class="form-control" placeholder="12345678"></div>
-            </div>
-
-            <div class="form-group" style="margin-top: 2rem;">
-                <label>Pre-Booked Holidays (Dates you are unavailable)</label>
-                <textarea id="pdHolidays" class="form-control" placeholder="List any dates already booked..."></textarea>
-            </div>
-
-            <div id="referralBlock" class="form-group" style="display:none; background:rgba(0,163,224,0.1); padding:1rem; border-radius:8px; border:1px solid var(--accent);">
-                <label style="color:var(--accent);">Referral Confirmation</label>
-                <p style="font-size:0.9rem;">You indicated you were referred by: <strong id="refNameSpan"></strong>. This has been logged for our internal referral scheme.</p>
-            </div>
-
-            <div class="checkbox-group" style="margin-top: 2rem;">
-                <input type="checkbox" id="chkDetailsConfirm">
-                <label for="chkDetailsConfirm">I confirm that all the personal and financial details provided above are true and accurate.</label>
+            <div class="nav-buttons">
+                <div style="flex:1;"></div>
+                <button class="btn-primary" onclick="goToStep(2)">Next Step ➔</button>
             </div>
         </div>
 
-        <!-- Section 3: Employment Forms -->
-        <div class="section">
-            <div class="section-title">3. Compliance & Background Checks</div>
-            
-            <div class="form-group" style="background:rgba(0,0,0,0.2); padding:1.5rem; border-radius:8px; border:1px solid var(--border);">
-                <label style="font-size:1.1rem; color:var(--accent);">Auto-Enrolment Pension</label>
-                <p style="font-size:0.95rem; line-height:1.5; color:var(--text-light); margin-bottom:0.5rem;">As per UK legislation, you will be automatically enrolled into the NGU workplace pension scheme after 3 months of employment if you meet the qualifying criteria. A formal pension letter will be issued to you by HR outlining your opt-out rights once enrolled.</p>
+        <!-- ================= STEP 2 ================= -->
+        <div id="step2" class="wizard-step">
+            <div class="section">
+                <div class="section-title">2. Personal & Bank Details</div>
+                <div class="grid-2">
+                    <div class="form-group"><label>Title</label><input type="text" id="pdTitle" class="form-control"></div>
+                    <div class="form-group"><label>Legal First Name</label><input type="text" id="pdFirst" class="form-control" onkeyup="generateSysEmail()"></div>
+                    <div class="form-group"><label>Preferred Name</label><input type="text" id="pdPref" class="form-control" onkeyup="generateSysEmail()"></div>
+                    <div class="form-group"><label>Legal Surname</label><input type="text" id="pdLast" class="form-control" onkeyup="generateSysEmail()"></div>
+                    <div class="form-group"><label>Date of Birth</label><input type="date" id="pdDob" class="form-control"></div>
+                    <div class="form-group"><label>National Insurance Number</label><input type="text" id="pdNi" class="form-control" placeholder="AA123456C"></div>
+                    
+                    <div class="form-group" style="grid-column: 1 / -1;"><label>Generated NGU System Email (For IT Setup)</label><input type="text" id="pdSysEmail" class="form-control" readonly></div>
+
+                    <div class="form-group"><label>Phone Number</label><input type="text" id="pdPhone" class="form-control"></div>
+                    <div class="form-group"><label>Personal Email</label><input type="email" id="pdEmail" class="form-control"></div>
+                    
+                    <div class="form-group" style="grid-column: 1 / -1;"><label>Current Address</label><input type="text" id="pdAddress" class="form-control"></div>
+                    <div class="form-group"><label>Postcode</label><input type="text" id="pdPostcode" class="form-control"></div>
+                    <div class="form-group"><label>Time at Current Address</label><input type="text" id="pdTimeAtAddr" class="form-control" placeholder="e.g. 2 Years, 4 Months"></div>
+                    
+                    <div class="form-group" style="grid-column: 1 / -1;">
+                        <label>Address History (Please provide any previous addresses in the last 5 years)</label>
+                        <textarea id="pdAddrHist" class="form-control" placeholder="Address 1, Dates..."></textarea>
+                    </div>
+                </div>
+
+                <h4 style="color:var(--accent); margin: 2rem 0 1rem 0; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Emergency Contact</h4>
+                <div class="grid-2">
+                    <div class="form-group"><label>Contact Name</label><input type="text" id="ecName" class="form-control"></div>
+                    <div class="form-group"><label>Relationship</label><input type="text" id="ecRel" class="form-control"></div>
+                    <div class="form-group"><label>Primary Number</label><input type="text" id="ecPhone" class="form-control"></div>
+                    <div class="form-group"><label>Alternative Number</label><input type="text" id="ecAlt" class="form-control"></div>
+                </div>
+
+                <h4 style="color:var(--accent); margin: 2rem 0 1rem 0; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Bank Details (For Payroll)</h4>
+                <div class="grid-2">
+                    <div class="form-group"><label>Name of Bank</label><input type="text" id="bkName" class="form-control"></div>
+                    <div class="form-group"><label>Name on Account</label><input type="text" id="bkAccName" class="form-control"></div>
+                    <div class="form-group"><label>Sort Code</label><input type="text" id="bkSort" class="form-control" placeholder="12-34-56"></div>
+                    <div class="form-group"><label>Account Number</label><input type="text" id="bkAccNum" class="form-control" placeholder="12345678"></div>
+                </div>
+
+                <div class="form-group" style="margin-top: 2rem;">
+                    <label>Pre-Booked Holidays (Dates you are unavailable)</label>
+                    <textarea id="pdHolidays" class="form-control" placeholder="List any dates already booked..."></textarea>
+                </div>
+
+                <div id="referralBlock" class="form-group" style="display:none; background:rgba(0,163,224,0.1); padding:1rem; border-radius:8px; border:1px solid var(--accent);">
+                    <label style="color:var(--accent);">Referral Confirmation</label>
+                    <p style="font-size:0.9rem;">You indicated you were referred by: <strong id="refNameSpan"></strong>. This has been logged for our internal referral scheme.</p>
+                </div>
+
+                <div class="checkbox-group" style="margin-top: 2rem;">
+                    <input type="checkbox" id="chkDetailsConfirm">
+                    <label for="chkDetailsConfirm">I confirm that all the personal and financial details provided above are true and accurate.</label>
+                </div>
             </div>
-
-            <div class="form-group">
-                <label style="font-size:1.1rem; color:white;">Basic DBS Check</label>
-                <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">Due to the nature of accessing customers' properties, a Basic DBS (Disclosure and Barring Service) check is required. Would you like NGU to process this on your behalf?</p>
-                <div class="radio-group" style="margin-bottom:1rem;">
-                    <label><input type="radio" name="dbsChoice" value="yes" onchange="toggleDBS(true)"> Yes, process on my behalf</label>
-                    <label><input type="radio" name="dbsChoice" value="no" onchange="toggleDBS(false)"> No, I will provide a recent valid certificate</label>
-                </div>
-
-                <div id="dbsConsentBox" style="display:none;" class="checkbox-group">
-                    <input type="checkbox" id="chkDbsConsent">
-                    <label for="chkDbsConsent">I consent to my personal information being used by Next Generation Utilities for the sole purpose of completing a Basic DBS check.</label>
-                </div>
+            <div class="nav-buttons">
+                <button class="btn-outline" onclick="goToStep(1)">⬅ Back</button>
+                <button class="btn-primary" onclick="goToStep(3)">Next Step ➔</button>
             </div>
         </div>
 
-        <!-- Section 4: Role Setup -->
-        <div class="section">
-            <div class="section-title">4. Role Setup & Uniform</div>
-            
-            <div class="grid-2">
-                <div class="form-group" style="grid-column: 1 / -1; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); padding:1.5rem; border-radius:8px;">
-                    <label style="color:var(--warning); font-size:1.1rem;">Vehicle Setup & Fleet</label>
-                    <p style="font-size:0.95rem; margin-bottom:1rem;">As you will be driving a company vehicle, please complete our mandatory Fleet Questionnaire and review the Fleet Welcome Pack.</p>
-                    <a href="https://www.cognitoforms.com/BMSL1/FLEETDriverQuestionnaire" target="_blank" class="external-link">➔ Complete Fleet Questionnaire Here</a>
+        <!-- ================= STEP 3 ================= -->
+        <div id="step3" class="wizard-step">
+            <div class="section">
+                <div class="section-title">3. Compliance & Background Checks</div>
+                
+                <div class="form-group" style="background:rgba(0,0,0,0.2); padding:1.5rem; border-radius:8px; border:1px solid var(--border);">
+                    <label style="font-size:1.1rem; color:var(--accent);">Auto-Enrolment Pension</label>
+                    <p style="font-size:0.95rem; line-height:1.5; color:var(--text-light); margin-bottom:0.5rem;">As per UK legislation, you will be automatically enrolled into the NGU workplace pension scheme after 3 months of employment if you meet the qualifying criteria. A formal pension letter will be issued to you by HR outlining your opt-out rights once enrolled.</p>
+                </div>
+
+                <div class="form-group">
+                    <label style="font-size:1.1rem; color:white;">Basic DBS Check</label>
+                    <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">Due to the nature of accessing customers' properties, a Basic DBS (Disclosure and Barring Service) check is required. Would you like NGU to process this on your behalf?</p>
+                    <div class="radio-group" style="margin-bottom:1rem;">
+                        <label><input type="radio" name="dbsChoice" value="yes" onchange="toggleDBS(true)"> Yes, process on my behalf</label>
+                        <label><input type="radio" name="dbsChoice" value="no" onchange="toggleDBS(false)"> No, I will provide a recent valid certificate</label>
+                    </div>
+
+                    <div id="dbsConsentBox" style="display:none;" class="checkbox-group">
+                        <input type="checkbox" id="chkDbsConsent">
+                        <label for="chkDbsConsent">I consent to my personal information being used by Next Generation Utilities for the sole purpose of completing a Basic DBS check.</label>
+                    </div>
                 </div>
             </div>
+            <div class="nav-buttons">
+                <button class="btn-outline" onclick="goToStep(2)">⬅ Back</button>
+                <button class="btn-primary" onclick="goToStep(4)">Next Step ➔</button>
+            </div>
+        </div>
 
-            <h4 style="color:var(--accent); margin: 2rem 0 1rem 0; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Uniform Sizing Request</h4>
-            <div class="grid-2">
-                <div class="form-group">
-                    <label>Uneek Classic T-Shirt</label>
-                    <select id="uniTshirt" class="form-control">
-                        <option value="">Select Size</option>
-                        <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
-                        <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option>
-                    </select>
+        <!-- ================= STEP 4 ================= -->
+        <div id="step4" class="wizard-step">
+            <div class="section">
+                <div class="section-title">4. Role Setup & Uniform</div>
+                
+                <div class="grid-2">
+                    <div class="form-group" style="grid-column: 1 / -1; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); padding:1.5rem; border-radius:8px;">
+                        <label style="color:var(--warning); font-size:1.1rem;">Vehicle Setup & Fleet</label>
+                        <p style="font-size:0.95rem; margin-bottom:1rem;">As you will be driving a company vehicle, please complete our mandatory Fleet Questionnaire and review the Fleet Welcome Pack.</p>
+                        <a href="https://www.cognitoforms.com/BMSL1/FLEETDriverQuestionnaire" target="_blank" class="external-link">➔ Complete Fleet Questionnaire Here</a>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Uneek Classic Hoodie</label>
-                    <select id="uniHoodie" class="form-control">
-                        <option value="">Select Size</option>
-                        <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
-                        <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Portwest FR25 Bizflame Jacket</label>
-                    <select id="uniFrJacket" class="form-control">
-                        <option value="">Select Size</option>
-                        <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
-                        <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Regatta Dover Bomber Jacket</label>
-                    <select id="uniRegatta" class="form-control">
-                        <option value="">Select Size</option>
-                        <option value="XXS">XXS</option><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
-                        <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Portwest PW3 Holster Trousers</label>
-                    <div style="display:flex; gap:10px;">
-                        <select id="uniTrouserWaist" class="form-control">
-                            <option value="">Waist</option>
-                            <option value="28">28</option><option value="30">30</option><option value="32">32</option><option value="33">33</option><option value="34">34</option>
-                            <option value="36">36</option><option value="38">38</option><option value="40">40</option><option value="41">41</option><option value="42">42</option>
-                            <option value="44">44</option><option value="46">46</option><option value="48">48</option>
+
+                <h4 style="color:var(--accent); margin: 2rem 0 1rem 0; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Uniform Sizing Request</h4>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Uneek Classic T-Shirt</label>
+                        <select id="uniTshirt" class="form-control">
+                            <option value="">Select Size</option>
+                            <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
+                            <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option>
                         </select>
-                        <select id="uniTrouserLength" class="form-control">
-                            <option value="">Length</option>
-                            <option value="Short">Short</option>
-                            <option value="Regular">Regular</option>
+                    </div>
+                    <div class="form-group">
+                        <label>Uneek Classic Hoodie</label>
+                        <select id="uniHoodie" class="form-control">
+                            <option value="">Select Size</option>
+                            <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
+                            <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Portwest FR25 Bizflame Jacket</label>
+                        <select id="uniFrJacket" class="form-control">
+                            <option value="">Select Size</option>
+                            <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
+                            <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Regatta Dover Bomber Jacket</label>
+                        <select id="uniRegatta" class="form-control">
+                            <option value="">Select Size</option>
+                            <option value="XXS">XXS</option><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
+                            <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Portwest PW3 Holster Trousers</label>
+                        <div style="display:flex; gap:10px;">
+                            <select id="uniTrouserWaist" class="form-control">
+                                <option value="">Waist</option>
+                                <option value="28">28</option><option value="30">30</option><option value="32">32</option><option value="33">33</option><option value="34">34</option>
+                                <option value="36">36</option><option value="38">38</option><option value="40">40</option><option value="41">41</option><option value="42">42</option>
+                                <option value="44">44</option><option value="46">46</option><option value="48">48</option>
+                            </select>
+                            <select id="uniTrouserLength" class="form-control">
+                                <option value="">Length</option>
+                                <option value="Short">Short</option>
+                                <option value="Regular">Regular</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Portwest Steelite Protector Boot</label>
+                        <select id="uniBoot" class="form-control">
+                            <option value="">Select Size (UK)</option>
+                            <option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
+                            <option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Presel GP-1 Dielectric Gloves</label>
+                        <select id="uniGloves" class="form-control">
+                            <option value="">Select Size</option>
+                            <option value="S">S</option><option value="M">M</option><option value="L">L</option>
+                            <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option>
                         </select>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Portwest Steelite Protector Boot</label>
-                    <select id="uniBoot" class="form-control">
-                        <option value="">Select Size (UK)</option>
-                        <option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
-                        <option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Presel GP-1 Dielectric Gloves</label>
-                    <select id="uniGloves" class="form-control">
-                        <option value="">Select Size</option>
-                        <option value="S">S</option><option value="M">M</option><option value="L">L</option>
-                        <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option>
-                    </select>
-                </div>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn-outline" onclick="goToStep(3)">⬅ Back</button>
+                <button class="btn-primary" onclick="goToStep(5)">Final Review ➔</button>
             </div>
         </div>
 
-        <!-- Section 5: Final Review -->
-        <div class="section" style="border:2px solid var(--accent); background:rgba(0,163,224,0.05);">
-            <div class="section-title" style="border-bottom:none; margin-bottom:0;">5. Final Submission</div>
-            <p style="color:var(--text-light); margin-bottom:1.5rem;">By clicking submit, you confirm that you have uploaded all requested documents, completed the Fleet questionnaire, and verified your personal information.</p>
-            
-            <button class="btn-primary" id="btnFinalSubmit" onclick="submitOnboarding()">Submit Onboarding File</button>
+        <!-- ================= STEP 5 ================= -->
+        <div id="step5" class="wizard-step">
+            <div class="section" style="border:2px solid var(--success); background:rgba(16,185,129,0.05);">
+                <div class="section-title" style="border-bottom:none; margin-bottom:0; color:var(--success);">5. Final Submission</div>
+                <p style="color:var(--text-light); margin-bottom:1.5rem; font-size:1.05rem; line-height: 1.6;">By clicking submit, you legally confirm that:<br>
+                1. You have uploaded all requested right-to-work documents.<br>
+                2. You have completed the mandatory Fleet questionnaire via the external link.<br>
+                3. You have verified your personal, emergency, and financial information for payroll.</p>
+                
+                <button class="btn-primary" id="btnFinalSubmit" onclick="submitOnboarding()">Submit Onboarding File</button>
+            </div>
+            <div class="nav-buttons">
+                <button class="btn-outline" onclick="goToStep(4)">⬅ Back to Edit Info</button>
+                <div style="flex:1;"></div>
+            </div>
         </div>
+
     </div>
 
 <script type="module">
@@ -332,54 +400,106 @@
     let currentApplicant = null;
     let uploadedUrls = {};
 
+    // Map DB Keys to readable labels
+    const certMapping = {
+        'mocopa': 'MOCOPA Certification',
+        'gasl3': 'Level 3 Gas Diploma',
+        'cmagas': 'CMA1 / CMA3 Gas',
+        'drivinglicence': 'Driving Licence',
+        'eusr': 'EUSR Card',
+        'gassafe': 'Gas Safe Registration'
+    };
+
     // --- INITIALIZE DATA ---
     async function loadData() {
         const user = localStorage.getItem('ngu_applicant_user');
+        
+        // If there's no user in local storage, kick them out to login securely
         if (!user) { window.location.href = 'engineer-portal.html'; return; }
 
-        const q = query(collection(db, "NGUO New Applicants"), where("portalUsername", "==", user));
-        const snap = await getDocs(q);
-        
-        if(snap.empty) { alert("Session error. Please log in again."); window.location.href = 'engineer-portal.html'; return; }
-        
-        snap.forEach(d => { currentAppId = d.id; currentApplicant = d.data(); });
+        try {
+            const q = query(collection(db, "NGUO New Applicants"), where("portalUsername", "==", user));
+            const snap = await getDocs(q);
+            
+            if(snap.empty) { alert("Session error. Please log in again."); window.location.href = 'engineer-portal.html'; return; }
+            
+            snap.forEach(d => { currentAppId = d.id; currentApplicant = d.data(); });
 
-        document.getElementById('welcomeTitle').textContent = `Welcome, ${currentApplicant.fullName ? currentApplicant.fullName.split(' ')[0] : 'Engineer'}! Let's get you set up.`;
+            // Swap out loading screen for real content
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('onboardingContainer').style.display = 'block';
 
-        // Pre-populate Section 2
-        const p = currentApplicant.personalDetails || {};
-        document.getElementById('pdTitle').value = p.title || '';
-        
-        const nameParts = (currentApplicant.fullName || '').split(' ');
-        document.getElementById('pdFirst').value = nameParts[0] || '';
-        document.getElementById('pdLast').value = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
-        
-        document.getElementById('pdPhone').value = p.phone || '';
-        document.getElementById('pdEmail').value = p.email || '';
-        document.getElementById('pdAddress').value = p.address || '';
-        document.getElementById('pdPostcode').value = p.postcode || '';
+            document.getElementById('welcomeTitle').textContent = `Welcome, ${currentApplicant.fullName ? currentApplicant.fullName.split(' ')[0] : 'Engineer'}! Let's get you set up.`;
 
-        // Referral check
-        if(currentApplicant.referralName) {
-            document.getElementById('referralBlock').style.display = 'block';
-            document.getElementById('refNameSpan').textContent = currentApplicant.referralName;
-        }
+            // Pre-populate Section 2
+            const p = currentApplicant.personalDetails || {};
+            document.getElementById('pdTitle').value = p.title || '';
+            
+            const nameParts = (currentApplicant.fullName || '').split(' ');
+            document.getElementById('pdFirst').value = nameParts[0] || '';
+            document.getElementById('pdLast').value = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+            
+            document.getElementById('pdPhone').value = p.phone || '';
+            document.getElementById('pdEmail').value = p.email || '';
+            document.getElementById('pdAddress').value = p.address || '';
+            document.getElementById('pdPostcode').value = p.postcode || '';
 
-        // Show previously uploaded certificates
-        const c = currentApplicant.certificates || {};
-        const prevDocsList = document.getElementById('prevDocsList');
-        prevDocsList.innerHTML = '';
-        let hasPrev = false;
-        Object.keys(c).forEach(key => {
-            if(c[key]?.filename) {
-                prevDocsList.innerHTML += `<span class="doc-chip">✓ ${c[key].filename}</span>`;
-                hasPrev = true;
+            // Referral check
+            if(currentApplicant.referralName) {
+                document.getElementById('referralBlock').style.display = 'block';
+                document.getElementById('refNameSpan').textContent = currentApplicant.referralName;
             }
-        });
-        if(!hasPrev) prevDocsList.innerHTML = '<span style="font-size:0.85rem; color:var(--text-muted)">None uploaded previously.</span>';
 
-        generateSysEmail();
+            // Show previously uploaded certificates with SMART LABELS
+            const c = currentApplicant.certificates || {};
+            const prevDocsList = document.getElementById('prevDocsList');
+            prevDocsList.innerHTML = '';
+            let hasPrev = false;
+            
+            Object.keys(c).forEach(key => {
+                if(key === 'additional' && Array.isArray(c[key])) {
+                    c[key].forEach(add => {
+                        if(add.filename) {
+                            prevDocsList.innerHTML += `<span class="doc-chip"><strong style="color:white;">${add.name}:</strong> ${add.filename}</span>`;
+                            hasPrev = true;
+                        }
+                    });
+                } else if (c[key]?.filename) {
+                    const label = certMapping[key] || key.toUpperCase();
+                    prevDocsList.innerHTML += `<span class="doc-chip"><strong style="color:white;">${label}:</strong> ${c[key].filename}</span>`;
+                    hasPrev = true;
+                }
+            });
+            if(!hasPrev) prevDocsList.innerHTML = '<span style="font-size:0.85rem; color:var(--text-muted)">None uploaded previously.</span>';
+
+            generateSysEmail();
+            
+        } catch (error) {
+            alert("Connection error fetching your profile.");
+            window.location.href = 'engineer-portal.html';
+        }
     }
+
+    // --- NAVIGATION WIZARD ---
+    window.goToStep = function(stepNum) {
+        // Hide all steps
+        document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
+        // Show target step
+        document.getElementById(`step${stepNum}`).classList.add('active');
+        
+        // Update Progress Bar
+        for(let i=1; i<=5; i++) {
+            const ind = document.getElementById(`ind-${i}`);
+            if (i < stepNum) {
+                ind.className = 'step-item completed';
+            } else if (i === stepNum) {
+                ind.className = 'step-item active';
+            } else {
+                ind.className = 'step-item';
+            }
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     window.generateSysEmail = function() {
         const pref = document.getElementById('pdPref').value.trim() || document.getElementById('pdFirst').value.trim();
@@ -432,15 +552,14 @@
         const dbsChoice = document.querySelector('input[name="dbsChoice"]:checked')?.value;
         const dbsConsent = document.getElementById('chkDbsConsent').checked;
 
-        if(!chkConfirm) return alert("Please check the box confirming your personal details are correct.");
-        if(!dbsChoice) return alert("Please select a DBS check option.");
-        if(dbsChoice === 'yes' && !dbsConsent) return alert("You must consent to the DBS check to proceed.");
+        if(!chkConfirm) return alert("Please go back to Step 2 and check the box confirming your personal details are correct.");
+        if(!dbsChoice) return alert("Please go back to Step 3 and select a DBS check option.");
+        if(dbsChoice === 'yes' && !dbsConsent) return alert("You must consent to the DBS check in Step 3 to proceed.");
 
         btn.disabled = true;
         btn.textContent = 'Saving Profile...';
 
         try {
-            // Build Update Object
             const updates = {
                 onboardingCompleted: true,
                 onboardingCompletedAt: new Date().toISOString(),
@@ -495,14 +614,14 @@
             const emails = [];
             const safeStart = currentApplicant.startDate ? new Date(currentApplicant.startDate).toLocaleDateString('en-GB') : 'TBC';
             
-            // 1. Notify Recruitment Onboarding is Complete
+            // 1. Notify Recruitment
             emails.push(emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FINAL_VERIFY, {
                 applicant_name: currentApplicant.fullName,
                 job_title: currentApplicant.position,
                 start_date: safeStart
             }));
 
-            // 2. Fire DBS Specific Email
+            // 2. Notify about DBS
             if(dbsChoice === 'yes') {
                 emails.push(emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DBS_YES, { 
                     applicant_name: currentApplicant.fullName,
@@ -520,12 +639,12 @@
             await Promise.allSettled(emails);
 
             document.getElementById('onboardingContainer').innerHTML = `
-                <div style="text-align:center; padding: 4rem 2rem;">
+                <div style="text-align:center; padding: 4rem 2rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
                     <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
                     <h2 style="color: var(--success); margin-bottom: 1rem;">Onboarding Complete!</h2>
                     <p style="color: var(--text-light); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
                         Thank you for providing your information. Your file has been sent to HR for final verification.<br><br>
-                        You can now close this window. Your Reporting Manager will be in touch shortly.
+                        You can now safely close this window. Your Reporting Manager will be in touch shortly.
                     </p>
                 </div>
             `;
@@ -538,6 +657,7 @@
         }
     };
 
+    // Load data immediately on page load
     window.onload = loadData;
 </script>
 </body>
