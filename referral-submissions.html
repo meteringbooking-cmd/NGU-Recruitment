@@ -419,7 +419,7 @@
     window.updateSubmissionStatus = async function(id, newStatus, candidateEmail, candidateName) {
         const confirmMsg = newStatus === 'Accepted' 
             ? "Are you sure you want to ACCEPT this referral? An email will be sent to the candidate." 
-            : "Are you sure you want to DENY this referral?";
+            : "Are you sure you want to DENY this referral? An email will be sent to the candidate.";
             
         if (!confirm(confirmMsg)) return;
 
@@ -441,7 +441,24 @@
                     console.log("Acceptance email sent successfully!");
                 } catch (emailError) {
                     console.error("Failed to send email: ", emailError);
-                    alert("Status updated, but there was an error sending the email.");
+                    alert("Status updated, but there was an error sending the acceptance email.");
+                }
+            }
+            // If denied, send the denial email via EmailJS
+            else if (newStatus === 'Denied' && candidateEmail) {
+                try {
+                    await emailjs.send(
+                        "service_pxe89mj",   // Your Service ID
+                        "template_4ryhvfl",  // Your Deny Template ID
+                        {
+                            to_email: candidateEmail,
+                            to_name: candidateName
+                        }
+                    );
+                    console.log("Denial email sent successfully!");
+                } catch (emailError) {
+                    console.error("Failed to send denial email: ", emailError);
+                    alert("Status updated, but there was an error sending the denial email.");
                 }
             }
         } catch (error) {
@@ -503,7 +520,7 @@
                 const nameParam = data.referralName ? data.referralName.replace(/'/g, "\\'") : '';
                 
                 actionFooterHTML = `
-                    <button class="btn-action btn-deny" onclick="updateSubmissionStatus('${data.id}', 'Denied')">✕ Deny</button>
+                    <button class="btn-action btn-deny" onclick="updateSubmissionStatus('${data.id}', 'Denied', '${emailParam}', '${nameParam}')">✕ Deny</button>
                     <button class="btn-action btn-accept" onclick="updateSubmissionStatus('${data.id}', 'Accepted', '${emailParam}', '${nameParam}')">✓ Accept</button>
                 `;
             } else {
