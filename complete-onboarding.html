@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>NGU — Complete Onboarding</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #005EB8; --accent: #00A3E0;
+            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
+            --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
+            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Work Sans', sans-serif; background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%); color: var(--text-light); min-height: 100vh; padding: 2rem; }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        .header { text-align: center; margin-bottom: 3rem; }
+        .header img { max-height: 50px; margin-bottom: 1rem; }
+        .header h1 { font-size: 2rem; color: var(--accent); }
+
+        .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .section-title { font-size: 1.4rem; color: white; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+        
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .form-control { width: 100%; padding: 0.9rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: white; font-family: inherit; font-size: 0.95rem; outline: none; }
+        .form-control:focus { border-color: var(--accent); }
+        .form-control[readonly] { background: rgba(0,0,0,0.2); color: var(--accent); cursor: not-allowed; }
+        textarea.form-control { resize: vertical; min-height: 100px; }
+
+        .file-upload-box { background: var(--bg-input); border: 1px dashed var(--accent); padding: 1.5rem; border-radius: 8px; text-align: center; position: relative; transition: all 0.2s; }
+        .file-upload-box:hover { background: rgba(0,163,224,0.05); }
+        .file-upload-box input[type="file"] { opacity: 0; position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; }
+        .file-status { margin-top: 0.5rem; font-size: 0.85rem; color: var(--success); font-weight: 600; }
+
+        .radio-group { display: flex; gap: 1rem; align-items: center; }
+        .radio-group label { text-transform: none; font-size: 0.95rem; color: white; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+        
+        .checkbox-group { display: flex; align-items: flex-start; gap: 10px; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); }
+        .checkbox-group input { width: 18px; height: 18px; accent-color: var(--accent); margin-top: 2px; }
+
+        .btn-primary { width: 100%; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; padding: 1rem; border: none; border-radius: 8px; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: all 0.2s; margin-top: 2rem; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.3); }
+
+        .previous-docs { margin-bottom: 2rem; background: rgba(0,0,0,0.15); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); }
+        .doc-chip { display: inline-block; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; margin: 4px; }
+        .external-link { color: var(--accent); text-decoration: underline; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="onboardingContainer">
+        <div class="header">
+            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo">
+            <h1 id="welcomeTitle">Welcome! Let's get you set up.</h1>
+        </div>
+
+        <!-- Section 1: Documents -->
+        <div class="section">
+            <div class="section-title">1. Upload Documents</div>
+            
+            <div class="previous-docs">
+                <label style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase;">Previously Uploaded Certificates:</label>
+                <div id="prevDocsList">Loading...</div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Passport / Right to Work ID</label>
+                    <div class="file-upload-box">
+                        <span id="label-doc-passport">Click or drag file here to upload</span>
+                        <input type="file" id="file-passport" onchange="handleFileUpload(this, 'passport')">
+                        <div class="file-status" id="status-passport"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>ID Photo (Passport Style for Badge)</label>
+                    <div class="file-upload-box">
+                        <span id="label-doc-idphoto">Click or drag file here to upload</span>
+                        <input type="file" id="file-idphoto" accept="image/*" onchange="handleFileUpload(this, 'idphoto')">
+                        <div class="file-status" id="status-idphoto"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Driving Licence (Front)</label>
+                    <div class="file-upload-box">
+                        <span id="label-doc-dlfront">Click or drag file here to upload</span>
+                        <input type="file" id="file-dlfront" onchange="handleFileUpload(this, 'dlfront')">
+                        <div class="file-status" id="status-dlfront"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Driving Licence (Back)</label>
+                    <div class="file-upload-box">
+                        <span id="label-doc-dlback">Click or drag file here to upload</span>
+                        <input type="file" id="file-dlback" onchange="handleFileUpload(this, 'dlback')">
+                        <div class="file-status" id="status-dlback"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Proof of Address (Utility Bill, Bank Statement)</label>
+                    <div class="file-upload-box">
+                        <span id="label-doc-poa">Click or drag file here to upload</span>
+                        <input type="file" id="file-poa" onchange="handleFileUpload(this, 'poa')">
+                        <div class="file-status" id="status-poa"></div>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 1rem;">
+                    <label>Do you have a P45 from your most recent employer?</label>
+                    <div class="radio-group" style="margin-bottom:1rem;">
+                        <label><input type="radio" name="hasP45" value="yes" onchange="toggleP45(true)"> Yes</label>
+                        <label><input type="radio" name="hasP45" value="no" onchange="toggleP45(false)" checked> No (I will need a new starter checklist)</label>
+                    </div>
+                    <div id="p45UploadDiv" style="display:none;">
+                        <div class="file-upload-box">
+                            <span id="label-doc-p45">Upload your P45 here</span>
+                            <input type="file" id="file-p45" onchange="handleFileUpload(this, 'p45')">
+                            <div class="file-status" id="status-p45"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Personal Details -->
+        <div class="section">
+            <div class="section-title">2. Personal & Bank Details</div>
+            <div class="grid-2">
+                <div class="form-group"><label>Title</label><input type="text" id="pdTitle" class="form-control"></div>
+                <div class="form-group"><label>Legal First Name</label><input type="text" id="pdFirst" class="form-control" onkeyup="generateSysEmail()"></div>
+                <div class="form-group"><label>Preferred Name</label><input type="text" id="pdPref" class="form-control" onkeyup="generateSysEmail()"></div>
+                <div class="form-group"><label>Legal Surname</label><input type="text" id="pdLast" class="form-control" onkeyup="generateSysEmail()"></div>
+                <div class="form-group"><label>Date of Birth</label><input type="date" id="pdDob" class="form-control"></div>
+                <div class="form-group"><label>National Insurance Number</label><input type="text" id="pdNi" class="form-control" placeholder="AA123456C"></div>
+                
+                <div class="form-group" style="grid-column: 1 / -1;"><label>Generated NGU System Email (For IT Setup)</label><input type="text" id="pdSysEmail" class="form-control" readonly></div>
+
+                <div class="form-group"><label>Phone Number</label><input type="text" id="pdPhone" class="form-control"></div>
+                <div class="form-group"><label>Personal Email</label><input type="email" id="pdEmail" class="form-control"></div>
+                
+                <div class="form-group" style="grid-column: 1 / -1;"><label>Current Address</label><input type="text" id="pdAddress" class="form-control"></div>
+                <div class="form-group"><label>Postcode</label><input type="text" id="pdPostcode" class="form-control"></div>
+                <div class="form-group"><label>Time at Current Address</label><input type="text" id="pdTimeAtAddr" class="form-control" placeholder="e.g. 2 Years, 4 Months"></div>
+                
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Address History (Please provide any previous addresses in the last 5 years)</label>
+                    <textarea id="pdAddrHist" class="form-control" placeholder="Address 1, Dates..."></textarea>
+                </div>
+            </div>
+
+            <h4 style="color:var(--accent); margin: 2rem 0 1rem 0; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Emergency Contact</h4>
+            <div class="grid-2">
+                <div class="form-group"><label>Contact Name</label><input type="text" id="ecName" class="form-control"></div>
+                <div class="form-group"><label>Relationship</label><input type="text" id="ecRel" class="form-control"></div>
+                <div class="form-group"><label>Primary Number</label><input type="text" id="ecPhone" class="form-control"></div>
+                <div class="form-group"><label>Alternative Number</label><input type="text" id="ecAlt" class="form-control"></div>
+            </div>
+
+            <h4 style="color:var(--accent); margin: 2rem 0 1rem 0; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Bank Details (For Payroll)</h4>
+            <div class="grid-2">
+                <div class="form-group"><label>Name of Bank</label><input type="text" id="bkName" class="form-control"></div>
+                <div class="form-group"><label>Name on Account</label><input type="text" id="bkAccName" class="form-control"></div>
+                <div class="form-group"><label>Sort Code</label><input type="text" id="bkSort" class="form-control" placeholder="12-34-56"></div>
+                <div class="form-group"><label>Account Number</label><input type="text" id="bkAccNum" class="form-control" placeholder="12345678"></div>
+            </div>
+
+            <div class="form-group" style="margin-top: 2rem;">
+                <label>Pre-Booked Holidays (Dates you are unavailable)</label>
+                <textarea id="pdHolidays" class="form-control" placeholder="List any dates already booked..."></textarea>
+            </div>
+
+            <div id="referralBlock" class="form-group" style="display:none; background:rgba(0,163,224,0.1); padding:1rem; border-radius:8px; border:1px solid var(--accent);">
+                <label style="color:var(--accent);">Referral Confirmation</label>
+                <p style="font-size:0.9rem;">You indicated you were referred by: <strong id="refNameSpan"></strong>. This has been logged for our internal referral scheme.</p>
+            </div>
+
+            <div class="checkbox-group" style="margin-top: 2rem;">
+                <input type="checkbox" id="chkDetailsConfirm">
+                <label for="chkDetailsConfirm">I confirm that all the personal and financial details provided above are true and accurate.</label>
+            </div>
+        </div>
+
+        <!-- Section 3: Employment Forms -->
+        <div class="section">
+            <div class="section-title">3. Compliance & Background Checks</div>
+            
+            <div class="form-group" style="background:rgba(0,0,0,0.2); padding:1.5rem; border-radius:8px; border:1px solid var(--border);">
+                <label style="font-size:1.1rem; color:var(--accent);">Auto-Enrolment Pension</label>
+                <p style="font-size:0.95rem; line-height:1.5; color:var(--text-light); margin-bottom:0.5rem;">As per UK legislation, you will be automatically enrolled into the NGU workplace pension scheme after 3 months of employment if you meet the qualifying criteria. A formal pension letter will be issued to you by HR outlining your opt-out rights once enrolled.</p>
+            </div>
+
+            <div class="form-group">
+                <label style="font-size:1.1rem; color:white;">Basic DBS Check</label>
+                <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:1rem;">Due to the nature of accessing customers' properties, a Basic DBS (Disclosure and Barring Service) check is required. Would you like NGU to process this on your behalf?</p>
+                <div class="radio-group" style="margin-bottom:1rem;">
+                    <label><input type="radio" name="dbsChoice" value="yes" onchange="toggleDBS(true)"> Yes, process on my behalf</label>
+                    <label><input type="radio" name="dbsChoice" value="no" onchange="toggleDBS(false)"> No, I will provide a recent valid certificate</label>
+                </div>
+
+                <div id="dbsConsentBox" style="display:none;" class="checkbox-group">
+                    <input type="checkbox" id="chkDbsConsent">
+                    <label for="chkDbsConsent">I consent to my personal information being used by Next Generation Utilities for the sole purpose of completing a Basic DBS check.</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Role Setup -->
+        <div class="section">
+            <div class="section-title">4. Role Setup & Uniform</div>
+            
+            <div class="grid-2">
+                <div class="form-group" style="grid-column: 1 / -1; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); padding:1.5rem; border-radius:8px;">
+                    <label style="color:var(--warning); font-size:1.1rem;">Vehicle Setup & Fleet</label>
+                    <p style="font-size:0.95rem; margin-bottom:1rem;">As you will be driving a company vehicle, please complete our mandatory Fleet Questionnaire and review the Fleet Welcome Pack.</p>
+                    <a href="https://www.cognitoforms.com/bmsl1/fleetdriverquestionnaire/publish" target="_blank" class="external-link">➔ Complete Fleet Questionnaire Here</a>
+                </div>
+            </div>
+
+            <h4 style="color:var(--accent); margin: 2rem 0 1rem 0; border-bottom:1px solid var(--border); padding-bottom:0.5rem;">Uniform Sizing Request</h4>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Uneek Classic T-Shirt</label>
+                    <select id="uniTshirt" class="form-control">
+                        <option value="">Select Size</option>
+                        <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
+                        <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Uneek Classic Hoodie</label>
+                    <select id="uniHoodie" class="form-control">
+                        <option value="">Select Size</option>
+                        <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
+                        <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Portwest FR25 Bizflame Jacket</label>
+                    <select id="uniFrJacket" class="form-control">
+                        <option value="">Select Size</option>
+                        <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
+                        <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Regatta Dover Bomber Jacket</label>
+                    <select id="uniRegatta" class="form-control">
+                        <option value="">Select Size</option>
+                        <option value="XXS">XXS</option><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
+                        <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Portwest PW3 Holster Trousers</label>
+                    <div style="display:flex; gap:10px;">
+                        <select id="uniTrouserWaist" class="form-control">
+                            <option value="">Waist</option>
+                            <option value="28">28</option><option value="30">30</option><option value="32">32</option><option value="33">33</option><option value="34">34</option>
+                            <option value="36">36</option><option value="38">38</option><option value="40">40</option><option value="41">41</option><option value="42">42</option>
+                            <option value="44">44</option><option value="46">46</option><option value="48">48</option>
+                        </select>
+                        <select id="uniTrouserLength" class="form-control">
+                            <option value="">Length</option>
+                            <option value="Short">Short</option>
+                            <option value="Regular">Regular</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Portwest Steelite Protector Boot</label>
+                    <select id="uniBoot" class="form-control">
+                        <option value="">Select Size (UK)</option>
+                        <option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
+                        <option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Presel GP-1 Dielectric Gloves</label>
+                    <select id="uniGloves" class="form-control">
+                        <option value="">Select Size</option>
+                        <option value="S">S</option><option value="M">M</option><option value="L">L</option>
+                        <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5: Final Review -->
+        <div class="section" style="border:2px solid var(--accent); background:rgba(0,163,224,0.05);">
+            <div class="section-title" style="border-bottom:none; margin-bottom:0;">5. Final Submission</div>
+            <p style="color:var(--text-light); margin-bottom:1.5rem;">By clicking submit, you confirm that you have uploaded all requested documents, completed the Fleet questionnaire, and verified your personal information.</p>
+            
+            <button class="btn-primary" id="btnFinalSubmit" onclick="submitOnboarding()">Submit Onboarding File</button>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+
+    // --- EMAILJS CONFIG ---
+    const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
+    const EMAILJS_DBS_YES = 'template_azauav5';
+    const EMAILJS_DBS_NO = 'template_1aay8zl';
+    const EMAILJS_FINAL_VERIFY = 'template_ada5v6u'; // Fallback generic or create a new one for onboarding complete
+    emailjs.init(EMAILJS_PUBLIC_KEY);
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    let currentAppId = null;
+    let currentApplicant = null;
+    let uploadedUrls = {};
+
+    // --- INITIALIZE DATA ---
+    async function loadData() {
+        const user = localStorage.getItem('ngu_portal_username');
+        if (!user) { window.location.href = 'engineer-portal.html'; return; }
+
+        const q = query(collection(db, "NGUO New Applicants"), where("portalUsername", "==", user));
+        const snap = await getDocs(q);
+        
+        if(snap.empty) { alert("Session error"); return; }
+        
+        snap.forEach(d => { currentAppId = d.id; currentApplicant = d.data(); });
+
+        document.getElementById('welcomeTitle').textContent = `Welcome, ${currentApplicant.fullName ? currentApplicant.fullName.split(' ')[0] : 'Engineer'}! Let's get you set up.`;
+
+        // Pre-populate Section 2
+        const p = currentApplicant.personalDetails || {};
+        document.getElementById('pdTitle').value = p.title || '';
+        
+        // Split name rudimentarily if needed, or rely on them filling it out
+        const nameParts = (currentApplicant.fullName || '').split(' ');
+        document.getElementById('pdFirst').value = nameParts[0] || '';
+        document.getElementById('pdLast').value = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+        
+        document.getElementById('pdPhone').value = p.phone || '';
+        document.getElementById('pdEmail').value = p.email || '';
+        document.getElementById('pdAddress').value = p.address || '';
+        document.getElementById('pdPostcode').value = p.postcode || '';
+
+        // Referral check
+        if(currentApplicant.referralName) {
+            document.getElementById('referralBlock').style.display = 'block';
+            document.getElementById('refNameSpan').textContent = currentApplicant.referralName;
+        }
+
+        // Show previously uploaded certificates
+        const c = currentApplicant.certificates || {};
+        const prevDocsList = document.getElementById('prevDocsList');
+        prevDocsList.innerHTML = '';
+        let hasPrev = false;
+        Object.keys(c).forEach(key => {
+            if(c[key]?.filename) {
+                prevDocsList.innerHTML += `<span class="doc-chip">✓ ${c[key].filename}</span>`;
+                hasPrev = true;
+            }
+        });
+        if(!hasPrev) prevDocsList.innerHTML = '<span style="font-size:0.85rem; color:var(--text-muted)">None uploaded previously.</span>';
+
+        generateSysEmail();
+    }
+
+    window.generateSysEmail = function() {
+        const pref = document.getElementById('pdPref').value.trim() || document.getElementById('pdFirst').value.trim();
+        const last = document.getElementById('pdLast').value.trim();
+        if(pref && last) {
+            document.getElementById('pdSysEmail').value = `${pref.toLowerCase()}.${last.toLowerCase()}@next-gen.uk`;
+        }
+    };
+
+    window.toggleP45 = function(show) {
+        document.getElementById('p45UploadDiv').style.display = show ? 'block' : 'none';
+    };
+
+    window.toggleDBS = function(wantsDbs) {
+        document.getElementById('dbsConsentBox').style.display = wantsDbs ? 'flex' : 'none';
+    };
+
+    // --- UPLOAD LOGIC ---
+    window.handleFileUpload = async function(inputEl, docType) {
+        if(inputEl.files.length === 0) return;
+        const file = inputEl.files[0];
+        const statusEl = document.getElementById(`status-${docType}`);
+        const labelEl = document.getElementById(`label-doc-${docType}`);
+        
+        statusEl.textContent = 'Uploading...';
+        statusEl.style.color = 'var(--warning)';
+
+        try {
+            const storagePath = `onboarding_docs/${currentAppId}/${docType}_${Date.now()}_${file.name}`;
+            const fileRef = ref(storage, storagePath);
+            await uploadBytes(fileRef, file);
+            const downloadUrl = await getDownloadURL(fileRef);
+
+            uploadedUrls[docType] = { url: downloadUrl, filename: file.name, path: storagePath };
+
+            statusEl.textContent = '✓ Uploaded successfully';
+            statusEl.style.color = 'var(--success)';
+            labelEl.textContent = `Replace: ${file.name}`;
+        } catch(e) {
+            console.error(e);
+            statusEl.textContent = 'Upload failed. Try again.';
+            statusEl.style.color = 'var(--error)';
+        }
+    };
+
+    // --- FINAL SUBMIT ---
+    window.submitOnboarding = async function() {
+        const btn = document.getElementById('btnFinalSubmit');
+        const chkConfirm = document.getElementById('chkDetailsConfirm').checked;
+        const dbsChoice = document.querySelector('input[name="dbsChoice"]:checked')?.value;
+        const dbsConsent = document.getElementById('chkDbsConsent').checked;
+
+        if(!chkConfirm) return alert("Please check the box confirming your personal details are correct.");
+        if(!dbsChoice) return alert("Please select a DBS check option.");
+        if(dbsChoice === 'yes' && !dbsConsent) return alert("You must consent to the DBS check to proceed.");
+
+        btn.disabled = true;
+        btn.textContent = 'Saving Profile...';
+
+        try {
+            // Build Update Object
+            const updates = {
+                onboardingCompleted: true,
+                onboardingCompletedAt: new Date().toISOString(),
+                onboardingDocs: uploadedUrls,
+                onboardingDetails: {
+                    title: document.getElementById('pdTitle').value,
+                    firstName: document.getElementById('pdFirst').value,
+                    preferredName: document.getElementById('pdPref').value,
+                    lastName: document.getElementById('pdLast').value,
+                    dob: document.getElementById('pdDob').value,
+                    niNumber: document.getElementById('pdNi').value,
+                    systemEmail: document.getElementById('pdSysEmail').value,
+                    phone: document.getElementById('pdPhone').value,
+                    personalEmail: document.getElementById('pdEmail').value,
+                    address: document.getElementById('pdAddress').value,
+                    postcode: document.getElementById('pdPostcode').value,
+                    timeAtAddress: document.getElementById('pdTimeAtAddr').value,
+                    addressHistory: document.getElementById('pdAddrHist').value,
+                    holidays: document.getElementById('pdHolidays').value
+                },
+                emergencyContact: {
+                    name: document.getElementById('ecName').value,
+                    relationship: document.getElementById('ecRel').value,
+                    phone: document.getElementById('ecPhone').value,
+                    altPhone: document.getElementById('ecAlt').value
+                },
+                bankDetails: {
+                    bankName: document.getElementById('bkName').value,
+                    accountName: document.getElementById('bkAccName').value,
+                    sortCode: document.getElementById('bkSort').value,
+                    accountNumber: document.getElementById('bkAccNum').value
+                },
+                dbsInfo: {
+                    choice: dbsChoice,
+                    consentGiven: dbsChoice === 'yes' ? dbsConsent : false
+                },
+                uniformData: {
+                    tshirt: document.getElementById('uniTshirt').value,
+                    hoodie: document.getElementById('uniHoodie').value,
+                    frJacket: document.getElementById('uniFrJacket').value,
+                    regattaJacket: document.getElementById('uniRegatta').value,
+                    trouserWaist: document.getElementById('uniTrouserWaist').value,
+                    trouserLength: document.getElementById('uniTrouserLength').value,
+                    boots: document.getElementById('uniBoot').value,
+                    gloves: document.getElementById('uniGloves').value
+                }
+            };
+
+            await updateDoc(doc(db, "NGUO New Applicants", currentAppId), updates);
+
+            // Fire Emails
+            const emails = [];
+            
+            // 1. Notify Recruitment Onboarding is Complete
+            emails.push(emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FINAL_VERIFY, {
+                applicant_name: currentApplicant.fullName,
+                job_title: currentApplicant.position,
+                message: "has completed their onboarding file. Please review their uploaded documents and uniform requests."
+            }));
+
+            // 2. Fire DBS Specific Email
+            if(dbsChoice === 'yes') {
+                emails.push(emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DBS_YES, { applicant_name: currentApplicant.fullName }));
+            } else {
+                emails.push(emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DBS_NO, { applicant_name: currentApplicant.fullName }));
+            }
+
+            await Promise.allSettled(emails);
+
+            document.getElementById('onboardingContainer').innerHTML = `
+                <div style="text-align:center; padding: 4rem 2rem;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
+                    <h2 style="color: var(--success); margin-bottom: 1rem;">Onboarding Complete!</h2>
+                    <p style="color: var(--text-light); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
+                        Thank you for providing your information. Your file has been sent to HR for final verification.<br><br>
+                        You can now close this window. Your Reporting Manager will be in touch shortly.
+                    </p>
+                </div>
+            `;
+
+        } catch (e) {
+            console.error(e);
+            alert("Error saving onboarding details. Please check your connection.");
+            btn.disabled = false;
+            btn.textContent = 'Submit Onboarding File';
+        }
+    };
+
+    window.onload = loadData;
+</script>
+</body>
+</html>
