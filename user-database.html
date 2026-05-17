@@ -7,32 +7,22 @@
     
     <!-- 
       --- PROTOTYPE SECURITY SCRIPT ---
-      Executes immediately to check 'session' data in localStorage before rendering body.
     -->
     <script>
         (function() {
             const username = localStorage.getItem('ngu_portal_username');
             const hasAccess = localStorage.getItem('ngu_portal_access_userdb');
 
-            // 1. Check if user is logged in at all
             if (!username) {
-                console.log("No session found, redirecting to login.");
                 window.location.href = 'login.html';
-                return; // Stop execution
+                return;
             }
 
-            // 2. Check specific page permission
-            // values in localStorage are stored as strings, so compare to string 'true'
             if (hasAccess !== 'true') {
-                console.log("User lacks database management permission.");
                 alert("Access Denied: You do not have permission to access the User Database.");
-                // Redirect back to homepage
                 window.location.href = 'homepage.html';
-                return; // Stop execution
+                return;
             }
-
-            // If we get here, user is allowed. Body will render normally.
-            console.log("Access granted to user: ", username);
         })();
     </script>
     
@@ -45,7 +35,7 @@
             --panel-border: #38444d;
             --primary-text: #e1e8ed;
             --secondary-text: #8899a6;
-            --accent-color: #00d4ff; /* NGU Cyan */
+            --accent-color: #00d4ff; 
             --success-color: #2ecc71;
             --danger-color: #ef4444;
         }
@@ -60,7 +50,7 @@
             padding: 20px;
         }
 
-        .main-container { max-width: 1100px; margin: 0 auto; }
+        .main-container { max-width: 1200px; margin: 0 auto; }
 
         /* Header Styling */
         .page-header {
@@ -96,7 +86,7 @@
             border-radius: 12px;
             border: 1px solid var(--panel-border);
             padding: 30px;
-            overflow: hidden;
+            overflow-x: auto;
         }
 
         .panel-title {
@@ -125,19 +115,19 @@
 
         /* Table */
         .user-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .user-table th, .user-table td { border-bottom: 1px solid var(--panel-border); padding: 15px; text-align: left; }
+        .user-table th, .user-table td { border-bottom: 1px solid var(--panel-border); padding: 15px; text-align: left; vertical-align: top; }
         .user-table th { color: var(--secondary-text); font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.05em; }
         .user-table tr:last-child td { border-bottom: none; }
         .user-table tr:hover td { background-color: rgba(255,255,255,0.02); }
 
         /* Access Tags */
+        .tag-container { display: flex; flex-wrap: wrap; gap: 6px; }
         .tag {
             display: inline-block; padding: 4px 8px; border-radius: 4px;
             font-size: 0.75em; font-weight: 700; text-transform: uppercase;
-            margin-right: 5px; margin-bottom: 5px;
+            background-color: rgba(46, 204, 113, 0.15); color: var(--success-color); border: 1px solid var(--success-color);
         }
-        .tag-off { background-color: #38444d; color: var(--secondary-text); }
-        .tag-on { background-color: rgba(46, 204, 113, 0.15); color: var(--success-color); border: 1px solid var(--success-color); }
+        .tag-none { background-color: rgba(239, 68, 68, 0.1); color: var(--danger-color); border: 1px solid var(--danger-color); }
 
         /* Modals */
         .modal-overlay {
@@ -151,7 +141,7 @@
             background-color: var(--container-bg);
             padding: 30px; border-radius: 12px;
             border: 1px solid var(--panel-border);
-            width: 500px; max-width: 90%;
+            width: 750px; max-width: 95%; max-height: 90vh; overflow-y: auto;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
 
@@ -160,12 +150,11 @@
             margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid var(--panel-border);
             display: flex; justify-content: space-between;
         }
-        .close-modal { background: none; border: none; color: var(--secondary-text); font-size: 1.5em; cursor: pointer; }
+        .close-modal { background: none; border: none; color: var(--secondary-text); font-size: 1.5em; cursor: pointer; padding: 0; }
 
         /* Inputs */
-        .form-group { margin-bottom: 15px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
         .form-group label { display: block; color: var(--secondary-text); font-size: 0.85em; text-transform: uppercase; margin-bottom: 5px; }
-        
         .edit-input {
             width: 100%; padding: 12px;
             background-color: var(--input-bg); border: 1px solid var(--panel-border);
@@ -173,15 +162,17 @@
         }
         .edit-input:focus { outline: none; border-color: var(--accent-color); }
 
-        .switch-group { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        /* 2-Column Switches */
+        .switch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .switch-label {
             display: flex; align-items: center; justify-content: space-between;
-            color: var(--primary-text); font-size: 0.95em;
-            padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 6px;
+            color: var(--primary-text); font-size: 0.85em; font-weight: 500;
+            padding: 10px 15px; background-color: rgba(0,0,0,0.2); border-radius: 6px;
+            border: 1px solid var(--panel-border);
         }
 
         /* Basic switch styling */
-        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; flex-shrink: 0;}
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
             position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
@@ -203,6 +194,11 @@
             border: 1px solid var(--danger-color);
             padding: 10px; border-radius: 6px;
             font-size: 0.8em; margin-bottom: 20px; font-weight: 600;
+        }
+
+        @media (max-width: 700px) {
+            .switch-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -237,11 +233,9 @@
         <table class="user-table" id="user-table" style="display: none;">
             <thead>
                 <tr>
-                    <th>Username</th>
-                    <th>Recruitment Submit</th>
-                    <th>Recruitment Manager</th>
-                    <th>User Db Manager</th>
-                    <th>Actions</th>
+                    <th style="width: 20%;">Username</th>
+                    <th style="width: 60%;">Active Permissions</th>
+                    <th style="width: 20%;">Actions</th>
                 </tr>
             </thead>
             <tbody id="user-table-body">
@@ -256,47 +250,65 @@
     <div class="modal-content">
         <div class="modal-header">
             <span id="modal-title">Add User</span>
-            <button class="close-modal" onclick="closeModal()">×</button>
+            <button class="close-modal" type="button" onclick="closeModal()">×</button>
         </div>
         <form id="user-form">
             <input type="hidden" id="edit-doc-id">
             
-            <div class="form-group">
-                <label for="username">Username (Full Name)</label>
-                <input type="text" id="username" class="edit-input" required placeholder="John Doe">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="username">Username (Full Name)</label>
+                    <input type="text" id="username" class="edit-input" required placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="text" id="password" class="edit-input" required>
+                </div>
             </div>
+
+            <div class="panel-title" style="font-size: 0.85em; margin: 20px 0 5px 0; color: var(--secondary-text);">Module Access Permissions</div>
             
-            <div class="form-group">
-                <label for="password">Password (Prototype - Plain Text)</label>
-                <input type="text" id="password" class="edit-input" required>
-            </div>
-
-            <div class="switch-group">
-                <div class="panel-title" style="font-size: 0.8em; margin-bottom: 5px; color: var(--secondary-text);">Page Permissions</div>
-                
+            <div class="switch-grid">
+                <!-- Group 1 -->
                 <label class="switch-label">
-                    <span>Recruitment Approval Form (Submit)</span>
-                    <div class="switch">
-                        <input type="checkbox" id="access-submission">
-                        <span class="slider"></span>
-                    </div>
+                    <span>Personnel Requisition (Submit)</span>
+                    <div class="switch"><input type="checkbox" id="acc-submission"><span class="slider"></span></div>
                 </label>
-                
                 <label class="switch-label">
-                    <span>Recruitment Form Manager (Approve)</span>
-                    <div class="switch">
-                        <input type="checkbox" id="access-management">
-                        <span class="slider"></span>
-                    </div>
+                    <span>Workflow Manager (Approve)</span>
+                    <div class="switch"><input type="checkbox" id="acc-manager"><span class="slider"></span></div>
                 </label>
-
-                <!-- New Permission -->
                 <label class="switch-label">
-                    <span>User Database (Admin Only)</span>
-                    <div class="switch">
-                        <input type="checkbox" id="access-userdb">
-                        <span class="slider"></span>
-                    </div>
+                    <span>Live Vacancies</span>
+                    <div class="switch"><input type="checkbox" id="acc-live-vacancies"><span class="slider"></span></div>
+                </label>
+                <label class="switch-label">
+                    <span>View Applications</span>
+                    <div class="switch"><input type="checkbox" id="acc-applications"><span class="slider"></span></div>
+                </label>
+                <label class="switch-label">
+                    <span>FTL Interviews</span>
+                    <div class="switch"><input type="checkbox" id="acc-ftl"><span class="slider"></span></div>
+                </label>
+                <label class="switch-label">
+                    <span>Contracts & Policies</span>
+                    <div class="switch"><input type="checkbox" id="acc-contracts"><span class="slider"></span></div>
+                </label>
+                <label class="switch-label">
+                    <span>Onboarding Admin Review</span>
+                    <div class="switch"><input type="checkbox" id="acc-admin-review"><span class="slider"></span></div>
+                </label>
+                <label class="switch-label">
+                    <span>View Referrals</span>
+                    <div class="switch"><input type="checkbox" id="acc-referrals"><span class="slider"></span></div>
+                </label>
+                <label class="switch-label">
+                    <span>Archived Roles</span>
+                    <div class="switch"><input type="checkbox" id="acc-archives"><span class="slider"></span></div>
+                </label>
+                <label class="switch-label" style="border-color: var(--danger-color);">
+                    <span style="color: var(--danger-color); font-weight: bold;">User Database (Super Admin)</span>
+                    <div class="switch"><input type="checkbox" id="acc-userdb"><span class="slider"></span></div>
                 </label>
             </div>
 
@@ -314,7 +326,6 @@
 
 <script>
     // --- Firebase Configuration ---
-    // Using your existing config
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
         authDomain: "oesperformance-a54c0.firebaseapp.com",
@@ -325,11 +336,8 @@
         measurementId: "G-R56BGZYV8N"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    
-    // --- Renamed Collection ---
     const collectionName = "NGU User Database"; 
 
     // DOM Elements
@@ -341,7 +349,9 @@
     const modalTitle = document.getElementById('modal-title');
     const docIdInput = document.getElementById('edit-doc-id');
 
-    // Setup Header & Logout
+    let isEditing = false;
+    let usersData = []; // Store fetched users locally for easy editing
+
     document.addEventListener('DOMContentLoaded', () => {
         const username = localStorage.getItem('ngu_portal_username');
         document.getElementById('display-username').textContent = username;
@@ -352,12 +362,7 @@
         window.location.href = 'login.html';
     });
 
-    // State
-    let isEditing = false;
-
-    // --- Core Functions ---
-
-    // 1. Fetch and Listen to Users (Real-time)
+    // 1. Fetch and Listen to Users
     function loadUsers() {
         db.collection(collectionName).orderBy('username').onSnapshot((snapshot) => {
             if (snapshot.empty) {
@@ -370,20 +375,35 @@
             statusMsg.style.display = 'none';
             table.style.display = 'table';
             tableBody.innerHTML = '';
+            usersData = [];
 
             snapshot.forEach(doc => {
                 const user = doc.data();
-                const id = doc.id;
+                user.id = doc.id;
+                usersData.push(user);
+
+                // Build Tags dynamically
+                let tags = '';
+                if(user.accessSubmission) tags += '<span class="tag">Req Submit</span>';
+                if(user.accessManager) tags += '<span class="tag">WF Manager</span>';
+                if(user.accessLiveVacancies) tags += '<span class="tag">Live Roles</span>';
+                if(user.accessApplications) tags += '<span class="tag">Applications</span>';
+                if(user.accessFtl) tags += '<span class="tag">FTL Dashboard</span>';
+                if(user.accessContracts) tags += '<span class="tag">Contracts</span>';
+                if(user.accessAdminReview) tags += '<span class="tag">Admin Review</span>';
+                if(user.accessReferrals) tags += '<span class="tag">Referrals</span>';
+                if(user.accessArchives) tags += '<span class="tag">Archives</span>';
+                if(user.accessUserDb) tags += '<span class="tag" style="background:rgba(239, 68, 68, 0.15); border-color:var(--danger-color); color:var(--danger-color);">Super Admin</span>';
+
+                if(tags === '') tags = '<span class="tag tag-none">No Access</span>';
 
                 const row = `
                     <tr>
                         <td style="font-weight:600; color:var(--primary-text);">${user.username}</td>
-                        <td>${renderAccessTag(user.accessSubmission)}</td>
-                        <td>${renderAccessTag(user.accessManagement)}</td>
-                        <td>${renderAccessTag(user.accessUserDb)}</td>
+                        <td><div class="tag-container">${tags}</div></td>
                         <td>
-                            <button class="btn-secondary" style="padding: 5px 10px; font-size:0.8em; margin-right:5px;" onclick="openEditModal('${id}', '${user.username}', '${user.password}', ${user.accessSubmission}, ${user.accessManagement}, ${user.accessUserDb})">Edit</button>
-                            <button class="btn-danger" onclick="deleteUser('${id}', '${user.username}')">Delete</button>
+                            <button class="btn-secondary" style="padding: 5px 10px; font-size:0.8em; margin-right:5px;" onclick="openEditModal('${user.id}')">Edit</button>
+                            <button class="btn-danger" onclick="deleteUser('${user.id}', '${user.username}')">Delete</button>
                         </td>
                     </tr>
                 `;
@@ -395,55 +415,45 @@
         });
     }
 
-    // Helper to render On/Off tags
-    function renderAccessTag(hasAccess) {
-        return hasAccess 
-            ? '<span class="tag tag-on">Enabled</span>' 
-            : '<span class="tag tag-off">Disabled</span>';
-    }
-
     // 2. Add/Edit Submit
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         
         const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('password').value; // Plain text!
-        const accessSubmission = document.getElementById('access-submission').checked;
-        const accessManagement = document.getElementById('access-management').checked;
-        const accessUserDb = document.getElementById('access-userdb').checked; // New field
-
+        
         const userData = {
             username: username,
-            password: password,
-            accessSubmission: accessSubmission,
-            accessManagement: accessManagement,
-            accessUserDb: accessUserDb, // New field
+            password: document.getElementById('password').value,
+            accessSubmission: document.getElementById('acc-submission').checked,
+            accessManager: document.getElementById('acc-manager').checked,
+            accessLiveVacancies: document.getElementById('acc-live-vacancies').checked,
+            accessApplications: document.getElementById('acc-applications').checked,
+            accessFtl: document.getElementById('acc-ftl').checked,
+            accessContracts: document.getElementById('acc-contracts').checked,
+            accessAdminReview: document.getElementById('acc-admin-review').checked,
+            accessReferrals: document.getElementById('acc-referrals').checked,
+            accessArchives: document.getElementById('acc-archives').checked,
+            accessUserDb: document.getElementById('acc-userdb').checked,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
         if (isEditing) {
-            // Update existing
             const id = docIdInput.value;
             db.collection(collectionName).doc(id).update(userData)
             .then(() => {
-                alert(`User ${username} updated successfully.`);
                 closeModal();
             })
             .catch(err => alert("Error updating: " + err));
         } else {
-            // Check if username already exists (basic check)
             db.collection(collectionName).where("username", "==", username).get()
             .then(snapshot => {
                 if(!snapshot.empty) {
                     alert("A user with this name already exists.");
                     return;
                 }
-                
-                // Add new
                 userData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                 db.collection(collectionName).add(userData)
                 .then(() => {
-                    alert(`User ${username} added successfully.`);
                     closeModal();
                 })
                 .catch(err => alert("Error adding: " + err));
@@ -452,48 +462,53 @@
     });
 
     // 3. Delete User
-    function deleteUser(id, name) {
+    window.deleteUser = function(id, name) {
         if(confirm(`Are you sure you want to delete user: ${name}?\nThis cannot be undone.`)) {
             db.collection(collectionName).doc(id).delete()
-            .then(() => alert("User deleted."))
             .catch(err => alert("Error deleting: " + err));
         }
     }
 
     // --- Modal Management ---
-
-    function openAddModal() {
+    window.openAddModal = function() {
         isEditing = false;
         modalTitle.textContent = "Add New User";
         form.reset();
         docIdInput.value = '';
-        document.getElementById('username').disabled = false; // Allow editing username for new users
+        document.getElementById('username').disabled = false;
         modal.classList.add('active');
     }
 
-    function openEditModal(id, username, password, accessSub, accessMgmt, accessDb) {
+    window.openEditModal = function(id) {
+        const user = usersData.find(u => u.id === id);
+        if(!user) return;
+
         isEditing = true;
-        modalTitle.textContent = `Edit User: ${username}`;
-        docIdInput.value = id;
+        modalTitle.textContent = `Edit User: ${user.username}`;
+        docIdInput.value = user.id;
         
-        document.getElementById('username').value = username;
-        document.getElementById('username').disabled = true; // Don't allow changing username once created
-        document.getElementById('password').value = password;
-        document.getElementById('access-submission').checked = accessSub;
-        document.getElementById('access-management').checked = accessMgmt;
-        document.getElementById('access-userdb').checked = accessDb; // New field
+        document.getElementById('username').value = user.username;
+        document.getElementById('username').disabled = true; 
+        document.getElementById('password').value = user.password;
+        
+        // Populate toggles
+        document.getElementById('acc-submission').checked = user.accessSubmission || false;
+        document.getElementById('acc-manager').checked = user.accessManager || false;
+        document.getElementById('acc-live-vacancies').checked = user.accessLiveVacancies || false;
+        document.getElementById('acc-applications').checked = user.accessApplications || false;
+        document.getElementById('acc-ftl').checked = user.accessFtl || false;
+        document.getElementById('acc-contracts').checked = user.accessContracts || false;
+        document.getElementById('acc-admin-review').checked = user.accessAdminReview || false;
+        document.getElementById('acc-referrals').checked = user.accessReferrals || false;
+        document.getElementById('acc-archives').checked = user.accessArchives || false;
+        document.getElementById('acc-userdb').checked = user.accessUserDb || false;
         
         modal.classList.add('active');
     }
 
-    function closeModal() {
-        modal.classList.remove('active');
-    }
-
-    // Close modal if clicking overlay
+    window.closeModal = function() { modal.classList.remove('active'); }
     modal.addEventListener('click', e => { if(e.target === modal) closeModal(); });
 
-    // Start
     window.onload = loadUsers;
 </script>
 
