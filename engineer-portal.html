@@ -327,10 +327,10 @@
     // --- EMAILJS CONFIG ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
     const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
-    const EMAILJS_Q_OFFER = 'template_vzmdy3a'; // Rec Query
-    const EMAILJS_Q_CONTRACT = 'template_z4p2v26'; // FTL Query
-    const EMAILJS_REC_CONFIRM = 'template_ada5v6u'; // Recruitment Accept Confirm
-    const EMAILJS_EMP_CONFIRM = 'template_qqpzv88'; // Employee Accept Confirm
+    const EMAILJS_Q_OFFER = 'template_vzmdy3a'; 
+    const EMAILJS_Q_CONTRACT = 'template_z4p2v26'; 
+    const EMAILJS_REC_CONFIRM = 'template_ada5v6u'; 
+    const EMAILJS_EMP_CONFIRM = 'template_qqpzv88'; 
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
     const firebaseConfig = {
@@ -449,7 +449,6 @@
         
         document.getElementById('welcomeName').textContent = a.fullName ? a.fullName.split(' ')[0] : 'Engineer';
 
-        // 1. Personal Info
         document.getElementById('pTitle').textContent = p.title || 'N/A';
         document.getElementById('pName').textContent = a.fullName || 'N/A';
         document.getElementById('pEmail').textContent = p.email || 'N/A';
@@ -457,7 +456,6 @@
         document.getElementById('pAddress').textContent = p.address || 'N/A';
         document.getElementById('pPostcode').textContent = p.postcode || 'N/A';
 
-        // 2. Licences & Registrations
         document.getElementById('pDvlaDetail').innerHTML = c.drivinglicence?.confirmed 
             ? `Confirmed<br><span style="font-size:0.85rem; color:var(--text-muted)">Expires: ${c.drivinglicence.expiry || 'N/A'}</span>` 
             : '<span style="color:var(--text-muted)">Not provided</span>';
@@ -468,12 +466,10 @@
             
         document.getElementById('pGasSafe').textContent = c.gassafe?.number || 'Not provided';
 
-        // 3. Compliance
         document.getElementById('pRightToWork').innerHTML = a.workPermit === 'no' ? '<span style="color:var(--success)">Valid (UK Citizen/No Permit Req)</span>' : '<span style="color:var(--warning)">Requires Permit</span>';
         document.getElementById('pConvictions').innerHTML = a.convictions === 'no' ? '<span style="color:var(--success)">Clear</span>' : '<span style="color:var(--error)">Declared</span>';
         document.getElementById('pMedical').innerHTML = (a.reasonableAdjustments?.medical === 'yes' || a.reasonableAdjustments?.disability === 'yes') ? '<span style="color:var(--warning)">Adjustments Requested</span>' : '<span style="color:var(--success)">None Declared</span>';
 
-        // 4. Employment History
         const empContainer = document.getElementById('employmentContainer');
         if (a.employment && a.employment.length > 0) {
             let empHtml = `
@@ -492,7 +488,6 @@
             empContainer.innerHTML = '<div style="color:var(--text-muted); font-style:italic;">No employment history provided.</div>';
         }
 
-        // 5. Uploaded Certificates
         const certContainer = document.getElementById('certContainer');
         let certHtml = '';
         
@@ -697,6 +692,9 @@
                     contractText = contractText.replace(/\[Employee Name\]/gi, `<strong style="color:var(--primary);">${empName}</strong>`);
                     contractText = contractText.replace(/\[Employee Address\]/gi, `<strong style="color:var(--primary);">${empAddr}</strong>`);
                     
+                    // Convert line breaks to HTML breaks so PDF engine reads them properly
+                    contractText = contractText.replace(/\n/g, '<br>');
+                    
                     docEl.innerHTML = contractText;
                 }
             } catch (e) {
@@ -735,7 +733,7 @@
         
         // 2. Wrap it in a clean, print-friendly container string
         const printContent = `
-            <div style="font-family: 'Times New Roman', serif; font-size: 14px; line-height: 1.6; color: black; background: white; padding: 20px;">
+            <div style="font-family: 'Times New Roman', serif; font-size: 14px; line-height: 1.6; color: black; background: white; padding: 20px; white-space: pre-wrap;">
                 ${rawHTML}
             </div>
         `;
