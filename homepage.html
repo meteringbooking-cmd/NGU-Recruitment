@@ -1,129 +1,619 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>NGU — System Hub</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGU Recruitment Portal</title>
+    
+    <!-- 
+      --- PROTOTYPE SECURITY SCRIPT ---
+      Executes immediately to check 'session' data in localStorage before rendering body.
+      All users must be logged in to see the hub.
+    -->
+    <script>
+        (function() {
+            const username = localStorage.getItem('ngu_portal_username');
+            // 1. Check if user is logged in at all
+            if (!username) {
+                console.log("No session found, redirecting to login.");
+                window.location.href = 'login.html';
+                return; // Stop execution
+            }
+            // If we get here, user is allowed. Body will render normally.
+            console.log("Access granted to user: ", username);
+        })();
+    </script>
+    
     <style>
         :root {
-            --primary: #005EB8; --accent: #00A3E0;
-            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
-            --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
-            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
+            /* Shared NGU Dark Theme */
+            --body-bg: #141d26;
+            --container-bg: #1c2938;
+            --input-bg: #2d3d50;
+            --panel-border: #38444d;
+            --primary-text: #e1e8ed;
+            --secondary-text: #8899a6;
+            --accent-color: #00d4ff; /* NGU Cyan */
+            --danger-color: #ef4444;
         }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: 'Work Sans', sans-serif; background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%); color: var(--text-light); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 3rem 1rem; }
-        body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(circle at 15% 20%, rgba(0,163,224,0.08) 0%, transparent 55%), radial-gradient(circle at 85% 75%, rgba(0,94,184,0.07) 0%, transparent 55%); pointer-events: none; z-index: -1; }
 
-        .container { width: 100%; max-width: 1000px; }
-        
-        .header { text-align: center; margin-bottom: 3rem; }
-        .header img { max-height: 60px; margin-bottom: 1.5rem; }
-        .header h1 { font-size: 2.2rem; color: white; margin-bottom: 0.5rem; }
-        .header p { color: var(--accent); font-size: 1.1rem; font-weight: 500; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
-        
-        .module-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; text-decoration: none; color: white; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; position: relative; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .module-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, var(--primary), var(--accent)); transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease; }
-        .module-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 12px 25px rgba(0,0,0,0.4); background: rgba(26, 41, 66, 0.8); }
-        .module-card:hover::before { transform: scaleX(1); }
-        
-        .module-icon { font-size: 2.5rem; margin-bottom: 1rem; }
-        .module-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--accent); }
-        .module-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; flex: 1; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--body-bg);
+            color: var(--primary-text);
+            line-height: 1.6;
+            padding: 20px;
+        }
 
-        /* Secondary Links Section */
-        .other-links-container { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .main-container {
+            max-width: 1400px; /* Expanded for widescreen use */
+            margin: 0 auto;
+        }
+
+        /* Header Styling */
+        .page-header {
+            background-color: var(--container-bg);
+            padding: 20px 30px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .header-brand { display: flex; align-items: center; gap: 15px; }
+        .logo { height: 40px; width: auto; }
+        .page-header h1 { font-size: 1.4em; text-transform: uppercase; letter-spacing: 0.1em; }
+
+        .header-user-info { text-align: right; display: flex; align-items: center; gap: 15px; }
+        .header-user-info span { color: var(--secondary-text); font-size: 0.9em; }
+
+        .btn-logout-header {
+            background: none; border: 1px solid var(--panel-border); color: var(--primary-text);
+            padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: all 0.2s;
+        }
+        .btn-logout-header:hover { border-color: var(--danger-color); color: var(--danger-color); background-color: rgba(239, 68, 68, 0.05);}
+
+        /* Hub Section */
+        .hub-welcome {
+            text-align: center;
+            margin-bottom: 50px;
+            padding: 0 20px;
+        }
+        .hub-welcome h2 {
+            font-size: 2em;
+            color: var(--primary-text);
+            font-weight: 800;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .hub-welcome p {
+            color: var(--secondary-text);
+            max-width: 650px;
+            margin: 0 auto;
+            font-size: 1.05em;
+        }
+
+        /* App Grid - Strictly 4 across */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* Forces exactly 4 columns */
+            gap: 25px;
+            padding-bottom: 40px;
+        }
+
+        /* App Card styling */
+        .app-card {
+            background-color: var(--container-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            padding: 30px 20px; 
+            text-decoration: none;
+            color: var(--primary-text);
+            display: flex;
+            flex-direction: column;
+            align-items: center; 
+            text-align: center;
+            gap: 15px;
+            transition: all 0.25s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .app-card:hover:not(.locked) {
+            border-color: var(--accent-color);
+            box-shadow: 0 10px 30px rgba(0,212,255,0.15);
+            transform: translateY(-3px);
+        }
+
+        /* Professional Icon Styling */
+        .app-icon {
+            margin-bottom: 10px;
+        }
+        .app-icon svg {
+            width: 45px;
+            height: 45px;
+            stroke: var(--accent-color); 
+            stroke-width: 1.5;
+            fill: none;
+        }
+
+        .app-title {
+            font-size: 1.1em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--primary-text);
+        }
+
+        .app-desc {
+            font-size: 0.9em;
+            color: var(--secondary-text);
+            flex-grow: 1; 
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .btn-go {
+            margin-top: auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85em;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--accent-color);
+            padding: 8px 16px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .app-card:hover:not(.locked) .btn-go {
+            background-color: rgba(0, 212, 255, 0.1);
+        }
+
+        /* NEW Badge Styling */
+        .new-badge {
+            position: absolute;
+            top: -12px;
+            left: -12px;
+            background-color: var(--danger-color);
+            color: white;
+            font-size: 0.75em;
+            font-weight: 800;
+            padding: 5px 12px;
+            border-radius: 20px;
+            letter-spacing: 0.05em;
+            box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+            animation: pulse-red 2s infinite;
+            z-index: 10;
+        }
+
+        @keyframes pulse-red {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* --- LOCKED CARD STYLING --- */
+        .app-card.locked {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none; 
+            filter: grayscale(100%);
+        }
+
+        /* Lock Overlay Text */
+        .lock-overlay {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--panel-border);
+            color: var(--secondary-text);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: none; 
+            align-items: center; gap: 5px;
+        }
+
+        .app-card.locked .lock-overlay {
+            display: flex;
+        }
+
+        /* --- SECONDARY LINKS SECTION --- */
+        .other-links-container { background: var(--container-bg); border: 1px solid var(--panel-border); border-radius: 12px; overflow: hidden; margin-bottom: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         details { width: 100%; }
-        summary { padding: 1.5rem; font-size: 1.1rem; font-weight: 600; color: white; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; background: var(--bg-card); transition: background 0.2s; }
-        summary:hover { background: rgba(26, 41, 66, 0.8); color: var(--accent); }
-        summary::after { content: '▼'; font-size: 0.9rem; transition: transform 0.3s; }
+        summary { padding: 20px 30px; font-size: 1.1em; font-weight: 700; color: var(--primary-text); cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none; transition: background 0.2s; text-transform: uppercase; letter-spacing: 0.05em; }
+        summary:hover { background: rgba(0, 212, 255, 0.05); color: var(--accent-color); }
+        summary::after { content: '▼'; font-size: 0.9em; transition: transform 0.3s; }
         details[open] summary::after { transform: rotate(180deg); }
         
-        .other-links-content { padding: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
-        .secondary-link { display: flex; align-items: center; gap: 10px; background: var(--bg-input); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; text-decoration: none; color: var(--text-light); font-size: 0.95rem; font-weight: 500; transition: all 0.2s; }
-        .secondary-link:hover { background: rgba(0, 163, 224, 0.1); border-color: var(--accent); color: var(--accent); }
-        .secondary-icon { font-size: 1.2rem; }
+        .other-links-content { padding: 20px 30px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; border-top: 1px solid var(--panel-border); background: var(--body-bg); }
+        .secondary-link { display: flex; align-items: center; gap: 10px; background: var(--input-bg); border: 1px solid var(--panel-border); padding: 15px; border-radius: 8px; text-decoration: none; color: var(--primary-text); font-size: 0.95em; font-weight: 500; transition: all 0.2s; }
+        .secondary-link:hover { border-color: var(--accent-color); color: var(--accent-color); transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,212,255,0.1); }
+        .secondary-icon { font-size: 1.2em; }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .container { animation: fadeIn 0.5s ease; }
+        /* Responsive Breakpoints */
+        @media (max-width: 1100px) {
+            .app-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        @media (max-width: 850px) {
+            .app-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 600px) {
+            .page-header { flex-direction: column; text-align: center; gap: 10px; padding: 20px;}
+            .header-user-info { flex-direction: column; gap: 5px;}
+            .app-grid { grid-template-columns: 1fr; }
+            .hub-welcome h2 { font-size: 1.6em; }
+            .app-card { padding: 30px 20px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="header">
-            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo">
-            <h1>System Command Hub</h1>
-            <p>Recruitment, Interviews & Onboarding</p>
+<div class="main-container">
+    <header class="page-header">
+        <div class="header-brand">
+            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
+            <h1>Recruitment Hub</h1>
         </div>
-
-        <!-- MAIN MODULES GRID -->
-        <div class="module-grid">
-            
-            <a href="view-applications.html" class="module-card">
-                <div class="module-icon">👥</div>
-                <div class="module-title">Applicant Tracker</div>
-                <div class="module-desc">Review new applications, perform scoring, and manage the candidate pipeline from start to finish.</div>
-            </a>
-
-            <a href="live-vacancies.html" class="module-card">
-                <div class="module-icon">📋</div>
-                <div class="module-title">Live Vacancies</div>
-                <div class="module-desc">Manage recruitment approval forms, track budgets, and open or close live job roles across the business.</div>
-            </a>
-
-            <a href="FTL-interview-availability.html" class="module-card">
-                <div class="module-icon">🗓️</div>
-                <div class="module-title">FTL Interview Dashboard</div>
-                <div class="module-desc">For Field Team Leaders. Claim interviews, generate Teams links, and submit post-interview scorecards.</div>
-            </a>
-
-            <a href="contract.html" class="module-card">
-                <div class="module-icon">⚖️</div>
-                <div class="module-title">Contracts & Policies</div>
-                <div class="module-desc">Create and manage standardized contract templates and compliance documents mapped to job titles.</div>
-            </a>
-
-            <a href="admin-review.html" class="module-card" style="grid-column: 1 / -1; max-width: 500px; margin: 0 auto; text-align: center; align-items: center;">
-                <div class="module-icon">🛡️</div>
-                <div class="module-title">Onboarding Admin Review</div>
-                <div class="module-desc">Final verification checkpoint. Review uploaded right-to-work documents, approve files, or request candidate re-submissions.</div>
-            </a>
-
+        <div class="header-user-info">
+            <span>Welcome, <strong style="color:white;" id="display-username">User</strong></span>
+            <button class="btn-logout-header" id="logout-btn">Sign Out</button>
         </div>
+    </header>
 
-        <!-- SECONDARY / CANDIDATE LINKS -->
-        <div class="other-links-container">
-            <details>
-                <summary>Candidate-Facing Links (For Reference/Testing)</summary>
-                <div class="other-links-content">
-                    <a href="apply.html" class="secondary-link">
-                        <span class="secondary-icon">📝</span>
-                        Initial Job Application Form
-                    </a>
-                    <a href="candidate-referral-bonus.html" class="secondary-link">
-                        <span class="secondary-icon">🤝</span>
-                        Candidate Referral Form
-                    </a>
-                    <a href="engineer-portal.html" class="secondary-link">
-                        <span class="secondary-icon">✍️</span>
-                        Engineer Contract Portal
-                    </a>
-                    <a href="complete-onboarding.html" class="secondary-link">
-                        <span class="secondary-icon">🚀</span>
-                        Complete Onboarding Form
-                    </a>
-                </div>
-            </details>
-        </div>
+    <div class="hub-welcome">
+        <h2>Operational Applications</h2>
+        <p>Select an operational module below. Modules marked as restricted are locked based on your current security profile.</p>
+    </div>
+
+    <div class="app-grid">
+        
+        <!-- App 1: Recruitment Submission -->
+        <a href="recruit-approval-form.html" class="app-card" id="card-submission">
+            <div class="lock-overlay">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Restricted
+            </div>
+            <div class="app-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+            </div>
+            <div class="app-title">Personnel Requisition</div>
+            <div class="app-desc">Initiate a formal Recruitment Authorisation Request for new headcount or replacement roles.</div>
+            <div class="btn-go">Open Request →</div>
+        </a>
+
+        <!-- App 2: Recruitment Form Display (Workflow Manager) -->
+        <a href="recruit-approval-form-display.html" class="app-card" id="card-manager">
+            <div class="lock-overlay">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Restricted
+            </div>
+            <div class="app-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                    <line x1="9" y1="21" x2="9" y2="9"></line>
+                </svg>
+            </div>
+            <div class="app-title">Workflow Manager</div>
+            <div class="app-desc">Review submitted requests, manage approval sign-offs, and track active recruitment workflows.</div>
+            <div class="btn-go">Open Manager →</div>
+        </a>
+
+        <!-- App 3: Live Vacancies -->
+        <a href="live-vacancies.html" class="app-card" id="card-live-vacancies">
+            <div class="lock-overlay">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Restricted
+            </div>
+            <div class="app-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+            </div>
+            <div class="app-title">Live Vacancies</div>
+            <div class="app-desc">View currently approved roles, job descriptions, and active recruitment requirements.</div>
+            <div class="btn-go">View Vacancies →</div>
+        </a>
+
+        <!-- App 4: View Applications -->
+        <a href="https://ngu-recruitment-portal.vercel.app/view-applications.html" class="app-card" id="card-applications">
+            <div class="new-badge" id="badge-applications" style="display: none;">NEW</div>
+            <div class="lock-overlay">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Restricted
+            </div>
+            <div class="app-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <circle cx="10" cy="13" r="1"></circle>
+                    <circle cx="10" cy="17" r="1"></circle>
+                </svg>
+            </div>
+            <div class="app-title">View Applications</div>
+            <div class="app-desc">Review submitted external job applications, candidate files, and uploaded credentials.</div>
+            <div class="btn-go">View Applications →</div>
+        </a>
+
+        <!-- App 5: FTL Interview Dashboard -->
+        <a href="FTL-interview-availability.html" class="app-card" id="card-ftl-interviews">
+            <div class="lock-overlay">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Restricted
+            </div>
+            <div class="app-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+            </div>
+            <div class="app-title">FTL Interviews</div>
+            <div class="app-desc">Dashboard for Field Team Leaders to claim candidate interviews and submit scorecards.</div>
+            <div class="btn-go">Open Dashboard →</div>
+        </a>
+
+        <!-- App 6: Admin Onboarding Review -->
+        <a href="admin-review.html" class="app-card" id="card-admin-review">
+            <div class="lock-overlay">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Restricted
+            </div>
+            <div class="app-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    <polyline points="9 12 11 14 15 10"></polyline>
+                </svg>
+            </div>
+            <div class="app-title">Admin Review</div>
+            <div class="app-desc">Review submitted onboarding files. Verify uploaded documents, uniforms, and bank details.</div>
+            <div class="btn-go">Open Review →</div>
+        </a>
+
+        <!-- App 7: Contracts & Policies -->
+        <a href="contract.html" class="app-card" id="card-contracts">
+            <div class="lock-overlay">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Restricted
+            </div>
+            <div class="app-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+            </div>
+            <div class="app-title">Contracts & Policies</div>
+            <div class="app-desc">Manage system-wide employment contract templates mapped directly to approved job titles.</div>
+            <div class="btn-go">Manage Contracts →</div>
+        </a>
+
+        <!-- App 8: View Referrals -->
+        <a href="https://ngu-recruitment-portal.vercel.app/referral-submissions.html" class="app-card" id="card-referrals">
+            <div class="new-badge" id="badge-referrals" style="display: none;">NEW</div>
+            <div class="lock-overlay">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Restricted
+            </div>
+            <div class="app-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="8.5" cy="7" r="4"></circle>
+                    <line x1="20" y1="8" x2="20" y2="14"></line>
+                    <line x1="23" y1="11" x2="17" y2="11"></line>
+                </svg>
+            </div>
+            <div class="app-title">View Referrals</div>
+            <div class="app-desc">Review internal employee referral submissions and candidate recommendations.</div>
+            <div class="btn-go">View Referrals →</div>
+        </a>
+
+        <!-- App 9: User Database -->
+        <a href="user-database.html" class="app-card" id="card-userdb">
+            <div class="lock-overlay">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Restricted
+            </div>
+            <div class="app-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+            </div>
+            <div class="app-title">Access Control</div>
+            <div class="app-desc">Administer portal user accounts, manage security credentials, and configure permissions.</div>
+            <div class="btn-go">Open Database →</div>
+        </a>
+
+        <!-- App 10: Archived Vacancies -->
+        <a href="archived-vacancies.html" class="app-card" id="card-archives">
+            <div class="lock-overlay">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                Restricted
+            </div>
+            <div class="app-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="4"></line>
+                    <line x1="8" y1="2" x2="8" y2="4"></line>
+                    <circle cx="12" cy="14" r="3"></circle>
+                    <path d="M12 11v-2"></path>
+                </svg>
+            </div>
+            <div class="app-title">Archived Roles</div>
+            <div class="app-desc">View historical recruitment workflows and closed vacancies across the organization.</div>
+            <div class="btn-go">View Archives →</div>
+        </a>
 
     </div>
+
+    <!-- CANDIDATE-FACING / SECONDARY LINKS SECTION -->
+    <div class="other-links-container">
+        <details>
+            <summary>Candidate-Facing Links (For Reference & Testing)</summary>
+            <div class="other-links-content">
+                <a href="apply.html" class="secondary-link">
+                    <span class="secondary-icon">📝</span>
+                    Initial Job Application Form
+                </a>
+                <a href="candidate-referral-bonus.html" class="secondary-link">
+                    <span class="secondary-icon">🤝</span>
+                    Candidate Referral Form
+                </a>
+                <a href="engineer-portal.html" class="secondary-link">
+                    <span class="secondary-icon">✍️</span>
+                    Engineer Contract Portal
+                </a>
+                <a href="complete-onboarding.html" class="secondary-link">
+                    <span class="secondary-icon">🚀</span>
+                    Complete Onboarding Form
+                </a>
+            </div>
+        </details>
+    </div>
+
+</div>
+
+<script>
+    // Setup Header, Logout, and Permissions
+    document.addEventListener('DOMContentLoaded', () => {
+        const username = localStorage.getItem('ngu_portal_username');
+        if(username) document.getElementById('display-username').textContent = username;
+
+        // --- Permission Logic ---
+        const accessSubStr = localStorage.getItem('ngu_portal_access_submission');
+        const accessMgmtStr = localStorage.getItem('ngu_portal_access_management');
+        const accessUserDbStr = localStorage.getItem('ngu_portal_access_userdb');
+
+        // Apply visual lock and disable interaction if permission is NOT 'true'
+        if (accessSubStr !== 'true') lockCard('card-submission');
+        
+        // Add all management-level cards to the management lock group
+        if (accessMgmtStr !== 'true') {
+            lockCard('card-manager');
+            lockCard('card-applications');
+            lockCard('card-referrals');
+            lockCard('card-archives');
+            lockCard('card-live-vacancies');
+            lockCard('card-ftl-interviews');
+            lockCard('card-admin-review');
+            lockCard('card-contracts');
+        }
+
+        if (accessUserDbStr !== 'true') lockCard('card-userdb');
+    });
+
+    // Logout Logic
+    document.getElementById('logout-btn').addEventListener('click', () => {
+        localStorage.clear();
+        window.location.href = 'login.html';
+    });
+
+    function lockCard(cardId) {
+        const card = document.getElementById(cardId);
+        if (card) {
+            card.classList.add('locked');
+        }
+    }
+</script>
+
+<!-- Firebase Script to check for NEW submissions and handle clicks -->
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, query, where, getDocs, Timestamp } 
+        from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Click listeners to dismiss badges immediately and save the "viewed" timestamp
+    document.getElementById('card-applications').addEventListener('click', () => {
+        document.getElementById('badge-applications').style.display = 'none';
+        localStorage.setItem('apps_last_viewed', Date.now().toString());
+    });
+
+    document.getElementById('card-referrals').addEventListener('click', () => {
+        document.getElementById('badge-referrals').style.display = 'none';
+        localStorage.setItem('refs_last_viewed', Date.now().toString());
+    });
+
+    async function checkForNewSubmissions() {
+        // Base comparison: Submissions from the last 24 hours
+        const yesterday = new Date();
+        yesterday.setHours(yesterday.getHours() - 24);
+
+        // Fetch user's individual "last viewed" timestamps
+        const appsLastViewed = parseInt(localStorage.getItem('apps_last_viewed')) || 0;
+        const refsLastViewed = parseInt(localStorage.getItem('refs_last_viewed')) || 0;
+
+        // Determine the actual cutoff date (whichever is more recent: 24h ago OR the last viewed time)
+        const appsCompareDate = new Date(Math.max(yesterday.getTime(), appsLastViewed));
+        const refsCompareDate = new Date(Math.max(yesterday.getTime(), refsLastViewed));
+
+        const timestampApps = Timestamp.fromDate(appsCompareDate);
+        const timestampRefs = Timestamp.fromDate(refsCompareDate);
+
+        // Check for New Applications
+        try {
+            const appsQuery = query(collection(db, "NGUO New Applicants"), where("submittedAt", ">", timestampApps));
+            const appsSnapshot = await getDocs(appsQuery);
+            if (!appsSnapshot.empty) {
+                document.getElementById('badge-applications').style.display = 'block';
+            }
+        } catch (error) {
+            console.error("Error checking new applications:", error);
+        }
+
+        // Check for New Referrals 
+        try {
+            const refQuery = query(collection(db, "NGU Referral submissions"), where("submittedAt", ">", timestampRefs));
+            const refSnapshot = await getDocs(refQuery);
+            if (!refSnapshot.empty) {
+                document.getElementById('badge-referrals').style.display = 'block';
+            }
+        } catch (error) {
+            console.error("Error checking new referrals:", error);
+        }
+    }
+
+    checkForNewSubmissions();
+</script>
 
 </body>
 </html>
