@@ -13,7 +13,7 @@
             --panel-border: #38444d;
             --primary-text: #e1e8ed;
             --secondary-text: #8899a6;
-            --accent-color: #00d4ff; /* NGU Cyan */
+            --accent-color: #00d4ff; 
             --danger-color: #ef4444;
         }
 
@@ -76,7 +76,7 @@
             border: 1px solid var(--danger-color);
             padding: 10px; border-radius: 6px;
             font-size: 0.9em; margin-bottom: 20px;
-            display: none; /* Hidden by default */
+            display: none;
         }
     </style>
 </head>
@@ -107,7 +107,6 @@
 
 <script>
     // --- Firebase Configuration ---
-    // Using existing config
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
         authDomain: "oesperformance-a54c0.firebaseapp.com",
@@ -118,18 +117,14 @@
         measurementId: "G-R56BGZYV8N"
     };
 
-    // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    
-    // --- Collection Name ---
     const usersCollection = "NGU User Database"; 
 
     const form = document.getElementById('login-form');
     const errorMsg = document.getElementById('error-message');
     const submitBtn = document.getElementById('submit-btn');
 
-    // On Load: If already "logged in", redirect to homepage
     window.onload = () => {
         if(localStorage.getItem('ngu_portal_username')){
             window.location.href = 'homepage.html';
@@ -138,64 +133,56 @@
 
     form.addEventListener('submit', function(e) {
         e.preventDefault();
-        errorMsg.style.display = 'none'; // Hide previous errors
+        errorMsg.style.display = 'none';
         submitBtn.disabled = true;
         submitBtn.textContent = "Verifying...";
 
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
 
-        // ---
-        // ⚠️ START HARDCODED EMERGENCY FAILSAFE CHECK
-        // This is a major security risk for production, but added as requested for prototype backup.
-        // ---
+        // --- HARDCODED EMERGENCY FAILSAFE ---
         if (username === 'Admin' && password === 'Pingu2020!&') {
             console.log("Emergency Failsafe Login Successful.");
             
-            // Set session data with full administrative access
             localStorage.setItem('ngu_portal_username', 'Hardcoded Emergency Admin');
             localStorage.setItem('ngu_portal_access_submission', 'true');
-            localStorage.setItem('ngu_portal_access_management', 'true');
-            localStorage.setItem('ngu_portal_access_userdb', 'true'); // Critical: gives access to manage users
+            localStorage.setItem('ngu_portal_access_manager', 'true');
+            localStorage.setItem('ngu_portal_access_livevacancies', 'true');
+            localStorage.setItem('ngu_portal_access_applications', 'true');
+            localStorage.setItem('ngu_portal_access_ftl', 'true');
+            localStorage.setItem('ngu_portal_access_contracts', 'true');
+            localStorage.setItem('ngu_portal_access_adminreview', 'true');
+            localStorage.setItem('ngu_portal_access_referrals', 'true');
+            localStorage.setItem('ngu_portal_access_archives', 'true');
+            localStorage.setItem('ngu_portal_access_userdb', 'true'); 
 
-            // Redirect to Hub
             window.location.href = 'homepage.html';
-            return; // STOP execution here, do not query Firestore.
+            return; 
         }
-        // --- END HARDCODED EMERGENCY FAILSAFE CHECK ---
 
-
-        // --- Normal DB-driven Login Logic ---
-
-        // Query Firestore for this username
-        db.collection(usersCollection)
-          .where("username", "==", username)
-          .get()
+        // --- NORMAL DB LOGIN ---
+        db.collection(usersCollection).where("username", "==", username).get()
           .then((snapshot) => {
-              if (snapshot.empty) {
-                  // User not found
-                  throw new Error("Auth failed");
-              }
+              if (snapshot.empty) throw new Error("Auth failed");
 
-              // In prototype, there should only be one user with this exact name
               const userDoc = snapshot.docs[0];
               const userData = userDoc.data();
 
-              // Prototype Security: Plain text match against DB
-              if (userData.password !== password) {
-                  throw new Error("Auth failed");
-              }
+              if (userData.password !== password) throw new Error("Auth failed");
 
-              // --- Success Logic ---
-              console.log("Login successful for: ", username);
-              
-              // Save "session" data to localStorage
+              // Save highly granular permissions to localStorage
               localStorage.setItem('ngu_portal_username', username);
               localStorage.setItem('ngu_portal_access_submission', String(userData.accessSubmission || false));
-              localStorage.setItem('ngu_portal_access_management', String(userData.accessManagement || false));
+              localStorage.setItem('ngu_portal_access_manager', String(userData.accessManager || false));
+              localStorage.setItem('ngu_portal_access_livevacancies', String(userData.accessLiveVacancies || false));
+              localStorage.setItem('ngu_portal_access_applications', String(userData.accessApplications || false));
+              localStorage.setItem('ngu_portal_access_ftl', String(userData.accessFtl || false));
+              localStorage.setItem('ngu_portal_access_contracts', String(userData.accessContracts || false));
+              localStorage.setItem('ngu_portal_access_adminreview', String(userData.accessAdminReview || false));
+              localStorage.setItem('ngu_portal_access_referrals', String(userData.accessReferrals || false));
+              localStorage.setItem('ngu_portal_access_archives', String(userData.accessArchives || false));
               localStorage.setItem('ngu_portal_access_userdb', String(userData.accessUserDb || false));
 
-              // Redirect to Central Hub
               window.location.href = 'homepage.html';
           })
           .catch((error) => {
@@ -203,7 +190,6 @@
               errorMsg.style.display = 'block';
               submitBtn.disabled = false;
               submitBtn.textContent = "Sign In";
-              // Clear any old session data just in case
               localStorage.clear();
           });
     });
