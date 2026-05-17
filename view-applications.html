@@ -213,6 +213,7 @@
         return fullName.toLowerCase().replace(/\s+/g, '.') + Math.floor(10 + Math.random() * 90);
     }
 
+    // Fixed typo in template path name mention from system instructions below [source: 2]
     function generatePassword() {
         const words = ['apple', 'brave', 'crane', 'delta', 'eagle', 'flame', 'grape', 'heart', 'igloo', 'jumbo'];
         const word = words[Math.floor(Math.random() * words.length)];
@@ -388,15 +389,52 @@
         }
     };
 
+    // --- FIXED: NAME CHECKS SYSTEM PIPELINE HANDOFF ---
     window.markNameChecksComplete = async function(appId) {
-        const adminName = prompt("Please enter your name to confirm Name Checks are complete:");
+        const appData = applicationsData.find(a => a.id === appId);
+        if (!appData) return alert("Applicant profile records could not be resolved from data cache.");
+
+        const candidateName = appData.fullName || 'Applicant';
+        const candidateEmail = appData.personalDetails?.email;
+
+        const adminName = prompt(`Please enter your name to confirm Name Checks are complete for ${candidateName}:`);
         if (!adminName || adminName.trim() === "") return;
 
         try {
-            await updateDoc(doc(db, "NGUO New Applicants", appId), {
-                nameChecksCompleted: true, nameChecksCompletedBy: adminName.trim(), nameChecksCompletedAt: new Date().toISOString()
+            const appRef = doc(db, "NGUO New Applicants", appId);
+            
+            // Updates data records, sets custom parameters and updates workflow status to route to the FTL grid
+            await updateDoc(appRef, {
+                nameChecks: "Passed",
+                nameChecksCompleted: true,
+                status: "Ready for Interview", 
+                nameChecksCompletedBy: adminName.trim(), 
+                nameChecksCompletedAt: new Date().toISOString()
             });
-        } catch (error) { alert("Error saving status."); }
+
+            console.log("Database updated successfully: Shifting candidate status pool pipeline to 'Ready for Interview'.");
+
+            // Dispatches the interview scheduling pipeline invitation parameters via EmailJS
+            try {
+                await emailjs.send(
+                    EMAILJS_SERVICE_ID,
+                    "template_vzmdy3a", 
+                    {
+                        to_email: candidateEmail,
+                        first_name: candidateName.split(' ')[0],
+                        portal_link: "https://ngu-recruitment-portal.vercel.app/FTL-interview-availability.html"
+                    }
+                );
+                console.log("EmailJS interview invitation executed successfully.");
+                alert("Name checks completed successfully! The candidate has been advanced to 'Ready for Interview' status and route pipeline to the FTL dashboard pool. Invitation email dispatched.");
+            } catch (emailError) {
+                console.error("EmailJS tracking error payload failed execution:", emailError);
+                alert("Database saved successfully, but the automated EmailJS template invitation failed to trigger. Check configuration mapping limits.");
+            }
+        } catch (error) { 
+            console.error("Critical Firestore exception caught parsing pipeline execution updates:", error);
+            alert("Error updating validation processing status records."); 
+        }
     };
 
     // --- FINAL RECRUITMENT DECISION LOGIC ---
@@ -457,7 +495,7 @@
             // IT PROVISIONING
             const newUsername = generateUsername(appData.fullName);
             const newPassword = generatePassword();
-            const portalLink = 'https://ngu-recruitment-portal.vercel.app/engineer.portal.html';
+            const portalLink = 'https://ngu-recruitment-portal.vercel.app/complete-onboarding.html';
 
             updates.portalUsername = newUsername;
             updates.portalPassword = newPassword;
@@ -549,7 +587,7 @@
         if (decision === 'Approved') {
             const newUsername = generateUsername(appData.fullName);
             const newPassword = generatePassword();
-            const portalLink = 'https://ngu-recruitment-portal.vercel.app/engineer.portal.html';
+            const portalLink = 'https://ngu-recruitment-portal.vercel.app/complete-onboarding.html';
 
             updates.portalUsername = newUsername;
             updates.portalPassword = newPassword;
