@@ -174,12 +174,35 @@
             display: flex;
             flex-direction: column;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-            transition: transform 0.2s ease, border-color 0.2s ease;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
             position: relative;
         }
         .submission-card:hover {
             transform: translateY(-3px);
             border-color: rgba(0, 163, 224, 0.4);
+        }
+        
+        /* 🔥 MATCH HIGHLIGHT STYLING 🔥 */
+        .submission-card.hot-match {
+            border-color: var(--warning-color);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+        }
+        .match-badge {
+            background: linear-gradient(135deg, var(--warning-color), #d97706);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            font-weight: 800;
+            margin-left: 8px;
+            animation: pulse-gold 2s infinite;
+            vertical-align: middle;
+            display: inline-block;
+        }
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
         }
 
         /* Status Ribbons */
@@ -324,7 +347,7 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy } 
+    import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy, where } 
         from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const firebaseConfig = {
@@ -338,27 +361,49 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    
     const colRef = collection(db, "NGU Referral submissions");
+    const vacRef = collection(db, "NGU Recuitment Approval Form");
 
     const gridContainer = document.getElementById('submission-grid');
     const statusMsg = document.getElementById('status-message');
     
     let allSubmissions = [];
     let currentFilter = 'all';
+    let livePostcodeAreas = new Set(); // Stores hot postcodes
 
-    // Format Dates nicely
+    // Helpers
     const formatDate = (timestamp) => {
         if (!timestamp) return 'Unknown Date';
         const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
         return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit' });
     };
 
-    // Safe string helper
     const safeStr = (str) => str ? str : '<span style="color:var(--secondary-text); font-style:italic;">Not provided</span>';
 
-    // Listen for live updates
+    // Extracts leading letters from a postcode (e.g. "NE11 0PZ" -> "NE")
+    function getPostcodeArea(str) {
+        if (!str || typeof str !== 'string') return '';
+        const match = str.trim().match(/^[a-zA-Z]+/);
+        return match ? match[0].toUpperCase() : '';
+    }
+
+    // 1. Fetch Live Vacancies to generate hot postcode matches
+    const vacQuery = query(vacRef, where("workflowClosed", "==", false));
+    onSnapshot(vacQuery, (snapshot) => {
+        livePostcodeAreas.clear();
+        snapshot.forEach(doc => {
+            const loc = doc.data().requestInformation?.location;
+            if (loc) {
+                livePostcodeAreas.add(getPostcodeArea(loc));
+            }
+        });
+        // Re-render if referrals are already loaded
+        if (allSubmissions.length > 0) renderGrid();
+    });
+
+    // 2. Fetch Referrals
     const q = query(colRef, orderBy("submittedAt", "desc"));
-    
     onSnapshot(q, (snapshot) => {
         allSubmissions = [];
         snapshot.forEach(doc => {
@@ -389,7 +434,6 @@
                         "service_pxe89mj",   // Your Service ID
                         "template_5f9epwr",  // Your Template ID
                         {
-                            // Map to variables used in your EmailJS template
                             to_email: candidateEmail,
                             to_name: candidateName
                         }
@@ -400,7 +444,6 @@
                     alert("Status updated, but there was an error sending the email.");
                 }
             }
-            // The onSnapshot listener will automatically trigger a re-render
         } catch (error) {
             console.error("Error updating document: ", error);
             alert("Failed to update status. Please try again.");
@@ -412,7 +455,7 @@
         gridContainer.innerHTML = '';
         
         const filteredData = allSubmissions.filter(item => {
-            const status = item.status || 'Pending'; // Default to pending if no status field
+            const status = item.status || 'Pending'; 
             if (currentFilter === 'all') return true;
             return status.toLowerCase() === currentFilter;
         });
@@ -433,6 +476,12 @@
             if (status === 'Accepted') ribbonClass = 'status-accepted';
             if (status === 'Denied') ribbonClass = 'status-denied';
 
+            // Check for Postcode Match
+            const refArea = getPostcodeArea(data.referralPostcode);
+            const isMatch = livePostcodeAreas.has(refArea) && status === 'Pending';
+            const matchClass = isMatch ? 'hot-match' : '';
+            const matchBadgeHTML = isMatch ? `<span class="match-badge">🔥 LIVE VACANCY MATCH</span>` : '';
+
             let conditionalHTML = '';
             if (data.role === 'Smart Meter Engineer') {
                 conditionalHTML = `
@@ -450,7 +499,6 @@
 
             let actionFooterHTML = '';
             if (status === 'Pending') {
-                // Safely format the parameters to pass into the inline onclick function
                 const emailParam = data.referralEmail ? data.referralEmail.replace(/'/g, "\\'") : '';
                 const nameParam = data.referralName ? data.referralName.replace(/'/g, "\\'") : '';
                 
@@ -467,7 +515,7 @@
             }
 
             const cardHtml = `
-                <div class="submission-card">
+                <div class="submission-card ${matchClass}">
                     <div class="card-ribbon ${ribbonClass}">${status}</div>
                     
                     <div class="card-header">
@@ -493,7 +541,10 @@
 
                         <div class="info-block">
                             <label>Postcode</label>
-                            <div class="value">${safeStr(data.referralPostcode)}</div>
+                            <div class="value">
+                                ${safeStr(data.referralPostcode)}
+                                ${matchBadgeHTML}
+                            </div>
                         </div>
 
                         <div class="info-block">
