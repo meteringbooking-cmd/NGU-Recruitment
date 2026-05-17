@@ -220,7 +220,7 @@
                 <div class="form-group" style="grid-column: 1 / -1; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); padding:1.5rem; border-radius:8px;">
                     <label style="color:var(--warning); font-size:1.1rem;">Vehicle Setup & Fleet</label>
                     <p style="font-size:0.95rem; margin-bottom:1rem;">As you will be driving a company vehicle, please complete our mandatory Fleet Questionnaire and review the Fleet Welcome Pack.</p>
-                    <a href="https://www.cognitoforms.com/bmsl1/fleetdriverquestionnaire/publish" target="_blank" class="external-link">➔ Complete Fleet Questionnaire Here</a>
+                    <a href="https://www.cognitoforms.com/BMSL1/FLEETDriverQuestionnaire" target="_blank" class="external-link">➔ Complete Fleet Questionnaire Here</a>
                 </div>
             </div>
 
@@ -334,13 +334,13 @@
 
     // --- INITIALIZE DATA ---
     async function loadData() {
-        const user = localStorage.getItem('ngu_portal_username');
+        const user = localStorage.getItem('ngu_applicant_user');
         if (!user) { window.location.href = 'engineer-portal.html'; return; }
 
         const q = query(collection(db, "NGUO New Applicants"), where("portalUsername", "==", user));
         const snap = await getDocs(q);
         
-        if(snap.empty) { alert("Session error"); return; }
+        if(snap.empty) { alert("Session error. Please log in again."); window.location.href = 'engineer-portal.html'; return; }
         
         snap.forEach(d => { currentAppId = d.id; currentApplicant = d.data(); });
 
