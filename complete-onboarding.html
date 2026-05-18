@@ -139,7 +139,8 @@
                     </div>
                     
                     <div class="form-group" id="fg-idphoto">
-                        <label>ID Photo (Passport Style for Badge)</label>
+                        <!-- UPDATED LABEL AS REQUESTED -->
+                        <label>ID Photo (Passport Style - Headshot with white background)</label>
                         <div class="file-upload-box" id="box-idphoto">
                             <span id="label-doc-idphoto">Click or drag file here to upload</span>
                             <input type="file" id="file-idphoto" accept="image/*" onchange="handleFileUpload(this, 'idphoto')">
@@ -178,12 +179,15 @@
                         <div class="reject-msg" id="rej-poa"></div>
                     </div>
                     
+                    <!-- NEW STARTER CHECKLIST LOGIC -->
                     <div class="form-group" id="fg-p45" style="grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 1rem;">
                         <label>Do you have a P45 from your most recent employer?</label>
                         <div class="radio-group" style="margin-bottom:1rem;" id="p45Radios">
                             <label><input type="radio" name="hasP45" value="yes" onchange="toggleP45(true)"> Yes</label>
-                            <label><input type="radio" name="hasP45" value="no" onchange="toggleP45(false)" checked> No (I will need a new starter checklist)</label>
+                            <label><input type="radio" name="hasP45" value="no" onchange="toggleP45(false)"> No (I will complete a New Starter Checklist)</label>
                         </div>
+                        
+                        <!-- File Upload for P45 -->
                         <div id="p45UploadDiv" style="display:none;">
                             <div class="file-upload-box" id="box-p45">
                                 <span id="label-doc-p45">Upload your P45 here</span>
@@ -191,6 +195,39 @@
                                 <div class="file-status" id="status-p45"></div>
                             </div>
                             <div class="reject-msg" id="rej-p45"></div>
+                        </div>
+
+                        <!-- Digital HMRC New Starter Checklist -->
+                        <div id="starterChecklistDiv" style="display:none; margin-top: 1rem; padding: 1.5rem; background: rgba(0,0,0,0.2); border: 1px solid var(--accent); border-radius: 8px;">
+                            <h4 style="color:var(--accent); margin-bottom: 1rem;">HMRC New Starter Checklist</h4>
+                            <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">As you do not have a P45, we require this information to ensure you are placed on the correct tax code.</p>
+                            
+                            <div class="form-group">
+                                <label style="color: white;">Employee Statement (Choose ONE)</label>
+                                <div class="radio-group" style="flex-direction: column; gap: 0.8rem; align-items: flex-start; margin-top: 0.5rem;">
+                                    <label style="line-height: 1.4;"><input type="radio" name="hmrcStatement" value="A"> <strong style="color:var(--accent);">A.</strong> This is my first job since 6 April and I have not been receiving taxable Jobseeker's Allowance, Employment and Support Allowance, taxable Incapacity Benefit, State or Occupational Pension.</label>
+                                    <label style="line-height: 1.4;"><input type="radio" name="hmrcStatement" value="B"> <strong style="color:var(--accent);">B.</strong> This is now my only job but since 6 April I have had another job, or received taxable Jobseeker's Allowance, Employment and Support Allowance or taxable Incapacity Benefit. I do not receive a State or Occupational Pension.</label>
+                                    <label style="line-height: 1.4;"><input type="radio" name="hmrcStatement" value="C"> <strong style="color:var(--accent);">C.</strong> As well as my new job, I have another job or receive a State or Occupational Pension.</label>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+                                <label style="color: white;">Do you have a Student or Postgraduate Loan which is not fully repaid?</label>
+                                <div class="radio-group" style="margin-top: 0.5rem;">
+                                    <label><input type="radio" name="studentLoan" value="yes" onchange="document.getElementById('loanPlans').style.display='block'"> Yes</label>
+                                    <label><input type="radio" name="studentLoan" value="no" onchange="document.getElementById('loanPlans').style.display='none'"> No</label>
+                                </div>
+                            </div>
+                            
+                            <div id="loanPlans" style="display:none; margin-left: 1rem; border-left: 2px solid var(--accent); padding-left: 1rem; margin-top: 1rem;">
+                                <label style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">What type of Student Loan do you have? (Check all that apply)</label>
+                                <div class="checkbox-group" style="flex-direction: column; background: transparent; border: none; padding: 0;">
+                                    <label><input type="checkbox" id="loanPlan1"> Plan 1</label>
+                                    <label><input type="checkbox" id="loanPlan2"> Plan 2</label>
+                                    <label><input type="checkbox" id="loanPlan4"> Plan 4</label>
+                                    <label><input type="checkbox" id="loanPostgrad"> Postgraduate Loan</label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -412,6 +449,7 @@
     const EMAILJS_DBS_YES = 'template_azauav5';
     const EMAILJS_DBS_NO = 'template_1aay8zl';
     const EMAILJS_FINAL_VERIFY = 'template_3qmq3bb';
+    const EMAILJS_CANDIDATE_CONFIRM = 'template_xqc9hkh'; // Fired to candidate on final submission
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
     const firebaseConfig = {
@@ -560,6 +598,32 @@
             if(uni.boots) document.getElementById('uniBoot').value = uni.boots;
             if(uni.gloves) document.getElementById('uniGloves').value = uni.gloves;
 
+            // Pre-populate HMRC Checklist if exists
+            const hmrc = currentApplicant.hmrcChecklist;
+            if (hmrc && currentApplicant.hasP45 === false) {
+                const choiceInput = document.querySelector(`input[name="hasP45"][value="no"]`);
+                if(choiceInput) choiceInput.checked = true;
+                toggleP45(false);
+                
+                if (hmrc.statement) {
+                    const stInput = document.querySelector(`input[name="hmrcStatement"][value="${hmrc.statement}"]`);
+                    if (stInput) stInput.checked = true;
+                }
+                if (hmrc.studentLoan) {
+                    const slInput = document.querySelector(`input[name="studentLoan"][value="${hmrc.studentLoan}"]`);
+                    if (slInput) {
+                        slInput.checked = true;
+                        if (hmrc.studentLoan === 'yes') {
+                            document.getElementById('loanPlans').style.display = 'block';
+                            document.getElementById('loanPlan1').checked = hmrc.plan1 || false;
+                            document.getElementById('loanPlan2').checked = hmrc.plan2 || false;
+                            document.getElementById('loanPlan4').checked = hmrc.plan4 || false;
+                            document.getElementById('loanPostgrad').checked = hmrc.postgrad || false;
+                        }
+                    }
+                }
+            }
+
             if (currentApplicant.dbsInfo?.choice) {
                 const choiceInput = document.querySelector(`input[name="dbsChoice"][value="${currentApplicant.dbsInfo.choice}"]`);
                 if(choiceInput) choiceInput.checked = true;
@@ -627,7 +691,10 @@
         }
     };
 
-    window.toggleP45 = function(show) { document.getElementById('p45UploadDiv').style.display = show ? 'block' : 'none'; };
+    window.toggleP45 = function(hasP45) { 
+        document.getElementById('p45UploadDiv').style.display = hasP45 ? 'block' : 'none'; 
+        document.getElementById('starterChecklistDiv').style.display = hasP45 ? 'none' : 'block';
+    };
     window.toggleDBS = function(wantsDbs) { document.getElementById('dbsConsentBox').style.display = wantsDbs ? 'flex' : 'none'; };
 
     // --- UPLOAD LOGIC ---
@@ -671,20 +738,41 @@
         const chkConfirm = document.getElementById('chkDetailsConfirm').checked;
         const dbsChoice = document.querySelector('input[name="dbsChoice"]:checked')?.value;
         const dbsConsent = document.getElementById('chkDbsConsent').checked;
+        const hasP45Choice = document.querySelector('input[name="hasP45"]:checked')?.value;
 
         if(!chkConfirm) return alert("Please check the box in Step 2 confirming your personal details are correct.");
         if(!dbsChoice) return alert("Please select a DBS check option in Step 3.");
         if(dbsChoice === 'yes' && !dbsConsent) return alert("You must consent to the DBS check in Step 3 to proceed.");
+        
+        // HMRC Validation
+        if (hasP45Choice === 'no') {
+            const statement = document.querySelector('input[name="hmrcStatement"]:checked');
+            if (!statement) return alert("Please select an Employee Statement (A, B, or C) in the New Starter Checklist (Step 1).");
+        }
 
         btn.disabled = true;
         btn.textContent = 'Saving Profile...';
 
         try {
+            let hmrcData = null;
+            if (hasP45Choice === 'no') {
+                hmrcData = {
+                    statement: document.querySelector('input[name="hmrcStatement"]:checked')?.value || '',
+                    studentLoan: document.querySelector('input[name="studentLoan"]:checked')?.value || 'no',
+                    plan1: document.getElementById('loanPlan1').checked,
+                    plan2: document.getElementById('loanPlan2').checked,
+                    plan4: document.getElementById('loanPlan4').checked,
+                    postgrad: document.getElementById('loanPostgrad').checked
+                };
+            }
+
             const updates = {
                 onboardingCompleted: true,
                 onboardingCompletedAt: new Date().toISOString(),
                 onboardingVerificationStatus: 'Pending', // Resets to pending upon resubmission
                 onboardingDocs: uploadedUrls,
+                hasP45: hasP45Choice === 'yes',
+                hmrcChecklist: hmrcData,
                 onboardingDetails: {
                     title: document.getElementById('pdTitle').value,
                     firstName: document.getElementById('pdFirst').value,
@@ -735,12 +823,21 @@
             const safeStart = currentApplicant.startDate ? new Date(currentApplicant.startDate).toLocaleDateString('en-GB') : 'TBC';
             
             try {
+                // Email to HR stating form is ready for review
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FINAL_VERIFY, {
                     applicant_name: currentApplicant.fullName,
                     job_title: currentApplicant.position,
                     start_date: safeStart
                 });
-            } catch (err) { console.error("Failed to send General Verify Email:", err); }
+            } catch (err) { console.error("Failed to send HR Verify Email:", err); }
+
+            try {
+                // Confirm submission explicitly to the candidate
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_CANDIDATE_CONFIRM, {
+                    to_email: document.getElementById('pdEmail').value || currentApplicant.personalDetails?.email,
+                    to_name: document.getElementById('pdFirst').value || currentApplicant.fullName
+                });
+            } catch (err) { console.error("Failed to send Candidate Confirm Email:", err); }
 
             // Only fire DBS emails if this is their very first time submitting onboarding
             // We avoid spamming the HR inbox on re-submissions for rejected documents
