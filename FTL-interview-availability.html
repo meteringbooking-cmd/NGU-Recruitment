@@ -592,10 +592,18 @@
                 if (hoursUntilInterview > 0 && hoursUntilInterview <= 24) {
                     updates.applicantReminderSent = true;
                     const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                    
+                    // --- FIXED THE HARDCODED "THE ROLE" VALUE HERE ---
                     emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APP_REMINDER, {
-                        to_email: b.applicantEmail, first_name: b.applicantName ? b.applicantName.split(' ')[0] : 'Applicant',
-                        job_title: 'the role', interview_date: displayDate, interview_time: b.time, interviewer_name: b.interviewer || 'a member of our team',
-                        location_method: 'Microsoft Teams', meeting_link: b.meetingLink || 'A link will be provided shortly', contact_email: 'recruitment@next-gen.uk'
+                        to_email: b.applicantEmail, 
+                        first_name: b.applicantName ? b.applicantName.split(' ')[0] : 'Applicant',
+                        job_title: b.position || 'your selected role', 
+                        interview_date: displayDate, 
+                        interview_time: b.time, 
+                        interviewer_name: b.interviewer || 'a member of our team',
+                        location_method: 'Microsoft Teams', 
+                        meeting_link: b.meetingLink || 'A link will be provided shortly', 
+                        contact_email: 'recruitment@next-gen.uk'
                     });
                 }
             }
