@@ -80,6 +80,12 @@
         .previous-docs { margin-bottom: 2rem; background: rgba(0,0,0,0.15); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); }
         .doc-chip { display: inline-block; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; margin: 4px; }
         .external-link { color: var(--accent); text-decoration: underline; font-weight: bold; }
+
+        /* Form Sub-blocks specifically for official structural declarations */
+        .hmrc-block { background: rgba(13, 31, 58, 0.4); padding: 1.25rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 1.25rem; }
+        .hmrc-sub-title { font-size: 0.95rem; font-weight: 700; color: var(--accent); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
+        .statement-card { background: rgba(0,0,0,0.25); border: 1px dashed var(--border); padding: 1rem; border-radius: 6px; margin-top: 0.8rem; display: none; }
+        .statement-card.selected { display: block; border-color: var(--success); background: rgba(16, 185, 129, 0.03); }
     </style>
 </head>
 <body>
@@ -181,7 +187,7 @@
                         <div class="reject-msg" id="rej-poa"></div>
                     </div>
                     
-                    <!-- P45 / HMRC STARTER CHECKLIST LOGIC WRAPPER -->
+                    <!-- P45 / HMRC STARTER CHECKLIST SYSTEM -->
                     <div class="form-group" id="fg-p45" style="grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 1rem;">
                         <label>Do you have a P45 from your most recent employer?</label>
                         <div class="radio-group" style="margin-bottom:1rem;" id="p45Radios">
@@ -199,79 +205,145 @@
                             <div class="reject-msg" id="rej-p45"></div>
                         </div>
 
-                        <!-- Full Structural Digital HMRC New Starter Checklist -->
+                        <!-- Full Digital HMRC New Starter Checklist Form Mapping -->
                         <div id="starterChecklistDiv" style="display:none; margin-top: 1rem; padding: 1.5rem; background: rgba(0,0,0,0.2); border: 1px solid var(--accent); border-radius: 8px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1.2rem;">
-                                <h4 style="color:var(--accent); margin:0;">HMRC New Starter Checklist</h4>
+                                <h4 style="color:var(--accent); margin:0;">HMRC New Starter Checklist (12/25)</h4>
                                 <button type="button" class="btn-mini-edit" id="btnEditStarterChecklist" onclick="toggleStarterChecklistEdit()">✏️ Edit Pre-populated Fields</button>
                             </div>
-                            <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">As you do not have a P45, we require this structural information to ensure you are assigned the correct tax code threshold.</p>
                             
-                            <!-- Pre-populated Section -->
-                            <div class="grid-2">
-                                <div class="form-group">
-                                    <label>First Name</label>
-                                    <input type="text" id="scFirst" class="form-control" readonly>
-                                </div>
-                                <div class="form-group">
-                                    <label>Last Name</label>
-                                    <input type="text" id="scLast" class="form-control" readonly>
-                                </div>
-                                <div class="form-group">
-                                    <label>Date of Birth</label>
-                                    <input type="date" id="scDob" class="form-control" readonly>
-                                </div>
-                                <div class="form-group">
-                                    <label>National Insurance Number</label>
-                                    <input type="text" id="scNi" class="form-control" readonly>
-                                </div>
-                                <div class="form-group" style="grid-column: 1 / -1;">
-                                    <label>Home Address</label>
-                                    <input type="text" id="scAddress" class="form-control" readonly>
-                                </div>
-                                <div class="form-group">
-                                    <label>Postcode</label>
-                                    <input type="text" id="scPostcode" class="form-control" readonly>
-                                </div>
-                                <div class="form-group">
-                                    <label>Gender</label>
-                                    <select id="scGender" class="form-control">
-                                        <option value="" selected disabled>Select...</option>
-                                        <option value="Male">Male</option>
-                                        <option value="Female">Female</option>
-                                        <option value="Other">Other / Prefer not to say</option>
-                                    </select>
+                            <!-- Part 1: Employee's personal details -->
+                            <div class="hmrc-block">
+                                <div class="hmrc-sub-title">Part 1: Employee's Personal Details</div>
+                                <div class="grid-2">
+                                    <div class="form-group">
+                                        <label>1. Last name</label>
+                                        <input type="text" id="scLast" class="form-control" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>2. First names (Do not enter initials or shortened names)</label>
+                                        <input type="text" id="scFirst" class="form-control" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>3. What is your sex? (As shown on birth/gender cert)</label>
+                                        <div class="radio-group" style="margin-top: 0.5rem;">
+                                            <label><input type="radio" name="scGender" value="Male"> Male</label>
+                                            <label><input type="radio" name="scGender" value="Female"> Female</label>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>4. Date of birth</label>
+                                        <input type="date" id="scDob" class="form-control" readonly>
+                                    </div>
+                                    <div class="form-group" style="grid-column: 1 / -1;">
+                                        <label>5. Home address</label>
+                                        <input type="text" id="scAddress" class="form-control" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Postcode</label>
+                                        <input type="text" id="scPostcode" class="form-control" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Country</label>
+                                        <input type="text" id="scCountry" class="form-control" value="United Kingdom">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>6. National Insurance number (if known)</label>
+                                        <input type="text" id="scNi" class="form-control" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>7. Employment start date</label>
+                                        <input type="text" id="scStartDate" class="form-control" readonly placeholder="Assigned by HR">
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="form-group" style="margin-top:1rem; border-top: 1px dashed var(--border); padding-top:1.5rem;">
-                                <label style="color: white; font-weight: 700;">Employee Statement (Choose ONE)</label>
-                                <div class="radio-group" style="flex-direction: column; gap: 0.8rem; align-items: flex-start; margin-top: 0.5rem;">
-                                    <label style="line-height: 1.4;"><input type="radio" name="hmrcStatement" value="A"> <strong style="color:var(--accent);">A.</strong> This is my first job since 6 April and I have not been receiving taxable Jobseeker's Allowance, Employment and Support Allowance, taxable Incapacity Benefit, State or Occupational Pension.</label>
-                                    <label style="line-height: 1.4;"><input type="radio" name="hmrcStatement" value="B"> <strong style="color:var(--accent);">B.</strong> This is now my only job but since 6 April I have had another job, or received taxable Jobseeker's Allowance, Employment and Support Allowance or taxable Incapacity Benefit. I do not receive a State or Occupational Pension.</label>
-                                    <label style="line-height: 1.4;"><input type="radio" name="hmrcStatement" value="C"> <strong style="color:var(--accent);">C.</strong> As well as my new job, I have another job or receive a State or Occupational Pension.</label>
+                            <!-- Part 2: Employee statement conditional loop matrix -->
+                            <div class="hmrc-block">
+                                <div class="hmrc-sub-title">Part 2: Employee Statement Setup</div>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.4;">These targeted criteria questions evaluate parameters natively to enforce assignment configuration for Statement A, B, or C tax codes.</p>
+                                
+                                <div class="form-group">
+                                    <label>8. Do you have another job?</label>
+                                    <div class="radio-group" style="margin-top:0.3rem;">
+                                        <label><input type="radio" name="qAnotherJob" value="yes" onchange="evaluateHMRCStatementLogic()"> Yes</label>
+                                        <label><input type="radio" name="qAnotherJob" value="no" onchange="evaluateHMRCStatementLogic()"> No</label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" id="fg-qPension" style="display:none;">
+                                    <label>9. Do you receive payments from a State, workplace or private pension?</label>
+                                    <div class="radio-group" style="margin-top:0.3rem;">
+                                        <label><input type="radio" name="qPension" value="yes" onchange="evaluateHMRCStatementLogic()"> Yes</label>
+                                        <label><input type="radio" name="qPension" value="no" onchange="evaluateHMRCStatementLogic()"> No</label>
+                                    </div>
+                                </div>
+
+                                <div class="form-group" id="fg-qBenefits" style="display:none;">
+                                    <label style="line-height:1.4;">10. Since 6 April have you received payments from another job which has ended, or any of the following taxable benefits: Jobseeker's Allowance (JSA), Employment and Support Allowance (ESA), or Incapacity Benefit?</label>
+                                    <div class="radio-group" style="margin-top:0.3rem;">
+                                        <label><input type="radio" name="qBenefits" value="yes" onchange="evaluateHMRCStatementLogic()"> Yes</label>
+                                        <label><input type="radio" name="qBenefits" value="no" onchange="evaluateHMRCStatementLogic()"> No</label>
+                                    </div>
+                                </div>
+
+                                <!-- Calculated Structural Code Signatures Display blocks -->
+                                <div id="stateBlockA" class="statement-card">
+                                    <strong style="color:var(--success);">Selected Target outcome: Statement A</strong>
+                                    <p style="font-size:0.85rem; margin-top:0.3rem; color:var(--text-light); line-height:1.4;"><strong>Rule Metric:</strong> This is my first job since 6 April and since 6 April I have not received payments from another job or JSA, ESA, or Incapacity Benefit. <br><em style="color:var(--text-muted);">(HR Code: Current personal allowance threshold)</em></p>
+                                </div>
+
+                                <div id="stateBlockB" class="statement-card">
+                                    <strong style="color:var(--success);">Selected Target outcome: Statement B</strong>
+                                    <p style="font-size:0.85rem; margin-top:0.3rem; color:var(--text-light); line-height:1.4;"><strong>Rule Metric:</strong> Since 6 April I have had another job which has ended but I do not have a P45, and/or I received payments from JSA, ESA, or Incapacity Benefit. I do not receive a pension. <br><em style="color:var(--text-muted);">(HR Code: Current personal allowance cumulative Week 1/Month 1 basis)</em></p>
+                                </div>
+
+                                <div id="stateBlockC" class="statement-card">
+                                    <strong style="color:var(--success);">Selected Target outcome: Statement C</strong>
+                                    <p style="font-size:0.85rem; margin-top:0.3rem; color:var(--text-light); line-height:1.4;"><strong>Rule Metric:</strong> I have another active concurrent job and/or I am in receipt of a State, workplace, or private pension. <br><em style="color:var(--text-muted);">(HR Code: Tax Code BR applied)</em></p>
                                 </div>
                             </div>
-                            
-                            <div class="form-group" style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-                                <label style="color: white;">Do you have a Student or Postgraduate Loan which is not fully repaid?</label>
-                                <div class="radio-group" style="margin-top: 0.5rem;">
-                                    <label><input type="radio" name="studentLoan" value="yes" onchange="document.getElementById('loanPlans').style.display='block'"> Yes</label>
-                                    <label><input type="radio" name="studentLoan" value="no" onchange="document.getElementById('loanPlans').style.display='none'"> No</label>
+
+                            <!-- Part 3: Student loans logic structure -->
+                            <div class="hmrc-block">
+                                <div class="hmrc-sub-title">Part 3: Student Loans</div>
+                                
+                                <div class="form-group">
+                                    <label>11. Do you have a student or postgraduate loan?</label>
+                                    <div class="radio-group" style="margin-top:0.3rem;">
+                                        <label><input type="radio" name="qStudentLoan" value="yes" onchange="evaluateHMRCStudentLoanLogic()"> Yes</label>
+                                        <label><input type="radio" name="qStudentLoan" value="no" onchange="evaluateHMRCStudentLoanLogic()"> No</label>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <div id="loanPlans" style="display:none; margin-left: 1rem; border-left: 2px solid var(--accent); padding-left: 1rem; margin-top: 1rem;">
-                                <label style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">What type of Student Loan do you have? (Check all that apply)</label>
-                                <div class="checkbox-group" style="flex-direction: column; background: transparent; border: none; padding: 0;">
-                                    <label><input type="checkbox" id="loanPlan1"> Plan 1 (Left higher education before 6 April 2011)</label>
-                                    <label><input type="checkbox" id="loanPlan2"> Plan 2 (Left higher education on or after 6 April 2011)</label>
-                                    <label><input type="checkbox" id="loanPlan4"> Plan 4 (Scottish Student Loans)</label>
-                                    <label><input type="checkbox" id="loanPostgrad"> Postgraduate Loan</label>
+
+                                <div class="form-group" id="fg-qLoanExclusions" style="display:none;">
+                                    <label style="line-height:1.4;">12. Do any of the following parameters apply to your situation?</label>
+                                    <ul style="font-size:0.8rem; color:var(--text-muted); margin: 0.5rem 0 0.8rem 1.25rem; line-height:1.4;">
+                                        <li>You are still studying on a course that your student loan relates to</li>
+                                        <li>You completed or left your course after the start of the current tax year (since 6 April)</li>
+                                        <li>You have already completely repaid your loan in full</li>
+                                        <li>You are paying the Student Loans Company by Direct Debit to manage end-of-repayments</li>
+                                    </ul>
+                                    <div class="radio-group">
+                                        <label><input type="radio" name="qLoanExclusions" value="yes" onchange="evaluateHMRCStudentLoanLogic()"> Yes</label>
+                                        <label><input type="radio" name="qLoanExclusions" value="no" onchange="evaluateHMRCStudentLoanLogic()"> No</label>
+                                    </div>
                                 </div>
-                                <div class="checkbox-group" style="margin-top:1rem; padding:10px;">
-                                    <input type="checkbox" id="loanFinishedRepaying">
-                                    <label for="loanFinishedRepaying" style="font-size:0.85rem; color:var(--warning);">Did your studies finish after 6 April of this current tax year?</label>
+
+                                <div id="fg-qLoanPlanSelection" style="display:none; border-top:1px dashed var(--border); padding-top:1rem; margin-top:1rem;">
+                                    <label>13. Put 'X' in the correct student loan plan type or postgraduate loan threshold:</label>
+                                    <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.8rem;">Select only one plan type (Plan 1, 2, 4 or 5). You can select Postgraduate Loan concurrently if it applies.</p>
+                                    
+                                    <div class="checkbox-group" style="flex-direction: column; background: transparent; border: none; padding: 0;">
+                                        <label style="line-height:1.4;"><input type="radio" name="scLoanPlanGroup" id="planRadio1" value="Plan 1"> <strong>Plan 1:</strong> England/Wales course started before 1 Sept 2012, or Northern Ireland tracking</label>
+                                        <label style="line-height:1.4;"><input type="radio" name="scLoanPlanGroup" id="planRadio2" value="Plan 2"> <strong>Plan 2:</strong> England/Wales course started between 1 Sept 2012 and 31 July 2023</label>
+                                        <label style="line-height:1.4;"><input type="radio" name="scLoanPlanGroup" id="planRadio4" value="Plan 4"> <strong>Plan 4:</strong> Applied through Student Awards Agency Scotland (SAAS)</label>
+                                        <label style="line-height:1.4;"><input type="radio" name="scLoanPlanGroup" id="planRadio5" value="Plan 5"> <strong>Plan 5:</strong> England course started on or after 1 August 2023</label>
+                                        
+                                        <div style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px dashed rgba(255,255,255,0.05); width:100%;">
+                                            <label style="line-height:1.4;"><input type="checkbox" id="scPostgradLoan" value="Postgraduate"> <strong>Postgraduate Loan:</strong> Master's or Doctoral framework course framework allocation</label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -512,6 +584,7 @@
     let currentAppId = null;
     let currentApplicant = null;
     let uploadedUrls = {};
+    let activeCalculatedStatement = "";
 
     const certMapping = {
         'mocopa': 'MOCOPA Certification',
@@ -522,9 +595,8 @@
         'gassafe': 'Gas Safe Registration'
     };
 
-    // Live Cross-Step Alignment Function
+    // Live Cross-Step Alignment and Sync
     window.syncStarterChecklistFields = function() {
-        // Only run sync values if fields are currently set to read-only/pre-populated mode
         if (document.getElementById('scFirst').hasAttribute('readonly')) {
             document.getElementById('scFirst').value = document.getElementById('pdFirst').value;
             document.getElementById('scLast').value = document.getElementById('pdLast').value;
@@ -561,6 +633,69 @@
             btn.textContent = '✏️ Edit Pre-populated Fields';
             btn.style.borderColor = 'var(--accent)';
             btn.style.color = 'var(--accent)';
+            syncStarterChecklistFields(); // Reset structural changes back to form bindings
+        }
+    };
+
+    // Official Structural Loop Handling for HMRC Statement Questions 8, 9 & 10
+    window.evaluateHMRCStatementLogic = function() {
+        const anotherJob = document.querySelector('input[name="qAnotherJob"]:checked')?.value;
+        const pensionBox = document.getElementById('fg-qPension');
+        const benefitsBox = document.getElementById('fg-qBenefits');
+        
+        // Hide dynamic subquestions and assessment display boxes by default
+        pensionBox.style.display = 'none';
+        benefitsBox.style.display = 'none';
+        document.querySelectorAll('#stateBlockA, #stateBlockB, #stateBlockC').forEach(el => el.classList.remove('selected'));
+        activeCalculatedStatement = "";
+
+        if (!anotherJob) return;
+
+        // Question 8 Check: Do you have another job?
+        if (anotherJob === 'yes') {
+            document.getElementById('stateBlockC').classList.add('selected');
+            activeCalculatedStatement = "Statement C";
+        } else {
+            // Uncover Question 9: Pension parameters check
+            pensionBox.style.display = 'block';
+            const pension = document.querySelector('input[name="qPension"]:checked')?.value;
+            
+            if (pension === 'yes') {
+                document.getElementById('stateBlockC').classList.add('selected');
+                activeCalculatedStatement = "Statement C";
+            } else if (pension === 'no') {
+                // Uncover Question 10: History tracking check
+                benefitsBox.style.display = 'block';
+                const benefits = document.querySelector('input[name="qBenefits"]:checked')?.value;
+                
+                if (benefits === 'yes') {
+                    document.getElementById('stateBlockB').classList.add('selected');
+                    activeCalculatedStatement = "Statement B";
+                } else if (benefits === 'no') {
+                    document.getElementById('stateBlockA').classList.add('selected');
+                    activeCalculatedStatement = "Statement A";
+                }
+            }
+        }
+    };
+
+    // Official Structural Loop Handling for HMRC Student Loans Questions 11 & 12
+    window.evaluateHMRCStudentLoanLogic = function() {
+        const hasLoan = document.querySelector('input[name="qStudentLoan"]:checked')?.value;
+        const exclusionsBox = document.getElementById('fg-qLoanExclusions');
+        const planSelectionBox = document.getElementById('fg-qLoanPlanSelection');
+
+        exclusionsBox.style.display = 'none';
+        planSelectionBox.style.display = 'none';
+
+        if (hasLoan === 'yes') {
+            exclusionsBox.style.display = 'block';
+            const exclusions = document.querySelector('input[name="qLoanExclusions"]:checked')?.value;
+            
+            if (exclusions === 'no') {
+                planSelectionBox.style.display = 'block';
+            }
+            // If exclusions === 'yes', go straight to declaration (Plan selection hidden)
         }
     };
 
@@ -641,7 +776,7 @@
                 }
             }
 
-            // Populate Profile Base Details
+            // Populate Profile Base details
             const p = currentApplicant.onboardingDetails || currentApplicant.personalDetails || {};
             document.getElementById('pdTitle').value = p.title || '';
             const nameParts = (currentApplicant.fullName || '').split(' ');
@@ -681,42 +816,58 @@
             if(uni.boots) document.getElementById('uniBoot').value = uni.boots;
             if(uni.gloves) document.getElementById('uniGloves').value = uni.gloves;
 
-            // Initialize Starter Checklist Pre-population Data
+            // Initialize formatting sync boundaries
             syncStarterChecklistFields();
+            if (currentApplicant.startDate) {
+                document.getElementById('scStartDate').value = new Date(currentApplicant.startDate).toLocaleDateString('en-GB');
+            }
 
-            // Populate HMRC Checklist if exists
+            // Populate HMRC Checklist from parameters mapping structure if database object returns non-null
             const hmrc = currentApplicant.hmrcChecklist;
             if (hmrc && currentApplicant.hasP45 === false) {
-                const choiceInput = document.querySelector(`input[name="hasP45"][value="no"]`);
+                const choiceInput = document.querySelector('input[name="hasP45"][value="no"]');
                 if(choiceInput) choiceInput.checked = true;
                 toggleP45(false);
                 
-                if (hmrc.firstName) document.getElementById('scFirst').value = hmrc.firstName;
                 if (hmrc.lastName) document.getElementById('scLast').value = hmrc.lastName;
+                if (hmrc.firstName) document.getElementById('scFirst').value = hmrc.firstName;
                 if (hmrc.dob) document.getElementById('scDob').value = hmrc.dob;
                 if (hmrc.niNumber) document.getElementById('scNi').value = hmrc.niNumber;
                 if (hmrc.address) document.getElementById('scAddress').value = hmrc.address;
                 if (hmrc.postcode) document.getElementById('scPostcode').value = hmrc.postcode;
-                if (hmrc.gender) document.getElementById('scGender').value = hmrc.gender;
+                if (hmrc.country) document.getElementById('scCountry').value = hmrc.country;
+                
+                if (hmrc.sex) {
+                    const sexInput = document.querySelector(`input[name="scGender"][value="${hmrc.sex}"]`);
+                    if(sexInput) sexInput.checked = true;
+                }
 
-                if (hmrc.statement) {
-                    const stInput = document.querySelector(`input[name="hmrcStatement"][value="${hmrc.statement}"]`);
-                    if (stInput) stInput.checked = true;
+                // Restore dynamic statement logic checkboxes
+                if (hmrc.anotherJobQuestion) {
+                    document.querySelector(`input[name="qAnotherJob"][value="${hmrc.anotherJobQuestion}"]`).checked = true;
                 }
-                if (hmrc.studentLoan) {
-                    const slInput = document.querySelector(`input[name="studentLoan"][value="${hmrc.studentLoan}"]`);
-                    if (slInput) {
-                        slInput.checked = true;
-                        if (hmrc.studentLoan === 'yes') {
-                            document.getElementById('loanPlans').style.display = 'block';
-                            document.getElementById('loanPlan1').checked = hmrc.plan1 || false;
-                            document.getElementById('loanPlan2').checked = hmrc.plan2 || false;
-                            document.getElementById('loanPlan4').checked = hmrc.plan4 || false;
-                            document.getElementById('loanPostgrad').checked = hmrc.postgrad || false;
-                            document.getElementById('loanFinishedRepaying').checked = hmrc.finishedRepaying || false;
-                        }
-                    }
+                if (hmrc.pensionQuestion) {
+                    document.querySelector(`input[name="qPension"][value="${hmrc.pensionQuestion}"]`).checked = true;
                 }
+                if (hmrc.benefitsQuestion) {
+                    document.querySelector(`input[name="qBenefits"][value="${hmrc.benefitsQuestion}"]`).checked = true;
+                }
+                evaluateHMRCStatementLogic();
+
+                // Restore Student loan logic selection paths
+                if (hmrc.hasLoanQuestion) {
+                    document.querySelector(`input[name="qStudentLoan"][value="${hmrc.hasLoanQuestion}"]`).checked = true;
+                }
+                if (hmrc.exclusionsQuestion) {
+                    document.querySelector(`input[name="qLoanExclusions"][value="${hmrc.exclusionsQuestion}"]`).checked = true;
+                }
+                evaluateHMRCStudentLoanLoanLogic();
+
+                if (hmrc.selectedPlan) {
+                    const planInput = document.querySelector(`input[name="scLoanPlanGroup"][value="${hmrc.selectedPlan}"]`);
+                    if(planInput) planInput.checked = true;
+                }
+                document.getElementById('scPostgradLoan').checked = hmrc.postgradLoanSelected || false;
             }
 
             if (currentApplicant.dbsInfo?.choice) {
@@ -731,7 +882,7 @@
                 document.getElementById('refNameSpan').textContent = currentApplicant.referralName;
             }
 
-            // Populate Prev Docs
+            // Populate Prev Docs chips
             const c = currentApplicant.certificates || {};
             const prevDocsList = document.getElementById('prevDocsList');
             prevDocsList.innerHTML = '';
@@ -838,12 +989,23 @@
         if(!dbsChoice) return alert("Please select a DBS check option in Step 3.");
         if(dbsChoice === 'yes' && !dbsConsent) return alert("You must consent to the DBS check in Step 3 to proceed.");
         
-        // HMRC Structural Validation
+        // HMRC Validation Checks
         if (hasP45Choice === 'no') {
-            const statement = document.querySelector('input[name="hmrcStatement"]:checked');
-            const gender = document.getElementById('scGender').value;
-            if (!gender) return alert("Please provide your Gender option within the New Starter Checklist (Step 1).");
-            if (!statement) return alert("Please select an Employee Statement (A, B, or C) in the New Starter Checklist (Step 1).");
+            const sexSelected = document.querySelector('input[name="scGender"]:checked')?.value;
+            if(!sexSelected) return alert("Please fill out Question 3: What is your sex? inside the Starter Checklist.");
+            if(!activeCalculatedStatement) return alert("Please answer all operational Statement Questions (8-10) to finalize your Employee Statement definition.");
+            
+            const loanQuestion = document.querySelector('input[name="qStudentLoan"]:checked')?.value;
+            if(!loanQuestion) return alert("Please select an option for Question 11 regarding Student/Postgraduate Loans.");
+            if(loanQuestion === 'yes') {
+                const exclusionSelected = document.querySelector('input[name="qLoanExclusions"]:checked')?.value;
+                if(!exclusionSelected) return alert("Please answer Question 12 relative to Loan repayment status parameters.");
+                if(exclusionSelected === 'no') {
+                    const planSelected = document.querySelector('input[name="scLoanPlanGroup"]:checked')?.value;
+                    const postgradSelected = document.getElementById('scPostgradLoan').checked;
+                    if(!planSelected && !postgradSelected) return alert("Please select at least one corresponding loan specification plan under Question 13.");
+                }
+            }
         }
 
         btn.disabled = true;
@@ -853,20 +1015,25 @@
             let hmrcData = null;
             if (hasP45Choice === 'no') {
                 hmrcData = {
-                    firstName: document.getElementById('scFirst').value,
                     lastName: document.getElementById('scLast').value,
+                    firstName: document.getElementById('scFirst').value,
+                    sex: document.querySelector('input[name="scGender"]:checked').value,
                     dob: document.getElementById('scDob').value,
-                    niNumber: document.getElementById('scNi').value,
                     address: document.getElementById('scAddress').value,
                     postcode: document.getElementById('scPostcode').value,
-                    gender: document.getElementById('scGender').value,
-                    statement: document.querySelector('input[name="hmrcStatement"]:checked')?.value || '',
-                    studentLoan: document.querySelector('input[name="studentLoan"]:checked')?.value || 'no',
-                    plan1: document.getElementById('loanPlan1').checked,
-                    plan2: document.getElementById('loanPlan2').checked,
-                    plan4: document.getElementById('loanPlan4').checked,
-                    postgrad: document.getElementById('loanPostgrad').checked,
-                    finishedRepaying: document.getElementById('loanFinishedRepaying').checked
+                    country: document.getElementById('scCountry').value,
+                    niNumber: document.getElementById('scNi').value,
+                    
+                    // Logic tracking parameters
+                    anotherJobQuestion: document.querySelector('input[name="qAnotherJob"]:checked')?.value || '',
+                    pensionQuestion: document.querySelector('input[name="qPension"]:checked')?.value || '',
+                    benefitsQuestion: document.querySelector('input[name="qBenefits"]:checked')?.value || '',
+                    calculatedStatementOutcome: activeCalculatedStatement,
+
+                    hasLoanQuestion: document.querySelector('input[name="qStudentLoan"]:checked')?.value || '',
+                    exclusionsQuestion: document.querySelector('input[name="qLoanExclusions"]:checked')?.value || '',
+                    selectedPlan: document.querySelector('input[name="scLoanPlanGroup"]:checked')?.value || 'None',
+                    postgradLoanSelected: document.getElementById('scPostgradLoan').checked
                 };
             }
 
@@ -927,9 +1094,7 @@
             
             try {
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FINAL_VERIFY, {
-                    applicant_name: currentApplicant.fullName,
-                    job_title: currentApplicant.position,
-                    start_date: safeStart
+                    applicant_name: currentApplicant.fullName, job_title: currentApplicant.position, start_date: safeStart
                 });
             } catch (err) { console.error("Failed to send HR Verify Email:", err); }
 
