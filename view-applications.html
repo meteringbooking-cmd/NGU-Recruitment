@@ -94,6 +94,13 @@
         .checklist-item label { cursor: pointer; font-size: 0.95rem; user-select: none; width: 100%;}
         .checklist-item.checked { border-color: var(--success); background: rgba(16, 185, 129, 0.05); color: #6ee7b7; text-decoration: line-through;}
 
+        /* Dropdown Expandable Elements styles */
+        details.collapsible-pack { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; margin-top: 1rem; overflow: hidden; }
+        details.collapsible-pack summary { background: rgba(255, 255, 255, 0.03); padding: 0.8rem 1.2rem; font-weight: 600; color: var(--accent); cursor: pointer; outline: none; user-select: none; transition: background 0.2s; font-size: 0.95rem; }
+        details.collapsible-pack summary:hover { background: rgba(255, 255, 255, 0.06); color: var(--text-light); }
+        details.collapsible-pack[open] summary { border-bottom: 1px solid var(--border); background: rgba(0, 163, 224, 0.05); }
+        .collapsible-content { padding: 1.2rem; }
+
         /* Review Modal Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;}
         .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease;}
@@ -780,9 +787,62 @@
                     </div>
                 `;
 
+                // Expandable Interview Questions & Notes block
+                if (data.notes) {
+                    let notesBody = '';
+                    if (data.type === 'engineer') {
+                        notesBody = `
+                            <div class="data-group"><div class="data-label">Section 1: Background & Career History</div><div class="text-box">${safeVal(data.notes.section1)}</div></div>
+                            <div class="data-group"><div class="data-label">Section 2: Qualifications & Technical Competence</div><div class="text-box">${safeVal(data.notes.section2)}</div></div>
+                            <div class="data-group"><div class="data-label">Section 3: Safety & Problem Solving</div><div class="text-box">${safeVal(data.notes.section3)}</div></div>
+                            <div class="data-group"><div class="data-label">Section 4: Customer Service & Behaviour</div><div class="text-box">${safeVal(data.notes.section4)}</div></div>
+                            <div class="data-group"><div class="data-label">Section 5: Reliability & Availability</div><div class="text-box">${safeVal(data.notes.section5)}</div></div>
+                        `;
+                    } else if (data.type === 'office') {
+                        notesBody = `
+                            <div class="data-group"><div class="data-label">Section 1: Background & Career History</div><div class="text-box">${safeVal(data.notes.section1)}</div></div>
+                            <div class="data-group"><div class="data-label">Section 2: Skills & Systems Competence</div><div class="text-box">${safeVal(data.notes.section2)}</div></div>
+                            <div class="data-group"><div class="data-label">Section 3: Customer Service & Behaviour</div><div class="text-box">${safeVal(data.notes.section3)}</div></div>
+                            <div class="data-group"><div class="data-label">Section 4: Teamwork & Reliability</div><div class="text-box">${safeVal(data.notes.section4)}</div></div>
+                        `;
+                    }
+                    if (data.notes.candidateQuestions) {
+                        notesBody += `<div class="data-group"><div class="data-label">Candidate Questions</div><div class="text-box">${safeVal(data.notes.candidateQuestions)}</div></div>`;
+                    }
+
+                    packResultsHtml += `
+                        <details class="collapsible-pack">
+                            <summary>📁 View Interview Discussion Answers & Notes</summary>
+                            <div class="collapsible-content">
+                                ${notesBody}
+                            </div>
+                        </details>
+                    `;
+                }
+
+                // Expandable Scorecard Breakdown Block
                 if (data.scores && data.scores.length > 0) {
                     let scoreRows = data.scores.map(s => `<tr><td><strong>${s.criteria}</strong></td><td style="text-align:center; font-weight:bold; color:var(--accent); font-size:1.1rem;">${s.score}</td><td>${s.comment || '<span style="color:var(--text-muted)">-</span>'}</td></tr>`).join('');
-                    packResultsHtml += `<h4 style="margin-top: 2rem; color: var(--text-light); margin-bottom: 0.8rem; font-size: 1rem;">Detailed Scorecard Breakdown</h4><table class="data-table" style="background: rgba(0,0,0,0.15); border-radius: 8px; overflow: hidden; margin-bottom: 2rem;"><thead><tr><th style="width:30%;">Criteria</th><th style="text-align:center; width:15%;">Score</th><th>Interviewer Comments</th></tr></thead><tbody>${scoreRows}</tbody></table>`;
+                    
+                    packResultsHtml += `
+                        <details class="collapsible-pack">
+                            <summary>📊 View Detailed Scorecard Matrix Breakdown</summary>
+                            <div class="collapsible-content" style="padding: 0.5rem 0 0 0;">
+                                <table class="data-table" style="background: rgba(0,0,0,0.15); border-radius: 8px; overflow: hidden; margin-bottom: 0;">
+                                    <thead>
+                                        <tr>
+                                            <th style="width:35%;">Criteria</th>
+                                            <th style="text-align:center; width:15%;">Score</th>
+                                            <th>Interviewer Comments</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${scoreRows}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </details>
+                    `;
                 }
 
                 // RECRUITMENT DECISION ACTION BLOCK
