@@ -213,7 +213,6 @@
         return fullName.toLowerCase().replace(/\s+/g, '.') + Math.floor(10 + Math.random() * 90);
     }
 
-    // Fixed typo in template path name mention from system instructions below [source: 2]
     function generatePassword() {
         const words = ['apple', 'brave', 'crane', 'delta', 'eagle', 'flame', 'grape', 'heart', 'igloo', 'jumbo'];
         const word = words[Math.floor(Math.random() * words.length)];
@@ -389,7 +388,6 @@
         }
     };
 
-    // --- FIXED: NAME CHECKS SYSTEM PIPELINE HANDOFF ---
     window.markNameChecksComplete = async function(appId) {
         const appData = applicationsData.find(a => a.id === appId);
         if (!appData) return alert("Applicant profile records could not be resolved from data cache.");
@@ -403,7 +401,6 @@
         try {
             const appRef = doc(db, "NGUO New Applicants", appId);
             
-            // Updates data records, sets custom parameters and updates workflow status to route to the FTL grid
             await updateDoc(appRef, {
                 nameChecks: "Passed",
                 nameChecksCompleted: true,
@@ -414,7 +411,6 @@
 
             console.log("Database updated successfully: Shifting candidate status pool pipeline to 'Ready for Interview'.");
 
-            // Dispatches the interview scheduling pipeline invitation parameters via EmailJS
             try {
                 await emailjs.send(
                     EMAILJS_SERVICE_ID,
@@ -951,7 +947,16 @@
             <div class="section"><h3>Qualifications & CV</h3><div class="data-group"><div class="data-label">Listed Qualifications</div><div class="text-box">${safeVal(app.qualifications)}</div></div><div class="data-group" style="margin-top:1.5rem;"><div class="data-label">Curriculum Vitae</div>${cvHtml}</div></div>
 
             <div class="section"><h3>Certificates & Licences</h3><div class="grid-2" style="margin-bottom:1.5rem;">
-                <div class="data-group"><div class="data-label">Driving Licence</div><div class="data-value">${c.drivinglicence?.confirmed ? `Confirmed (Expires: ${c.drivinglicence?.expiry || 'N/A'})` : 'No / Not provided'}</div></div>
+                <div class="data-group">
+                    <div class="data-label">Driving Licence</div>
+                    <div class="data-value">
+                        ${c.drivinglicence?.confirmed 
+                            ? `Confirmed<br>
+                               <span style="font-size:0.85rem; color:var(--text-muted)">Expires: ${c.drivinglicence?.expiry || 'N/A'}</span>
+                               ${c.drivinglicence?.checkCode ? `<br><span style="font-size:0.85rem; color:var(--accent); font-family:'DM Mono', monospace;">Code: ${c.drivinglicence.checkCode}</span>` : ''}` 
+                            : 'No / Not provided'}
+                    </div>
+                </div>
                 <div class="data-group"><div class="data-label">EUSR Card</div><div class="data-value">${c.eusr?.has ? `Yes (No: ${c.eusr?.number || 'N/A'})` : 'No / Not provided'}</div></div>
                 <div class="data-group"><div class="data-label">Gas Safe Registration</div><div class="data-value">${c.gassafe?.number ? c.gassafe.number : 'Not provided'}</div></div>
             </div><div class="data-label">Uploaded Certificate Files</div><div class="cert-list">${certsHtml}</div></div>
