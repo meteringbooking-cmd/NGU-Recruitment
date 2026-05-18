@@ -420,9 +420,20 @@
                         <button type="button" class="yn-btn" id="yn-dl-yes" onclick="setDrivingLicenceApp(true)">Yes</button>
                         <button type="button" class="yn-btn" id="yn-dl-no"  onclick="setDrivingLicenceApp(false)">No</button>
                     </div>
-                    <div id="dl-expiry-wrap" style="display:none;margin-top:0.7rem;">
-                        <label style="font-size:0.82rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:0.3rem;">Licence Expiry Date</label>
-                        <input type="date" id="dl-expiry" class="cert-inline-input" style="max-width:200px;resize:none;">
+                    
+                    <div id="dl-details-wrap" style="display:none;margin-top:0.7rem; gap: 10px; flex-direction: column;">
+                        <div>
+                            <label style="font-size:0.82rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:0.3rem;">Licence Expiry Date</label>
+                            <input type="date" id="dl-expiry" class="cert-inline-input" style="max-width:200px;resize:none;">
+                        </div>
+                        <div style="margin-top:0.8rem;">
+                            <label style="font-size:0.82rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:0.3rem;">Licence Check Code</label>
+                            <input type="text" id="dl-check-code" class="cert-inline-input" placeholder="e.g. ABC12345" style="max-width:200px;resize:none;">
+                            <div style="background: rgba(0, 163, 224, 0.1); border: 1px solid rgba(0, 163, 224, 0.3); padding: 8px 12px; border-radius: 6px; margin-top: 8px; font-size: 0.8rem; line-height: 1.4;">
+                                ℹ️ <strong>How to get your check code:</strong><br>
+                                You can generate a code to share your driving record by visiting <a href="https://www.gov.uk/view-driving-licence" target="_blank" style="color: var(--accent); text-decoration: underline;">https://www.gov.uk/view-driving-licence</a>. The code is case-sensitive and valid for 21 days.
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="cert-row-actions">
@@ -774,9 +785,9 @@
     window.setDrivingLicenceApp = function(val) {
         document.getElementById('yn-dl-yes').className = 'yn-btn' + (val ? ' selected-yes' : '');
         document.getElementById('yn-dl-no').className  = 'yn-btn' + (!val ? ' selected-no' : '');
-        document.getElementById('dl-expiry-wrap').style.display = val ? 'block' : 'none';
+        document.getElementById('dl-details-wrap').style.display = val ? 'flex' : 'none';
         const badge = document.getElementById('badge-drivinglicence');
-        if (val) { badge.textContent = 'Yes — add expiry'; badge.className = 'cert-badge ready'; }
+        if (val) { badge.textContent = 'Yes — details added'; badge.className = 'cert-badge ready'; }
         else     { badge.textContent = 'No'; badge.className = 'cert-badge done'; document.getElementById('row-drivinglicence').classList.add('uploaded'); }
     };
 
@@ -802,14 +813,18 @@
         if (this.value.trim()) { badge.textContent = `✓ ${this.value.trim()}`; badge.className = 'cert-badge done'; }
     });
 
-    // DL expiry live badge update
-    document.getElementById('dl-expiry').addEventListener('change', function() {
+    // DL details check update
+    document.getElementById('dl-expiry').addEventListener('change', updateDLBadge);
+    document.getElementById('dl-check-code').addEventListener('input', updateDLBadge);
+    function updateDLBadge() {
+        const expiry = document.getElementById('dl-expiry').value;
+        const code = document.getElementById('dl-check-code').value.trim();
         const badge = document.getElementById('badge-drivinglicence');
-        if (this.value) {
-            badge.textContent = `✓ Expires ${this.value}`; badge.className = 'cert-badge done';
+        if (expiry || code) {
+            badge.textContent = `✓ Details entered`; badge.className = 'cert-badge done';
             document.getElementById('row-drivinglicence').classList.add('uploaded');
         }
-    });
+    }
 
     /* Additional certs */
     let addCertCounter = 0;
@@ -1048,7 +1063,11 @@
                 gasl3:          certFileData['gasl3']       || null,
                 cmagas:         certFileData['cmagas']      || null,
                 higherskills:   certFileData['higherskills']|| null,
-                drivinglicence: { confirmed: dlConfirmed, expiry: document.getElementById('dl-expiry').value || '' },
+                drivinglicence: { 
+                    confirmed: dlConfirmed, 
+                    expiry: document.getElementById('dl-expiry').value || '',
+                    checkCode: document.getElementById('dl-check-code').value.trim() || ''
+                },
                 eusr:           { has: euHas, number: document.getElementById('eusr-number').value.trim() },
                 gassafe:        { number: document.getElementById('gassafe-number').value.trim() },
                 additional:     additionalCerts
