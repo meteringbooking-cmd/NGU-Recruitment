@@ -210,7 +210,7 @@
                             </div>
                             <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">As you do not have a P45, we require this structural information to ensure you are assigned the correct tax code threshold.</p>
                             
-                            <!-- Part 1: Employee's personal details (Editable directly) -->
+                            <!-- Part 1: Employee's personal details -->
                             <div class="hmrc-block">
                                 <div class="hmrc-sub-title">Part 1: Employee's Personal Details</div>
                                 <div class="grid-2">
@@ -1049,17 +1049,23 @@
             await updateDoc(doc(db, "NGUO New Applicants", currentAppId), updates);
 
             const safeStart = currentApplicant.startDate ? new Date(currentApplicant.startDate).toLocaleDateString('en-GB') : 'TBC';
-            
+            const portalLink = window.location.href;
+
+            // --- DISPATCH ALERTS VIA EMAILJS ---
             try {
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FINAL_VERIFY, {
-                    applicant_name: currentApplicant.fullName, job_title: currentApplicant.position, start_date: safeStart
+                    applicant_name: currentApplicant.fullName || "New Hire", 
+                    job_title: currentApplicant.position || "Engineer", 
+                    start_date: safeStart,
+                    portal_link: portalLink
                 });
             } catch (err) { console.error("Failed to send HR Verify Email:", err); }
 
             try {
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_CANDIDATE_CONFIRM, {
                     to_email: document.getElementById('pdEmail').value || currentApplicant.personalDetails?.email,
-                    to_name: document.getElementById('pdFirst').value || currentApplicant.fullName
+                    to_name: document.getElementById('pdFirst').value || currentApplicant.fullName,
+                    portal_link: portalLink
                 });
             } catch (err) { console.error("Failed to send Candidate Confirm Email:", err); }
 
@@ -1067,11 +1073,15 @@
                 try {
                     if(dbsChoice === 'yes') {
                         await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DBS_YES, { 
-                            applicant_name: currentApplicant.fullName, job_title: currentApplicant.position, start_date: safeStart
+                            applicant_name: currentApplicant.fullName || "New Hire", 
+                            job_title: currentApplicant.position || "Engineer", 
+                            start_date: safeStart
                         });
                     } else {
                         await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DBS_NO, { 
-                            applicant_name: currentApplicant.fullName, job_title: currentApplicant.position, start_date: safeStart
+                            applicant_name: currentApplicant.fullName || "New Hire", 
+                            job_title: currentApplicant.position || "Engineer", 
+                            start_date: safeStart
                         });
                     }
                 } catch (err) { console.error("Failed to send DBS Email:", err); }
@@ -1089,7 +1099,7 @@
             `;
 
         } catch (e) {
-            console.error(e);
+            console.error("Critical submission runtime error: ", e);
             alert("Error saving onboarding details. Please check your connection.");
             btn.disabled = false;
             btn.textContent = 'Submit Onboarding File';
