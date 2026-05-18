@@ -487,6 +487,7 @@
     const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_FTL_REMINDER = 'template_v410t15';
     const EMAILJS_APP_REMINDER = 'template_n1r23pg';
+    const EMAILJS_INTERVIEW_COMPLETED = 'template_5ma65oo';
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
     const firebaseConfig = {
@@ -593,7 +594,6 @@
                     updates.applicantReminderSent = true;
                     const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
                     
-                    // --- FIXED THE HARDCODED "THE ROLE" VALUE HERE ---
                     emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APP_REMINDER, {
                         to_email: b.applicantEmail, 
                         first_name: b.applicantName ? b.applicantName.split(' ')[0] : 'Applicant',
@@ -719,11 +719,12 @@
         });
     });
 
-    // --- SAVE TO FIREBASE ---
+    // --- SAVE TO FIREBASE & TRIGGER EMAILJS ---
     window.submitInterviewData = async function(type) {
         if (!confirm("Are you sure you want to submit this interview pack? This cannot be undone.")) return;
         
         const docId = document.getElementById('activeDocId').value;
+        const applicantName = document.getElementById('hdrName').textContent;
         let payload = { type: type, submittedAt: new Date().toISOString() };
 
         if (type === 'engineer') {
@@ -780,11 +781,29 @@
         }
 
         try {
+            // Update documentation status pool entries in Firestore Database
             await updateDoc(doc(db, "NGU Interview Times", docId), {
                 interviewCompleted: true,
                 interviewData: payload,
                 status: "Completed"
             });
+
+            // Dispatch Assessment Results summary parameters pipeline straight to EmailJS
+            try {
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INTERVIEW_COMPLETED, {
+                    interviewer_name: currentUser,
+                    applicant_name: applicantName,
+                    total_score: payload.totalScore,
+                    recommendation: payload.recommendation,
+                    strengths: payload.strengths || "None documented",
+                    concerns: payload.concerns || "None noted",
+                    additional_comments: payload.additionalComments || "None noted"
+                });
+                console.log("EmailJS completed interview pack submission alert sent successfully.");
+            } catch (emailError) {
+                console.error("EmailJS internal report routing exception caught: ", emailError);
+            }
+
             alert("Interview successfully saved and completed!");
             closeInterviewModal();
         } catch (error) {
