@@ -41,7 +41,7 @@
         .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .section-title { font-size: 1.4rem; color: white; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; }
         
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem 1.5rem; }
         .form-group { margin-bottom: 1.5rem; position: relative; }
         .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
         .form-control { width: 100%; padding: 0.9rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: white; font-family: inherit; font-size: 0.95rem; outline: none; transition: all 0.2s; }
@@ -73,6 +73,9 @@
         .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.3); }
         .btn-outline { width: 100%; background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 1rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s; font-family: inherit; }
         .btn-outline:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: rgba(0, 163, 224, 0.05); }
+
+        .btn-mini-edit { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-mini-edit:hover { background: rgba(0, 163, 224, 0.15); color: white; }
 
         .previous-docs { margin-bottom: 2rem; background: rgba(0,0,0,0.15); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); }
         .doc-chip { display: inline-block; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; margin: 4px; }
@@ -139,7 +142,6 @@
                     </div>
                     
                     <div class="form-group" id="fg-idphoto">
-                        <!-- UPDATED LABEL AS REQUESTED -->
                         <label>ID Photo (Passport Style - Headshot with white background)</label>
                         <div class="file-upload-box" id="box-idphoto">
                             <span id="label-doc-idphoto">Click or drag file here to upload</span>
@@ -179,7 +181,7 @@
                         <div class="reject-msg" id="rej-poa"></div>
                     </div>
                     
-                    <!-- NEW STARTER CHECKLIST LOGIC -->
+                    <!-- P45 / HMRC STARTER CHECKLIST LOGIC WRAPPER -->
                     <div class="form-group" id="fg-p45" style="grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 1rem;">
                         <label>Do you have a P45 from your most recent employer?</label>
                         <div class="radio-group" style="margin-bottom:1rem;" id="p45Radios">
@@ -197,13 +199,53 @@
                             <div class="reject-msg" id="rej-p45"></div>
                         </div>
 
-                        <!-- Digital HMRC New Starter Checklist -->
+                        <!-- Full Structural Digital HMRC New Starter Checklist -->
                         <div id="starterChecklistDiv" style="display:none; margin-top: 1rem; padding: 1.5rem; background: rgba(0,0,0,0.2); border: 1px solid var(--accent); border-radius: 8px;">
-                            <h4 style="color:var(--accent); margin-bottom: 1rem;">HMRC New Starter Checklist</h4>
-                            <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">As you do not have a P45, we require this information to ensure you are placed on the correct tax code.</p>
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1.2rem;">
+                                <h4 style="color:var(--accent); margin:0;">HMRC New Starter Checklist</h4>
+                                <button type="button" class="btn-mini-edit" id="btnEditStarterChecklist" onclick="toggleStarterChecklistEdit()">✏️ Edit Pre-populated Fields</button>
+                            </div>
+                            <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">As you do not have a P45, we require this structural information to ensure you are assigned the correct tax code threshold.</p>
                             
-                            <div class="form-group">
-                                <label style="color: white;">Employee Statement (Choose ONE)</label>
+                            <!-- Pre-populated Section -->
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label>First Name</label>
+                                    <input type="text" id="scFirst" class="form-control" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label>Last Name</label>
+                                    <input type="text" id="scLast" class="form-control" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label>Date of Birth</label>
+                                    <input type="date" id="scDob" class="form-control" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label>National Insurance Number</label>
+                                    <input type="text" id="scNi" class="form-control" readonly>
+                                </div>
+                                <div class="form-group" style="grid-column: 1 / -1;">
+                                    <label>Home Address</label>
+                                    <input type="text" id="scAddress" class="form-control" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label>Postcode</label>
+                                    <input type="text" id="scPostcode" class="form-control" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label>Gender</label>
+                                    <select id="scGender" class="form-control">
+                                        <option value="" selected disabled>Select...</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                        <option value="Other">Other / Prefer not to say</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group" style="margin-top:1rem; border-top: 1px dashed var(--border); padding-top:1.5rem;">
+                                <label style="color: white; font-weight: 700;">Employee Statement (Choose ONE)</label>
                                 <div class="radio-group" style="flex-direction: column; gap: 0.8rem; align-items: flex-start; margin-top: 0.5rem;">
                                     <label style="line-height: 1.4;"><input type="radio" name="hmrcStatement" value="A"> <strong style="color:var(--accent);">A.</strong> This is my first job since 6 April and I have not been receiving taxable Jobseeker's Allowance, Employment and Support Allowance, taxable Incapacity Benefit, State or Occupational Pension.</label>
                                     <label style="line-height: 1.4;"><input type="radio" name="hmrcStatement" value="B"> <strong style="color:var(--accent);">B.</strong> This is now my only job but since 6 April I have had another job, or received taxable Jobseeker's Allowance, Employment and Support Allowance or taxable Incapacity Benefit. I do not receive a State or Occupational Pension.</label>
@@ -222,10 +264,14 @@
                             <div id="loanPlans" style="display:none; margin-left: 1rem; border-left: 2px solid var(--accent); padding-left: 1rem; margin-top: 1rem;">
                                 <label style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">What type of Student Loan do you have? (Check all that apply)</label>
                                 <div class="checkbox-group" style="flex-direction: column; background: transparent; border: none; padding: 0;">
-                                    <label><input type="checkbox" id="loanPlan1"> Plan 1</label>
-                                    <label><input type="checkbox" id="loanPlan2"> Plan 2</label>
-                                    <label><input type="checkbox" id="loanPlan4"> Plan 4</label>
+                                    <label><input type="checkbox" id="loanPlan1"> Plan 1 (Left higher education before 6 April 2011)</label>
+                                    <label><input type="checkbox" id="loanPlan2"> Plan 2 (Left higher education on or after 6 April 2011)</label>
+                                    <label><input type="checkbox" id="loanPlan4"> Plan 4 (Scottish Student Loans)</label>
                                     <label><input type="checkbox" id="loanPostgrad"> Postgraduate Loan</label>
+                                </div>
+                                <div class="checkbox-group" style="margin-top:1rem; padding:10px;">
+                                    <input type="checkbox" id="loanFinishedRepaying">
+                                    <label for="loanFinishedRepaying" style="font-size:0.85rem; color:var(--warning);">Did your studies finish after 6 April of this current tax year?</label>
                                 </div>
                             </div>
                         </div>
@@ -244,19 +290,19 @@
                 <div class="section-title">2. Personal & Bank Details</div>
                 <div class="grid-2">
                     <div class="form-group"><label>Title</label><input type="text" id="pdTitle" class="form-control"></div>
-                    <div class="form-group"><label>Legal First Name</label><input type="text" id="pdFirst" class="form-control" onkeyup="generateSysEmail()"></div>
+                    <div class="form-group"><label>Legal First Name</label><input type="text" id="pdFirst" class="form-control" onkeyup="generateSysEmail(); syncStarterChecklistFields();"></div>
                     <div class="form-group"><label>Preferred Name</label><input type="text" id="pdPref" class="form-control" onkeyup="generateSysEmail()"></div>
-                    <div class="form-group"><label>Legal Surname</label><input type="text" id="pdLast" class="form-control" onkeyup="generateSysEmail()"></div>
-                    <div class="form-group"><label>Date of Birth</label><input type="date" id="pdDob" class="form-control"></div>
-                    <div class="form-group"><label>National Insurance Number</label><input type="text" id="pdNi" class="form-control" placeholder="AA123456C"></div>
+                    <div class="form-group"><label>Legal Surname</label><input type="text" id="pdLast" class="form-control" onkeyup="generateSysEmail(); syncStarterChecklistFields();"></div>
+                    <div class="form-group"><label>Date of Birth</label><input type="date" id="pdDob" class="form-control" onchange="syncStarterChecklistFields();"></div>
+                    <div class="form-group"><label>National Insurance Number</label><input type="text" id="pdNi" class="form-control" placeholder="AA123456C" onkeyup="syncStarterChecklistFields();"></div>
                     
                     <div class="form-group" style="grid-column: 1 / -1;"><label>Generated NGU System Email (For IT Setup)</label><input type="text" id="pdSysEmail" class="form-control" readonly></div>
 
                     <div class="form-group"><label>Phone Number</label><input type="text" id="pdPhone" class="form-control"></div>
                     <div class="form-group"><label>Personal Email</label><input type="email" id="pdEmail" class="form-control"></div>
                     
-                    <div class="form-group" style="grid-column: 1 / -1;"><label>Current Address</label><input type="text" id="pdAddress" class="form-control"></div>
-                    <div class="form-group"><label>Postcode</label><input type="text" id="pdPostcode" class="form-control"></div>
+                    <div class="form-group" style="grid-column: 1 / -1;"><label>Current Address</label><input type="text" id="pdAddress" class="form-control" onkeyup="syncStarterChecklistFields();"></div>
+                    <div class="form-group"><label>Postcode</label><input type="text" id="pdPostcode" class="form-control" onkeyup="syncStarterChecklistFields();"></div>
                     <div class="form-group"><label>Time at Current Address</label><input type="text" id="pdTimeAtAddr" class="form-control" placeholder="e.g. 2 Years, 4 Months"></div>
                     
                     <div class="form-group" style="grid-column: 1 / -1;">
@@ -449,7 +495,7 @@
     const EMAILJS_DBS_YES = 'template_azauav5';
     const EMAILJS_DBS_NO = 'template_1aay8zl';
     const EMAILJS_FINAL_VERIFY = 'template_3qmq3bb';
-    const EMAILJS_CANDIDATE_CONFIRM = 'template_xqc9hkh'; // Fired to candidate on final submission
+    const EMAILJS_CANDIDATE_CONFIRM = 'template_xqc9hkh';
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
     const firebaseConfig = {
@@ -474,6 +520,48 @@
         'drivinglicence': 'Driving Licence',
         'eusr': 'EUSR Card',
         'gassafe': 'Gas Safe Registration'
+    };
+
+    // Live Cross-Step Alignment Function
+    window.syncStarterChecklistFields = function() {
+        // Only run sync values if fields are currently set to read-only/pre-populated mode
+        if (document.getElementById('scFirst').hasAttribute('readonly')) {
+            document.getElementById('scFirst').value = document.getElementById('pdFirst').value;
+            document.getElementById('scLast').value = document.getElementById('pdLast').value;
+            document.getElementById('scDob').value = document.getElementById('pdDob').value;
+            document.getElementById('scNi').value = document.getElementById('pdNi').value;
+            document.getElementById('scAddress').value = document.getElementById('pdAddress').value;
+            document.getElementById('scPostcode').value = document.getElementById('pdPostcode').value;
+        }
+    };
+
+    window.toggleStarterChecklistEdit = function() {
+        const fields = ['scFirst', 'scLast', 'scDob', 'scNi', 'scAddress', 'scPostcode'];
+        const btn = document.getElementById('btnEditStarterChecklist');
+        const isReadOnly = document.getElementById('scFirst').hasAttribute('readonly');
+
+        fields.forEach(id => {
+            const el = document.getElementById(id);
+            if (isReadOnly) {
+                el.removeAttribute('readonly');
+                el.style.background = 'var(--bg-input)';
+                el.style.color = 'white';
+            } else {
+                el.setAttribute('readonly', true);
+                el.style.background = 'rgba(0,0,0,0.2)';
+                el.style.color = 'var(--accent)';
+            }
+        });
+
+        if (isReadOnly) {
+            btn.textContent = '🔒 Lock & Save Changes';
+            btn.style.borderColor = 'var(--success)';
+            btn.style.color = 'var(--success)';
+        } else {
+            btn.textContent = '✏️ Edit Pre-populated Fields';
+            btn.style.borderColor = 'var(--accent)';
+            btn.style.color = 'var(--accent)';
+        }
     };
 
     async function loadData() {
@@ -502,7 +590,6 @@
                 uploadedUrls = currentApplicant.onboardingDocs;
             }
 
-            // AUTO-CHECK IF ALREADY COMPLETED ONCE
             if (currentApplicant.onboardingCompleted) {
                 document.getElementById('chkDetailsConfirm').checked = true;
             }
@@ -526,11 +613,10 @@
                     } else if (box && v.status === 'verified') {
                         box.classList.add('verified');
                         document.getElementById(`status-${key}`).textContent = '✓ Verified by HR';
-                        if (fileInput) fileInput.disabled = true; // Lock verified uploads
+                        if (fileInput) fileInput.disabled = true;
                     }
                 });
 
-                // Lock Steps 2, 3, and 4
                 ['step2', 'step3', 'step4'].forEach(stepId => {
                     const step = document.getElementById(stepId);
                     if (step) {
@@ -539,26 +625,23 @@
                             i.disabled = true;
                             i.style.opacity = '0.6';
                         });
-                        // Disable radio and checkbox groups
                         step.querySelectorAll('.checkbox-group').forEach(c => c.classList.add('disabled'));
                         step.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
                     }
                 });
 
-                // Overwrite Step 1 Nav to jump directly to Step 5
                 const step1Nav = document.getElementById('nav-step1');
                 if (step1Nav) {
                     step1Nav.innerHTML = `<div style="flex:1;"></div><button class="btn-primary" onclick="goToStep(5)">Skip to Final Review ➔</button>`;
                 }
                 
-                // Overwrite Step 5 Nav to go back to Step 1 instead of Step 4
                 const step5Nav = document.getElementById('nav-step5');
                 if (step5Nav) {
                     step5Nav.innerHTML = `<button class="btn-outline" onclick="goToStep(1)">⬅ Back to Documents</button><div style="flex:1;"></div>`;
                 }
             }
 
-            // Pre-populate Details
+            // Populate Profile Base Details
             const p = currentApplicant.onboardingDetails || currentApplicant.personalDetails || {};
             document.getElementById('pdTitle').value = p.title || '';
             const nameParts = (currentApplicant.fullName || '').split(' ');
@@ -598,13 +681,24 @@
             if(uni.boots) document.getElementById('uniBoot').value = uni.boots;
             if(uni.gloves) document.getElementById('uniGloves').value = uni.gloves;
 
-            // Pre-populate HMRC Checklist if exists
+            // Initialize Starter Checklist Pre-population Data
+            syncStarterChecklistFields();
+
+            // Populate HMRC Checklist if exists
             const hmrc = currentApplicant.hmrcChecklist;
             if (hmrc && currentApplicant.hasP45 === false) {
                 const choiceInput = document.querySelector(`input[name="hasP45"][value="no"]`);
                 if(choiceInput) choiceInput.checked = true;
                 toggleP45(false);
                 
+                if (hmrc.firstName) document.getElementById('scFirst').value = hmrc.firstName;
+                if (hmrc.lastName) document.getElementById('scLast').value = hmrc.lastName;
+                if (hmrc.dob) document.getElementById('scDob').value = hmrc.dob;
+                if (hmrc.niNumber) document.getElementById('scNi').value = hmrc.niNumber;
+                if (hmrc.address) document.getElementById('scAddress').value = hmrc.address;
+                if (hmrc.postcode) document.getElementById('scPostcode').value = hmrc.postcode;
+                if (hmrc.gender) document.getElementById('scGender').value = hmrc.gender;
+
                 if (hmrc.statement) {
                     const stInput = document.querySelector(`input[name="hmrcStatement"][value="${hmrc.statement}"]`);
                     if (stInput) stInput.checked = true;
@@ -619,6 +713,7 @@
                             document.getElementById('loanPlan2').checked = hmrc.plan2 || false;
                             document.getElementById('loanPlan4').checked = hmrc.plan4 || false;
                             document.getElementById('loanPostgrad').checked = hmrc.postgrad || false;
+                            document.getElementById('loanFinishedRepaying').checked = hmrc.finishedRepaying || false;
                         }
                     }
                 }
@@ -721,7 +816,6 @@
             statusEl.style.color = 'var(--success)';
             labelEl.textContent = `Replace: ${file.name}`;
             
-            // Clear rejection styling on upload
             if (box) box.classList.remove('rejected');
             if (rejMsg) rejMsg.style.display = 'none';
 
@@ -744,9 +838,11 @@
         if(!dbsChoice) return alert("Please select a DBS check option in Step 3.");
         if(dbsChoice === 'yes' && !dbsConsent) return alert("You must consent to the DBS check in Step 3 to proceed.");
         
-        // HMRC Validation
+        // HMRC Structural Validation
         if (hasP45Choice === 'no') {
             const statement = document.querySelector('input[name="hmrcStatement"]:checked');
+            const gender = document.getElementById('scGender').value;
+            if (!gender) return alert("Please provide your Gender option within the New Starter Checklist (Step 1).");
             if (!statement) return alert("Please select an Employee Statement (A, B, or C) in the New Starter Checklist (Step 1).");
         }
 
@@ -757,19 +853,27 @@
             let hmrcData = null;
             if (hasP45Choice === 'no') {
                 hmrcData = {
+                    firstName: document.getElementById('scFirst').value,
+                    lastName: document.getElementById('scLast').value,
+                    dob: document.getElementById('scDob').value,
+                    niNumber: document.getElementById('scNi').value,
+                    address: document.getElementById('scAddress').value,
+                    postcode: document.getElementById('scPostcode').value,
+                    gender: document.getElementById('scGender').value,
                     statement: document.querySelector('input[name="hmrcStatement"]:checked')?.value || '',
                     studentLoan: document.querySelector('input[name="studentLoan"]:checked')?.value || 'no',
                     plan1: document.getElementById('loanPlan1').checked,
                     plan2: document.getElementById('loanPlan2').checked,
                     plan4: document.getElementById('loanPlan4').checked,
-                    postgrad: document.getElementById('loanPostgrad').checked
+                    postgrad: document.getElementById('loanPostgrad').checked,
+                    finishedRepaying: document.getElementById('loanFinishedRepaying').checked
                 };
             }
 
             const updates = {
                 onboardingCompleted: true,
                 onboardingCompletedAt: new Date().toISOString(),
-                onboardingVerificationStatus: 'Pending', // Resets to pending upon resubmission
+                onboardingVerificationStatus: 'Pending',
                 onboardingDocs: uploadedUrls,
                 hasP45: hasP45Choice === 'yes',
                 hmrcChecklist: hmrcData,
@@ -819,11 +923,9 @@
 
             await updateDoc(doc(db, "NGUO New Applicants", currentAppId), updates);
 
-            // --- FIRE EMAILS SEQUENTIALLY TO PREVENT EMAILJS RATE LIMITING ---
             const safeStart = currentApplicant.startDate ? new Date(currentApplicant.startDate).toLocaleDateString('en-GB') : 'TBC';
             
             try {
-                // Email to HR stating form is ready for review
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FINAL_VERIFY, {
                     applicant_name: currentApplicant.fullName,
                     job_title: currentApplicant.position,
@@ -832,15 +934,12 @@
             } catch (err) { console.error("Failed to send HR Verify Email:", err); }
 
             try {
-                // Confirm submission explicitly to the candidate
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_CANDIDATE_CONFIRM, {
                     to_email: document.getElementById('pdEmail').value || currentApplicant.personalDetails?.email,
                     to_name: document.getElementById('pdFirst').value || currentApplicant.fullName
                 });
             } catch (err) { console.error("Failed to send Candidate Confirm Email:", err); }
 
-            // Only fire DBS emails if this is their very first time submitting onboarding
-            // We avoid spamming the HR inbox on re-submissions for rejected documents
             if (!currentApplicant.onboardingCompleted) {
                 try {
                     if(dbsChoice === 'yes') {
