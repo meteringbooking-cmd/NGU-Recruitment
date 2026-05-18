@@ -13,6 +13,7 @@
             --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
             --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
             --success: #10B981; --error: #EF4444; --warning: #F59E0B;
+            --sidebar-width: 340px;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family: 'Work Sans', sans-serif; background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%); color: var(--text-light); min-height: 100vh; padding: 2rem; }
@@ -73,9 +74,6 @@
         .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.3); }
         .btn-outline { width: 100%; background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 1rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s; font-family: inherit; }
         .btn-outline:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: rgba(0, 163, 224, 0.05); }
-
-        .btn-mini-edit { background: transparent; border: 1px solid var(--accent); color: var(--accent); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-        .btn-mini-edit:hover { background: rgba(0, 163, 224, 0.15); color: white; }
 
         .previous-docs { margin-bottom: 2rem; background: rgba(0,0,0,0.15); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); }
         .doc-chip { display: inline-block; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; margin: 4px; }
@@ -207,22 +205,22 @@
 
                         <!-- Full Digital HMRC New Starter Checklist Form Mapping -->
                         <div id="starterChecklistDiv" style="display:none; margin-top: 1rem; padding: 1.5rem; background: rgba(0,0,0,0.2); border: 1px solid var(--accent); border-radius: 8px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1.2rem;">
+                            <div style="border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1.2rem;">
                                 <h4 style="color:var(--accent); margin:0;">HMRC New Starter Checklist (12/25)</h4>
-                                <button type="button" class="btn-mini-edit" id="btnEditStarterChecklist" onclick="toggleStarterChecklistEdit()">✏️ Edit Pre-populated Fields</button>
                             </div>
+                            <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">As you do not have a P45, we require this structural information to ensure you are assigned the correct tax code threshold.</p>
                             
-                            <!-- Part 1: Employee's personal details -->
+                            <!-- Part 1: Employee's personal details (Editable directly) -->
                             <div class="hmrc-block">
                                 <div class="hmrc-sub-title">Part 1: Employee's Personal Details</div>
                                 <div class="grid-2">
                                     <div class="form-group">
                                         <label>1. Last name</label>
-                                        <input type="text" id="scLast" class="form-control" readonly>
+                                        <input type="text" id="scLast" class="form-control">
                                     </div>
                                     <div class="form-group">
                                         <label>2. First names (Do not enter initials or shortened names)</label>
-                                        <input type="text" id="scFirst" class="form-control" readonly>
+                                        <input type="text" id="scFirst" class="form-control">
                                     </div>
                                     <div class="form-group">
                                         <label>3. What is your sex? (As shown on birth/gender cert)</label>
@@ -233,15 +231,15 @@
                                     </div>
                                     <div class="form-group">
                                         <label>4. Date of birth</label>
-                                        <input type="date" id="scDob" class="form-control" readonly>
+                                        <input type="date" id="scDob" class="form-control">
                                     </div>
                                     <div class="form-group" style="grid-column: 1 / -1;">
                                         <label>5. Home address</label>
-                                        <input type="text" id="scAddress" class="form-control" readonly>
+                                        <input type="text" id="scAddress" class="form-control">
                                     </div>
                                     <div class="form-group">
                                         <label>Postcode</label>
-                                        <input type="text" id="scPostcode" class="form-control" readonly>
+                                        <input type="text" id="scPostcode" class="form-control">
                                     </div>
                                     <div class="form-group">
                                         <label>Country</label>
@@ -249,7 +247,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label>6. National Insurance number (if known)</label>
-                                        <input type="text" id="scNi" class="form-control" readonly>
+                                        <input type="text" id="scNi" class="form-control">
                                     </div>
                                     <div class="form-group">
                                         <label>7. Employment start date</label>
@@ -597,44 +595,12 @@
 
     // Live Cross-Step Alignment and Sync
     window.syncStarterChecklistFields = function() {
-        if (document.getElementById('scFirst').hasAttribute('readonly')) {
-            document.getElementById('scFirst').value = document.getElementById('pdFirst').value;
-            document.getElementById('scLast').value = document.getElementById('pdLast').value;
-            document.getElementById('scDob').value = document.getElementById('pdDob').value;
-            document.getElementById('scNi').value = document.getElementById('pdNi').value;
-            document.getElementById('scAddress').value = document.getElementById('pdAddress').value;
-            document.getElementById('scPostcode').value = document.getElementById('pdPostcode').value;
-        }
-    };
-
-    window.toggleStarterChecklistEdit = function() {
-        const fields = ['scFirst', 'scLast', 'scDob', 'scNi', 'scAddress', 'scPostcode'];
-        const btn = document.getElementById('btnEditStarterChecklist');
-        const isReadOnly = document.getElementById('scFirst').hasAttribute('readonly');
-
-        fields.forEach(id => {
-            const el = document.getElementById(id);
-            if (isReadOnly) {
-                el.removeAttribute('readonly');
-                el.style.background = 'var(--bg-input)';
-                el.style.color = 'white';
-            } else {
-                el.setAttribute('readonly', true);
-                el.style.background = 'rgba(0,0,0,0.2)';
-                el.style.color = 'var(--accent)';
-            }
-        });
-
-        if (isReadOnly) {
-            btn.textContent = '🔒 Lock & Save Changes';
-            btn.style.borderColor = 'var(--success)';
-            btn.style.color = 'var(--success)';
-        } else {
-            btn.textContent = '✏️ Edit Pre-populated Fields';
-            btn.style.borderColor = 'var(--accent)';
-            btn.style.color = 'var(--accent)';
-            syncStarterChecklistFields(); // Reset structural changes back to form bindings
-        }
+        document.getElementById('scFirst').value = document.getElementById('pdFirst').value;
+        document.getElementById('scLast').value = document.getElementById('pdLast').value;
+        document.getElementById('scDob').value = document.getElementById('pdDob').value;
+        document.getElementById('scNi').value = document.getElementById('pdNi').value;
+        document.getElementById('scAddress').value = document.getElementById('pdAddress').value;
+        document.getElementById('scPostcode').value = document.getElementById('pdPostcode').value;
     };
 
     // Official Structural Loop Handling for HMRC Statement Questions 8, 9 & 10
@@ -643,7 +609,6 @@
         const pensionBox = document.getElementById('fg-qPension');
         const benefitsBox = document.getElementById('fg-qBenefits');
         
-        // Hide dynamic subquestions and assessment display boxes by default
         pensionBox.style.display = 'none';
         benefitsBox.style.display = 'none';
         document.querySelectorAll('#stateBlockA, #stateBlockB, #stateBlockC').forEach(el => el.classList.remove('selected'));
@@ -651,12 +616,10 @@
 
         if (!anotherJob) return;
 
-        // Question 8 Check: Do you have another job?
         if (anotherJob === 'yes') {
             document.getElementById('stateBlockC').classList.add('selected');
             activeCalculatedStatement = "Statement C";
         } else {
-            // Uncover Question 9: Pension parameters check
             pensionBox.style.display = 'block';
             const pension = document.querySelector('input[name="qPension"]:checked')?.value;
             
@@ -664,7 +627,6 @@
                 document.getElementById('stateBlockC').classList.add('selected');
                 activeCalculatedStatement = "Statement C";
             } else if (pension === 'no') {
-                // Uncover Question 10: History tracking check
                 benefitsBox.style.display = 'block';
                 const benefits = document.querySelector('input[name="qBenefits"]:checked')?.value;
                 
@@ -695,7 +657,6 @@
             if (exclusions === 'no') {
                 planSelectionBox.style.display = 'block';
             }
-            // If exclusions === 'yes', go straight to declaration (Plan selection hidden)
         }
     };
 
@@ -816,13 +777,13 @@
             if(uni.boots) document.getElementById('uniBoot').value = uni.boots;
             if(uni.gloves) document.getElementById('uniGloves').value = uni.gloves;
 
-            // Initialize formatting sync boundaries
+            // Initialize structural data bindings
             syncStarterChecklistFields();
             if (currentApplicant.startDate) {
                 document.getElementById('scStartDate').value = new Date(currentApplicant.startDate).toLocaleDateString('en-GB');
             }
 
-            // Populate HMRC Checklist from parameters mapping structure if database object returns non-null
+            // Populate HMRC Checklist fields if document states exist
             const hmrc = currentApplicant.hmrcChecklist;
             if (hmrc && currentApplicant.hasP45 === false) {
                 const choiceInput = document.querySelector('input[name="hasP45"][value="no"]');
@@ -842,7 +803,6 @@
                     if(sexInput) sexInput.checked = true;
                 }
 
-                // Restore dynamic statement logic checkboxes
                 if (hmrc.anotherJobQuestion) {
                     document.querySelector(`input[name="qAnotherJob"][value="${hmrc.anotherJobQuestion}"]`).checked = true;
                 }
@@ -854,14 +814,13 @@
                 }
                 evaluateHMRCStatementLogic();
 
-                // Restore Student loan logic selection paths
                 if (hmrc.hasLoanQuestion) {
                     document.querySelector(`input[name="qStudentLoan"][value="${hmrc.hasLoanQuestion}"]`).checked = true;
                 }
                 if (hmrc.exclusionsQuestion) {
                     document.querySelector(`input[name="qLoanExclusions"][value="${hmrc.exclusionsQuestion}"]`).checked = true;
                 }
-                evaluateHMRCStudentLoanLoanLogic();
+                evaluateHMRCStudentLoanLogic();
 
                 if (hmrc.selectedPlan) {
                     const planInput = document.querySelector(`input[name="scLoanPlanGroup"][value="${hmrc.selectedPlan}"]`);
@@ -1024,7 +983,6 @@
                     country: document.getElementById('scCountry').value,
                     niNumber: document.getElementById('scNi').value,
                     
-                    // Logic tracking parameters
                     anotherJobQuestion: document.querySelector('input[name="qAnotherJob"]:checked')?.value || '',
                     pensionQuestion: document.querySelector('input[name="qPension"]:checked')?.value || '',
                     benefitsQuestion: document.querySelector('input[name="qBenefits"]:checked')?.value || '',
