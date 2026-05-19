@@ -263,11 +263,96 @@
         .avail-remove:hover { background: rgba(239,68,68,0.2); border-color: var(--error); }
         .avail-hint { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem; }
 
-        @media (max-width: 600px) {
-            .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
-            .section { padding: 1.5rem 1.2rem; }
-            .cert-upload-row { flex-wrap: wrap; }
-            .cert-row-actions { flex-wrap: wrap; }
+        @media (max-width: 640px) {
+            /* Body & container */
+            body { padding: 1rem 0.75rem 3rem; }
+
+            /* Header */
+            .page-header { margin-bottom: 2rem; }
+            .page-header h1 { font-size: 1.55rem; }
+            .page-header p  { font-size: 0.8rem; }
+            .logo { max-height: 54px; margin-bottom: 1.4rem; }
+
+            /* Section cards */
+            .section { padding: 1.2rem 1rem 1.4rem; margin-bottom: 1.2rem; border-radius: 12px; }
+            .section-header { gap: 0.65rem; margin-bottom: 1.2rem; padding-bottom: 0.8rem; }
+            .section-header h2 { font-size: 1rem; }
+            .section-header p  { font-size: 0.78rem; }
+            .section-num { width: 30px; height: 30px; font-size: 0.78rem; flex-shrink: 0; }
+
+            /* Form grids — always single column */
+            .form-grid, .form-grid-3 { grid-template-columns: 1fr; gap: 0.9rem; }
+
+            /* Inputs — font-size 1rem prevents iOS auto-zoom */
+            input[type="text"], input[type="email"], input[type="tel"],
+            input[type="date"], select, textarea {
+                font-size: 1rem;
+                padding: 0.75rem 0.85rem;
+            }
+
+            /* Radio option buttons */
+            .radio-group { gap: 0.6rem; }
+            .radio-option { padding: 0.6rem 0.9rem; font-size: 0.88rem; }
+
+            /* Certificate rows — stack vertically */
+            .cert-upload-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.65rem;
+                padding: 0.9rem;
+            }
+            .cert-row-icon { font-size: 1.2rem; }
+            .cert-row-title { font-size: 0.88rem; line-height: 1.4; }
+            .cert-row-info { width: 100%; }
+            .cert-row-actions { flex-wrap: wrap; gap: 0.5rem; width: 100%; }
+            .cert-file-label { font-size: 0.82rem; padding: 0.5rem 0.9rem; }
+            .cert-badge { font-size: 0.72rem; }
+            .cert-inline-input { max-width: 100% !important; font-size: 1rem; }
+
+            /* Driving licence info summary */
+            .dl-info-summary { font-size: 0.82rem; padding: 0.8rem 0.9rem; }
+            .dl-info-summary ul { margin-left: 0.9rem; }
+
+            /* Y/N buttons */
+            .yn-group { gap: 0.5rem; }
+            .yn-btn { padding: 0.4rem 1.1rem; font-size: 0.85rem; }
+
+            /* Employment entries */
+            .employment-entry { padding: 1rem; }
+            .entry-label { font-size: 0.85rem; }
+            .btn-remove { font-size: 0.75rem; padding: 0.3rem 0.6rem; }
+
+            /* Availability entries */
+            .avail-entry {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.6rem;
+                padding: 0.8rem 0.9rem;
+            }
+            .avail-entry input[type="date"] { width: 100%; min-width: unset; }
+            .avail-time-group { width: 100%; }
+            .avail-time-btn { flex: 1; text-align: center; font-size: 0.82rem; padding: 0.45rem 0.5rem; }
+            .avail-remove { align-self: flex-end; }
+
+            /* Signature canvas */
+            .sig-canvas { height: 100px; }
+
+            /* Submit */
+            .btn-primary { width: 100%; font-size: 0.98rem; padding: 0.9rem 1rem; }
+            .submit-msg { font-size: 0.88rem; }
+
+            /* Success screen */
+            #successScreen { padding: 2.5rem 1rem; }
+            #successScreen h2 { font-size: 1.4rem; }
+            #successScreen p  { font-size: 0.92rem; }
+
+            /* Add / action buttons */
+            .btn-add, .add-cert-btn { font-size: 0.85rem; padding: 0.65rem 1rem; }
+
+            /* Upload zone */
+            .upload-zone { padding: 1.4rem 0.8rem; }
+            .upload-zone-label { font-size: 0.88rem; }
+            .upload-zone-hint  { font-size: 0.76rem; }
         }
     </style>
 </head>
@@ -462,7 +547,13 @@
                         <button type="button" class="yn-btn" id="yn-dl-no"  onclick="setDrivingLicenceApp(false)">No</button>
                     </div>
 
-                    <div id="dl-details-wrap" style="display:none;margin-top:0.9rem;gap:10px;flex-direction:column;">
+                    <div id="dl-details-wrap" style="display:none;margin-top:0.9rem;gap:12px;flex-direction:column;">
+
+                        <!-- Expiry date -->
+                        <div>
+                            <label style="font-size:0.82rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:0.3rem;">Licence Expiry Date <span style="color:var(--accent)">*</span></label>
+                            <input type="date" id="dl-expiry" class="cert-inline-input" style="max-width:220px;">
+                        </div>
 
                         <!-- Summary info block -->
                         <div class="dl-info-summary">
@@ -478,7 +569,7 @@
                         </div>
 
                         <!-- Upload for the summary document -->
-                        <div style="margin-top:0.3rem;">
+                        <div>
                             <div id="sub-drivinglicence" class="cert-row-sub">No file selected</div>
                             <div id="prog-drivinglicence" class="cert-upload-progress">⏳ Uploading…</div>
                             <label class="cert-file-label" style="margin-top:0.5rem;display:inline-flex;">
@@ -881,7 +972,7 @@
         document.getElementById('yn-dl-no').className  = 'yn-btn' + (!val ? ' selected-no' : '');
         document.getElementById('dl-details-wrap').style.display = val ? 'flex' : 'none';
         const badge = document.getElementById('badge-drivinglicence');
-        if (val) { badge.textContent = 'Upload required'; badge.className = 'cert-badge ready'; }
+        if (val) { badge.textContent = 'Details required'; badge.className = 'cert-badge ready'; }
         else     { badge.textContent = 'No'; badge.className = 'cert-badge done'; document.getElementById('row-drivinglicence').classList.add('uploaded'); }
     };
 
@@ -893,6 +984,14 @@
         if (val) { badge.textContent = 'Yes — add number'; badge.className = 'cert-badge ready'; }
         else     { badge.textContent = 'N/A'; badge.className = 'cert-badge done'; document.getElementById('row-eusr').classList.add('uploaded'); }
     };
+
+    document.getElementById('dl-expiry').addEventListener('change', function() {
+        const badge = document.getElementById('badge-drivinglicence');
+        const expiry = this.value;
+        const uploaded = certUploadResults['drivinglicence'];
+        if (expiry && uploaded) { badge.textContent = '✓ Complete'; badge.className = 'cert-badge done'; document.getElementById('row-drivinglicence').classList.add('uploaded'); }
+        else if (expiry)        { badge.textContent = 'Summary needed'; badge.className = 'cert-badge ready'; }
+    });
 
     document.getElementById('gassafe-number').addEventListener('input', function() {
         const badge = document.getElementById('badge-gassafe');
@@ -1155,6 +1254,7 @@
                 higherskills: certUploadResults['higherskills'] || null,
                 drivinglicence: {
                     confirmed: dlConfirmed,
+                    expiry: document.getElementById('dl-expiry').value || '',
                     summary: certUploadResults['drivinglicence'] || null
                 },
                 eusr:    { has: euHas, number: document.getElementById('eusr-number').value.trim() },
