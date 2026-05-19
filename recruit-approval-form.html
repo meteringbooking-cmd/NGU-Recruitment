@@ -219,6 +219,11 @@
                     <label for="location">Location</label>
                     <input type="text" id="location" name="location">
                 </div>
+                <!-- NEW FIELD: INDUCTION LOCATION -->
+                <div class="field-container">
+                    <label for="induction-location">Induction Location</label>
+                    <input type="text" id="induction-location" name="induction-location">
+                </div>
                 <div class="field-container">
                     <label for="hiring-manager">Hiring Manager</label>
                     <input type="text" id="hiring-manager" name="hiring-manager">
@@ -479,6 +484,7 @@
                 department: formData.get('department'),
                 jobTitle: formData.get('job-title'),
                 location: formData.get('location'),
+                inductionLocation: formData.get('induction-location'),
                 hiringManager: formData.get('hiring-manager'),
                 reportsTo: formData.get('reports-to')
             },
@@ -542,6 +548,7 @@
                 department: formData.get('department'),
                 job_title: formData.get('job-title'),
                 location: formData.get('location') || 'N/A',
+                induction_location: formData.get('induction-location') || 'N/A',
                 hiring_manager: formData.get('hiring-manager') || 'N/A',
                 urgency: formData.get('urgency') || 'N/A',
                 vacancy_type: formData.getAll('vacancy-type').join(', ') || 'N/A',
