@@ -452,7 +452,7 @@
                 </div>
             </div>
 
-            <!-- Driving Licence confirmation -->
+            <!-- Driving Licence confirmation + summary upload -->
             <div class="cert-upload-row" id="row-drivinglicence">
                 <div class="cert-row-icon">🪪</div>
                 <div class="cert-row-info" style="flex:1;min-width:200px;">
@@ -461,22 +461,30 @@
                         <button type="button" class="yn-btn" id="yn-dl-yes" onclick="setDrivingLicenceApp(true)">Yes</button>
                         <button type="button" class="yn-btn" id="yn-dl-no"  onclick="setDrivingLicenceApp(false)">No</button>
                     </div>
-                    
-                    <div id="dl-details-wrap" style="display:none;margin-top:0.7rem; gap: 10px; flex-direction: column;">
-                        <div>
-                            <label style="font-size:0.82rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:0.3rem;">Licence Expiry Date</label>
-                            <input type="date" id="dl-expiry" class="cert-inline-input" style="max-width:200px;resize:none;">
+
+                    <div id="dl-details-wrap" style="display:none;margin-top:0.9rem;gap:10px;flex-direction:column;">
+
+                        <!-- Summary info block -->
+                        <div class="dl-info-summary">
+                            <strong>📋 Upload your Driving Licence Summary</strong>
+                            <p style="margin-top:0.45rem;color:var(--text-muted);font-size:0.82rem;">Your summary can be downloaded from the <a href="https://www.gov.uk/view-driving-licence" target="_blank" style="color:var(--accent);text-decoration:underline;">GOV.UK View or Share Driving Licence</a> service. It should include:</p>
+                            <ul>
+                                <li>Driver's name and address</li>
+                                <li>Licence number, type and vehicle categories</li>
+                                <li>Licence and category expiry dates</li>
+                                <li>Penalty points and any endorsements or convictions</li>
+                                <li>Disqualifications, bans or restrictions</li>
+                            </ul>
                         </div>
 
-                        <!-- REPLACED: Licence check code input replaced with summary info block -->
-                        <div class="dl-info-summary">
-                            <strong>ℹ️ Driving Licence Check Summary</strong>
-                            <ul>
-                                <li>Your driving licence details will be verified as part of our pre-employment checks.</li>
-                                <li>You may be asked to provide a <strong>DVLA check code</strong> at the interview stage — this can be generated at <a href="https://www.gov.uk/view-driving-licence" target="_blank" style="color:var(--accent);text-decoration:underline;">gov.uk/view-driving-licence</a>.</li>
-                                <li>The check code is <strong>case-sensitive</strong> and remains <strong>valid for 21 days</strong> from generation.</li>
-                                <li>Please ensure your licence is current and free from disqualifying endorsements before applying.</li>
-                            </ul>
+                        <!-- Upload for the summary document -->
+                        <div style="margin-top:0.3rem;">
+                            <div id="sub-drivinglicence" class="cert-row-sub">No file selected</div>
+                            <div id="prog-drivinglicence" class="cert-upload-progress">⏳ Uploading…</div>
+                            <label class="cert-file-label" style="margin-top:0.5rem;display:inline-flex;">
+                                Upload Summary
+                                <input type="file" id="file-drivinglicence" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('drivinglicence',this)">
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -873,7 +881,7 @@
         document.getElementById('yn-dl-no').className  = 'yn-btn' + (!val ? ' selected-no' : '');
         document.getElementById('dl-details-wrap').style.display = val ? 'flex' : 'none';
         const badge = document.getElementById('badge-drivinglicence');
-        if (val) { badge.textContent = 'Yes — details shown'; badge.className = 'cert-badge ready'; }
+        if (val) { badge.textContent = 'Upload required'; badge.className = 'cert-badge ready'; }
         else     { badge.textContent = 'No'; badge.className = 'cert-badge done'; document.getElementById('row-drivinglicence').classList.add('uploaded'); }
     };
 
@@ -897,15 +905,7 @@
         if (this.value.trim()) { badge.textContent = `✓ ${this.value.trim()}`; badge.className = 'cert-badge done'; }
     });
 
-    document.getElementById('dl-expiry').addEventListener('change', updateDLBadge);
-    function updateDLBadge() {
-        const expiry = document.getElementById('dl-expiry').value;
-        const badge  = document.getElementById('badge-drivinglicence');
-        if (expiry) {
-            badge.textContent = `✓ Expiry entered`; badge.className = 'cert-badge done';
-            document.getElementById('row-drivinglicence').classList.add('uploaded');
-        }
-    }
+
 
     /* Additional certs */
     let addCertCounter = 0;
@@ -1155,7 +1155,7 @@
                 higherskills: certUploadResults['higherskills'] || null,
                 drivinglicence: {
                     confirmed: dlConfirmed,
-                    expiry: document.getElementById('dl-expiry').value || ''
+                    summary: certUploadResults['drivinglicence'] || null
                 },
                 eusr:    { has: euHas, number: document.getElementById('eusr-number').value.trim() },
                 gassafe: { number: document.getElementById('gassafe-number').value.trim() },
