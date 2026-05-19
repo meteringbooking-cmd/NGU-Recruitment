@@ -554,8 +554,12 @@
             card.innerHTML = `
                 <div class="card-info">
                     <div class="card-date">🗓 ${displayDate} @ ${booking.time}</div>
-                    <div class="card-name">${booking.applicantName}${booking.applicantPostcode ? ` <span style="font-size:0.75rem; color:var(--text-light); background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:4px; font-family:'DM Mono', monospace; letter-spacing:0.05em; margin-left:8px;">${booking.applicantPostcode}</span>` : ''}</div>
-                </div>
+                    <div class="card-name">
+    ${booking.applicantName}
+    ${booking.applicantPostcode 
+        ? `<span style="font-size:0.75rem; color:var(--text-light); background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:4px; font-family:'DM Mono', monospace; letter-spacing:0.05em; margin-left:8px;">${booking.applicantPostcode}</span>` 
+        : ''}
+</div>
                 <div class="card-action">${actionHtml}</div>
             `;
             scheduleGrid.appendChild(card);
