@@ -118,24 +118,53 @@
 <body>
 
     <!-- 1. LOGIN SCREEN -->
-    <div id="loginScreen">
-        <div class="login-card">
-            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
-            <h2>Welcome to NGU</h2>
-            <p>Please enter your provisioned credentials to access your onboarding portal.</p>
-            
-            <div class="input-group">
-                <label>Username</label>
-                <input type="text" id="loginUser" placeholder="e.g. john.doe42">
-            </div>
-            <div class="input-group">
-                <label>Password</label>
-                <input type="password" id="loginPass" placeholder="••••••••">
-            </div>
-            <button class="btn-primary" id="loginBtn" onclick="attemptLogin()">Access Portal</button>
-            <div id="loginError" style="color: var(--error); margin-top: 1rem; font-size: 0.9rem; display: none;">Invalid username or password.</div>
-        </div>
-    </div>
+window.attemptLogin = async function() {
+    const user = document.getElementById('loginUser').value.trim();
+    const pass = document.getElementById('loginPass').value.trim();
+    const btn = document.getElementById('loginBtn');
+    const err = document.getElementById('loginError');
+
+    if (!user || !pass) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Authenticating...';
+    err.style.display = 'none';
+
+    try {
+        const q = query(collection(db, "NGUO New Applicants"), where("portalUsername", "==", user), where("portalPassword", "==", pass));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+            err.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Access Portal';
+            return;
+        }
+
+        querySnapshot.forEach((doc) => { currentApplicant = { id: doc.id, ...doc.data() }; });
+
+        // ✅ ADD THIS LINE — saves the username so complete-onboarding.html can re-authenticate
+        localStorage.setItem('ngu_applicant_user', user);
+
+        await fetchVacancyData(currentApplicant.position, currentApplicant.personalDetails?.postcode);
+
+        populatePortalData();
+        
+        if(currentApplicant.contractAccepted) {
+            document.getElementById('btnViewOffer').style.display = 'none';
+            transitionToOnboarding();
+        }
+
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('portalScreen').style.display = 'block';
+
+    } catch (error) {
+        console.error("Login Error:", error);
+        alert("Connection error. Please try again.");
+        btn.disabled = false;
+        btn.textContent = 'Access Portal';
+    }
+};
 
     <!-- 2. PORTAL SCREEN -->
     <div id="portalScreen">
