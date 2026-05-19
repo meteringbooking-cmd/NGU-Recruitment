@@ -570,6 +570,7 @@
     const EMAILJS_DBS_NO = 'template_1aay8zl';
     const EMAILJS_FINAL_VERIFY = 'template_3qmq3bb';
     const EMAILJS_CANDIDATE_CONFIRM = 'template_xqc9hkh';
+    const EMAILJS_SETUP_COMPLETE = 'template_xqc9hkh';
 
     // Initialise EmailJS immediately — outside any deferred block
     emailjs.init(EMAILJS_PUBLIC_KEY);
@@ -591,6 +592,8 @@
     let activeCalculatedStatement = "";
     // Track whether DBS email has already been sent this session
     let dbsEmailSent = false;
+    // Track whether setup complete email has already been sent this session
+    let setupEmailSent = false;
 
     const certMapping = {
         'mocopa': 'MOCOPA Certification',
@@ -791,6 +794,8 @@
                 await fireDBSEmail();
             } else if (currentStep === 4) {
                 await saveStep4();
+                // Fire setup complete email when step 4 is saved
+                await fireSetupCompleteEmail();
             }
             showStepIndicator(currentStep, 'saved', '✓ Progress saved');
             goToStep(nextStep);
@@ -920,6 +925,19 @@
             portal_link: window.location.href
         });
         if (sent) currentApplicant._candidateEmailSent = true;
+    }
+
+    async function fireSetupCompleteEmail() {
+        if (setupEmailSent) return;
+        const toEmail = document.getElementById('pdEmail').value.trim() || currentApplicant.onboardingDetails?.personalEmail || currentApplicant.personalDetails?.email || '';
+        const toName  = document.getElementById('pdFirst').value.trim() || currentApplicant.fullName || 'Engineer';
+        if (!toEmail) { console.warn('No candidate email — skipping setup complete email.'); return; }
+        const sent = await sendEmail(EMAILJS_SETUP_COMPLETE, {
+            to_email: toEmail,
+            to_name: toName,
+            portal_link: window.location.href
+        });
+        if (sent) setupEmailSent = true;
     }
 
     async function fireDBSEmail() {
