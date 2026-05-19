@@ -416,8 +416,6 @@
                 nameChecksCompletedAt: new Date().toISOString()
             });
 
-            console.log("Database updated successfully: Shifting candidate status pool pipeline to 'Ready for Interview'.");
-
             try {
                 await emailjs.send(
                     EMAILJS_SERVICE_ID,
@@ -428,15 +426,14 @@
                         portal_link: "https://ngu-recruitment-portal.vercel.app/FTL-interview-availability.html"
                     }
                 );
-                console.log("EmailJS interview invitation executed successfully.");
-                alert("Name checks completed successfully! The candidate has been advanced to 'Ready for Interview' status and route pipeline to the FTL dashboard pool. Invitation email dispatched.");
+                alert("Name checks completed successfully! The candidate has been advanced to 'Ready for Interview' status. Invitation email dispatched.");
             } catch (emailError) {
-                console.error("EmailJS tracking error payload failed execution:", emailError);
-                alert("Database saved successfully, but the automated EmailJS template invitation failed to trigger. Check configuration mapping limits.");
+                console.error("EmailJS error:", emailError);
+                alert("Database saved successfully, but the automated email invitation failed. Check EmailJS configuration.");
             }
         } catch (error) { 
-            console.error("Critical Firestore exception caught parsing pipeline execution updates:", error);
-            alert("Error updating validation processing status records."); 
+            console.error("Firestore error:", error);
+            alert("Error updating status records."); 
         }
     };
 
@@ -495,7 +492,6 @@
         if (decision === 'Approved') {
             templateId = EMAILJS_APPROVED;
             
-            // IT PROVISIONING
             const newUsername = generateUsername(appData.fullName);
             const newPassword = generatePassword();
             const portalLink = 'https://ngu-recruitment-portal.vercel.app/complete-onboarding.html';
@@ -504,7 +500,7 @@
             updates.portalPassword = newPassword;
             updates.portalLink = portalLink;
             updates.assignedFTL = ftlName;
-            updates.startDate = document.getElementById('offerStartDate').value; // Save raw date to DB
+            updates.startDate = document.getElementById('offerStartDate').value;
 
             emailParams.portal_link = portalLink;
             emailParams.username = newUsername;
@@ -523,7 +519,6 @@
             await updateDoc(doc(db, "NGUO New Applicants", appId), updates);
             await emailjs.send(EMAILJS_SERVICE_ID, templateId, emailParams);
             
-            // Send FTL Notification
             if (triggerFtlEmail) {
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_CALL, {
                     ftl_email: assignedFTL,
@@ -596,7 +591,7 @@
             updates.portalPassword = newPassword;
             updates.portalLink = portalLink;
             updates.assignedFTL = ftlName;
-            updates.startDate = document.getElementById('postHoldStartDate').value; // Save raw to DB
+            updates.startDate = document.getElementById('postHoldStartDate').value;
 
             emailParams.portal_link = portalLink;
             emailParams.username = newUsername;
@@ -638,12 +633,10 @@
 
         let filteredApps = applicationsData;
 
-        // Apply Matches Filter
         if (showOnlyMatches) {
             filteredApps = filteredApps.filter(app => isAreaMatch(app.position, app.personalDetails?.postcode));
         }
 
-        // Apply Active vs Archive Filter
         const isArchived = (app) => {
             return app.finalRecruitmentDecision === 'Approved' || 
                    app.finalRecruitmentDecision === 'Rejected' || 
@@ -724,19 +717,59 @@
         const appEmail = (p.email || '').toLowerCase();
         const matchedInterview = interviewsData.find(i => i.applicantEmail?.toLowerCase() === appEmail);
 
-        let cvHtml = app.cv && app.cv.data ? `<a href="${app.cv.data}" download="${app.cv.filename}" class="btn-download">📄 Download CV (${app.cv.filename})</a>` : `<div class="text-box">No CV uploaded</div>`;
+        // ── CV download link (uses .url from Firebase Storage) ──
+        let cvHtml = app.cv && app.cv.url
+            ? `<a href="${app.cv.url}" target="_blank" class="btn-download">📄 View / Download CV (${app.cv.filename || 'CV'})</a>`
+            : `<div class="text-box">No CV uploaded</div>`;
 
+        // ── Certificate file links (uses .url from Firebase Storage) ──
         let certsHtml = '';
-        [{ key: 'mocopa', label: 'MOCOPA' }, { key: 'gasl3', label: 'Level 3 Gas' }, { key: 'cmagas', label: 'CMA Gas' }, { key: 'higherskills', label: 'Higher Skills' }].forEach(cert => {
-            if (c[cert.key] && c[cert.key].data) certsHtml += `<div class="cert-item"><div><strong>${cert.label}</strong><br><small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${c[cert.key].filename}</small></div><a href="${c[cert.key].data}" download="${c[cert.key].filename}" class="btn-download">Download</a></div>`;
+        [
+            { key: 'mocopa',       label: 'MOCOPA' },
+            { key: 'gasl3',        label: 'Level 3 Gas' },
+            { key: 'cmagas',       label: 'CMA Gas' },
+            { key: 'higherskills', label: 'Higher Skills' }
+        ].forEach(cert => {
+            if (c[cert.key] && c[cert.key].url) {
+                certsHtml += `
+                    <div class="cert-item">
+                        <div>
+                            <strong>${cert.label}</strong><br>
+                            <small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${c[cert.key].filename || ''}</small>
+                        </div>
+                        <a href="${c[cert.key].url}" target="_blank" class="btn-download">View / Download</a>
+                    </div>`;
+            }
         });
-        if (c.additional && c.additional.length > 0) {
-            c.additional.forEach(add => { if(add.data) certsHtml += `<div class="cert-item"><div><strong>${add.name}</strong><br><small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${add.filename}</small></div><a href="${add.data}" download="${add.filename}" class="btn-download">Download</a></div>`; });
-        }
-        if(!certsHtml) certsHtml = `<div class="text-box">No file certificates uploaded</div>`;
 
-        let empHtml = app.employment && app.employment.length > 0 ? `<table class="data-table"><thead><tr><th>Company</th><th>Position</th><th>Reason for Leaving</th></tr></thead><tbody>` + app.employment.map(e => `<tr><td>${safeVal(e.company)}</td><td>${safeVal(e.position)}</td><td>${safeVal(e.reason)}</td></tr>`).join('') + `</tbody></table>` : `<div class="text-box">No employment history provided</div>`;
-        let unavailHtml = app.unavailability && app.unavailability.length > 0 ? `<table class="data-table"><thead><tr><th>Date</th><th>Time</th></tr></thead><tbody>` + app.unavailability.map(u => `<tr><td>${safeVal(u.date)}</td><td>${safeVal(u.time)}</td></tr>`).join('') + `</tbody></table>` : `<div class="text-box">No unavailable dates specified</div>`;
+        // Additional certs
+        if (c.additional && c.additional.length > 0) {
+            c.additional.forEach(add => {
+                if (add.url) {
+                    certsHtml += `
+                        <div class="cert-item">
+                            <div>
+                                <strong>${add.certName || add.name || 'Additional Certificate'}</strong><br>
+                                <small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${add.filename || ''}</small>
+                            </div>
+                            <a href="${add.url}" target="_blank" class="btn-download">View / Download</a>
+                        </div>`;
+                }
+            });
+        }
+        if (!certsHtml) certsHtml = `<div class="text-box">No file certificates uploaded</div>`;
+
+        let empHtml = app.employment && app.employment.length > 0
+            ? `<table class="data-table"><thead><tr><th>Company</th><th>Position</th><th>Reason for Leaving</th></tr></thead><tbody>`
+              + app.employment.map(e => `<tr><td>${safeVal(e.company)}</td><td>${safeVal(e.position)}</td><td>${safeVal(e.reason)}</td></tr>`).join('')
+              + `</tbody></table>`
+            : `<div class="text-box">No employment history provided</div>`;
+
+        let unavailHtml = app.unavailability && app.unavailability.length > 0
+            ? `<table class="data-table"><thead><tr><th>Date</th><th>Time</th></tr></thead><tbody>`
+              + app.unavailability.map(u => `<tr><td>${safeVal(u.date)}</td><td>${safeVal(u.time)}</td></tr>`).join('')
+              + `</tbody></table>`
+            : `<div class="text-box">No unavailable dates specified</div>`;
 
         const matchBadgeHtml = matchStatus ? `<div class="match-badge-large">📍 Live Vacancy Area Match (${appArea})</div>` : '';
 
@@ -750,7 +783,9 @@
             });
         } else { reviewsHtml = `<div class="text-box">No reviews recorded yet.</div>`; }
 
-        const reviewActionHtml = reviews.length < 2 ? `<button class="btn-action-alt" style="margin-top:1.5rem;" onclick="openReviewModal('${app.id}')">+ Perform Review</button>` : `<div class="badge" style="margin-top:1.5rem; background:rgba(16,185,129,0.2); color:var(--success); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✓ Fully Reviewed (Completed)</div>`;
+        const reviewActionHtml = reviews.length < 2
+            ? `<button class="btn-action-alt" style="margin-top:1.5rem;" onclick="openReviewModal('${app.id}')">+ Perform Review</button>`
+            : `<div class="badge" style="margin-top:1.5rem; background:rgba(16,185,129,0.2); color:var(--success); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✓ Fully Reviewed (Completed)</div>`;
 
         let nameChecksHtml = '';
         if (app.nameChecksRequested) {
@@ -767,7 +802,9 @@
         if (matchedInterview) {
             const intv = matchedInterview;
             const displayDate = new Date(intv.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-            let statusBanner = intv.interviewCompleted ? `<span style="color:var(--success); font-weight:bold;">✓ Completed by ${intv.interviewer}</span>` : `<span style="color:var(--warning); font-weight:bold;">⏱ Scheduled for ${displayDate} @ ${intv.time}</span>`;
+            let statusBanner = intv.interviewCompleted
+                ? `<span style="color:var(--success); font-weight:bold;">✓ Completed by ${intv.interviewer}</span>`
+                : `<span style="color:var(--warning); font-weight:bold;">⏱ Scheduled for ${displayDate} @ ${intv.time}</span>`;
 
             let packResultsHtml = '';
             
@@ -787,7 +824,6 @@
                     </div>
                 `;
 
-                // Expandable Interview Questions & Notes block
                 if (data.notes) {
                     let notesBody = '';
                     if (data.type === 'engineer') {
@@ -813,32 +849,20 @@
                     packResultsHtml += `
                         <details class="collapsible-pack">
                             <summary>📁 View Interview Discussion Answers & Notes</summary>
-                            <div class="collapsible-content">
-                                ${notesBody}
-                            </div>
+                            <div class="collapsible-content">${notesBody}</div>
                         </details>
                     `;
                 }
 
-                // Expandable Scorecard Breakdown Block
                 if (data.scores && data.scores.length > 0) {
                     let scoreRows = data.scores.map(s => `<tr><td><strong>${s.criteria}</strong></td><td style="text-align:center; font-weight:bold; color:var(--accent); font-size:1.1rem;">${s.score}</td><td>${s.comment || '<span style="color:var(--text-muted)">-</span>'}</td></tr>`).join('');
-                    
                     packResultsHtml += `
                         <details class="collapsible-pack">
                             <summary>📊 View Detailed Scorecard Matrix Breakdown</summary>
                             <div class="collapsible-content" style="padding: 0.5rem 0 0 0;">
                                 <table class="data-table" style="background: rgba(0,0,0,0.15); border-radius: 8px; overflow: hidden; margin-bottom: 0;">
-                                    <thead>
-                                        <tr>
-                                            <th style="width:35%;">Criteria</th>
-                                            <th style="text-align:center; width:15%;">Score</th>
-                                            <th>Interviewer Comments</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${scoreRows}
-                                    </tbody>
+                                    <thead><tr><th style="width:35%;">Criteria</th><th style="text-align:center; width:15%;">Score</th><th>Interviewer Comments</th></tr></thead>
+                                    <tbody>${scoreRows}</tbody>
                                 </table>
                             </div>
                         </details>
@@ -860,8 +884,6 @@
                                 <option value="Rejected">Reject Candidate</option>
                             </select>
                         </div>
-
-                        <!-- HOLD REASON DROPDOWN -->
                         <div id="holdReasonDiv" style="display:none; margin-bottom: 1rem;">
                             <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--warning);">Select Reason for Hold:</label>
                             <select id="holdReasonSelect" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--warning); background:var(--bg-input); color:white; font-size:1rem; outline:none;">
@@ -874,8 +896,6 @@
                                 <option value="Need additional checks">Need additional checks</option>
                             </select>
                         </div>
-
-                        <!-- FTL ASSIGN & START DATE (ONLY SHOWS IF APPROVED) -->
                         <div id="ftlAssignDiv" style="display:none; margin-bottom: 1rem;">
                             <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Assign an FTL to Call the Candidate:</label>
                             <select id="ftlAssignSelect" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; margin-bottom:1rem;">
@@ -885,17 +905,14 @@
                                 <option value="stuart.whyte@next-gen.uk">Stuart Whyte</option>
                                 <option value="tom.green@next-gen.uk">Tom Green</option>
                             </select>
-
                             <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Proposed Start Date:</label>
                             <input type="date" id="offerStartDate" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit;">
                         </div>
-
                         <button class="btn-action-alt" style="width:100%; justify-content:center; padding:0.8rem;" onclick="submitFinalDecision('${app.id}')">Submit Decision & Trigger Actions</button>
                     `;
                 } else if (app.finalRecruitmentDecision === 'Hold') {
                     const hc = app.holdChecklist || {};
                     const isAllChecked = (hc.notes && hc.checks && hc.manager && hc.compare && hc.outcome);
-                    
                     packResultsHtml += `
                         <div style="margin-bottom:1.5rem; font-size:1rem; color:var(--text-light);">
                             <strong>Status:</strong> <span style="color:var(--warning);">On Hold</span><br>
@@ -910,7 +927,6 @@
                             <div class="checklist-item ${hc.outcome ? 'checked' : ''}"><input type="checkbox" id="chk_outcome" onchange="updateHoldChecklist('${app.id}', 'outcome', this.checked)" ${hc.outcome ? 'checked' : ''}><label for="chk_outcome">Final outcome by due date</label></div>
                         </div>
                     `;
-
                     if (isAllChecked) {
                         packResultsHtml += `
                             <div id="postHoldFtlDiv" style="margin-bottom: 1.5rem;">
@@ -922,7 +938,6 @@
                                     <option value="stuart.whyte@next-gen.uk">Stuart Whyte</option>
                                     <option value="tom.green@next-gen.uk">Tom Green</option>
                                 </select>
-
                                 <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Proposed Start Date:</label>
                                 <input type="date" id="postHoldStartDate" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit;">
                             </div>
@@ -937,13 +952,11 @@
                 } else {
                     const finalColor = app.finalRecruitmentDecision === 'Approved' ? 'var(--success)' : 'var(--error)';
                     const finalIcon = app.finalRecruitmentDecision === 'Approved' ? '🎉' : '❌';
-                    
                     let startDateDisplay = '';
                     if (app.finalRecruitmentDecision === 'Approved' && app.startDate) {
                         const sDateFormatted = new Date(app.startDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
                         startDateDisplay = `<div style="font-size:0.9rem; color:white; font-weight:bold; margin-top:0.5rem;">Start Date: ${sDateFormatted}</div>`;
                     }
-
                     packResultsHtml += `
                         <div style="text-align:center; padding: 1rem;">
                             <div style="font-size:2rem; margin-bottom:0.5rem;">${finalIcon}</div>
@@ -1004,22 +1017,32 @@
             </div>${app.reasonableAdjustments?.disability === 'yes' ? `<div class="data-group" style="margin-top:1rem;"><div class="data-label">Disability Details</div><div class="text-box">${safeVal(app.reasonableAdjustments?.disabilityText)}</div></div>` : ''}
             ${app.reasonableAdjustments?.medical === 'yes' ? `<div class="data-group" style="margin-top:1rem;"><div class="data-label">Medical Details</div><div class="text-box">${safeVal(app.reasonableAdjustments?.medicalText)}</div></div>` : ''}</div>
 
-            <div class="section"><h3>Qualifications & CV</h3><div class="data-group"><div class="data-label">Listed Qualifications</div><div class="text-box">${safeVal(app.qualifications)}</div></div><div class="data-group" style="margin-top:1.5rem;"><div class="data-label">Curriculum Vitae</div>${cvHtml}</div></div>
+            <div class="section"><h3>Qualifications & CV</h3>
+                <div class="data-group"><div class="data-label">Listed Qualifications</div><div class="text-box">${safeVal(app.qualifications)}</div></div>
+                <div class="data-group" style="margin-top:1.5rem;"><div class="data-label">Curriculum Vitae</div>${cvHtml}</div>
+            </div>
 
-            <div class="section"><h3>Certificates & Licences</h3><div class="grid-2" style="margin-bottom:1.5rem;">
-                <div class="data-group">
-                    <div class="data-label">Driving Licence</div>
-                    <div class="data-value">
-                        ${c.drivinglicence?.confirmed 
-    ? `Confirmed<br>
-       <span style="font-size:0.85rem; color:var(--text-muted)">Expires: ${c.drivinglicence?.expiry || 'N/A'}</span>
-       ${c.drivinglicence?.checkCode ? `<br><span style="font-size:0.85rem; color:var(--accent); font-family:'DM Mono', monospace;">Code: ${c.drivinglicence.checkCode}</span>` : ''}` 
-    : 'No / Not provided'}
+            <div class="section"><h3>Certificates & Licences</h3>
+                <div class="grid-2" style="margin-bottom:1.5rem;">
+                    <div class="data-group">
+                        <div class="data-label">Driving Licence</div>
+                        <div class="data-value">
+                            ${c.drivinglicence?.confirmed
+                                ? `Confirmed<br>
+                                   <span style="font-size:0.85rem; color:var(--text-muted);">Expires: ${c.drivinglicence?.expiry || 'N/A'}</span>
+                                   ${c.drivinglicence?.summary?.url
+                                       ? `<br><a href="${c.drivinglicence.summary.url}" target="_blank" class="btn-download" style="margin-top:0.5rem; display:inline-flex;">📄 View Summary</a>`
+                                       : `<br><span style="font-size:0.8rem; color:var(--text-muted); font-style:italic;">No summary uploaded</span>`
+                                   }`
+                                : 'No / Not provided'}
+                        </div>
                     </div>
+                    <div class="data-group"><div class="data-label">EUSR Card</div><div class="data-value">${c.eusr?.has ? `Yes (No: ${c.eusr?.number || 'N/A'})` : 'No / Not provided'}</div></div>
+                    <div class="data-group"><div class="data-label">Gas Safe Registration</div><div class="data-value">${c.gassafe?.number ? c.gassafe.number : 'Not provided'}</div></div>
                 </div>
-                <div class="data-group"><div class="data-label">EUSR Card</div><div class="data-value">${c.eusr?.has ? `Yes (No: ${c.eusr?.number || 'N/A'})` : 'No / Not provided'}</div></div>
-                <div class="data-group"><div class="data-label">Gas Safe Registration</div><div class="data-value">${c.gassafe?.number ? c.gassafe.number : 'Not provided'}</div></div>
-            </div><div class="data-label">Uploaded Certificate Files</div><div class="cert-list">${certsHtml}</div></div>
+                <div class="data-label">Uploaded Certificate Files</div>
+                <div class="cert-list">${certsHtml}</div>
+            </div>
 
             <div class="section"><h3>Employment History</h3>${empHtml}</div>
             <div class="section"><h3>Interview Unavailability</h3>${unavailHtml}</div>
