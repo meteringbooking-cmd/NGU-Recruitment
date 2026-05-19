@@ -1062,12 +1062,26 @@
             } catch (err) { console.error("Failed to send HR Verify Email:", err); }
 
             try {
-                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_CANDIDATE_CONFIRM, {
-                    to_email: document.getElementById('pdEmail').value || currentApplicant.personalDetails?.email,
-                    to_name: document.getElementById('pdFirst').value || currentApplicant.fullName,
-                    portal_link: portalLink
-                });
-            } catch (err) { console.error("Failed to send Candidate Confirm Email:", err); }
+                try {
+    const candidateEmail = document.getElementById('pdEmail').value.trim() 
+        || currentApplicant.personalDetails?.email 
+        || currentApplicant.onboardingDetails?.personalEmail 
+        || '';
+    const candidateName = document.getElementById('pdFirst').value.trim() 
+        || currentApplicant.fullName 
+        || 'Candidate';
+
+    if (!candidateEmail) {
+        console.error("Candidate confirm email skipped — no email address found.");
+    } else {
+        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_CANDIDATE_CONFIRM, {
+            to_email: candidateEmail,
+            to_name: candidateName,
+            portal_link: portalLink
+        });
+        console.log("Candidate confirm email sent to:", candidateEmail);
+    }
+} catch (err) { console.error("Failed to send Candidate Confirm Email:", err); }
 
             if (!currentApplicant.onboardingCompleted) {
                 try {
