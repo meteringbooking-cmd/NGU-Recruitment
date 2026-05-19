@@ -278,17 +278,32 @@
                 return;
             }
 
-            await setDoc(docRef, {
-                date: date,
-                time: time,
-                applicantName: name,
-                applicantEmail: email,
-                status: "Booked",
-                interviewer: null,
-                bookedAt: serverTimestamp(),
-                applicantReminderSent: false,
-                unclaimedReminderLevel: 0
-            });
+            // Look up postcode from applicant record
+let applicantPostcode = '';
+try {
+    const appQuery = await getDocs(query(
+        collection(db, "NGUO New Applicants"),
+        where("personalDetails.email", "==", email.toLowerCase())
+    ));
+    if (!appQuery.empty) {
+        applicantPostcode = appQuery.docs[0].data().personalDetails?.postcode || '';
+    }
+} catch (e) {
+    console.warn("Could not fetch applicant postcode:", e);
+}
+
+await setDoc(docRef, {
+    date: date,
+    time: time,
+    applicantName: name,
+    applicantEmail: email,
+    applicantPostcode: applicantPostcode,
+    status: "Booked",
+    interviewer: null,
+    bookedAt: serverTimestamp(),
+    applicantReminderSent: false,
+    unclaimedReminderLevel: 0
+});
 
             const displayDate = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
             const firstName = name.split(' ')[0];
