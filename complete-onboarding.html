@@ -95,6 +95,14 @@
         .hmrc-sub-title { font-size: 0.95rem; font-weight: 700; color: var(--accent); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
         .statement-card { background: rgba(0,0,0,0.25); border: 1px dashed var(--border); padding: 1rem; border-radius: 6px; margin-top: 0.8rem; display: none; }
         .statement-card.selected { display: block; border-color: var(--success); background: rgba(16, 185, 129, 0.03); }
+
+        /* Holiday date range picker */
+        .holiday-range-row { margin-bottom: 0.75rem; }
+        .holiday-range-inputs { display: flex; gap: 1rem; align-items: flex-end; }
+        .holiday-remove-btn { background: rgba(239,68,68,0.1); border: 1px solid var(--error); color: #fca5a5; padding: 0.6rem 1rem; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 700; white-space: nowrap; transition: all 0.2s; }
+        .holiday-remove-btn:hover { background: rgba(239,68,68,0.25); }
+        .btn-add-range { margin-top: 0.75rem; background: transparent; border: 1px dashed var(--accent); color: var(--accent); padding: 0.7rem 1.2rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; font-family: inherit; transition: all 0.2s; }
+        .btn-add-range:hover { background: rgba(0,163,224,0.08); }
     </style>
 </head>
 <body>
@@ -401,7 +409,21 @@
 
                 <div class="form-group" style="margin-top: 2rem;">
                     <label>Pre-Booked Holidays (Dates you are unavailable)</label>
-                    <textarea id="pdHolidays" class="form-control" placeholder="List any dates already booked..."></textarea>
+                    <div id="holidayRangesContainer">
+                        <div class="holiday-range-row" id="holiday-row-0">
+                            <div class="holiday-range-inputs">
+                                <div style="flex:1;">
+                                    <label style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">From</label>
+                                    <input type="date" class="form-control holiday-from" id="holidayFrom_0">
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">To</label>
+                                    <input type="date" class="form-control holiday-to" id="holidayTo_0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-add-range" onclick="addHolidayRange()">+ Add Another Date Range</button>
                 </div>
 
                 <div id="referralBlock" class="form-group" style="display:none; background:rgba(0,163,224,0.1); padding:1rem; border-radius:8px; border:1px solid var(--accent);">
@@ -707,6 +729,47 @@
         document.getElementById('dbsConsentBox').style.display = wantsDbs ? 'flex' : 'none';
     };
 
+    // ─── HOLIDAY DATE RANGE HELPERS ──────────────────────────────────────────────
+
+    let holidayRowCount = 1;
+
+    window.addHolidayRange = function() {
+        const container = document.getElementById('holidayRangesContainer');
+        const idx = holidayRowCount++;
+        const row = document.createElement('div');
+        row.className = 'holiday-range-row';
+        row.id = `holiday-row-${idx}`;
+        row.innerHTML = `
+            <div class="holiday-range-inputs">
+                <div style="flex:1;">
+                    <label style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">From</label>
+                    <input type="date" class="form-control holiday-from" id="holidayFrom_${idx}">
+                </div>
+                <div style="flex:1;">
+                    <label style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">To</label>
+                    <input type="date" class="form-control holiday-to" id="holidayTo_${idx}">
+                </div>
+                <button type="button" class="holiday-remove-btn" onclick="removeHolidayRange('holiday-row-${idx}')">✕ Remove</button>
+            </div>`;
+        container.appendChild(row);
+    };
+
+    window.removeHolidayRange = function(rowId) {
+        const row = document.getElementById(rowId);
+        if (row) row.remove();
+    };
+
+    function getHolidayRanges() {
+        const rows = document.querySelectorAll('#holidayRangesContainer .holiday-range-row');
+        const ranges = [];
+        rows.forEach(row => {
+            const from = row.querySelector('.holiday-from')?.value || '';
+            const to   = row.querySelector('.holiday-to')?.value || '';
+            if (from || to) ranges.push({ from, to });
+        });
+        return ranges;
+    }
+
     // ─── FILE UPLOAD (immediate on select, with progress bar) ───────────────────
 
     window.handleFileUpload = async function(inputEl, docType) {
@@ -861,7 +924,7 @@
                 postcode: document.getElementById('pdPostcode').value,
                 timeAtAddress: document.getElementById('pdTimeAtAddr').value,
                 addressHistory: document.getElementById('pdAddrHist').value,
-                holidays: document.getElementById('pdHolidays').value
+                holidays: getHolidayRanges()
             },
             emergencyContact: {
                 name: document.getElementById('ecName').value,
@@ -1096,7 +1159,16 @@
             document.getElementById('pdSysEmail').value = p.systemEmail || '';
             document.getElementById('pdTimeAtAddr').value = p.timeAtAddress || '';
             document.getElementById('pdAddrHist').value = p.addressHistory || '';
-            document.getElementById('pdHolidays').value = p.holidays || '';
+            // Restore holiday date ranges
+            if (p.holidays && Array.isArray(p.holidays) && p.holidays.length > 0) {
+                const container = document.getElementById('holidayRangesContainer');
+                container.innerHTML = '';
+                p.holidays.forEach((range, i) => {
+                    addHolidayRange();
+                    document.getElementById(`holidayFrom_${i}`).value = range.from || '';
+                    document.getElementById(`holidayTo_${i}`).value = range.to || '';
+                });
+            }
 
             const ec = currentApplicant.emergencyContact || {};
             document.getElementById('ecName').value = ec.name || '';
