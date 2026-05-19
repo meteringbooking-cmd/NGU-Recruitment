@@ -1011,10 +1011,10 @@
                     <div class="data-label">Driving Licence</div>
                     <div class="data-value">
                         ${c.drivinglicence?.confirmed 
-                            ? `Confirmed<br>
-                               <span style="font-size:0.85rem; color:var(--text-muted)">Expires: ${c.drivinglicence?.expiry || 'N/A'}</span>
-                               ${c.drivinglicence?.checkCode ? `<br><span style="font-size:0.85rem; color:var(--accent); font-family:'DM Mono', monospace;">Code: ${c.drivinglicence.checkCode}</span>` : ''}` 
-                            : 'No / Not provided'}
+    ? `Confirmed<br>
+       <span style="font-size:0.85rem; color:var(--text-muted)">Expires: ${c.drivinglicence?.expiry || 'N/A'}</span>
+       ${c.drivinglicence?.checkCode ? `<br><span style="font-size:0.85rem; color:var(--accent); font-family:'DM Mono', monospace;">Code: ${c.drivinglicence.checkCode}</span>` : ''}` 
+    : 'No / Not provided'}
                     </div>
                 </div>
                 <div class="data-group"><div class="data-label">EUSR Card</div><div class="data-value">${c.eusr?.has ? `Yes (No: ${c.eusr?.number || 'N/A'})` : 'No / Not provided'}</div></div>
