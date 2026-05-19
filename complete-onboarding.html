@@ -51,15 +51,20 @@
         .form-control[readonly] { background: rgba(0,0,0,0.2); color: var(--accent); cursor: not-allowed; }
         textarea.form-control { resize: vertical; min-height: 100px; }
 
-        .file-upload-box { background: var(--bg-input); border: 1px dashed var(--accent); padding: 1.5rem; border-radius: 8px; text-align: center; position: relative; transition: all 0.2s; }
-        .file-upload-box:hover:not(.verified) { background: rgba(0,163,224,0.05); }
+        .file-upload-box { background: var(--bg-input); border: 1px dashed var(--accent); padding: 1.5rem; border-radius: 8px; text-align: center; position: relative; transition: all 0.2s; cursor: pointer; }
+        .file-upload-box:hover:not(.verified):not(.uploading) { background: rgba(0,163,224,0.05); }
         .file-upload-box input[type="file"] { opacity: 0; position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; }
         .file-upload-box input[type="file"]:disabled { cursor: not-allowed; }
-        .file-status { margin-top: 0.5rem; font-size: 0.85rem; color: var(--success); font-weight: 600; }
+        .file-status { margin-top: 0.5rem; font-size: 0.85rem; font-weight: 600; }
+
+        /* Upload progress bar */
+        .upload-progress-wrap { margin-top: 0.6rem; background: rgba(0,0,0,0.3); border-radius: 4px; height: 5px; overflow: hidden; display: none; }
+        .upload-progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 4px; transition: width 0.3s ease; }
         
         /* Verification Status Styling */
         .file-upload-box.verified { border-color: var(--success); background: rgba(16, 185, 129, 0.05); }
         .file-upload-box.rejected { border-color: var(--error); background: rgba(239, 68, 68, 0.05); }
+        .file-upload-box.uploading { border-color: var(--warning); border-style: solid; }
         .reject-msg { font-size: 0.8rem; color: #fca5a5; font-weight: bold; margin-top: 5px; background: rgba(239, 68, 68, 0.1); padding: 5px; border-radius: 4px; display: none; }
 
         .radio-group { display: flex; gap: 1rem; align-items: center; }
@@ -72,6 +77,7 @@
         .nav-buttons { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1rem; }
         .btn-primary { width: 100%; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; padding: 1rem; border: none; border-radius: 8px; font-weight: 800; font-size: 1.1rem; cursor: pointer; transition: all 0.2s; font-family: inherit; }
         .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.3); }
+        .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
         .btn-outline { width: 100%; background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 1rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s; font-family: inherit; }
         .btn-outline:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: rgba(0, 163, 224, 0.05); }
 
@@ -79,7 +85,12 @@
         .doc-chip { display: inline-block; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; margin: 4px; }
         .external-link { color: var(--accent); text-decoration: underline; font-weight: bold; }
 
-        /* Form Sub-blocks specifically for official structural declarations */
+        /* Step save status indicator */
+        .step-save-indicator { display: none; font-size: 0.8rem; color: var(--success); font-weight: 600; padding: 0.5rem 1rem; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); border-radius: 6px; text-align: center; margin-top: 0.5rem; }
+        .step-save-indicator.saving { color: var(--warning); background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); display: block; }
+        .step-save-indicator.saved { color: var(--success); background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.3); display: block; }
+        .step-save-indicator.error { color: var(--error); background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); display: block; }
+
         .hmrc-block { background: rgba(13, 31, 58, 0.4); padding: 1.25rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 1.25rem; }
         .hmrc-sub-title { font-size: 0.95rem; font-weight: 700; color: var(--accent); margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 8px; }
         .statement-card { background: rgba(0,0,0,0.25); border: 1px dashed var(--border); padding: 1rem; border-radius: 6px; margin-top: 0.8rem; display: none; }
@@ -93,7 +104,6 @@
         <h2 style="color: var(--accent);">Verifying your secure session...</h2>
     </div>
 
-    <!-- Final Success Overlay if totally verified -->
     <div id="verifiedScreen" style="display: none; text-align:center; padding: 4rem 2rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; max-width: 800px; margin: 10vh auto;">
         <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
         <h2 style="color: var(--success); margin-bottom: 1rem;">Onboarding Fully Verified!</h2>
@@ -105,7 +115,6 @@
 
     <div class="container" id="onboardingContainer" style="display: none;">
         
-        <!-- Rejected Alert Banner -->
         <div id="rejectionBanner" style="display: none; background: rgba(239, 68, 68, 0.1); border: 1px solid var(--error); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; color: #fca5a5; font-weight: 600;">
             ⚠️ Action Required: Some of your uploaded documents were rejected during our review. Please re-upload the highlighted files below. Your other sections have been locked.
         </div>
@@ -140,6 +149,7 @@
                         <div class="file-upload-box" id="box-passport">
                             <span id="label-doc-passport">Click or drag file here to upload</span>
                             <input type="file" id="file-passport" onchange="handleFileUpload(this, 'passport')">
+                            <div class="upload-progress-wrap" id="prog-wrap-passport"><div class="upload-progress-bar" id="prog-passport"></div></div>
                             <div class="file-status" id="status-passport"></div>
                         </div>
                         <div class="reject-msg" id="rej-passport"></div>
@@ -150,6 +160,7 @@
                         <div class="file-upload-box" id="box-idphoto">
                             <span id="label-doc-idphoto">Click or drag file here to upload</span>
                             <input type="file" id="file-idphoto" accept="image/*" onchange="handleFileUpload(this, 'idphoto')">
+                            <div class="upload-progress-wrap" id="prog-wrap-idphoto"><div class="upload-progress-bar" id="prog-idphoto"></div></div>
                             <div class="file-status" id="status-idphoto"></div>
                         </div>
                         <div class="reject-msg" id="rej-idphoto"></div>
@@ -160,6 +171,7 @@
                         <div class="file-upload-box" id="box-dlfront">
                             <span id="label-doc-dlfront">Click or drag file here to upload</span>
                             <input type="file" id="file-dlfront" onchange="handleFileUpload(this, 'dlfront')">
+                            <div class="upload-progress-wrap" id="prog-wrap-dlfront"><div class="upload-progress-bar" id="prog-dlfront"></div></div>
                             <div class="file-status" id="status-dlfront"></div>
                         </div>
                         <div class="reject-msg" id="rej-dlfront"></div>
@@ -170,6 +182,7 @@
                         <div class="file-upload-box" id="box-dlback">
                             <span id="label-doc-dlback">Click or drag file here to upload</span>
                             <input type="file" id="file-dlback" onchange="handleFileUpload(this, 'dlback')">
+                            <div class="upload-progress-wrap" id="prog-wrap-dlback"><div class="upload-progress-bar" id="prog-dlback"></div></div>
                             <div class="file-status" id="status-dlback"></div>
                         </div>
                         <div class="reject-msg" id="rej-dlback"></div>
@@ -180,6 +193,7 @@
                         <div class="file-upload-box" id="box-poa">
                             <span id="label-doc-poa">Click or drag file here to upload</span>
                             <input type="file" id="file-poa" onchange="handleFileUpload(this, 'poa')">
+                            <div class="upload-progress-wrap" id="prog-wrap-poa"><div class="upload-progress-bar" id="prog-poa"></div></div>
                             <div class="file-status" id="status-poa"></div>
                         </div>
                         <div class="reject-msg" id="rej-poa"></div>
@@ -193,24 +207,22 @@
                             <label><input type="radio" name="hasP45" value="no" onchange="toggleP45(false)"> No (I will complete a New Starter Checklist)</label>
                         </div>
                         
-                        <!-- File Upload for P45 -->
                         <div id="p45UploadDiv" style="display:none;">
                             <div class="file-upload-box" id="box-p45">
                                 <span id="label-doc-p45">Upload your P45 here</span>
                                 <input type="file" id="file-p45" onchange="handleFileUpload(this, 'p45')">
+                                <div class="upload-progress-wrap" id="prog-wrap-p45"><div class="upload-progress-bar" id="prog-p45"></div></div>
                                 <div class="file-status" id="status-p45"></div>
                             </div>
                             <div class="reject-msg" id="rej-p45"></div>
                         </div>
 
-                        <!-- Full Digital HMRC New Starter Checklist Form Mapping -->
                         <div id="starterChecklistDiv" style="display:none; margin-top: 1rem; padding: 1.5rem; background: rgba(0,0,0,0.2); border: 1px solid var(--accent); border-radius: 8px;">
                             <div style="border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 1.2rem;">
                                 <h4 style="color:var(--accent); margin:0;">HMRC New Starter Checklist (12/25)</h4>
                             </div>
-                            <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">As you do not have a P45, we require this structural information to ensure you are assigned the correct tax code threshold.</p>
+                            <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1.5rem;">As you do not have a P45, we require this information to ensure you are assigned the correct tax code threshold.</p>
                             
-                            <!-- Part 1: Employee's personal details -->
                             <div class="hmrc-block">
                                 <div class="hmrc-sub-title">Part 1: Employee's Personal Details</div>
                                 <div class="grid-2">
@@ -256,10 +268,9 @@
                                 </div>
                             </div>
 
-                            <!-- Part 2: Employee statement conditional loop matrix -->
                             <div class="hmrc-block">
                                 <div class="hmrc-sub-title">Part 2: Employee Statement Setup</div>
-                                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.4;">These targeted criteria questions evaluate parameters natively to enforce assignment configuration for Statement A, B, or C tax codes.</p>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.4;">These questions determine your Statement A, B, or C tax code assignment.</p>
                                 
                                 <div class="form-group">
                                     <label>8. Do you have another job?</label>
@@ -285,24 +296,20 @@
                                     </div>
                                 </div>
 
-                                <!-- Calculated Structural Code Signatures Display blocks -->
                                 <div id="stateBlockA" class="statement-card">
                                     <strong style="color:var(--success);">Selected Target outcome: Statement A</strong>
                                     <p style="font-size:0.85rem; margin-top:0.3rem; color:var(--text-light); line-height:1.4;"><strong>Rule Metric:</strong> This is my first job since 6 April and since 6 April I have not received payments from another job or JSA, ESA, or Incapacity Benefit. <br><em style="color:var(--text-muted);">(HR Code: Current personal allowance threshold)</em></p>
                                 </div>
-
                                 <div id="stateBlockB" class="statement-card">
                                     <strong style="color:var(--success);">Selected Target outcome: Statement B</strong>
                                     <p style="font-size:0.85rem; margin-top:0.3rem; color:var(--text-light); line-height:1.4;"><strong>Rule Metric:</strong> Since 6 April I have had another job which has ended but I do not have a P45, and/or I received payments from JSA, ESA, or Incapacity Benefit. I do not receive a pension. <br><em style="color:var(--text-muted);">(HR Code: Current personal allowance cumulative Week 1/Month 1 basis)</em></p>
                                 </div>
-
                                 <div id="stateBlockC" class="statement-card">
                                     <strong style="color:var(--success);">Selected Target outcome: Statement C</strong>
                                     <p style="font-size:0.85rem; margin-top:0.3rem; color:var(--text-light); line-height:1.4;"><strong>Rule Metric:</strong> I have another active concurrent job and/or I am in receipt of a State, workplace, or private pension. <br><em style="color:var(--text-muted);">(HR Code: Tax Code BR applied)</em></p>
                                 </div>
                             </div>
 
-                            <!-- Part 3: Student loans logic structure -->
                             <div class="hmrc-block">
                                 <div class="hmrc-sub-title">Part 3: Student Loans</div>
                                 
@@ -329,17 +336,15 @@
                                 </div>
 
                                 <div id="fg-qLoanPlanSelection" style="display:none; border-top:1px dashed var(--border); padding-top:1rem; margin-top:1rem;">
-                                    <label>13. Put 'X' in the correct student loan plan type or postgraduate loan threshold:</label>
+                                    <label>13. Select your student loan plan type:</label>
                                     <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.8rem;">Select only one plan type (Plan 1, 2, 4 or 5). You can select Postgraduate Loan concurrently if it applies.</p>
-                                    
                                     <div class="checkbox-group" style="flex-direction: column; background: transparent; border: none; padding: 0;">
-                                        <label style="line-height:1.4;"><input type="radio" name="scLoanPlanGroup" id="planRadio1" value="Plan 1"> <strong>Plan 1:</strong> England/Wales course started before 1 Sept 2012, or Northern Ireland tracking</label>
+                                        <label style="line-height:1.4;"><input type="radio" name="scLoanPlanGroup" id="planRadio1" value="Plan 1"> <strong>Plan 1:</strong> England/Wales course started before 1 Sept 2012, or Northern Ireland</label>
                                         <label style="line-height:1.4;"><input type="radio" name="scLoanPlanGroup" id="planRadio2" value="Plan 2"> <strong>Plan 2:</strong> England/Wales course started between 1 Sept 2012 and 31 July 2023</label>
                                         <label style="line-height:1.4;"><input type="radio" name="scLoanPlanGroup" id="planRadio4" value="Plan 4"> <strong>Plan 4:</strong> Applied through Student Awards Agency Scotland (SAAS)</label>
                                         <label style="line-height:1.4;"><input type="radio" name="scLoanPlanGroup" id="planRadio5" value="Plan 5"> <strong>Plan 5:</strong> England course started on or after 1 August 2023</label>
-                                        
                                         <div style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px dashed rgba(255,255,255,0.05); width:100%;">
-                                            <label style="line-height:1.4;"><input type="checkbox" id="scPostgradLoan" value="Postgraduate"> <strong>Postgraduate Loan:</strong> Master's or Doctoral framework course framework allocation</label>
+                                            <label style="line-height:1.4;"><input type="checkbox" id="scPostgradLoan" value="Postgraduate"> <strong>Postgraduate Loan:</strong> Master's or Doctoral framework course</label>
                                         </div>
                                     </div>
                                 </div>
@@ -348,9 +353,10 @@
                     </div>
                 </div>
             </div>
+            <div id="step1-save-indicator" class="step-save-indicator"></div>
             <div class="nav-buttons" id="nav-step1">
                 <div style="flex:1;"></div>
-                <button class="btn-primary" onclick="goToStep(2)">Next Step ➔</button>
+                <button class="btn-primary" onclick="saveAndGoToStep(2)">Next Step ➔</button>
             </div>
         </div>
 
@@ -365,16 +371,12 @@
                     <div class="form-group"><label>Legal Surname</label><input type="text" id="pdLast" class="form-control" onkeyup="generateSysEmail(); syncStarterChecklistFields();"></div>
                     <div class="form-group"><label>Date of Birth</label><input type="date" id="pdDob" class="form-control" onchange="syncStarterChecklistFields();"></div>
                     <div class="form-group"><label>National Insurance Number</label><input type="text" id="pdNi" class="form-control" placeholder="AA123456C" onkeyup="syncStarterChecklistFields();"></div>
-                    
                     <div class="form-group" style="grid-column: 1 / -1;"><label>Generated NGU System Email (For IT Setup)</label><input type="text" id="pdSysEmail" class="form-control" readonly></div>
-
                     <div class="form-group"><label>Phone Number</label><input type="text" id="pdPhone" class="form-control"></div>
                     <div class="form-group"><label>Personal Email</label><input type="email" id="pdEmail" class="form-control"></div>
-                    
                     <div class="form-group" style="grid-column: 1 / -1;"><label>Current Address</label><input type="text" id="pdAddress" class="form-control" onkeyup="syncStarterChecklistFields();"></div>
                     <div class="form-group"><label>Postcode</label><input type="text" id="pdPostcode" class="form-control" onkeyup="syncStarterChecklistFields();"></div>
                     <div class="form-group"><label>Time at Current Address</label><input type="text" id="pdTimeAtAddr" class="form-control" placeholder="e.g. 2 Years, 4 Months"></div>
-                    
                     <div class="form-group" style="grid-column: 1 / -1;">
                         <label>Address History (Please provide any previous addresses in the last 5 years)</label>
                         <textarea id="pdAddrHist" class="form-control" placeholder="Address 1, Dates..."></textarea>
@@ -412,9 +414,10 @@
                     <label for="chkDetailsConfirm">I confirm that all the personal and financial details provided above are true and accurate.</label>
                 </div>
             </div>
+            <div id="step2-save-indicator" class="step-save-indicator"></div>
             <div class="nav-buttons">
                 <button class="btn-outline" onclick="goToStep(1)">⬅ Back</button>
-                <button class="btn-primary" onclick="goToStep(3)">Next Step ➔</button>
+                <button class="btn-primary" onclick="saveAndGoToStep(3)">Next Step ➔</button>
             </div>
         </div>
 
@@ -442,9 +445,10 @@
                     </div>
                 </div>
             </div>
+            <div id="step3-save-indicator" class="step-save-indicator"></div>
             <div class="nav-buttons">
                 <button class="btn-outline" onclick="goToStep(2)">⬅ Back</button>
-                <button class="btn-primary" onclick="goToStep(4)">Next Step ➔</button>
+                <button class="btn-primary" onclick="saveAndGoToStep(4)">Next Step ➔</button>
             </div>
         </div>
 
@@ -467,32 +471,32 @@
                         <label>Uneek Classic T-Shirt</label>
                         <select id="uniTshirt" class="form-control">
                             <option value="">Select Size</option>
-                            <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
-                            <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option>
+                            <option>XS</option><option>S</option><option>M</option><option>L</option>
+                            <option>XL</option><option>XXL</option><option>XXXL</option><option>4XL</option><option>5XL</option><option>6XL</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Uneek Classic Hoodie</label>
                         <select id="uniHoodie" class="form-control">
                             <option value="">Select Size</option>
-                            <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
-                            <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option>
+                            <option>XS</option><option>S</option><option>M</option><option>L</option>
+                            <option>XL</option><option>XXL</option><option>XXXL</option><option>4XL</option><option>5XL</option><option>6XL</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Portwest FR25 Bizflame Jacket</label>
                         <select id="uniFrJacket" class="form-control">
                             <option value="">Select Size</option>
-                            <option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
-                            <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option><option value="6XL">6XL</option>
+                            <option>XS</option><option>S</option><option>M</option><option>L</option>
+                            <option>XL</option><option>XXL</option><option>XXXL</option><option>4XL</option><option>5XL</option><option>6XL</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Regatta Dover Bomber Jacket</label>
                         <select id="uniRegatta" class="form-control">
                             <option value="">Select Size</option>
-                            <option value="XXS">XXS</option><option value="XS">XS</option><option value="S">S</option><option value="M">M</option><option value="L">L</option>
-                            <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option><option value="4XL">4XL</option><option value="5XL">5XL</option>
+                            <option>XXS</option><option>XS</option><option>S</option><option>M</option><option>L</option>
+                            <option>XL</option><option>XXL</option><option>XXXL</option><option>4XL</option><option>5XL</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -500,14 +504,13 @@
                         <div style="display:flex; gap:10px;">
                             <select id="uniTrouserWaist" class="form-control">
                                 <option value="">Waist</option>
-                                <option value="28">28</option><option value="30">30</option><option value="32">32</option><option value="33">33</option><option value="34">34</option>
-                                <option value="36">36</option><option value="38">38</option><option value="40">40</option><option value="41">41</option><option value="42">42</option>
-                                <option value="44">44</option><option value="46">46</option><option value="48">48</option>
+                                <option>28</option><option>30</option><option>32</option><option>33</option><option>34</option>
+                                <option>36</option><option>38</option><option>40</option><option>41</option><option>42</option>
+                                <option>44</option><option>46</option><option>48</option>
                             </select>
                             <select id="uniTrouserLength" class="form-control">
                                 <option value="">Length</option>
-                                <option value="Short">Short</option>
-                                <option value="Regular">Regular</option>
+                                <option>Short</option><option>Regular</option>
                             </select>
                         </div>
                     </div>
@@ -515,23 +518,24 @@
                         <label>Portwest Steelite Protector Boot</label>
                         <select id="uniBoot" class="form-control">
                             <option value="">Select Size (UK)</option>
-                            <option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option>
-                            <option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option>
+                            <option>3</option><option>4</option><option>5</option><option>6</option><option>7</option>
+                            <option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option>
                         </select>
                     </div>
                     <div class="form-group">
                         <label>Presel GP-1 Dielectric Gloves</label>
                         <select id="uniGloves" class="form-control">
                             <option value="">Select Size</option>
-                            <option value="S">S</option><option value="M">M</option><option value="L">L</option>
-                            <option value="XL">XL</option><option value="XXL">XXL</option><option value="XXXL">XXXL</option>
+                            <option>S</option><option>M</option><option>L</option>
+                            <option>XL</option><option>XXL</option><option>XXXL</option>
                         </select>
                     </div>
                 </div>
             </div>
+            <div id="step4-save-indicator" class="step-save-indicator"></div>
             <div class="nav-buttons">
                 <button class="btn-outline" onclick="goToStep(3)">⬅ Back</button>
-                <button class="btn-primary" onclick="goToStep(5)">Final Review ➔</button>
+                <button class="btn-primary" onclick="saveAndGoToStep(5)">Final Review ➔</button>
             </div>
         </div>
 
@@ -557,7 +561,7 @@
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-    import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
     // --- EMAILJS CONFIG ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
@@ -566,6 +570,8 @@
     const EMAILJS_DBS_NO = 'template_1aay8zl';
     const EMAILJS_FINAL_VERIFY = 'template_3qmq3bb';
     const EMAILJS_CANDIDATE_CONFIRM = 'template_xqc9hkh';
+
+    // Initialise EmailJS immediately — outside any deferred block
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
     const firebaseConfig = {
@@ -583,6 +589,8 @@
     let currentApplicant = null;
     let uploadedUrls = {};
     let activeCalculatedStatement = "";
+    // Track whether DBS email has already been sent this session
+    let dbsEmailSent = false;
 
     const certMapping = {
         'mocopa': 'MOCOPA Certification',
@@ -593,7 +601,31 @@
         'gassafe': 'Gas Safe Registration'
     };
 
-    // Live Cross-Step Alignment and Sync
+    // ─── HELPERS ────────────────────────────────────────────────────────────────
+
+    function showStepIndicator(step, state, msg) {
+        const el = document.getElementById(`step${step}-save-indicator`);
+        if (!el) return;
+        el.className = `step-save-indicator ${state}`;
+        el.textContent = msg;
+        if (state === 'saved') {
+            setTimeout(() => { el.className = 'step-save-indicator'; }, 4000);
+        }
+    }
+
+    async function sendEmail(templateId, params) {
+        try {
+            const result = await emailjs.send(EMAILJS_SERVICE_ID, templateId, params);
+            console.log(`Email sent [${templateId}]:`, result.status);
+            return true;
+        } catch (err) {
+            console.error(`Email FAILED [${templateId}]:`, err);
+            return false;
+        }
+    }
+
+    // ─── SYNC ───────────────────────────────────────────────────────────────────
+
     window.syncStarterChecklistFields = function() {
         document.getElementById('scFirst').value = document.getElementById('pdFirst').value;
         document.getElementById('scLast').value = document.getElementById('pdLast').value;
@@ -603,7 +635,16 @@
         document.getElementById('scPostcode').value = document.getElementById('pdPostcode').value;
     };
 
-    // Official Structural Loop Handling for HMRC Statement Questions 8, 9 & 10
+    window.generateSysEmail = function() {
+        const pref = document.getElementById('pdPref').value.trim() || document.getElementById('pdFirst').value.trim();
+        const last = document.getElementById('pdLast').value.trim();
+        if (pref && last) {
+            document.getElementById('pdSysEmail').value = `${pref.toLowerCase()}.${last.toLowerCase()}@next-gen.uk`;
+        }
+    };
+
+    // ─── HMRC LOGIC ─────────────────────────────────────────────────────────────
+
     window.evaluateHMRCStatementLogic = function() {
         const anotherJob = document.querySelector('input[name="qAnotherJob"]:checked')?.value;
         const pensionBox = document.getElementById('fg-qPension');
@@ -622,14 +663,12 @@
         } else {
             pensionBox.style.display = 'block';
             const pension = document.querySelector('input[name="qPension"]:checked')?.value;
-            
             if (pension === 'yes') {
                 document.getElementById('stateBlockC').classList.add('selected');
                 activeCalculatedStatement = "Statement C";
             } else if (pension === 'no') {
                 benefitsBox.style.display = 'block';
                 const benefits = document.querySelector('input[name="qBenefits"]:checked')?.value;
-                
                 if (benefits === 'yes') {
                     document.getElementById('stateBlockB').classList.add('selected');
                     activeCalculatedStatement = "Statement B";
@@ -641,24 +680,326 @@
         }
     };
 
-    // Official Structural Loop Handling for HMRC Student Loans Questions 11 & 12
     window.evaluateHMRCStudentLoanLogic = function() {
         const hasLoan = document.querySelector('input[name="qStudentLoan"]:checked')?.value;
         const exclusionsBox = document.getElementById('fg-qLoanExclusions');
         const planSelectionBox = document.getElementById('fg-qLoanPlanSelection');
-
         exclusionsBox.style.display = 'none';
         planSelectionBox.style.display = 'none';
-
         if (hasLoan === 'yes') {
             exclusionsBox.style.display = 'block';
             const exclusions = document.querySelector('input[name="qLoanExclusions"]:checked')?.value;
-            
-            if (exclusions === 'no') {
-                planSelectionBox.style.display = 'block';
-            }
+            if (exclusions === 'no') planSelectionBox.style.display = 'block';
         }
     };
+
+    // ─── TOGGLE HELPERS ─────────────────────────────────────────────────────────
+
+    window.toggleP45 = function(hasP45) { 
+        document.getElementById('p45UploadDiv').style.display = hasP45 ? 'block' : 'none'; 
+        document.getElementById('starterChecklistDiv').style.display = hasP45 ? 'none' : 'block';
+    };
+
+    window.toggleDBS = function(wantsDbs) {
+        document.getElementById('dbsConsentBox').style.display = wantsDbs ? 'flex' : 'none';
+    };
+
+    // ─── FILE UPLOAD (immediate on select, with progress bar) ───────────────────
+
+    window.handleFileUpload = async function(inputEl, docType) {
+        if (inputEl.files.length === 0) return;
+        const file = inputEl.files[0];
+
+        const statusEl  = document.getElementById(`status-${docType}`);
+        const labelEl   = document.getElementById(`label-doc-${docType}`);
+        const box       = document.getElementById(`box-${docType}`);
+        const rejMsg    = document.getElementById(`rej-${docType}`);
+        const progWrap  = document.getElementById(`prog-wrap-${docType}`);
+        const progBar   = document.getElementById(`prog-${docType}`);
+
+        // Reset state
+        box.classList.remove('verified', 'rejected');
+        box.classList.add('uploading');
+        if (rejMsg) rejMsg.style.display = 'none';
+        statusEl.textContent = 'Uploading…';
+        statusEl.style.color = 'var(--warning)';
+        if (progWrap) { progWrap.style.display = 'block'; progBar.style.width = '0%'; }
+
+        // Disable the input while uploading so user can't re-trigger
+        inputEl.disabled = true;
+
+        try {
+            const storagePath = `onboarding_docs/${currentAppId}/${docType}_${Date.now()}_${file.name}`;
+            const fileRef = ref(storage, storagePath);
+            const uploadTask = uploadBytesResumable(fileRef, file);
+
+            await new Promise((resolve, reject) => {
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                        if (progBar) progBar.style.width = `${pct}%`;
+                    },
+                    (error) => reject(error),
+                    () => resolve()
+                );
+            });
+
+            const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+            uploadedUrls[docType] = { url: downloadUrl, filename: file.name, path: storagePath };
+
+            // Persist uploaded docs to Firestore immediately
+            await updateDoc(doc(db, "NGUO New Applicants", currentAppId), {
+                onboardingDocs: uploadedUrls
+            });
+
+            box.classList.remove('uploading');
+            box.classList.add('verified');
+            statusEl.textContent = '✓ Uploaded & saved';
+            statusEl.style.color = 'var(--success)';
+            labelEl.textContent = `Replace: ${file.name}`;
+            if (progWrap) progWrap.style.display = 'none';
+
+        } catch (e) {
+            console.error('Upload error:', e);
+            box.classList.remove('uploading');
+            box.classList.add('rejected');
+            statusEl.textContent = '✗ Upload failed — please try again';
+            statusEl.style.color = 'var(--error)';
+            if (progWrap) progWrap.style.display = 'none';
+        } finally {
+            // Re-enable so user can retry / replace
+            inputEl.disabled = false;
+        }
+    };
+
+    // ─── PER-STEP SAVE + NAVIGATE ────────────────────────────────────────────────
+
+    window.saveAndGoToStep = async function(nextStep) {
+        const currentStep = nextStep - 1;
+        showStepIndicator(currentStep, 'saving', '💾 Saving your progress…');
+
+        try {
+            if (currentStep === 1) {
+                await saveStep1();
+            } else if (currentStep === 2) {
+                await saveStep2();
+                // Fire candidate confirmation email as soon as personal details are saved
+                await fireCandidateConfirmEmail();
+            } else if (currentStep === 3) {
+                await saveStep3();
+                // Fire DBS email as soon as compliance section is saved
+                await fireDBSEmail();
+            } else if (currentStep === 4) {
+                await saveStep4();
+            }
+            showStepIndicator(currentStep, 'saved', '✓ Progress saved');
+            goToStep(nextStep);
+        } catch (e) {
+            console.error(`Save error on step ${currentStep}:`, e);
+            showStepIndicator(currentStep, 'error', '✗ Save failed — check your connection and try again');
+        }
+    };
+
+    // ─── STEP SAVE FUNCTIONS ─────────────────────────────────────────────────────
+
+    async function saveStep1() {
+        const hasP45Choice = document.querySelector('input[name="hasP45"]:checked')?.value;
+        let hmrcData = null;
+
+        if (hasP45Choice === 'no') {
+            hmrcData = {
+                lastName: document.getElementById('scLast').value,
+                firstName: document.getElementById('scFirst').value,
+                sex: document.querySelector('input[name="scGender"]:checked')?.value || '',
+                dob: document.getElementById('scDob').value,
+                address: document.getElementById('scAddress').value,
+                postcode: document.getElementById('scPostcode').value,
+                country: document.getElementById('scCountry').value,
+                niNumber: document.getElementById('scNi').value,
+                anotherJobQuestion: document.querySelector('input[name="qAnotherJob"]:checked')?.value || '',
+                pensionQuestion: document.querySelector('input[name="qPension"]:checked')?.value || '',
+                benefitsQuestion: document.querySelector('input[name="qBenefits"]:checked')?.value || '',
+                calculatedStatementOutcome: activeCalculatedStatement,
+                hasLoanQuestion: document.querySelector('input[name="qStudentLoan"]:checked')?.value || '',
+                exclusionsQuestion: document.querySelector('input[name="qLoanExclusions"]:checked')?.value || '',
+                selectedPlan: document.querySelector('input[name="scLoanPlanGroup"]:checked')?.value || 'None',
+                postgradLoanSelected: document.getElementById('scPostgradLoan').checked
+            };
+        }
+
+        await updateDoc(doc(db, "NGUO New Applicants", currentAppId), {
+            onboardingDocs: uploadedUrls,
+            hasP45: hasP45Choice === 'yes',
+            hmrcChecklist: hmrcData,
+            step1SavedAt: new Date().toISOString()
+        });
+    }
+
+    async function saveStep2() {
+        const chkConfirm = document.getElementById('chkDetailsConfirm').checked;
+        if (!chkConfirm) {
+            throw new Error('Please check the confirmation box before proceeding.');
+        }
+
+        await updateDoc(doc(db, "NGUO New Applicants", currentAppId), {
+            onboardingDetails: {
+                title: document.getElementById('pdTitle').value,
+                firstName: document.getElementById('pdFirst').value,
+                preferredName: document.getElementById('pdPref').value,
+                lastName: document.getElementById('pdLast').value,
+                dob: document.getElementById('pdDob').value,
+                niNumber: document.getElementById('pdNi').value,
+                systemEmail: document.getElementById('pdSysEmail').value,
+                phone: document.getElementById('pdPhone').value,
+                personalEmail: document.getElementById('pdEmail').value,
+                address: document.getElementById('pdAddress').value,
+                postcode: document.getElementById('pdPostcode').value,
+                timeAtAddress: document.getElementById('pdTimeAtAddr').value,
+                addressHistory: document.getElementById('pdAddrHist').value,
+                holidays: document.getElementById('pdHolidays').value
+            },
+            emergencyContact: {
+                name: document.getElementById('ecName').value,
+                relationship: document.getElementById('ecRel').value,
+                phone: document.getElementById('ecPhone').value,
+                altPhone: document.getElementById('ecAlt').value
+            },
+            bankDetails: {
+                bankName: document.getElementById('bkName').value,
+                accountName: document.getElementById('bkAccName').value,
+                sortCode: document.getElementById('bkSort').value,
+                accountNumber: document.getElementById('bkAccNum').value
+            },
+            step2SavedAt: new Date().toISOString()
+        });
+    }
+
+    async function saveStep3() {
+        const dbsChoice = document.querySelector('input[name="dbsChoice"]:checked')?.value;
+        if (!dbsChoice) throw new Error('Please select a DBS check option before proceeding.');
+        if (dbsChoice === 'yes' && !document.getElementById('chkDbsConsent').checked) {
+            throw new Error('You must consent to the DBS check to proceed.');
+        }
+
+        await updateDoc(doc(db, "NGUO New Applicants", currentAppId), {
+            dbsInfo: {
+                choice: dbsChoice,
+                consentGiven: dbsChoice === 'yes' ? document.getElementById('chkDbsConsent').checked : false
+            },
+            step3SavedAt: new Date().toISOString()
+        });
+    }
+
+    async function saveStep4() {
+        await updateDoc(doc(db, "NGUO New Applicants", currentAppId), {
+            uniformData: {
+                tshirt: document.getElementById('uniTshirt').value,
+                hoodie: document.getElementById('uniHoodie').value,
+                frJacket: document.getElementById('uniFrJacket').value,
+                regattaJacket: document.getElementById('uniRegatta').value,
+                trouserWaist: document.getElementById('uniTrouserWaist').value,
+                trouserLength: document.getElementById('uniTrouserLength').value,
+                boots: document.getElementById('uniBoot').value,
+                gloves: document.getElementById('uniGloves').value
+            },
+            step4SavedAt: new Date().toISOString()
+        });
+    }
+
+    // ─── EMAIL DISPATCH (per section) ───────────────────────────────────────────
+
+    async function fireCandidateConfirmEmail() {
+        // Only send if not already sent for this session
+        if (currentApplicant._candidateEmailSent) return;
+        const toEmail = document.getElementById('pdEmail').value.trim();
+        const toName  = document.getElementById('pdFirst').value.trim() || currentApplicant.fullName;
+        if (!toEmail) { console.warn('No candidate email address — skipping candidate confirmation email.'); return; }
+        const sent = await sendEmail(EMAILJS_CANDIDATE_CONFIRM, {
+            to_email: toEmail,
+            to_name: toName,
+            portal_link: window.location.href
+        });
+        if (sent) currentApplicant._candidateEmailSent = true;
+    }
+
+    async function fireDBSEmail() {
+        if (dbsEmailSent) return;
+        const dbsChoice = document.querySelector('input[name="dbsChoice"]:checked')?.value;
+        if (!dbsChoice) return;
+        const safeStart = currentApplicant.startDate ? new Date(currentApplicant.startDate).toLocaleDateString('en-GB') : 'TBC';
+        const templateId = dbsChoice === 'yes' ? EMAILJS_DBS_YES : EMAILJS_DBS_NO;
+        const sent = await sendEmail(templateId, {
+            applicant_name: currentApplicant.fullName || 'New Hire',
+            job_title: currentApplicant.position || 'Engineer',
+            start_date: safeStart
+        });
+        if (sent) dbsEmailSent = true;
+    }
+
+    // ─── FINAL SUBMIT ────────────────────────────────────────────────────────────
+
+    window.submitOnboarding = async function() {
+        const btn = document.getElementById('btnFinalSubmit');
+        btn.disabled = true;
+        btn.textContent = 'Finalising submission…';
+
+        try {
+            const safeStart = currentApplicant.startDate ? new Date(currentApplicant.startDate).toLocaleDateString('en-GB') : 'TBC';
+
+            await updateDoc(doc(db, "NGUO New Applicants", currentAppId), {
+                onboardingCompleted: true,
+                onboardingCompletedAt: new Date().toISOString(),
+                onboardingVerificationStatus: 'Pending'
+            });
+
+            // Always fire the HR verification email on final submit
+            await sendEmail(EMAILJS_FINAL_VERIFY, {
+                applicant_name: currentApplicant.fullName || 'New Hire',
+                job_title: currentApplicant.position || 'Engineer',
+                start_date: safeStart,
+                portal_link: window.location.href
+            });
+
+            // Candidate confirmation — fire if not already sent (failsafe)
+            await fireCandidateConfirmEmail();
+
+            // DBS — fire if not already sent (failsafe)
+            await fireDBSEmail();
+
+            document.getElementById('onboardingContainer').innerHTML = `
+                <div style="text-align:center; padding: 4rem 2rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
+                    <h2 style="color: var(--success); margin-bottom: 1rem;">Onboarding Complete!</h2>
+                    <p style="color: var(--text-light); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
+                        Thank you for providing your information. Your file has been sent to HR for final verification.<br><br>
+                        You can now safely close this window. Your Reporting Manager will be in touch shortly.
+                    </p>
+                </div>
+            `;
+
+        } catch (e) {
+            console.error('Final submit error:', e);
+            alert('Error finalising submission. Please check your connection and try again.');
+            btn.disabled = false;
+            btn.textContent = 'Submit Onboarding File';
+        }
+    };
+
+    // ─── NAVIGATION ─────────────────────────────────────────────────────────────
+
+    window.goToStep = function(stepNum) {
+        document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
+        document.getElementById(`step${stepNum}`).classList.add('active');
+        for (let i = 1; i <= 5; i++) {
+            const ind = document.getElementById(`ind-${i}`);
+            if (i < stepNum) ind.className = 'step-item completed';
+            else if (i === stepNum) ind.className = 'step-item active';
+            else ind.className = 'step-item';
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // ─── LOAD DATA ───────────────────────────────────────────────────────────────
 
     async function loadData() {
         const user = localStorage.getItem('ngu_applicant_user');
@@ -668,7 +1009,7 @@
             const q = query(collection(db, "NGUO New Applicants"), where("portalUsername", "==", user));
             const snap = await getDocs(q);
             
-            if(snap.empty) { alert("Session error. Please log in again."); window.location.href = 'engineer-portal.html'; return; }
+            if (snap.empty) { alert("Session error. Please log in again."); window.location.href = 'engineer-portal.html'; return; }
             
             snap.forEach(d => { currentAppId = d.id; currentApplicant = d.data(); });
 
@@ -682,13 +1023,11 @@
             document.getElementById('onboardingContainer').style.display = 'block';
             document.getElementById('welcomeTitle').textContent = `Welcome, ${currentApplicant.fullName ? currentApplicant.fullName.split(' ')[0] : 'Engineer'}! Let's get you set up.`;
 
-            if (currentApplicant.onboardingDocs) {
-                uploadedUrls = currentApplicant.onboardingDocs;
-            }
+            if (currentApplicant.onboardingDocs) uploadedUrls = currentApplicant.onboardingDocs;
+            if (currentApplicant.onboardingCompleted) document.getElementById('chkDetailsConfirm').checked = true;
 
-            if (currentApplicant.onboardingCompleted) {
-                document.getElementById('chkDetailsConfirm').checked = true;
-            }
+            // Mark candidate email as already sent if onboarding was previously completed
+            if (currentApplicant.onboardingCompleted) currentApplicant._candidateEmailSent = true;
 
             // --- REJECTION LOCKDOWN LOGIC ---
             if (currentApplicant.onboardingVerificationStatus === 'Rejected' && currentApplicant.documentVerification) {
@@ -702,10 +1041,7 @@
                     
                     if (box && v.status === 'rejected') {
                         box.classList.add('rejected');
-                        if (rejMsg) {
-                            rejMsg.textContent = `Rejected Reason: ${v.reason}`;
-                            rejMsg.style.display = 'block';
-                        }
+                        if (rejMsg) { rejMsg.textContent = `Rejected Reason: ${v.reason}`; rejMsg.style.display = 'block'; }
                     } else if (box && v.status === 'verified') {
                         box.classList.add('verified');
                         document.getElementById(`status-${key}`).textContent = '✓ Verified by HR';
@@ -716,28 +1052,17 @@
                 ['step2', 'step3', 'step4'].forEach(stepId => {
                     const step = document.getElementById(stepId);
                     if (step) {
-                        const inputs = step.querySelectorAll('input, select, textarea');
-                        inputs.forEach(i => {
-                            i.disabled = true;
-                            i.style.opacity = '0.6';
-                        });
+                        step.querySelectorAll('input, select, textarea').forEach(i => { i.disabled = true; i.style.opacity = '0.6'; });
                         step.querySelectorAll('.checkbox-group').forEach(c => c.classList.add('disabled'));
                         step.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
                     }
                 });
 
-                const step1Nav = document.getElementById('nav-step1');
-                if (step1Nav) {
-                    step1Nav.innerHTML = `<div style="flex:1;"></div><button class="btn-primary" onclick="goToStep(5)">Skip to Final Review ➔</button>`;
-                }
-                
-                const step5Nav = document.getElementById('nav-step5');
-                if (step5Nav) {
-                    step5Nav.innerHTML = `<button class="btn-outline" onclick="goToStep(1)">⬅ Back to Documents</button><div style="flex:1;"></div>`;
-                }
+                document.getElementById('nav-step1').innerHTML = `<div style="flex:1;"></div><button class="btn-primary" onclick="goToStep(5)">Skip to Final Review ➔</button>`;
+                document.getElementById('nav-step5').innerHTML = `<button class="btn-outline" onclick="goToStep(1)">⬅ Back to Documents</button><div style="flex:1;"></div>`;
             }
 
-            // Populate Profile Base details
+            // ─── POPULATE FIELDS ─────────────────────────────────────────────────
             const p = currentApplicant.onboardingDetails || currentApplicant.personalDetails || {};
             document.getElementById('pdTitle').value = p.title || '';
             const nameParts = (currentApplicant.fullName || '').split(' ');
@@ -768,26 +1093,24 @@
             document.getElementById('bkAccNum').value = bk.accountNumber || '';
 
             const uni = currentApplicant.uniformData || {};
-            if(uni.tshirt) document.getElementById('uniTshirt').value = uni.tshirt;
-            if(uni.hoodie) document.getElementById('uniHoodie').value = uni.hoodie;
-            if(uni.frJacket) document.getElementById('uniFrJacket').value = uni.frJacket;
-            if(uni.regattaJacket) document.getElementById('uniRegatta').value = uni.regattaJacket;
-            if(uni.trouserWaist) document.getElementById('uniTrouserWaist').value = uni.trouserWaist;
-            if(uni.trouserLength) document.getElementById('uniTrouserLength').value = uni.trouserLength;
-            if(uni.boots) document.getElementById('uniBoot').value = uni.boots;
-            if(uni.gloves) document.getElementById('uniGloves').value = uni.gloves;
+            if (uni.tshirt) document.getElementById('uniTshirt').value = uni.tshirt;
+            if (uni.hoodie) document.getElementById('uniHoodie').value = uni.hoodie;
+            if (uni.frJacket) document.getElementById('uniFrJacket').value = uni.frJacket;
+            if (uni.regattaJacket) document.getElementById('uniRegatta').value = uni.regattaJacket;
+            if (uni.trouserWaist) document.getElementById('uniTrouserWaist').value = uni.trouserWaist;
+            if (uni.trouserLength) document.getElementById('uniTrouserLength').value = uni.trouserLength;
+            if (uni.boots) document.getElementById('uniBoot').value = uni.boots;
+            if (uni.gloves) document.getElementById('uniGloves').value = uni.gloves;
 
-            // Initialize structural data bindings
             syncStarterChecklistFields();
             if (currentApplicant.startDate) {
                 document.getElementById('scStartDate').value = new Date(currentApplicant.startDate).toLocaleDateString('en-GB');
             }
 
-            // Populate HMRC Checklist fields if document states exist
             const hmrc = currentApplicant.hmrcChecklist;
             if (hmrc && currentApplicant.hasP45 === false) {
                 const choiceInput = document.querySelector('input[name="hasP45"][value="no"]');
-                if(choiceInput) choiceInput.checked = true;
+                if (choiceInput) choiceInput.checked = true;
                 toggleP45(false);
                 
                 if (hmrc.lastName) document.getElementById('scLast').value = hmrc.lastName;
@@ -797,63 +1120,58 @@
                 if (hmrc.address) document.getElementById('scAddress').value = hmrc.address;
                 if (hmrc.postcode) document.getElementById('scPostcode').value = hmrc.postcode;
                 if (hmrc.country) document.getElementById('scCountry').value = hmrc.country;
-                
-                if (hmrc.sex) {
-                    const sexInput = document.querySelector(`input[name="scGender"][value="${hmrc.sex}"]`);
-                    if(sexInput) sexInput.checked = true;
-                }
-
-                if (hmrc.anotherJobQuestion) {
-                    document.querySelector(`input[name="qAnotherJob"][value="${hmrc.anotherJobQuestion}"]`).checked = true;
-                }
-                if (hmrc.pensionQuestion) {
-                    document.querySelector(`input[name="qPension"][value="${hmrc.pensionQuestion}"]`).checked = true;
-                }
-                if (hmrc.benefitsQuestion) {
-                    document.querySelector(`input[name="qBenefits"][value="${hmrc.benefitsQuestion}"]`).checked = true;
-                }
+                if (hmrc.sex) { const s = document.querySelector(`input[name="scGender"][value="${hmrc.sex}"]`); if (s) s.checked = true; }
+                if (hmrc.anotherJobQuestion) document.querySelector(`input[name="qAnotherJob"][value="${hmrc.anotherJobQuestion}"]`).checked = true;
+                if (hmrc.pensionQuestion) document.querySelector(`input[name="qPension"][value="${hmrc.pensionQuestion}"]`).checked = true;
+                if (hmrc.benefitsQuestion) document.querySelector(`input[name="qBenefits"][value="${hmrc.benefitsQuestion}"]`).checked = true;
                 evaluateHMRCStatementLogic();
-
-                if (hmrc.hasLoanQuestion) {
-                    document.querySelector(`input[name="qStudentLoan"][value="${hmrc.hasLoanQuestion}"]`).checked = true;
-                }
-                if (hmrc.exclusionsQuestion) {
-                    document.querySelector(`input[name="qLoanExclusions"][value="${hmrc.exclusionsQuestion}"]`).checked = true;
-                }
+                if (hmrc.hasLoanQuestion) document.querySelector(`input[name="qStudentLoan"][value="${hmrc.hasLoanQuestion}"]`).checked = true;
+                if (hmrc.exclusionsQuestion) document.querySelector(`input[name="qLoanExclusions"][value="${hmrc.exclusionsQuestion}"]`).checked = true;
                 evaluateHMRCStudentLoanLogic();
-
-                if (hmrc.selectedPlan) {
-                    const planInput = document.querySelector(`input[name="scLoanPlanGroup"][value="${hmrc.selectedPlan}"]`);
-                    if(planInput) planInput.checked = true;
-                }
+                if (hmrc.selectedPlan) { const pl = document.querySelector(`input[name="scLoanPlanGroup"][value="${hmrc.selectedPlan}"]`); if (pl) pl.checked = true; }
                 document.getElementById('scPostgradLoan').checked = hmrc.postgradLoanSelected || false;
+            }
+
+            if (currentApplicant.hasP45 === true) {
+                const choiceInput = document.querySelector('input[name="hasP45"][value="yes"]');
+                if (choiceInput) { choiceInput.checked = true; toggleP45(true); }
             }
 
             if (currentApplicant.dbsInfo?.choice) {
                 const choiceInput = document.querySelector(`input[name="dbsChoice"][value="${currentApplicant.dbsInfo.choice}"]`);
-                if(choiceInput) choiceInput.checked = true;
+                if (choiceInput) choiceInput.checked = true;
                 toggleDBS(currentApplicant.dbsInfo.choice === 'yes');
                 document.getElementById('chkDbsConsent').checked = currentApplicant.dbsInfo.consentGiven || false;
+                // If DBS info already saved, mark email as sent to avoid duplicates
+                if (currentApplicant.step3SavedAt) dbsEmailSent = true;
             }
 
-            if(currentApplicant.referralName) {
+            if (currentApplicant.referralName) {
                 document.getElementById('referralBlock').style.display = 'block';
                 document.getElementById('refNameSpan').textContent = currentApplicant.referralName;
             }
 
-            // Populate Prev Docs chips
+            // Restore verified/uploaded state for already-uploaded docs
+            Object.keys(uploadedUrls).forEach(key => {
+                const box = document.getElementById(`box-${key}`);
+                const statusEl = document.getElementById(`status-${key}`);
+                const labelEl = document.getElementById(`label-doc-${key}`);
+                if (box && !box.classList.contains('verified')) {
+                    box.classList.add('verified');
+                    if (statusEl) { statusEl.textContent = '✓ Previously uploaded'; statusEl.style.color = 'var(--success)'; }
+                    if (labelEl && uploadedUrls[key].filename) labelEl.textContent = `Replace: ${uploadedUrls[key].filename}`;
+                }
+            });
+
+            // Populate prev docs chips
             const c = currentApplicant.certificates || {};
             const prevDocsList = document.getElementById('prevDocsList');
             prevDocsList.innerHTML = '';
             let hasPrev = false;
-            
             Object.keys(c).forEach(key => {
-                if(key === 'additional' && Array.isArray(c[key])) {
+                if (key === 'additional' && Array.isArray(c[key])) {
                     c[key].forEach(add => {
-                        if(add.filename) {
-                            prevDocsList.innerHTML += `<span class="doc-chip"><strong style="color:white;">${add.name}:</strong> ${add.filename}</span>`;
-                            hasPrev = true;
-                        }
+                        if (add.filename) { prevDocsList.innerHTML += `<span class="doc-chip"><strong style="color:white;">${add.name}:</strong> ${add.filename}</span>`; hasPrev = true; }
                     });
                 } else if (c[key]?.filename) {
                     const label = certMapping[key] || key.toUpperCase();
@@ -861,250 +1179,15 @@
                     hasPrev = true;
                 }
             });
-            if(!hasPrev) prevDocsList.innerHTML = '<span style="font-size:0.85rem; color:var(--text-muted)">None uploaded previously.</span>';
+            if (!hasPrev) prevDocsList.innerHTML = '<span style="font-size:0.85rem; color:var(--text-muted)">None uploaded previously.</span>';
 
             if (!p.systemEmail) generateSysEmail();
-            
+
         } catch (error) {
-            console.error(error);
+            console.error('loadData error:', error);
             alert("Connection error fetching your profile.");
         }
     }
-
-    window.goToStep = function(stepNum) {
-        document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
-        document.getElementById(`step${stepNum}`).classList.add('active');
-        
-        for(let i=1; i<=5; i++) {
-            const ind = document.getElementById(`ind-${i}`);
-            if (i < stepNum) {
-                ind.className = 'step-item completed';
-            } else if (i === stepNum) {
-                ind.className = 'step-item active';
-            } else {
-                ind.className = 'step-item';
-            }
-        }
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-
-    window.generateSysEmail = function() {
-        const pref = document.getElementById('pdPref').value.trim() || document.getElementById('pdFirst').value.trim();
-        const last = document.getElementById('pdLast').value.trim();
-        if(pref && last) {
-            document.getElementById('pdSysEmail').value = `${pref.toLowerCase()}.${last.toLowerCase()}@next-gen.uk`;
-        }
-    };
-
-    window.toggleP45 = function(hasP45) { 
-        document.getElementById('p45UploadDiv').style.display = hasP45 ? 'block' : 'none'; 
-        document.getElementById('starterChecklistDiv').style.display = hasP45 ? 'none' : 'block';
-    };
-    window.toggleDBS = function(wantsDbs) { document.getElementById('dbsConsentBox').style.display = wantsDbs ? 'flex' : 'none'; };
-
-    // --- UPLOAD LOGIC ---
-    window.handleFileUpload = async function(inputEl, docType) {
-        if(inputEl.files.length === 0) return;
-        const file = inputEl.files[0];
-        const statusEl = document.getElementById(`status-${docType}`);
-        const labelEl = document.getElementById(`label-doc-${docType}`);
-        const box = document.getElementById(`box-${docType}`);
-        const rejMsg = document.getElementById(`rej-${docType}`);
-        
-        statusEl.textContent = 'Uploading...';
-        statusEl.style.color = 'var(--warning)';
-
-        try {
-            const storagePath = `onboarding_docs/${currentAppId}/${docType}_${Date.now()}_${file.name}`;
-            const fileRef = ref(storage, storagePath);
-            await uploadBytes(fileRef, file);
-            const downloadUrl = await getDownloadURL(fileRef);
-
-            uploadedUrls[docType] = { url: downloadUrl, filename: file.name, path: storagePath };
-
-            statusEl.textContent = '✓ Uploaded successfully';
-            statusEl.style.color = 'var(--success)';
-            labelEl.textContent = `Replace: ${file.name}`;
-            
-            if (box) box.classList.remove('rejected');
-            if (rejMsg) rejMsg.style.display = 'none';
-
-        } catch(e) {
-            console.error(e);
-            statusEl.textContent = 'Upload failed. Try again.';
-            statusEl.style.color = 'var(--error)';
-        }
-    };
-
-    // --- FINAL SUBMIT ---
-    window.submitOnboarding = async function() {
-        const btn = document.getElementById('btnFinalSubmit');
-        const chkConfirm = document.getElementById('chkDetailsConfirm').checked;
-        const dbsChoice = document.querySelector('input[name="dbsChoice"]:checked')?.value;
-        const dbsConsent = document.getElementById('chkDbsConsent').checked;
-        const hasP45Choice = document.querySelector('input[name="hasP45"]:checked')?.value;
-
-        if(!chkConfirm) return alert("Please check the box in Step 2 confirming your personal details are correct.");
-        if(!dbsChoice) return alert("Please select a DBS check option in Step 3.");
-        if(dbsChoice === 'yes' && !dbsConsent) return alert("You must consent to the DBS check in Step 3 to proceed.");
-        
-        // HMRC Validation Checks
-        if (hasP45Choice === 'no') {
-            const sexSelected = document.querySelector('input[name="scGender"]:checked')?.value;
-            if(!sexSelected) return alert("Please fill out Question 3: What is your sex? inside the Starter Checklist.");
-            if(!activeCalculatedStatement) return alert("Please answer all operational Statement Questions (8-10) to finalize your Employee Statement definition.");
-            
-            const loanQuestion = document.querySelector('input[name="qStudentLoan"]:checked')?.value;
-            if(!loanQuestion) return alert("Please select an option for Question 11 regarding Student/Postgraduate Loans.");
-            if(loanQuestion === 'yes') {
-                const exclusionSelected = document.querySelector('input[name="qLoanExclusions"]:checked')?.value;
-                if(!exclusionSelected) return alert("Please answer Question 12 relative to Loan repayment status parameters.");
-                if(exclusionSelected === 'no') {
-                    const planSelected = document.querySelector('input[name="scLoanPlanGroup"]:checked')?.value;
-                    const postgradSelected = document.getElementById('scPostgradLoan').checked;
-                    if(!planSelected && !postgradSelected) return alert("Please select at least one corresponding loan specification plan under Question 13.");
-                }
-            }
-        }
-
-        btn.disabled = true;
-        btn.textContent = 'Saving Profile...';
-
-        try {
-            let hmrcData = null;
-            if (hasP45Choice === 'no') {
-                hmrcData = {
-                    lastName: document.getElementById('scLast').value,
-                    firstName: document.getElementById('scFirst').value,
-                    sex: document.querySelector('input[name="scGender"]:checked').value,
-                    dob: document.getElementById('scDob').value,
-                    address: document.getElementById('scAddress').value,
-                    postcode: document.getElementById('scPostcode').value,
-                    country: document.getElementById('scCountry').value,
-                    niNumber: document.getElementById('scNi').value,
-                    
-                    anotherJobQuestion: document.querySelector('input[name="qAnotherJob"]:checked')?.value || '',
-                    pensionQuestion: document.querySelector('input[name="qPension"]:checked')?.value || '',
-                    benefitsQuestion: document.querySelector('input[name="qBenefits"]:checked')?.value || '',
-                    calculatedStatementOutcome: activeCalculatedStatement,
-
-                    hasLoanQuestion: document.querySelector('input[name="qStudentLoan"]:checked')?.value || '',
-                    exclusionsQuestion: document.querySelector('input[name="qLoanExclusions"]:checked')?.value || '',
-                    selectedPlan: document.querySelector('input[name="scLoanPlanGroup"]:checked')?.value || 'None',
-                    postgradLoanSelected: document.getElementById('scPostgradLoan').checked
-                };
-            }
-
-            const updates = {
-                onboardingCompleted: true,
-                onboardingCompletedAt: new Date().toISOString(),
-                onboardingVerificationStatus: 'Pending',
-                onboardingDocs: uploadedUrls,
-                hasP45: hasP45Choice === 'yes',
-                hmrcChecklist: hmrcData,
-                onboardingDetails: {
-                    title: document.getElementById('pdTitle').value,
-                    firstName: document.getElementById('pdFirst').value,
-                    preferredName: document.getElementById('pdPref').value,
-                    lastName: document.getElementById('pdLast').value,
-                    dob: document.getElementById('pdDob').value,
-                    niNumber: document.getElementById('pdNi').value,
-                    systemEmail: document.getElementById('pdSysEmail').value,
-                    phone: document.getElementById('pdPhone').value,
-                    personalEmail: document.getElementById('pdEmail').value,
-                    address: document.getElementById('pdAddress').value,
-                    postcode: document.getElementById('pdPostcode').value,
-                    timeAtAddress: document.getElementById('pdTimeAtAddr').value,
-                    addressHistory: document.getElementById('pdAddrHist').value,
-                    holidays: document.getElementById('pdHolidays').value
-                },
-                emergencyContact: {
-                    name: document.getElementById('ecName').value,
-                    relationship: document.getElementById('ecRel').value,
-                    phone: document.getElementById('ecPhone').value,
-                    altPhone: document.getElementById('ecAlt').value
-                },
-                bankDetails: {
-                    bankName: document.getElementById('bkName').value,
-                    accountName: document.getElementById('bkAccName').value,
-                    sortCode: document.getElementById('bkSort').value,
-                    accountNumber: document.getElementById('bkAccNum').value
-                },
-                dbsInfo: {
-                    choice: dbsChoice,
-                    consentGiven: dbsChoice === 'yes' ? dbsConsent : false
-                },
-                uniformData: {
-                    tshirt: document.getElementById('uniTshirt').value,
-                    hoodie: document.getElementById('uniHoodie').value,
-                    frJacket: document.getElementById('uniFrJacket').value,
-                    regattaJacket: document.getElementById('uniRegatta').value,
-                    trouserWaist: document.getElementById('uniTrouserWaist').value,
-                    trouserLength: document.getElementById('uniTrouserLength').value,
-                    boots: document.getElementById('uniBoot').value,
-                    gloves: document.getElementById('uniGloves').value
-                }
-            };
-
-            await updateDoc(doc(db, "NGUO New Applicants", currentAppId), updates);
-
-            const safeStart = currentApplicant.startDate ? new Date(currentApplicant.startDate).toLocaleDateString('en-GB') : 'TBC';
-            const portalLink = window.location.href;
-
-            // --- DISPATCH ALERTS VIA EMAILJS ---
-            try {
-                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FINAL_VERIFY, {
-                    applicant_name: currentApplicant.fullName || "New Hire", 
-                    job_title: currentApplicant.position || "Engineer", 
-                    start_date: safeStart,
-                    portal_link: portalLink
-                });
-            } catch (err) { console.error("Failed to send HR Verify Email:", err); }
-
-            try {
-                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_CANDIDATE_CONFIRM, {
-                    to_email: document.getElementById('pdEmail').value || currentApplicant.personalDetails?.email,
-                    to_name: document.getElementById('pdFirst').value || currentApplicant.fullName,
-                    portal_link: portalLink
-                });
-            } catch (err) { console.error("Failed to send Candidate Confirm Email:", err); }
-
-            if (!currentApplicant.onboardingCompleted) {
-                try {
-                    if(dbsChoice === 'yes') {
-                        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DBS_YES, { 
-                            applicant_name: currentApplicant.fullName || "New Hire", 
-                            job_title: currentApplicant.position || "Engineer", 
-                            start_date: safeStart
-                        });
-                    } else {
-                        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DBS_NO, { 
-                            applicant_name: currentApplicant.fullName || "New Hire", 
-                            job_title: currentApplicant.position || "Engineer", 
-                            start_date: safeStart
-                        });
-                    }
-                } catch (err) { console.error("Failed to send DBS Email:", err); }
-            }
-
-            document.getElementById('onboardingContainer').innerHTML = `
-                <div style="text-align:center; padding: 4rem 2rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;">
-                    <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
-                    <h2 style="color: var(--success); margin-bottom: 1rem;">Onboarding Complete!</h2>
-                    <p style="color: var(--text-light); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
-                        Thank you for providing your information. Your file has been sent to HR for final verification.<br><br>
-                        You can now safely close this window. Your Reporting Manager will be in touch shortly.
-                    </p>
-                </div>
-            `;
-
-        } catch (e) {
-            console.error("Critical submission runtime error: ", e);
-            alert("Error saving onboarding details. Please check your connection.");
-            btn.disabled = false;
-            btn.textContent = 'Submit Onboarding File';
-        }
-    };
 
     window.onload = loadData;
 </script>
