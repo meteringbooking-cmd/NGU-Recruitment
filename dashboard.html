@@ -24,19 +24,25 @@
             --amber: #F59E0B;
             --amber-dim: rgba(245, 158, 11, 0.12);
             --red: #EF4444;
+            --header-h: 62px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
 
         body {
             font-family: 'Syne', sans-serif;
             background: var(--bg);
             color: var(--text);
-            min-height: 100vh;
-            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Animated background grid */
+        /* Background grid */
         body::before {
             content: '';
             position: fixed;
@@ -49,436 +55,432 @@
             z-index: 0;
         }
 
-        .page-wrap {
-            position: relative;
-            z-index: 1;
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 30px 24px 60px;
-        }
-
         /* ── HEADER ── */
         .header {
+            position: relative;
+            z-index: 10;
+            flex-shrink: 0;
+            height: var(--header-h);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 18px 28px;
+            padding: 0 24px;
             background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            margin-bottom: 36px;
-            box-shadow: 0 0 40px rgba(0,163,224,0.06);
-            flex-wrap: wrap;
-            gap: 14px;
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.4);
         }
 
         .header-left { display: flex; align-items: center; gap: 18px; }
-        .logo { height: 38px; }
+        .logo { height: 34px; }
 
         .header-title {
-            font-size: 1.05rem;
+            font-size: 0.95rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.15em;
             color: var(--text);
         }
 
-        .header-right { display: flex; align-items: center; gap: 10px; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
 
+        .live-pill {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            background: var(--green-dim);
+            border: 1px solid rgba(16,185,129,0.3);
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
         .live-dot {
-            width: 8px; height: 8px;
+            width: 7px; height: 7px;
             border-radius: 50%;
             background: var(--green);
-            box-shadow: 0 0 8px var(--green);
+            box-shadow: 0 0 6px var(--green);
             animation: blink 2s ease-in-out infinite;
         }
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
-        }
-
+        @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.25;} }
         .live-label {
-            font-size: 0.75rem;
-            font-weight: 600;
+            font-size: 0.7rem;
+            font-weight: 700;
             color: var(--green);
             letter-spacing: 0.1em;
             text-transform: uppercase;
             font-family: 'DM Mono', monospace;
         }
 
+        .last-updated-header {
+            font-size: 0.68rem;
+            color: var(--muted);
+            font-family: 'DM Mono', monospace;
+        }
+
         .btn-hub {
-            padding: 8px 16px;
+            padding: 7px 14px;
             background: var(--surface-2);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 7px;
             color: var(--text);
             text-decoration: none;
-            font-size: 0.82rem;
+            font-size: 0.78rem;
             font-weight: 600;
+            letter-spacing: 0.04em;
             transition: border-color 0.2s, background 0.2s;
+            display: flex; align-items: center; gap: 6px;
         }
         .btn-hub:hover { border-color: var(--accent); background: var(--accent-dim); }
 
-        /* ── SECTION LABEL ── */
-        .section-label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.18em;
-            color: var(--muted);
-            margin-bottom: 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .section-label::after {
-            content: '';
+        /* ── MAIN BODY ── */
+        .dash-body {
+            position: relative;
+            z-index: 1;
             flex: 1;
-            height: 1px;
-            background: var(--border);
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 16px 20px;
+            gap: 16px;
+            overflow: hidden;
         }
 
-        /* ── STAT CARDS ROW ── */
+        /* ── STAT CARDS ── */
         .stat-row {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-bottom: 36px;
+            gap: 14px;
+            flex-shrink: 0;
         }
 
         .stat-card {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 28px 26px 24px;
+            border-radius: 12px;
+            padding: 18px 22px 16px;
             position: relative;
             overflow: hidden;
-            transition: border-color 0.3s, transform 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            transition: border-color 0.2s;
         }
-        .stat-card:hover { transform: translateY(-2px); }
-        .stat-card::before {
+        .stat-card::after {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 2px;
         }
-        .stat-card.accent::before { background: var(--accent); border-color: rgba(0,163,224,0.3); }
-        .stat-card.green::before { background: var(--green); border-color: rgba(16,185,129,0.3); }
-        .stat-card.amber::before { background: var(--amber); border-color: rgba(245,158,11,0.3); }
         .stat-card.accent { border-color: rgba(0,163,224,0.2); }
-        .stat-card.green { border-color: rgba(16,185,129,0.2); }
+        .stat-card.accent::after { background: var(--accent); }
         .stat-card.amber { border-color: rgba(245,158,11,0.2); }
+        .stat-card.amber::after { background: var(--amber); }
+        .stat-card.green { border-color: rgba(16,185,129,0.2); }
+        .stat-card.green::after { background: var(--green); }
 
-        .stat-icon {
-            font-size: 1.4rem;
-            margin-bottom: 16px;
-            display: block;
+        .stat-icon-wrap {
+            width: 46px; height: 46px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
         }
+        .stat-card.accent .stat-icon-wrap { background: var(--accent-dim); border: 1px solid rgba(0,163,224,0.2); }
+        .stat-card.amber .stat-icon-wrap { background: var(--amber-dim); border: 1px solid rgba(245,158,11,0.2); }
+        .stat-card.green .stat-icon-wrap { background: var(--green-dim); border: 1px solid rgba(16,185,129,0.2); }
 
+        .stat-icon-wrap svg { width: 22px; height: 22px; }
+        .stat-card.accent .stat-icon-wrap svg { color: var(--accent); }
+        .stat-card.amber .stat-icon-wrap svg { color: var(--amber); }
+        .stat-card.green .stat-icon-wrap svg { color: var(--green); }
+
+        .stat-info { min-width: 0; }
         .stat-label {
-            font-size: 0.72rem;
+            font-size: 0.65rem;
             font-weight: 700;
             letter-spacing: 0.14em;
             text-transform: uppercase;
             color: var(--muted);
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
-
         .stat-value {
-            font-size: 3rem;
+            font-size: 2.4rem;
             font-weight: 800;
             line-height: 1;
-            margin-bottom: 6px;
             font-family: 'DM Mono', monospace;
-            transition: all 0.4s;
         }
         .stat-card.accent .stat-value { color: var(--accent); }
-        .stat-card.green .stat-value { color: var(--green); }
         .stat-card.amber .stat-value { color: var(--amber); }
-
+        .stat-card.green .stat-value { color: var(--green); }
         .stat-sub {
-            font-size: 0.8rem;
+            font-size: 0.72rem;
             color: var(--muted);
+            margin-top: 3px;
         }
 
-        /* Skeleton loading shimmer */
-        .skeleton {
-            background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-            border-radius: 4px;
-            display: inline-block;
-        }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-        /* ── LOWER GRID ── */
-        .lower-grid {
+        /* ── PANELS ROW ── */
+        .panels-row {
+            flex: 1;
+            min-height: 0;
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+            grid-template-columns: 1fr 1fr 2fr;
+            gap: 14px;
         }
 
         .panel {
             background: var(--surface);
             border: 1px solid var(--border);
-            border-radius: 14px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
             overflow: hidden;
         }
 
         .panel-head {
-            padding: 18px 22px;
+            flex-shrink: 0;
+            padding: 13px 18px;
             border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(0,0,0,0.15);
+            background: rgba(0,0,0,0.18);
         }
 
         .panel-title {
-            font-size: 0.85rem;
+            font-size: 0.72rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
+            letter-spacing: 0.12em;
             color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+        .panel-title svg { width: 14px; height: 14px; color: var(--accent); flex-shrink: 0; }
 
         .panel-count {
             font-family: 'DM Mono', monospace;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--accent);
             background: var(--accent-dim);
             border: 1px solid rgba(0,163,224,0.2);
-            padding: 3px 10px;
+            padding: 2px 9px;
             border-radius: 20px;
-            font-weight: 500;
         }
 
         .panel-body {
-            padding: 16px;
-            max-height: 420px;
+            flex: 1;
+            min-height: 0;
             overflow-y: auto;
+            padding: 12px;
         }
 
-        /* Custom scrollbar */
-        .panel-body::-webkit-scrollbar { width: 4px; }
+        .panel-body::-webkit-scrollbar { width: 3px; }
         .panel-body::-webkit-scrollbar-track { background: transparent; }
         .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-        /* ── VACANCY ROWS ── */
-        .vacancy-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 14px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            margin-bottom: 8px;
-            transition: border-color 0.2s;
-            animation: fadeUp 0.3s ease forwards;
-        }
-        .vacancy-row:hover { border-color: rgba(0,163,224,0.3); }
+        /* ── ROWS ── */
         @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity:0; transform:translateY(6px); }
+            to   { opacity:1; transform:translateY(0); }
         }
 
-        .vacancy-info {}
-        .vacancy-title {
-            font-size: 0.9rem;
-            font-weight: 700;
-            color: var(--text);
-            margin-bottom: 3px;
-        }
-        .vacancy-location {
-            font-size: 0.75rem;
-            color: var(--accent);
-            font-family: 'DM Mono', monospace;
-        }
-        .vacancy-dept {
-            font-size: 0.72rem;
-            color: var(--muted);
-            margin-top: 2px;
-        }
-
-        .vacancy-badge {
-            background: var(--green-dim);
-            border: 1px solid rgba(16,185,129,0.3);
-            color: var(--green);
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 3px 9px;
-            border-radius: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            white-space: nowrap;
-        }
-
-        /* ── REFERRAL / APPLICATION ROWS ── */
-        .submission-row {
+        .row-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 11px 14px;
+            gap: 10px;
+            padding: 10px 12px;
             background: var(--surface-2);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            margin-bottom: 8px;
-            animation: fadeUp 0.3s ease forwards;
+            border-radius: 7px;
+            margin-bottom: 6px;
+            animation: fadeUp 0.25s ease forwards;
             transition: border-color 0.2s;
         }
-        .submission-row:hover { border-color: var(--border-glow); }
+        .row-item:last-child { margin-bottom: 0; }
+        .row-item:hover { border-color: rgba(0,163,224,0.28); }
 
-        .sub-left {}
-        .sub-name {
-            font-size: 0.88rem;
+        .row-main { min-width: 0; flex: 1; }
+        .row-name {
+            font-size: 0.84rem;
             font-weight: 700;
             color: var(--text);
             margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        .sub-meta {
-            font-size: 0.72rem;
+        .row-meta {
+            font-size: 0.68rem;
             color: var(--muted);
             font-family: 'DM Mono', monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
-        .sub-meta span { color: var(--accent); }
+        .row-meta b { color: var(--accent); font-weight: 500; }
 
-        .status-pill {
-            font-size: 0.68rem;
+        /* Applications grid panel */
+        .app-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .app-grid .row-item { margin-bottom: 0; }
+
+        .pill {
+            font-size: 0.62rem;
             font-weight: 700;
-            padding: 3px 9px;
+            padding: 2px 8px;
             border-radius: 4px;
             text-transform: uppercase;
             letter-spacing: 0.06em;
             white-space: nowrap;
+            flex-shrink: 0;
         }
         .pill-pending { background: var(--amber-dim); border: 1px solid rgba(245,158,11,0.3); color: var(--amber); }
         .pill-accepted { background: var(--green-dim); border: 1px solid rgba(16,185,129,0.3); color: var(--green); }
         .pill-denied { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--red); }
+        .pill-live { background: var(--green-dim); border: 1px solid rgba(16,185,129,0.3); color: var(--green); font-size: 0.6rem; }
 
-        .empty-panel {
+        .empty-msg {
             text-align: center;
-            padding: 40px 20px;
+            padding: 30px 16px;
             color: var(--muted);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
 
-        .loading-row {
-            padding: 12px 14px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            margin-bottom: 8px;
+        .skeleton {
+            background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+            display: block;
+            height: 12px;
+            margin-bottom: 4px;
         }
-
-        /* ── TIMESTAMP ── */
-        .last-updated {
-            text-align: center;
-            margin-top: 32px;
-            font-size: 0.72rem;
-            color: var(--muted);
-            font-family: 'DM Mono', monospace;
-        }
-
-        @media (max-width: 900px) {
-            .stat-row { grid-template-columns: 1fr; }
-            .lower-grid { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 600px) {
-            .stat-row { grid-template-columns: 1fr; }
-        }
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
     </style>
 </head>
 <body>
 
-<div class="page-wrap">
-
-    <!-- HEADER -->
-    <header class="header">
-        <div class="header-left">
-            <a href="homepage.html" class="btn-hub">← Hub</a>
-            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
-            <div class="header-title">Operations Dashboard</div>
-        </div>
-        <div class="header-right">
+<!-- HEADER -->
+<header class="header">
+    <div class="header-left">
+        <a href="homepage.html" class="btn-hub">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+            Hub
+        </a>
+        <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
+        <div class="header-title">Operations Dashboard</div>
+    </div>
+    <div class="header-right">
+        <div class="last-updated-header" id="last-updated">—</div>
+        <div class="live-pill">
             <div class="live-dot"></div>
-            <div class="live-label">Live Data</div>
+            <div class="live-label">Live</div>
         </div>
-    </header>
+    </div>
+</header>
+
+<!-- MAIN -->
+<div class="dash-body">
 
     <!-- STAT CARDS -->
-    <div class="section-label">Overview</div>
     <div class="stat-row">
 
         <div class="stat-card accent">
-            <span class="stat-icon">📋</span>
-            <div class="stat-label">Live Vacancies</div>
-            <div class="stat-value" id="stat-vacancies">—</div>
-            <div class="stat-sub">Fully approved & open roles</div>
+            <div class="stat-icon-wrap">
+                <!-- briefcase -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="12"/><path d="M2 12h20"/></svg>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Live Vacancies</div>
+                <div class="stat-value" id="stat-vacancies">—</div>
+                <div class="stat-sub">Fully approved & open</div>
+            </div>
         </div>
 
         <div class="stat-card amber">
-            <span class="stat-icon">🔗</span>
-            <div class="stat-label">Referral Submissions</div>
-            <div class="stat-value" id="stat-referrals">—</div>
-            <div class="stat-sub">All-time submissions received</div>
+            <div class="stat-icon-wrap">
+                <!-- share/referral -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Referral Submissions</div>
+                <div class="stat-value" id="stat-referrals">—</div>
+                <div class="stat-sub">All-time received</div>
+            </div>
         </div>
 
         <div class="stat-card green">
-            <span class="stat-icon">👤</span>
-            <div class="stat-label">Applications Received</div>
-            <div class="stat-value" id="stat-applications">—</div>
-            <div class="stat-sub">Total applicants on record</div>
+            <div class="stat-icon-wrap">
+                <!-- users -->
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Applications Received</div>
+                <div class="stat-value" id="stat-applications">—</div>
+                <div class="stat-sub">Total on record</div>
+            </div>
         </div>
 
     </div>
 
-    <!-- LOWER PANELS -->
-    <div class="section-label">Detail</div>
-    <div class="lower-grid">
+    <!-- PANELS ROW -->
+    <div class="panels-row">
 
-        <!-- LIVE VACANCIES LIST -->
+        <!-- VACANCIES -->
         <div class="panel">
             <div class="panel-head">
-                <div class="panel-title">Live Vacancy Locations</div>
+                <div class="panel-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    Live Vacancies
+                </div>
                 <div class="panel-count" id="vac-count-badge">—</div>
             </div>
             <div class="panel-body" id="vacancies-list">
-                <div class="loading-row"><span class="skeleton" style="width:60%; height:14px;">&nbsp;</span></div>
-                <div class="loading-row"><span class="skeleton" style="width:75%; height:14px;">&nbsp;</span></div>
-                <div class="loading-row"><span class="skeleton" style="width:50%; height:14px;">&nbsp;</span></div>
+                <div class="row-item"><div class="row-main"><span class="skeleton" style="width:70%"></span><span class="skeleton" style="width:45%"></span></div></div>
+                <div class="row-item"><div class="row-main"><span class="skeleton" style="width:80%"></span><span class="skeleton" style="width:55%"></span></div></div>
+                <div class="row-item"><div class="row-main"><span class="skeleton" style="width:60%"></span><span class="skeleton" style="width:40%"></span></div></div>
             </div>
         </div>
 
-        <!-- REFERRAL SUBMISSIONS LIST -->
+        <!-- REFERRALS -->
         <div class="panel">
             <div class="panel-head">
-                <div class="panel-title">Recent Referral Submissions</div>
+                <div class="panel-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                    Referral Submissions
+                </div>
                 <div class="panel-count" id="ref-count-badge">—</div>
             </div>
             <div class="panel-body" id="referrals-list">
-                <div class="loading-row"><span class="skeleton" style="width:65%; height:14px;">&nbsp;</span></div>
-                <div class="loading-row"><span class="skeleton" style="width:80%; height:14px;">&nbsp;</span></div>
-                <div class="loading-row"><span class="skeleton" style="width:55%; height:14px;">&nbsp;</span></div>
+                <div class="row-item"><div class="row-main"><span class="skeleton" style="width:65%"></span><span class="skeleton" style="width:50%"></span></div></div>
+                <div class="row-item"><div class="row-main"><span class="skeleton" style="width:75%"></span><span class="skeleton" style="width:45%"></span></div></div>
+                <div class="row-item"><div class="row-main"><span class="skeleton" style="width:55%"></span><span class="skeleton" style="width:60%"></span></div></div>
             </div>
         </div>
 
-        <!-- APPLICATIONS LIST (full-width) -->
-        <div class="panel" style="grid-column: 1 / -1;">
+        <!-- APPLICATIONS -->
+        <div class="panel">
             <div class="panel-head">
-                <div class="panel-title">Recent Applications</div>
+                <div class="panel-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Applications
+                </div>
                 <div class="panel-count" id="app-count-badge">—</div>
             </div>
             <div class="panel-body" id="applications-list">
-                <div class="loading-row"><span class="skeleton" style="width:55%; height:14px;">&nbsp;</span></div>
-                <div class="loading-row"><span class="skeleton" style="width:70%; height:14px;">&nbsp;</span></div>
-                <div class="loading-row"><span class="skeleton" style="width:60%; height:14px;">&nbsp;</span></div>
+                <div class="app-grid">
+                    <div class="row-item"><div class="row-main"><span class="skeleton" style="width:70%"></span><span class="skeleton" style="width:50%"></span></div></div>
+                    <div class="row-item"><div class="row-main"><span class="skeleton" style="width:65%"></span><span class="skeleton" style="width:55%"></span></div></div>
+                    <div class="row-item"><div class="row-main"><span class="skeleton" style="width:80%"></span><span class="skeleton" style="width:45%"></span></div></div>
+                    <div class="row-item"><div class="row-main"><span class="skeleton" style="width:60%"></span><span class="skeleton" style="width:60%"></span></div></div>
+                </div>
             </div>
         </div>
 
     </div>
-
-    <div class="last-updated" id="last-updated">Last updated: —</div>
 
 </div>
 
@@ -500,7 +502,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ── Helpers ──────────────────────────────────────────────
     const safe = (v, fallback = 'Unknown') => v || fallback;
 
     function formatDate(timestamp) {
@@ -511,173 +512,130 @@
 
     function animateCount(el, target) {
         let current = 0;
-        const step = Math.ceil(target / 20);
-        const interval = setInterval(() => {
+        const step = Math.max(1, Math.ceil(target / 24));
+        const iv = setInterval(() => {
             current = Math.min(current + step, target);
             el.textContent = current;
-            if (current >= target) clearInterval(interval);
-        }, 40);
+            if (current >= target) clearInterval(iv);
+        }, 35);
     }
 
     function updateTimestamp() {
         document.getElementById('last-updated').textContent =
-            'Last updated: ' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            'Updated ' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
 
-    // ── 1. LIVE VACANCIES ────────────────────────────────────
-    const vacQuery = query(
-        collection(db, 'NGU Recuitment Approval Form'),
-        where('workflowClosed', '==', false)
-    );
+    // ── 1. LIVE VACANCIES ─────────────────────────────────────
+    const vacQuery = query(collection(db, 'NGU Recuitment Approval Form'), where('workflowClosed', '==', false));
 
     onSnapshot(vacQuery, (snapshot) => {
-        const liveVacancies = [];
+        const live = [];
         snapshot.forEach(doc => {
             const data = doc.data();
-            const approvals = data.approvalSignOff || {};
-            const isLive =
-                approvals.departmentHead?.decision === 'Approve' &&
-                approvals.finance?.decision === 'Approve' &&
-                approvals.finalApprover?.decision === 'Approve';
-            if (isLive) liveVacancies.push({ id: doc.id, ...data });
+            const a = data.approvalSignOff || {};
+            if (a.departmentHead?.decision === 'Approve' && a.finance?.decision === 'Approve' && a.finalApprover?.decision === 'Approve') {
+                live.push({ id: doc.id, ...data });
+            }
         });
 
-        const count = liveVacancies.length;
-        const statEl = document.getElementById('stat-vacancies');
-        animateCount(statEl, count);
-        document.getElementById('vac-count-badge').textContent = `${count} open`;
+        animateCount(document.getElementById('stat-vacancies'), live.length);
+        document.getElementById('vac-count-badge').textContent = `${live.length} open`;
 
         const listEl = document.getElementById('vacancies-list');
         listEl.innerHTML = '';
 
-        if (count === 0) {
-            listEl.innerHTML = '<div class="empty-panel">No live vacancies at this time.</div>';
-            return;
-        }
+        if (!live.length) { listEl.innerHTML = '<div class="empty-msg">No live vacancies.</div>'; return; }
 
-        liveVacancies.forEach((v, i) => {
+        live.forEach((v, i) => {
             const title = safe(v.requestInformation?.jobTitle, 'Untitled Role');
-            const location = safe(v.requestInformation?.location, 'Location TBC');
-            const dept = safe(v.requestInformation?.department, '');
+            const location = safe(v.requestInformation?.location, 'TBC');
+            const dept = v.requestInformation?.department || '';
             const dateApproved = v.finalOutcome?.dateApproved || v.approvalSignOff?.finalApprover?.date;
 
             const row = document.createElement('div');
-            row.className = 'vacancy-row';
+            row.className = 'row-item';
             row.style.animationDelay = `${i * 0.05}s`;
             row.innerHTML = `
-                <div class="vacancy-info">
-                    <div class="vacancy-title">${title}</div>
-                    <div class="vacancy-location">📍 ${location}</div>
-                    ${dept ? `<div class="vacancy-dept">${dept}</div>` : ''}
+                <div class="row-main">
+                    <div class="row-name">${title}</div>
+                    <div class="row-meta"><b>${location}</b>${dept ? ' · ' + dept : ''}${dateApproved ? ' · ' + formatDate(dateApproved) : ''}</div>
                 </div>
-                <div class="vacancy-badge">LIVE${dateApproved ? '<br><span style="font-weight:400;font-size:0.65rem;letter-spacing:0;">' + formatDate(dateApproved) + '</span>' : ''}</div>
+                <span class="pill pill-live">Live</span>
             `;
             listEl.appendChild(row);
         });
-
         updateTimestamp();
     });
 
-    // ── 2. REFERRAL SUBMISSIONS ──────────────────────────────
-    const refQuery = query(
-        collection(db, 'NGU Referral submissions'),
-        orderBy('submittedAt', 'desc')
-    );
+    // ── 2. REFERRALS ──────────────────────────────────────────
+    const refQuery = query(collection(db, 'NGU Referral submissions'), orderBy('submittedAt', 'desc'));
 
     onSnapshot(refQuery, (snapshot) => {
-        const referrals = [];
-        snapshot.forEach(doc => referrals.push({ id: doc.id, ...doc.data() }));
+        const refs = [];
+        snapshot.forEach(doc => refs.push({ id: doc.id, ...doc.data() }));
 
-        const count = referrals.length;
-        animateCount(document.getElementById('stat-referrals'), count);
-        document.getElementById('ref-count-badge').textContent = `${count} total`;
+        animateCount(document.getElementById('stat-referrals'), refs.length);
+        document.getElementById('ref-count-badge').textContent = `${refs.length} total`;
 
         const listEl = document.getElementById('referrals-list');
         listEl.innerHTML = '';
 
-        if (count === 0) {
-            listEl.innerHTML = '<div class="empty-panel">No referral submissions yet.</div>';
-            return;
-        }
+        if (!refs.length) { listEl.innerHTML = '<div class="empty-msg">No referrals yet.</div>'; return; }
 
-        // Show most recent 20
-        referrals.slice(0, 20).forEach((ref, i) => {
+        refs.slice(0, 30).forEach((ref, i) => {
             const status = ref.status || 'Pending';
             const pillClass = status === 'Accepted' ? 'pill-accepted' : status === 'Denied' ? 'pill-denied' : 'pill-pending';
-
             const row = document.createElement('div');
-            row.className = 'submission-row';
+            row.className = 'row-item';
             row.style.animationDelay = `${i * 0.04}s`;
             row.innerHTML = `
-                <div class="sub-left">
-                    <div class="sub-name">${safe(ref.referralName, 'Unnamed Candidate')}</div>
-                    <div class="sub-meta">
-                        Referred by <span>${safe(ref.referrerName)}</span>
-                        · ${safe(ref.role, 'Role unspecified')}
-                        · ${safe(ref.referralPostcode, '')}
-                    </div>
+                <div class="row-main">
+                    <div class="row-name">${safe(ref.referralName, 'Unnamed')}</div>
+                    <div class="row-meta">via <b>${safe(ref.referrerName)}</b> · ${safe(ref.role, 'No role')}${ref.referralPostcode ? ' · ' + ref.referralPostcode : ''}</div>
                 </div>
-                <span class="status-pill ${pillClass}">${status}</span>
+                <span class="pill ${pillClass}">${status}</span>
             `;
             listEl.appendChild(row);
         });
-
         updateTimestamp();
     });
 
-    // ── 3. APPLICATIONS ──────────────────────────────────────
-    const appQuery = query(
-        collection(db, 'NGUO New Applicants'),
-        orderBy('submittedAt', 'desc')
-    );
+    // ── 3. APPLICATIONS ───────────────────────────────────────
+    const appQuery = query(collection(db, 'NGUO New Applicants'), orderBy('submittedAt', 'desc'));
 
     onSnapshot(appQuery, (snapshot) => {
-        const applications = [];
-        snapshot.forEach(doc => applications.push({ id: doc.id, ...doc.data() }));
+        const apps = [];
+        snapshot.forEach(doc => apps.push({ id: doc.id, ...doc.data() }));
 
-        const count = applications.length;
-        animateCount(document.getElementById('stat-applications'), count);
-        document.getElementById('app-count-badge').textContent = `${count} total`;
+        animateCount(document.getElementById('stat-applications'), apps.length);
+        document.getElementById('app-count-badge').textContent = `${apps.length} total`;
 
         const listEl = document.getElementById('applications-list');
         listEl.innerHTML = '';
 
-        if (count === 0) {
-            listEl.innerHTML = '<div class="empty-panel">No applications on record.</div>';
-            return;
-        }
+        if (!apps.length) { listEl.innerHTML = '<div class="empty-msg">No applications.</div>'; return; }
 
-        // Build 4-column grid of recent apps
         const grid = document.createElement('div');
-        grid.style.cssText = 'display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:8px;';
+        grid.className = 'app-grid';
 
-        applications.slice(0, 40).forEach((appData, i) => {
-            const finalDec = appData.finalRecruitmentDecision;
-            let statusLabel = 'Active';
-            let pillClass = 'pill-pending';
-
-            if (finalDec === 'Approved') { statusLabel = 'Offered'; pillClass = 'pill-accepted'; }
-            else if (finalDec === 'Rejected') { statusLabel = 'Rejected'; pillClass = 'pill-denied'; }
-            else if (appData.interviewDecision === 'Interview Rejected') { statusLabel = 'Int. Rejected'; pillClass = 'pill-denied'; }
-            else if (appData.status === 'Ready for Interview') { statusLabel = 'Interview'; pillClass = 'pill-accepted'; }
-            else if ((appData.reviews || []).length >= 2) { statusLabel = 'Reviewed'; pillClass = 'pill-accepted'; }
-
-            const postcode = appData.personalDetails?.postcode || '';
+        apps.slice(0, 60).forEach((a, i) => {
+            const fd = a.finalRecruitmentDecision;
+            let label = 'Active', pillClass = 'pill-pending';
+            if (fd === 'Approved') { label = 'Offered'; pillClass = 'pill-accepted'; }
+            else if (fd === 'Rejected') { label = 'Rejected'; pillClass = 'pill-denied'; }
+            else if (a.interviewDecision === 'Interview Rejected') { label = 'Int. Rej.'; pillClass = 'pill-denied'; }
+            else if (a.status === 'Ready for Interview') { label = 'Interview'; pillClass = 'pill-accepted'; }
+            else if ((a.reviews || []).length >= 2) { label = 'Reviewed'; pillClass = 'pill-accepted'; }
 
             const row = document.createElement('div');
-            row.className = 'submission-row';
+            row.className = 'row-item';
             row.style.animationDelay = `${i * 0.02}s`;
-            row.style.marginBottom = '0';
             row.innerHTML = `
-                <div class="sub-left">
-                    <div class="sub-name">${safe(appData.fullName, 'Unnamed Applicant')}</div>
-                    <div class="sub-meta">
-                        <span>${safe(appData.position, 'No position')}</span>
-                        ${postcode ? ` · ${postcode}` : ''}
-                        · ${formatDate(appData.submittedAt)}
-                    </div>
+                <div class="row-main">
+                    <div class="row-name">${safe(a.fullName, 'Unnamed')}</div>
+                    <div class="row-meta"><b>${safe(a.position, 'No role')}</b>${a.personalDetails?.postcode ? ' · ' + a.personalDetails.postcode : ''} · ${formatDate(a.submittedAt)}</div>
                 </div>
-                <span class="status-pill ${pillClass}">${statusLabel}</span>
+                <span class="pill ${pillClass}">${label}</span>
             `;
             grid.appendChild(row);
         });
