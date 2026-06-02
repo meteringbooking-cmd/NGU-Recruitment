@@ -1,1 +1,320 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Add Vacancy - NGU Portal</title>
+    
+    <script>
+        // Authentication Check
+        (function() {
+            const username = localStorage.getItem('ngu_portal_username');
+            const hasAccess = localStorage.getItem('ngu_portal_access_management'); 
+
+            if (!username) {
+                window.location.href = 'login.html';
+                return;
+            }
+            if (hasAccess !== 'true') {
+                alert("Access Denied: You do not have permission to add vacancies.");
+                window.location.href = 'homepage.html';
+                return;
+            }
+        })();
+    </script>
+    
+    <style>
+        :root {
+            --body-bg: #141d26;
+            --container-bg: #1c2938;
+            --input-bg: #2d3d50;
+            --panel-border: #38444d;
+            --primary-text: #e1e8ed;
+            --secondary-text: #8899a6;
+            --accent-color: #00d4ff; 
+            --success-color: #2ecc71;
+            --danger-color: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--body-bg);
+            color: var(--primary-text);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .page-header {
+            background-color: var(--container-bg); 
+            padding: 20px; 
+            border-radius: 12px 12px 0 0;
+            border: 1px solid var(--panel-border);
+            border-bottom: none;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .page-header h1 { 
+            font-size: 1.2em; 
+            color: var(--primary-text); 
+            text-transform: uppercase; 
+            letter-spacing: 0.1em; 
+            margin: 0; 
+        }
+
+        .form-container {
+            background-color: var(--container-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 0 0 12px 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .form-group { margin-bottom: 20px; }
+        
+        .form-group label {
+            display: block;
+            color: var(--secondary-text);
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+            color: var(--primary-text);
+            font-size: 1em;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .form-group input[disabled] {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .toggle-row { 
+            display: flex; 
+            align-items: center; 
+            background-color: var(--input-bg); 
+            padding: 12px 15px; 
+            border-radius: 6px; 
+            border: 1px solid var(--panel-border); 
+            margin-bottom: 10px;
+        }
+
+        .toggle-row label { 
+            font-size: 0.9em; 
+            color: var(--primary-text); 
+            cursor: pointer; 
+            user-select: none; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+            margin: 0;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        input[type="checkbox"] { 
+            width: 18px; 
+            height: 18px; 
+            accent-color: var(--accent-color); 
+            cursor: pointer; 
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--accent-color);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 1em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover { background-color: #00b3d6; }
+        .btn-submit:disabled { background-color: var(--secondary-text); cursor: not-allowed; }
+
+        .btn-back {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--secondary-text);
+            text-decoration: none;
+            font-size: 0.9em;
+            transition: color 0.2s;
+        }
+        .btn-back:hover { color: var(--primary-text); }
+
+        #status-message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 0.9em;
+            display: none;
+        }
+        .status-success { background-color: rgba(46, 204, 113, 0.15); color: var(--success-color); border: 1px solid rgba(46, 204, 113, 0.4); }
+        .status-error { background-color: rgba(239, 68, 68, 0.15); color: var(--danger-color); border: 1px solid rgba(239, 68, 68, 0.4); }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <header class="page-header">
+        <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" height="30">
+        <h1>Quick Add Vacancy</h1>
+    </header>
+
+    <div class="form-container">
+        <form id="quickAddForm">
+            <div class="form-group">
+                <label>Job Title</label>
+                <input type="text" value="Smart Meter Engineer" disabled>
+            </div>
+
+            <div class="form-group">
+                <label for="location">Desired Location (e.g., NE8 3TS)</label>
+                <input type="text" id="location" required placeholder="Enter Postcode / Area">
+            </div>
+
+            <div class="form-group">
+                <label for="startDate">Desired Start Date</label>
+                <input type="date" id="startDate" required>
+            </div>
+
+            <div class="form-group">
+                <label>Advertising Requirements</label>
+                <div class="toggle-row">
+                    <label><input type="checkbox" id="extAdvert" checked> Requires External Advert (LinkedIn/Indeed)</label>
+                </div>
+                <div class="toggle-row">
+                    <label><input type="checkbox" id="intAdvert" checked> Requires Internal Email</label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">Publish to Live Board</button>
+            <div id="status-message"></div>
+        </form>
+        
+        <a href="live-vacancies.html" class="btn-back">← Back to Live Vacancies</a>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<script>
+    // Initialize Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717",
+        measurementId: "G-R56BGZYV8N"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const collectionName = "NGU Recuitment Approval Form";
+
+    const form = document.getElementById('quickAddForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusMsg = document.getElementById('status-message');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Publishing...";
+        statusMsg.style.display = 'none';
+        statusMsg.className = '';
+
+        const location = document.getElementById('location').value.trim();
+        const startDate = document.getElementById('startDate').value;
+        const extAdvert = document.getElementById('extAdvert').checked ? 'Yes' : 'No';
+        const intAdvert = document.getElementById('intAdvert').checked ? 'Yes' : 'No';
+        const currentUser = localStorage.getItem('ngu_portal_username') || 'QuickAdd User';
+
+        // Construct the document exactly how live-vacancies.html expects it
+        const newVacancyData = {
+            workflowClosed: false,
+            createdAt: new Date().toISOString(),
+            createdBy: currentUser,
+            quickAdded: true, // Helpful flag if you ever need to filter quick additions
+            requestInformation: {
+                jobTitle: "Smart Meter Engineer",
+                location: location,
+                department: "Engineering"
+            },
+            recruitmentRequirements: {
+                desiredStartDate: startDate,
+                externalAdvertRequired: extAdvert,
+                internalAdvertRequired: intAdvert
+            },
+            // Auto-Approve so it passes the isLive check immediately
+            approvalSignOff: {
+                departmentHead: { decision: 'Approve', date: new Date().toISOString() },
+                finance: { decision: 'Approve', date: new Date().toISOString() },
+                finalApprover: { decision: 'Approve', date: new Date().toISOString() }
+            },
+            advertStatus: {
+                linkedinLive: false,
+                indeedLive: false,
+                internalEmailSent: false
+            }
+        };
+
+        try {
+            await db.collection(collectionName).add(newVacancyData);
+            
+            statusMsg.textContent = "Vacancy successfully added to the live board!";
+            statusMsg.classList.add('status-success');
+            statusMsg.style.display = 'block';
+            
+            // Reset form for next entry
+            form.reset();
+        } catch (error) {
+            console.error("Error adding vacancy: ", error);
+            statusMsg.textContent = "Error adding vacancy. Please check console.";
+            statusMsg.classList.add('status-error');
+            statusMsg.style.display = 'block';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Publish to Live Board";
+        }
+    });
+</script>
+</body>
+</html>
