@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -95,7 +94,8 @@
         }
 
         .form-group input[type="text"],
-        .form-group input[type="date"] {
+        .form-group input[type="date"],
+        .form-group textarea {
             width: 100%;
             padding: 12px;
             background-color: var(--input-bg);
@@ -103,9 +103,16 @@
             border-radius: 6px;
             color: var(--primary-text);
             font-size: 1em;
+            font-family: inherit;
         }
 
-        .form-group input:focus {
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
             outline: none;
             border-color: var(--accent-color);
         }
@@ -192,7 +199,7 @@
 <div class="main-container">
     <header class="page-header">
         <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" height="30">
-        <h1>Quick Add Vacancy</h1>
+        <h1>Quick Add Vacancies</h1>
     </header>
 
     <div class="form-container">
@@ -203,8 +210,8 @@
             </div>
 
             <div class="form-group">
-                <label for="location">Desired Location (e.g., NE8 3TS)</label>
-                <input type="text" id="location" required placeholder="Enter Postcode / Area">
+                <label for="locations">Desired Locations (Enter one per line or comma-separated)</label>
+                <textarea id="locations" required placeholder="e.g. NE8 3TS&#10;B1 1AA&#10;M1 1AE" rows="4"></textarea>
             </div>
 
             <div class="form-group">
@@ -261,53 +268,72 @@
         statusMsg.style.display = 'none';
         statusMsg.className = '';
 
-        const location = document.getElementById('location').value.trim();
+        // Extract and clean up the locations
+        const rawLocations = document.getElementById('locations').value;
+        // Split by newlines or commas, trim whitespace, and filter out any empty strings
+        const locationArray = rawLocations.split(/[\n,]+/).map(loc => loc.trim()).filter(loc => loc.length > 0);
+
+        if (locationArray.length === 0) {
+            statusMsg.textContent = "Please enter at least one valid location.";
+            statusMsg.classList.add('status-error');
+            statusMsg.style.display = 'block';
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Publish to Live Board";
+            return;
+        }
+
         const startDate = document.getElementById('startDate').value;
         const extAdvert = document.getElementById('extAdvert').checked ? 'Yes' : 'No';
         const intAdvert = document.getElementById('intAdvert').checked ? 'Yes' : 'No';
         const currentUser = localStorage.getItem('ngu_portal_username') || 'QuickAdd User';
-
-        // Construct the document exactly how live-vacancies.html expects it
-        const newVacancyData = {
-            workflowClosed: false,
-            createdAt: new Date().toISOString(),
-            createdBy: currentUser,
-            quickAdded: true, // Helpful flag if you ever need to filter quick additions
-            requestInformation: {
-                jobTitle: "Smart Meter Engineer",
-                location: location,
-                department: "Engineering"
-            },
-            recruitmentRequirements: {
-                desiredStartDate: startDate,
-                externalAdvertRequired: extAdvert,
-                internalAdvertRequired: intAdvert
-            },
-            // Auto-Approve so it passes the isLive check immediately
-            approvalSignOff: {
-                departmentHead: { decision: 'Approve', date: new Date().toISOString() },
-                finance: { decision: 'Approve', date: new Date().toISOString() },
-                finalApprover: { decision: 'Approve', date: new Date().toISOString() }
-            },
-            advertStatus: {
-                linkedinLive: false,
-                indeedLive: false,
-                internalEmailSent: false
-            }
-        };
+        const timestamp = new Date().toISOString();
 
         try {
-            await db.collection(collectionName).add(newVacancyData);
+            // Create a batch of promises to upload all locations simultaneously
+            const uploadPromises = locationArray.map(location => {
+                const newVacancyData = {
+                    workflowClosed: false,
+                    createdAt: timestamp,
+                    createdBy: currentUser,
+                    quickAdded: true,
+                    requestInformation: {
+                        jobTitle: "Smart Meter Engineer",
+                        location: location, // Dynamically insert the specific location from the array
+                        department: "Engineering"
+                    },
+                    recruitmentRequirements: {
+                        desiredStartDate: startDate,
+                        externalAdvertRequired: extAdvert,
+                        internalAdvertRequired: intAdvert
+                    },
+                    approvalSignOff: {
+                        departmentHead: { decision: 'Approve', date: timestamp },
+                        finance: { decision: 'Approve', date: timestamp },
+                        finalApprover: { decision: 'Approve', date: timestamp }
+                    },
+                    advertStatus: {
+                        linkedinLive: false,
+                        indeedLive: false,
+                        internalEmailSent: false
+                    }
+                };
+                
+                return db.collection(collectionName).add(newVacancyData);
+            });
+
+            // Wait for all database additions to complete
+            await Promise.all(uploadPromises);
             
-            statusMsg.textContent = "Vacancy successfully added to the live board!";
+            const countText = locationArray.length === 1 ? '1 vacancy' : `${locationArray.length} vacancies`;
+            statusMsg.textContent = `Success! ${countText} added to the live board.`;
             statusMsg.classList.add('status-success');
             statusMsg.style.display = 'block';
             
             // Reset form for next entry
             form.reset();
         } catch (error) {
-            console.error("Error adding vacancy: ", error);
-            statusMsg.textContent = "Error adding vacancy. Please check console.";
+            console.error("Error adding vacancies: ", error);
+            statusMsg.textContent = "Error adding vacancies. Please check console.";
             statusMsg.classList.add('status-error');
             statusMsg.style.display = 'block';
         } finally {
