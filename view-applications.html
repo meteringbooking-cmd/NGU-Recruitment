@@ -230,6 +230,15 @@
         return `${capWord}${num}${sym}`; 
     }
 
+    // --- JUNK APPLICATION FILTER ---
+    // Silently excludes applications with invalid/non-UK phone numbers.
+    // These are hidden from both Active and Archived tabs and receive no emails.
+    function isJunkApp(app) {
+        const phone = (app.personalDetails?.phone || '').trim().replace(/\s+/g, '');
+        if (!phone) return true;
+        return !phone.match(/^(\+44|07|01|02)/);
+    }
+
     // --- EVENT LISTENERS ---
     document.getElementById('filterMatchesToggle').addEventListener('change', (e) => {
         showOnlyMatches = e.target.checked;
@@ -310,6 +319,9 @@
     async function checkAndSendReminders(apps) {
         const now = new Date();
         for (const app of apps) {
+            // Skip junk applications — no emails for invalid phone numbers
+            if (isJunkApp(app)) continue;
+
             const reviews = app.reviews || [];
             if (reviews.length >= 2) continue; 
             let reminderCount = app.reminderCount || 0;
@@ -627,32 +639,62 @@
         return liveVacancies.some(v => v.jobTitle?.trim().toLowerCase() === safeAppPos && v.locationArea === appArea);
     }
 
+    // --- ARCHIVE LOGIC ---
+    // An application is archived if:
+    //   1. A final recruitment decision of Approved or Rejected has been made
+    //   2. The interview stage recorded an "Interview Rejected" outcome
+    //   3. The interview recommendation came back as "Do Not Proceed"
+    function isArchivedApp(app) {
+        if (
+            app.finalRecruitmentDecision === 'Approved' ||
+            app.finalRecruitmentDecision === 'Rejected' ||
+            app.interviewDecision === 'Interview Rejected'
+        ) return true;
+
+        // Auto-archive on Do Not Proceed interview recommendation
+        const appEmail = (app.personalDetails?.email || '').toLowerCase();
+        const matchedInterview = interviewsData.find(i => i.applicantEmail?.toLowerCase() === appEmail);
+        if (matchedInterview?.interviewCompleted && matchedInterview?.interviewData?.recommendation === 'Do Not Proceed') {
+            return true;
+        }
+
+        return false;
+    }
+
     function renderSidebar() {
         const listEl = document.getElementById('applicantList');
         listEl.innerHTML = '';
 
-        let filteredApps = applicationsData;
+        // Silently drop junk applications from all views
+        let filteredApps = applicationsData.filter(app => !isJunkApp(app));
 
         if (showOnlyMatches) {
             filteredApps = filteredApps.filter(app => isAreaMatch(app.position, app.personalDetails?.postcode));
         }
 
-        const isArchived = (app) => {
-    const appEmail = (app.personalDetails?.email || '').toLowerCase();
-    const matchedInterview = interviewsData.find(i => i.applicantEmail?.toLowerCase() === appEmail);
-    const isDNP = matchedInterview?.interviewCompleted && 
-                  matchedInterview?.interviewData?.recommendation === 'Do Not Proceed';
-    
-    return app.finalRecruitmentDecision === 'Approved' || 
-           app.finalRecruitmentDecision === 'Rejected' || 
-           app.interviewDecision === 'Interview Rejected' ||
-           isDNP;
-};
-
         if (currentTab === 'active') {
-            filteredApps = filteredApps.filter(app => !isArchived(app));
+            filteredApps = filteredApps.filter(app => !isArchivedApp(app));
         } else {
-            filteredApps = filteredApps.filter(app => isArchived(app));
+            // Archived tab: only show apps that are explicitly archived via decision or interview rejection.
+            // Do Not Proceed (interview rec) apps do NOT appear in Archived — they are silently hidden.
+            filteredApps = filteredApps.filter(app => {
+                const appEmail = (app.personalDetails?.email || '').toLowerCase();
+                const matchedInterview = interviewsData.find(i => i.applicantEmail?.toLowerCase() === appEmail);
+                const isDNPOnly =
+                    matchedInterview?.interviewCompleted &&
+                    matchedInterview?.interviewData?.recommendation === 'Do Not Proceed' &&
+                    app.finalRecruitmentDecision !== 'Approved' &&
+                    app.finalRecruitmentDecision !== 'Rejected' &&
+                    app.interviewDecision !== 'Interview Rejected';
+
+                if (isDNPOnly) return false; // hidden from archived too
+
+                return (
+                    app.finalRecruitmentDecision === 'Approved' ||
+                    app.finalRecruitmentDecision === 'Rejected' ||
+                    app.interviewDecision === 'Interview Rejected'
+                );
+            });
         }
 
         if (filteredApps.length === 0) {
