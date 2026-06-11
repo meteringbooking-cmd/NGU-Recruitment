@@ -638,10 +638,16 @@
         }
 
         const isArchived = (app) => {
-            return app.finalRecruitmentDecision === 'Approved' || 
-                   app.finalRecruitmentDecision === 'Rejected' || 
-                   app.interviewDecision === 'Interview Rejected';
-        };
+    const appEmail = (app.personalDetails?.email || '').toLowerCase();
+    const matchedInterview = interviewsData.find(i => i.applicantEmail?.toLowerCase() === appEmail);
+    const isDNP = matchedInterview?.interviewCompleted && 
+                  matchedInterview?.interviewData?.recommendation === 'Do Not Proceed';
+    
+    return app.finalRecruitmentDecision === 'Approved' || 
+           app.finalRecruitmentDecision === 'Rejected' || 
+           app.interviewDecision === 'Interview Rejected' ||
+           isDNP;
+};
 
         if (currentTab === 'active') {
             filteredApps = filteredApps.filter(app => !isArchived(app));
