@@ -24,15 +24,13 @@
             --amber: #F59E0B;
             --amber-dim: rgba(245, 158, 11, 0.12);
             --red: #EF4444;
+            --purple: #8B5CF6;
+            --purple-dim: rgba(139, 92, 246, 0.12);
             --header-h: 62px;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        html, body {
-            height: 100%;
-            overflow: hidden;
-        }
+        html, body { height: 100%; overflow: hidden; }
 
         body {
             font-family: 'Syne', sans-serif;
@@ -42,7 +40,6 @@
             flex-direction: column;
         }
 
-        /* Background grid */
         body::before {
             content: '';
             position: fixed;
@@ -146,7 +143,7 @@
         /* ── STAT CARDS ── */
         .stat-row {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 14px;
             flex-shrink: 0;
         }
@@ -155,12 +152,12 @@
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 18px 22px 16px;
+            padding: 16px 20px 14px;
             position: relative;
             overflow: hidden;
             display: flex;
             align-items: center;
-            gap: 18px;
+            gap: 16px;
             transition: border-color 0.2s;
         }
         .stat-card::after {
@@ -169,31 +166,35 @@
             top: 0; left: 0; right: 0;
             height: 2px;
         }
-        .stat-card.accent { border-color: rgba(0,163,224,0.2); }
-        .stat-card.accent::after { background: var(--accent); }
-        .stat-card.amber { border-color: rgba(245,158,11,0.2); }
-        .stat-card.amber::after { background: var(--amber); }
-        .stat-card.green { border-color: rgba(16,185,129,0.2); }
-        .stat-card.green::after { background: var(--green); }
+        .stat-card.accent  { border-color: rgba(0,163,224,0.2); }
+        .stat-card.accent::after  { background: var(--accent); }
+        .stat-card.amber   { border-color: rgba(245,158,11,0.2); }
+        .stat-card.amber::after   { background: var(--amber); }
+        .stat-card.green   { border-color: rgba(16,185,129,0.2); }
+        .stat-card.green::after   { background: var(--green); }
+        .stat-card.purple  { border-color: rgba(139,92,246,0.2); }
+        .stat-card.purple::after  { background: var(--purple); }
 
         .stat-icon-wrap {
-            width: 46px; height: 46px;
+            width: 44px; height: 44px;
             border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
             flex-shrink: 0;
         }
-        .stat-card.accent .stat-icon-wrap { background: var(--accent-dim); border: 1px solid rgba(0,163,224,0.2); }
-        .stat-card.amber .stat-icon-wrap { background: var(--amber-dim); border: 1px solid rgba(245,158,11,0.2); }
-        .stat-card.green .stat-icon-wrap { background: var(--green-dim); border: 1px solid rgba(16,185,129,0.2); }
+        .stat-card.accent  .stat-icon-wrap { background: var(--accent-dim);  border: 1px solid rgba(0,163,224,0.2); }
+        .stat-card.amber   .stat-icon-wrap { background: var(--amber-dim);   border: 1px solid rgba(245,158,11,0.2); }
+        .stat-card.green   .stat-icon-wrap { background: var(--green-dim);   border: 1px solid rgba(16,185,129,0.2); }
+        .stat-card.purple  .stat-icon-wrap { background: var(--purple-dim);  border: 1px solid rgba(139,92,246,0.2); }
 
-        .stat-icon-wrap svg { width: 22px; height: 22px; }
-        .stat-card.accent .stat-icon-wrap svg { color: var(--accent); }
-        .stat-card.amber .stat-icon-wrap svg { color: var(--amber); }
-        .stat-card.green .stat-icon-wrap svg { color: var(--green); }
+        .stat-icon-wrap svg { width: 20px; height: 20px; }
+        .stat-card.accent  .stat-icon-wrap svg { color: var(--accent); }
+        .stat-card.amber   .stat-icon-wrap svg { color: var(--amber); }
+        .stat-card.green   .stat-icon-wrap svg { color: var(--green); }
+        .stat-card.purple  .stat-icon-wrap svg { color: var(--purple); }
 
         .stat-info { min-width: 0; }
         .stat-label {
-            font-size: 0.65rem;
+            font-size: 0.62rem;
             font-weight: 700;
             letter-spacing: 0.14em;
             text-transform: uppercase;
@@ -201,19 +202,16 @@
             margin-bottom: 4px;
         }
         .stat-value {
-            font-size: 2.4rem;
+            font-size: 2.2rem;
             font-weight: 800;
             line-height: 1;
             font-family: 'DM Mono', monospace;
         }
-        .stat-card.accent .stat-value { color: var(--accent); }
-        .stat-card.amber .stat-value { color: var(--amber); }
-        .stat-card.green .stat-value { color: var(--green); }
-        .stat-sub {
-            font-size: 0.72rem;
-            color: var(--muted);
-            margin-top: 3px;
-        }
+        .stat-card.accent  .stat-value { color: var(--accent); }
+        .stat-card.amber   .stat-value { color: var(--amber); }
+        .stat-card.green   .stat-value { color: var(--green); }
+        .stat-card.purple  .stat-value { color: var(--purple); }
+        .stat-sub { font-size: 0.68rem; color: var(--muted); margin-top: 3px; }
 
         /* ── PANELS ROW ── */
         .panels-row {
@@ -319,13 +317,89 @@
         }
         .row-meta b { color: var(--accent); font-weight: 500; }
 
-        /* Applications grid panel */
-        .app-grid {
+        /* ── APPLICATION ROWS (full width, stage badge) ── */
+        .app-row {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
+            grid-template-columns: 1fr auto auto;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            margin-bottom: 6px;
+            animation: fadeUp 0.25s ease forwards;
+            transition: border-color 0.2s;
         }
-        .app-grid .row-item { margin-bottom: 0; }
+        .app-row:last-child { margin-bottom: 0; }
+        .app-row:hover { border-color: rgba(0,163,224,0.28); }
+
+        .app-row-info { min-width: 0; }
+        .app-row-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .app-row-meta {
+            font-size: 0.67rem;
+            color: var(--muted);
+            font-family: 'DM Mono', monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .app-row-meta b { color: var(--accent); font-weight: 500; }
+
+        /* Stage badge — wider, more prominent */
+        .stage-badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.64rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .stage-badge .dot {
+            width: 5px; height: 5px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* Stage colour variants */
+        .stage-new        { background: rgba(0,163,224,0.1);   border: 1px solid rgba(0,163,224,0.3);   color: var(--accent); }
+        .stage-new .dot        { background: var(--accent); }
+        .stage-reviewing  { background: var(--amber-dim);       border: 1px solid rgba(245,158,11,0.3);  color: var(--amber); }
+        .stage-reviewing .dot  { background: var(--amber); }
+        .stage-namecheck  { background: rgba(139,92,246,0.1);   border: 1px solid rgba(139,92,246,0.3);  color: var(--purple); }
+        .stage-namecheck .dot  { background: var(--purple); }
+        .stage-interview  { background: rgba(16,185,129,0.1);   border: 1px solid rgba(16,185,129,0.3);  color: var(--green); }
+        .stage-interview .dot  { background: var(--green); }
+        .stage-decision   { background: rgba(245,158,11,0.15);  border: 1px solid rgba(245,158,11,0.5);  color: var(--amber); box-shadow: 0 0 6px rgba(245,158,11,0.2); }
+        .stage-decision .dot   { background: var(--amber); box-shadow: 0 0 4px var(--amber); animation: blink 1.5s infinite; }
+
+        /* Wait time chip */
+        .wait-chip {
+            font-size: 0.6rem;
+            font-weight: 700;
+            font-family: 'DM Mono', monospace;
+            color: var(--muted);
+            background: rgba(0,0,0,0.25);
+            border: 1px solid var(--border);
+            padding: 2px 7px;
+            border-radius: 4px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .wait-chip.urgent { color: var(--amber); border-color: rgba(245,158,11,0.3); background: var(--amber-dim); }
 
         .pill {
             font-size: 0.62rem;
@@ -337,10 +411,10 @@
             white-space: nowrap;
             flex-shrink: 0;
         }
-        .pill-pending { background: var(--amber-dim); border: 1px solid rgba(245,158,11,0.3); color: var(--amber); }
-        .pill-accepted { background: var(--green-dim); border: 1px solid rgba(16,185,129,0.3); color: var(--green); }
-        .pill-denied { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--red); }
-        .pill-live { background: var(--green-dim); border: 1px solid rgba(16,185,129,0.3); color: var(--green); font-size: 0.6rem; }
+        .pill-pending  { background: var(--amber-dim); border: 1px solid rgba(245,158,11,0.3);  color: var(--amber); }
+        .pill-accepted { background: var(--green-dim);  border: 1px solid rgba(16,185,129,0.3); color: var(--green); }
+        .pill-denied   { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--red); }
+        .pill-live     { background: var(--green-dim);  border: 1px solid rgba(16,185,129,0.3); color: var(--green); font-size: 0.6rem; }
 
         .empty-msg {
             text-align: center;
@@ -390,8 +464,7 @@
 
         <div class="stat-card accent">
             <div class="stat-icon-wrap">
-                <!-- briefcase -->
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="12"/><path d="M2 12h20"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><path d="M2 12h20"/></svg>
             </div>
             <div class="stat-info">
                 <div class="stat-label">Live Vacancies</div>
@@ -402,7 +475,6 @@
 
         <div class="stat-card amber">
             <div class="stat-icon-wrap">
-                <!-- share/referral -->
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
             </div>
             <div class="stat-info">
@@ -414,13 +486,23 @@
 
         <div class="stat-card green">
             <div class="stat-icon-wrap">
-                <!-- users -->
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </div>
             <div class="stat-info">
-                <div class="stat-label">Applications Received</div>
+                <div class="stat-label">Active Applicants</div>
                 <div class="stat-value" id="stat-applications">—</div>
-                <div class="stat-sub">Total on record</div>
+                <div class="stat-sub">In pipeline now</div>
+            </div>
+        </div>
+
+        <div class="stat-card purple">
+            <div class="stat-icon-wrap">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Awaiting Review</div>
+                <div class="stat-value" id="stat-needs-review">—</div>
+                <div class="stat-sub">Need attention</div>
             </div>
         </div>
 
@@ -441,7 +523,6 @@
             <div class="panel-body" id="vacancies-list">
                 <div class="row-item"><div class="row-main"><span class="skeleton" style="width:70%"></span><span class="skeleton" style="width:45%"></span></div></div>
                 <div class="row-item"><div class="row-main"><span class="skeleton" style="width:80%"></span><span class="skeleton" style="width:55%"></span></div></div>
-                <div class="row-item"><div class="row-main"><span class="skeleton" style="width:60%"></span><span class="skeleton" style="width:40%"></span></div></div>
             </div>
         </div>
 
@@ -457,26 +538,23 @@
             <div class="panel-body" id="referrals-list">
                 <div class="row-item"><div class="row-main"><span class="skeleton" style="width:65%"></span><span class="skeleton" style="width:50%"></span></div></div>
                 <div class="row-item"><div class="row-main"><span class="skeleton" style="width:75%"></span><span class="skeleton" style="width:45%"></span></div></div>
-                <div class="row-item"><div class="row-main"><span class="skeleton" style="width:55%"></span><span class="skeleton" style="width:60%"></span></div></div>
             </div>
         </div>
 
-        <!-- APPLICATIONS -->
+        <!-- ACTIVE APPLICATIONS WITH STAGE TRACKING -->
         <div class="panel">
             <div class="panel-head">
                 <div class="panel-title">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    Applications
+                    Active Pipeline
                 </div>
                 <div class="panel-count" id="app-count-badge">—</div>
             </div>
             <div class="panel-body" id="applications-list">
-                <div class="app-grid">
-                    <div class="row-item"><div class="row-main"><span class="skeleton" style="width:70%"></span><span class="skeleton" style="width:50%"></span></div></div>
-                    <div class="row-item"><div class="row-main"><span class="skeleton" style="width:65%"></span><span class="skeleton" style="width:55%"></span></div></div>
-                    <div class="row-item"><div class="row-main"><span class="skeleton" style="width:80%"></span><span class="skeleton" style="width:45%"></span></div></div>
-                    <div class="row-item"><div class="row-main"><span class="skeleton" style="width:60%"></span><span class="skeleton" style="width:60%"></span></div></div>
-                </div>
+                <div class="app-row"><div class="app-row-info"><span class="skeleton" style="width:55%"></span><span class="skeleton" style="width:70%"></span></div></div>
+                <div class="app-row"><div class="app-row-info"><span class="skeleton" style="width:65%"></span><span class="skeleton" style="width:60%"></span></div></div>
+                <div class="app-row"><div class="app-row-info"><span class="skeleton" style="width:50%"></span><span class="skeleton" style="width:75%"></span></div></div>
+                <div class="app-row"><div class="app-row-info"><span class="skeleton" style="width:70%"></span><span class="skeleton" style="width:55%"></span></div></div>
             </div>
         </div>
 
@@ -484,7 +562,6 @@
 
 </div>
 
-<!-- Firebase -->
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getFirestore, collection, query, where, orderBy, onSnapshot }
@@ -502,12 +579,24 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // Shared interviews cache — loaded once, used by applications renderer
+    let interviewsCache = [];
+
     const safe = (v, fallback = 'Unknown') => v || fallback;
 
     function formatDate(timestamp) {
         if (!timestamp) return '—';
         const d = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+    }
+
+    function waitTime(submittedAt) {
+        if (!submittedAt) return { label: '—', urgent: false };
+        const past = submittedAt.toDate ? submittedAt.toDate() : new Date(submittedAt);
+        const diffMs = Math.max(0, Date.now() - past);
+        const days = Math.floor(diffMs / 86400000);
+        const hrs  = Math.floor((diffMs % 86400000) / 3600000);
+        return { label: days > 0 ? `${days}d ${hrs}h` : `${hrs}h`, urgent: days >= 2 };
     }
 
     function animateCount(el, target) {
@@ -523,6 +612,57 @@
     function updateTimestamp() {
         document.getElementById('last-updated').textContent =
             'Updated ' + new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+
+    // ── JUNK FILTER (mirrors view-applications logic) ─────────
+    function isJunk(app) {
+        const phone = (app.personalDetails?.phone || '').trim().replace(/\s+/g, '');
+        if (!phone) return true;
+        return !phone.match(/^(\+44|07|01|02)/);
+    }
+
+    // ── STAGE RESOLVER ────────────────────────────────────────
+    // Returns { label, cssClass } for the applicant's current pipeline stage.
+    // Priority order (most advanced first):
+    //   Decision needed → Interview scheduled/complete → Name check → Reviewing → New
+    function resolveStage(a, interviews) {
+        const email = (a.personalDetails?.email || '').toLowerCase();
+        const interview = interviews.find(i => i.applicantEmail?.toLowerCase() === email);
+
+        // Interview completed — awaiting final recruitment decision
+        if (interview?.interviewCompleted && !a.finalRecruitmentDecision) {
+            const rec = interview.interviewData?.recommendation || '';
+            return { label: `Decision · ${rec || 'Post-Interview'}`, cssClass: 'stage-decision' };
+        }
+
+        // Interview booked but not yet completed
+        if (interview && !interview.interviewCompleted) {
+            const d = new Date(interview.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+            return { label: `Interview · ${d} ${interview.time || ''}`.trim(), cssClass: 'stage-interview' };
+        }
+
+        // Name checks in progress
+        if (a.nameChecksRequested && !a.nameChecksCompleted) {
+            return { label: 'Name Check', cssClass: 'stage-namecheck' };
+        }
+
+        // Name checks done, ready for interview invite
+        if (a.nameChecksCompleted) {
+            return { label: 'Ready · Interview', cssClass: 'stage-interview' };
+        }
+
+        // At least one review logged
+        if ((a.reviews || []).length === 1) {
+            return { label: 'Reviewing · 1/2', cssClass: 'stage-reviewing' };
+        }
+
+        // Both reviews done, but name checks not yet triggered (edge case)
+        if ((a.reviews || []).length >= 2) {
+            return { label: 'Reviewed · 2/2', cssClass: 'stage-reviewing' };
+        }
+
+        // Brand new — no reviews yet
+        return { label: 'New · Awaiting Review', cssClass: 'stage-new' };
     }
 
     // ── 1. LIVE VACANCIES ─────────────────────────────────────
@@ -547,10 +687,10 @@
         if (!live.length) { listEl.innerHTML = '<div class="empty-msg">No live vacancies.</div>'; return; }
 
         live.forEach((v, i) => {
-            const title = safe(v.requestInformation?.jobTitle, 'Untitled Role');
+            const title    = safe(v.requestInformation?.jobTitle, 'Untitled Role');
             const location = safe(v.requestInformation?.location, 'TBC');
-            const dept = v.requestInformation?.department || '';
-            const dateApproved = v.finalOutcome?.dateApproved || v.approvalSignOff?.finalApprover?.date;
+            const dept     = v.requestInformation?.department || '';
+            const dateApp  = v.approvalSignOff?.finalApprover?.date;
 
             const row = document.createElement('div');
             row.className = 'row-item';
@@ -558,7 +698,7 @@
             row.innerHTML = `
                 <div class="row-main">
                     <div class="row-name">${title}</div>
-                    <div class="row-meta"><b>${location}</b>${dept ? ' · ' + dept : ''}${dateApproved ? ' · ' + formatDate(dateApproved) : ''}</div>
+                    <div class="row-meta"><b>${location}</b>${dept ? ' · ' + dept : ''}${dateApp ? ' · ' + formatDate(dateApp) : ''}</div>
                 </div>
                 <span class="pill pill-live">Live</span>
             `;
@@ -583,7 +723,7 @@
         if (!refs.length) { listEl.innerHTML = '<div class="empty-msg">No referrals yet.</div>'; return; }
 
         refs.slice(0, 30).forEach((ref, i) => {
-            const status = ref.status || 'Pending';
+            const status    = ref.status || 'Pending';
             const pillClass = status === 'Accepted' ? 'pill-accepted' : status === 'Denied' ? 'pill-denied' : 'pill-pending';
             const row = document.createElement('div');
             row.className = 'row-item';
@@ -600,49 +740,88 @@
         updateTimestamp();
     });
 
-    // ── 3. APPLICATIONS ───────────────────────────────────────
+    // ── 3. INTERVIEWS cache ───────────────────────────────────
+    const intQuery = query(collection(db, 'NGU Interview Times'));
+    onSnapshot(intQuery, (snapshot) => {
+        interviewsCache = [];
+        snapshot.forEach(doc => interviewsCache.push({ id: doc.id, ...doc.data() }));
+        // Trigger a re-render of applications if data is already loaded
+        if (lastAppsSnapshot) renderApplications(lastAppsSnapshot);
+    });
+
+    // ── 4. APPLICATIONS ───────────────────────────────────────
+    let lastAppsSnapshot = null;
     const appQuery = query(collection(db, 'NGUO New Applicants'), orderBy('submittedAt', 'desc'));
 
     onSnapshot(appQuery, (snapshot) => {
-        const apps = [];
-        snapshot.forEach(doc => apps.push({ id: doc.id, ...doc.data() }));
+        lastAppsSnapshot = snapshot;
+        renderApplications(snapshot);
+    });
 
-        animateCount(document.getElementById('stat-applications'), apps.length);
-        document.getElementById('app-count-badge').textContent = `${apps.length} total`;
+    function renderApplications(snapshot) {
+        const all = [];
+        snapshot.forEach(doc => all.push({ id: doc.id, ...doc.data() }));
+
+        // Filter out junk phone numbers
+        const clean = all.filter(a => !isJunk(a));
+
+        // Filter to active only — exclude archived/DNP
+        const active = clean.filter(a => {
+            if (a.finalRecruitmentDecision === 'Approved') return false;
+            if (a.finalRecruitmentDecision === 'Rejected') return false;
+            if (a.interviewDecision === 'Interview Rejected') return false;
+            // Do Not Proceed from interview rec
+            const email = (a.personalDetails?.email || '').toLowerCase();
+            const interview = interviewsCache.find(i => i.applicantEmail?.toLowerCase() === email);
+            if (interview?.interviewCompleted && interview?.interviewData?.recommendation === 'Do Not Proceed') return false;
+            return true;
+        });
+
+        // Count those needing a review action (0 or 1 review only)
+        const needsReview = active.filter(a => (a.reviews || []).length < 2).length;
+
+        animateCount(document.getElementById('stat-applications'), active.length);
+        animateCount(document.getElementById('stat-needs-review'), needsReview);
+        document.getElementById('app-count-badge').textContent = `${active.length} active`;
 
         const listEl = document.getElementById('applications-list');
         listEl.innerHTML = '';
 
-        if (!apps.length) { listEl.innerHTML = '<div class="empty-msg">No applications.</div>'; return; }
+        if (!active.length) {
+            listEl.innerHTML = '<div class="empty-msg">No active applications in pipeline.</div>';
+            updateTimestamp();
+            return;
+        }
 
-        const grid = document.createElement('div');
-        grid.className = 'app-grid';
-
-        apps.slice(0, 60).forEach((a, i) => {
-            const fd = a.finalRecruitmentDecision;
-            let label = 'Active', pillClass = 'pill-pending';
-            if (fd === 'Approved') { label = 'Offered'; pillClass = 'pill-accepted'; }
-            else if (fd === 'Rejected') { label = 'Rejected'; pillClass = 'pill-denied'; }
-            else if (a.interviewDecision === 'Interview Rejected') { label = 'Int. Rej.'; pillClass = 'pill-denied'; }
-            else if (a.status === 'Ready for Interview') { label = 'Interview'; pillClass = 'pill-accepted'; }
-            else if ((a.reviews || []).length >= 2) { label = 'Reviewed'; pillClass = 'pill-accepted'; }
-
-            const row = document.createElement('div');
-            row.className = 'row-item';
-            row.style.animationDelay = `${i * 0.02}s`;
-            row.innerHTML = `
-                <div class="row-main">
-                    <div class="row-name">${safe(a.fullName, 'Unnamed')}</div>
-                    <div class="row-meta"><b>${safe(a.position, 'No role')}</b>${a.personalDetails?.postcode ? ' · ' + a.personalDetails.postcode : ''} · ${formatDate(a.submittedAt)}</div>
-                </div>
-                <span class="pill ${pillClass}">${label}</span>
-            `;
-            grid.appendChild(row);
+        // Sort: stage-decision first, then stage-reviewing, then stage-namecheck, then interview, then new
+        const stageOrder = { 'stage-decision': 0, 'stage-reviewing': 1, 'stage-namecheck': 2, 'stage-interview': 3, 'stage-new': 4 };
+        active.sort((a, b) => {
+            const sa = resolveStage(a, interviewsCache).cssClass;
+            const sb = resolveStage(b, interviewsCache).cssClass;
+            return (stageOrder[sa] ?? 5) - (stageOrder[sb] ?? 5);
         });
 
-        listEl.appendChild(grid);
+        active.forEach((a, i) => {
+            const stage = resolveStage(a, interviewsCache);
+            const wt    = waitTime(a.submittedAt);
+            const postcode = a.personalDetails?.postcode || '';
+
+            const row = document.createElement('div');
+            row.className = 'app-row';
+            row.style.animationDelay = `${i * 0.025}s`;
+            row.innerHTML = `
+                <div class="app-row-info">
+                    <div class="app-row-name">${safe(a.fullName, 'Unnamed Applicant')}</div>
+                    <div class="app-row-meta"><b>${safe(a.position, 'No role')}</b>${postcode ? ' · ' + postcode : ''} · ${formatDate(a.submittedAt)}</div>
+                </div>
+                <span class="stage-badge ${stage.cssClass}"><span class="dot"></span>${stage.label}</span>
+                <span class="wait-chip ${wt.urgent ? 'urgent' : ''}">${wt.label}</span>
+            `;
+            listEl.appendChild(row);
+        });
+
         updateTimestamp();
-    });
+    }
 </script>
 
 </body>
