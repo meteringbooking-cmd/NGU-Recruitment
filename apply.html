@@ -378,6 +378,27 @@
             </div>
         </div>
 
+        <!-- 1b. RECRUITMENT AGENCY -->
+        <div class="section" id="recruitmentAgencySection">
+            <div class="section-header">
+                <div class="section-num">2</div>
+                <div><h2>Recruitment Agency</h2></div>
+            </div>
+            <div class="form-group">
+                <label>Are you a recruitment agency? <span class="req">*</span></label>
+                <div class="radio-group" id="recruitmentAgencyGroup" style="margin-top:0.5rem;">
+                    <label class="radio-option" id="recruitmentAgencyYesLabel"><input type="radio" name="recruitmentAgency" value="yes"> Yes</label>
+                    <label class="radio-option" id="recruitmentAgencyNoLabel"><input type="radio" name="recruitmentAgency" value="no"> No</label>
+                </div>
+                <div class="conditional" id="recruitmentAgencyDetails">
+                    <div class="form-group" style="margin-top:0.8rem;">
+                        <label>Who are you representing? <span class="req">*</span></label>
+                        <input type="text" id="recruitmentAgencyName" placeholder="Agency / company name">
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 2. PERSONAL DETAILS -->
         <div class="section">
             <div class="section-header">
@@ -884,10 +905,11 @@
             });
         });
     }
-    setupRadio('disability', 'disabilityYesLabel', 'disabilityNoLabel', 'disabilityDetails');
-    setupRadio('medical',    'medicalYesLabel',    'medicalNoLabel',    'medicalDetails');
-    setupRadio('convictions','convictionsYesLabel','convictionsNoLabel','convictionsDetails');
-    setupRadio('workPermit', 'workPermitYesLabel', 'workPermitNoLabel', null);
+    setupRadio('disability',        'disabilityYesLabel',        'disabilityNoLabel',        'disabilityDetails');
+    setupRadio('medical',           'medicalYesLabel',           'medicalNoLabel',           'medicalDetails');
+    setupRadio('convictions',       'convictionsYesLabel',       'convictionsNoLabel',       'convictionsDetails');
+    setupRadio('workPermit',        'workPermitYesLabel',        'workPermitNoLabel',        null);
+    setupRadio('recruitmentAgency', 'recruitmentAgencyYesLabel', 'recruitmentAgencyNoLabel', 'recruitmentAgencyDetails');
     function getRadioValue(name) { const r = document.querySelector(`input[name="${name}"]:checked`); return r ? r.value : ''; }
 
     /* ═══════════════════════════════════════════════════
@@ -1183,8 +1205,13 @@
         const consentName        = document.getElementById('consentName').value.trim();
         const consentDate        = document.getElementById('consentDate').value;
 
+        const recruitmentAgency     = getRadioValue('recruitmentAgency');
+        const recruitmentAgencyName = recruitmentAgency === 'yes' ? document.getElementById('recruitmentAgencyName').value.trim() : '';
+
         const missing = [];
         if (!position)        missing.push('Position Applied For');
+        if (!recruitmentAgency) missing.push('Recruitment agency question');
+        if (recruitmentAgency === 'yes' && !recruitmentAgencyName) missing.push('Agency name');
         if (!title)           missing.push('Title');
         if (!forename)        missing.push('Forename');
         if (!surname)         missing.push('Surname');
@@ -1269,6 +1296,7 @@
             await addDoc(colRef, {
                 submittedAt: serverTimestamp(),
                 position,
+                recruitmentAgency: { isAgency: recruitmentAgency === 'yes', agencyName: recruitmentAgencyName },
                 personalDetails: { title, forename, surname, email, phone, address, postcode },
                 fullName: `${forename} ${surname}`,
                 reasonableAdjustments: {
