@@ -1096,6 +1096,22 @@
         return m ? m[1].toUpperCase() : '';
     }
 
+    // --- ENERGISE OUTCODE RESOLVER ---
+    // Energise stores locations as bare area letters ("NE", "AB", "SW1").
+    // If there are no digits, we append "1" to make a valid geocodable outcode
+    // ("NE" -> "NE1", "AB" -> "AB1"). Used only for Energise geo lookups;
+    // the original value is still displayed to the user.
+    function getEnergiseOutcode(location) {
+        if (!location || typeof location !== 'string') return '';
+        const str = location.trim().toUpperCase();
+        // Already a valid outcode with digits (e.g. "NE8", "SW1A")
+        const outcode = getOutcode(str);
+        if (outcode) return outcode;
+        // Bare area letters only (e.g. "NE", "AB", "M") — append "1"
+        if (/^[A-Z]{1,2}$/.test(str)) return str + '1';
+        return '';
+    }
+
     // ── HAVERSINE DISTANCE (miles) ──
     function haversine(lat1, lon1, lat2, lon2) {
         const R = 3958.8;
@@ -1157,9 +1173,15 @@
     async function geocodeAndRerender() {
         const distContracts = ['Energise', 'ImServe'];
         // Vacancy locations for distance contracts
+        // Energise: convert bare area codes to synthetic outcodes ("NE" -> "NE1")
         const vacLocs = liveVacanciesCache
             .filter(v => distContracts.includes(v.requestInformation?.contract || ''))
-            .map(v => v.requestInformation?.location || '')
+            .map(v => {
+                const loc      = v.requestInformation?.location || '';
+                const contract = v.requestInformation?.contract || '';
+                if (contract === 'Energise') return getEnergiseOutcode(loc);
+                return loc;
+            })
             .filter(Boolean);
         // Applicant outcodes
         const appOutcodes = cleanAppsCache
@@ -1193,10 +1215,10 @@
             if (vacPos !== appPos) return false;
 
             if (contract === 'Energise') {
-                const vacOc     = getOutcode(vacLoc);
+                const vacOc     = getEnergiseOutcode(vacLoc);
                 const vacCoords = vacOc ? geoCache[vacOc] : null;
                 if (vacCoords && appCoords) return haversine(vacCoords.lat, vacCoords.lng, appCoords.lat, appCoords.lng) <= 20;
-                // fallback
+                // fallback: prefix match
                 return getPostcodeArea(vacLoc) === appArea && appArea !== '';
             }
             if (contract === 'ImServe') {
@@ -1499,7 +1521,7 @@
                     const contr   = v.requestInformation?.contract || '';
                     if (vacPos !== appPos) return false;
                     if (contr === 'Energise') {
-                        const vacOc     = getOutcode(vacLoc);
+                        const vacOc     = getEnergiseOutcode(vacLoc);
                         const vacCoords = vacOc ? geoCache[vacOc] : null;
                         if (vacCoords && appCoords) return haversine(vacCoords.lat, vacCoords.lng, appCoords.lat, appCoords.lng) <= 20;
                         return getPostcodeArea(vacLoc) === appArea && appArea !== '';
