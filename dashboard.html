@@ -1646,14 +1646,21 @@
             vacSection.innerHTML += `<div class="drawer-empty">No live vacancies for ${contractName}.</div>`;
         } else {
             vacancies.forEach(v => {
-                const title    = v.requestInformation?.jobTitle || 'Untitled Role';
-                const location = v.requestInformation?.location || '—';
-                const dept     = v.requestInformation?.department || '';
+                const title      = v.requestInformation?.jobTitle || 'Untitled Role';
+                const location   = v.requestInformation?.location || '—';
+                const dept       = v.requestInformation?.department || '';
+                const mc         = getVacancyMatchCount(v);
+                const chipClass  = mc > 0 ? 'vac-match-chip' : 'vac-match-chip no-match';
+                const chipText   = mc === 1 ? '1 match' : `${mc} matches`;
                 const row = document.createElement('div');
                 row.className = 'drawer-vacancy-row';
+                row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;gap:10px;';
                 row.innerHTML = `
-                    <div class="drawer-row-name">${title}</div>
-                    <div class="drawer-row-meta"><b>${location}</b>${dept ? ' · ' + dept : ''}</div>
+                    <div style="min-width:0;flex:1;">
+                        <div class="drawer-row-name">${title}</div>
+                        <div class="drawer-row-meta"><b>${location}</b>${dept ? ' · ' + dept : ''}</div>
+                    </div>
+                    <span class="${chipClass}" style="flex-shrink:0;">${chipText}</span>
                 `;
                 vacSection.appendChild(row);
             });
