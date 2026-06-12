@@ -192,7 +192,7 @@
         </div>
     </header>
 
-    <div id="status-message" style="display:none; text-align:center; padding:40px; color:var(--secondary-text); background-color:var(--container-bg); border-radius:8px; border:1px solid var(--panel-border);">&#8987; Loading live vacancies...</div>
+    <div id="status-message" style="text-align:center; padding:40px; color:var(--secondary-text); background-color:var(--container-bg); border-radius:8px; border:1px solid var(--panel-border);">&#8987; Loading live vacancies...</div>
 
     <div class="vacancy-scroll" id="vacancyScroll">
         <div id="vacancy-grid" class="vacancy-grid" style="display: none;"></div>
@@ -318,6 +318,13 @@
 
         statusMsg.style.display = 'none';
         gridContainer.style.display = 'grid';
+
+        // Sort alphabetically by desired location
+        filtered.sort((a, b) => {
+            const locA = (a.requestInformation?.location || '').trim().toLowerCase();
+            const locB = (b.requestInformation?.location || '').trim().toLowerCase();
+            return locA.localeCompare(locB);
+        });
 
         filtered.forEach(vacancy => {
             const rawJobTitle = vacancy.requestInformation?.jobTitle || '';
