@@ -1188,6 +1188,22 @@
             .map(a => getOutcode(a.personalDetails?.postcode || ''))
             .filter(Boolean);
         if (appOutcodes.length) await batchGeocode([...new Set(appOutcodes)]);
+        // Some postcode areas use 2-digit districts (e.g. AB uses AB10-AB99, not AB1).
+        // Retry any failed Energise outcodes with a "10" suffix.
+        const energiseVacOcs = [...new Set(
+            liveVacanciesCache
+                .filter(v => (v.requestInformation?.contract || '') === 'Energise')
+                .map(v => getEnergiseOutcode(v.requestInformation?.location || ''))
+                .filter(Boolean)
+        )];
+        for (const oc of energiseVacOcs) {
+            if (geoCache[oc]) continue;
+            const letters = oc.replace(/\d+$/, '');
+            const alt     = letters + '10';
+            if (alt === oc) continue;
+            if (!Object.prototype.hasOwnProperty.call(geoCache, alt)) await batchGeocode([alt]);
+            if (geoCache[alt]) geoCache[oc] = geoCache[alt];
+        }
         for (const loc of [...new Set(vacLocs)]) {
             const oc = getOutcode(loc);
             if (oc) { if (!Object.prototype.hasOwnProperty.call(geoCache, oc)) await batchGeocode([oc]); }
@@ -1218,7 +1234,7 @@
                 const vacOc     = getEnergiseOutcode(vacLoc);
                 const vacCoords = vacOc ? geoCache[vacOc] : null;
                 if (vacCoords && appCoords) return haversine(vacCoords.lat, vacCoords.lng, appCoords.lat, appCoords.lng) <= 20;
-                // fallback: prefix match
+                // Geocoding failed (e.g. AB1 not valid) — fall back to area prefix match
                 return getPostcodeArea(vacLoc) === appArea && appArea !== '';
             }
             if (contract === 'ImServe') {
@@ -1524,6 +1540,7 @@
                         const vacOc     = getEnergiseOutcode(vacLoc);
                         const vacCoords = vacOc ? geoCache[vacOc] : null;
                         if (vacCoords && appCoords) return haversine(vacCoords.lat, vacCoords.lng, appCoords.lat, appCoords.lng) <= 20;
+                        // Geocoding failed (e.g. AB1 not valid) — fall back to area prefix match
                         return getPostcodeArea(vacLoc) === appArea && appArea !== '';
                     }
                     if (contr === 'ImServe') {
