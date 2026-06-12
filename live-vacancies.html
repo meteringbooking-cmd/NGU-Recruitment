@@ -507,9 +507,8 @@
         filtered.forEach(vacancy => {
             const rawJobTitle = vacancy.requestInformation?.jobTitle || '';
             const dept        = safeStr(vacancy.requestInformation?.department);
-            const locationStr = safeStr(vacancy.requestInformation?.location);
             const contract    = vacancy.requestInformation?.contract || '';
-            
+
             // Format for safe matching
             const safeVacPos   = rawJobTitle.trim().toLowerCase();
             const rawLocation  = vacancy.requestInformation?.location || ''; // raw, for geocache key consistency
