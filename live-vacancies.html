@@ -361,31 +361,34 @@
         }));
     }
 
-    // Geocode a free-text UK place name via Nominatim (OpenStreetMap)
+    // Geocode a free-text UK place name via postcodes.io /places
+    // (CORS-friendly, no rate limits, UK-specific — replaces Nominatim)
     async function geocodePlace(name) {
         const key = name.trim().toLowerCase();
         if (!key) return null;
         if (Object.prototype.hasOwnProperty.call(placeCache, key)) return placeCache[key];
         placeCache[key] = null; // mark in-flight
-        try {
-            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name + ', UK')}&format=json&limit=1&countrycodes=gb`;
-            const res  = await fetch(url, { headers: { 'User-Agent': 'NGU-RecruitmentPortal/1.0' } });
-            const json = await res.json();
-            if (json.length > 0) {
-                placeCache[key] = { lat: parseFloat(json[0].lat), lng: parseFloat(json[0].lon) };
-            } else {
-                // Try first word only as a fallback (e.g. "North London" -> "London")
-                const firstWord = name.trim().split(/\s+/).pop(); // last word often more specific
-                if (firstWord && firstWord.toLowerCase() !== key) {
-                    const url2 = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(firstWord + ', UK')}&format=json&limit=1&countrycodes=gb`;
-                    const res2  = await fetch(url2, { headers: { 'User-Agent': 'NGU-RecruitmentPortal/1.0' } });
-                    const json2 = await res2.json();
-                    if (json2.length > 0) {
-                        placeCache[key] = { lat: parseFloat(json2[0].lat), lng: parseFloat(json2[0].lon) };
-                    }
+
+        const tryPlace = async (q) => {
+            try {
+                const r = await fetch(`https://api.postcodes.io/places?q=${encodeURIComponent(q)}&limit=1`);
+                const j = await r.json();
+                if (j.status === 200 && j.result && j.result.length > 0) {
+                    return { lat: j.result[0].latitude, lng: j.result[0].longitude };
                 }
+            } catch(e) {}
+            return null;
+        };
+
+        let coords = await tryPlace(name.trim());
+        if (!coords) {
+            // Fallback: try just the last word (e.g. "North London" -> "London")
+            const lastWord = name.trim().split(/\s+/).pop();
+            if (lastWord && lastWord.toLowerCase() !== key) {
+                coords = await tryPlace(lastWord);
             }
-        } catch(e) {}
+        }
+        placeCache[key] = coords;
         return placeCache[key];
     }
 
