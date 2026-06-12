@@ -330,6 +330,22 @@
         return m ? m[1].toUpperCase() : '';
     }
 
+    // --- ENERGISE OUTCODE RESOLVER ---
+    // Energise stores locations as bare area letters ("NE", "AB", "SW1").
+    // If there are no digits, we append "1" to make a valid geocodable outcode
+    // ("NE" -> "NE1", "AB" -> "AB1"). Used only for Energise geo lookups;
+    // the original value is still displayed to the user.
+    function getEnergiseOutcode(location) {
+        if (!location || typeof location !== 'string') return '';
+        const str = location.trim().toUpperCase();
+        // Already a valid outcode with digits (e.g. "NE8", "SW1A")
+        const outcode = getOutcode(str);
+        if (outcode) return outcode;
+        // Bare area letters only (e.g. "NE", "AB", "M") — append "1"
+        if (/^[A-Z]{1,2}$/.test(str)) return str + '1';
+        return '';
+    }
+
     // --- HAVERSINE DISTANCE (miles) ---
     function haversine(lat1, lon1, lat2, lon2) {
         const R = 3958.8;
@@ -439,23 +455,34 @@
     async function geocodeAndRender() {
         const distanceContracts = ['Energise', 'ImServe'];
 
-        // Vacancy location strings for distance-based contracts
-        const vacLocationTasks = activeVacancies
+        // Collect geocoding tasks — Energise uses synthetic outcodes, ImServe uses place names
+        const energiseOutcodes = [];
+        const imServePlaces    = [];
+        activeVacancies
             .filter(v => distanceContracts.includes(v.requestInformation?.contract || ''))
-            .map(v => v.requestInformation?.location || '')
-            .filter(Boolean);
+            .forEach(v => {
+                const loc      = v.requestInformation?.location || '';
+                const contract = v.requestInformation?.contract || '';
+                if (contract === 'Energise') {
+                    const oc = getEnergiseOutcode(loc);
+                    if (oc) energiseOutcodes.push(oc);
+                } else if (contract === 'ImServe') {
+                    if (loc) imServePlaces.push(loc);
+                }
+            });
 
-        // Applicant postcodes (for all distance-based lookups)
+        // Applicant outcodes (all distance-based contracts need these)
         const appOutcodes = allApplications
             .map(a => getOutcode(a.personalDetails?.postcode || ''))
             .filter(Boolean);
 
-        // Geocode applicant outcodes in parallel (postcodes.io)
-        if (appOutcodes.length) await batchGeocode([...new Set(appOutcodes)]);
+        // Geocode applicant outcodes + Energise vacancy outcodes in parallel (postcodes.io)
+        const allOutcodes = [...new Set([...appOutcodes, ...energiseOutcodes])];
+        if (allOutcodes.length) await batchGeocode(allOutcodes);
 
-        // Geocode each vacancy location sequentially (respects Nominatim 1 req/s)
-        for (const loc of [...new Set(vacLocationTasks)]) {
-            await geocodeLocation(loc);
+        // Geocode ImServe place names sequentially (one API call each)
+        for (const loc of [...new Set(imServePlaces)]) {
+            await geocodePlace(loc);
         }
 
         renderGrid();
@@ -559,13 +586,16 @@
             let matchCount     = 0;
 
             // Resolve vacancy coords
+            // Energise: use synthetic outcode ("NE" -> "NE1") for centre-point geocoding
+            // ImServe:  use place name cache
+            const energiseOc = isEnergise ? getEnergiseOutcode(rawLocation) : '';
             let vacCoords = null;
-            if (isEnergise && vacOutcode) {
-                vacCoords = geoCache[vacOutcode] || null;
+            if (isEnergise && energiseOc) {
+                vacCoords = geoCache[energiseOc] || null;
             }
             if (isImServe) {
                 const placeKey = rawLocation.trim().toLowerCase();
-                vacCoords = placeCache[placeKey] || (vacOutcode ? geoCache[vacOutcode] : null) || null;
+                vacCoords = placeCache[placeKey] || (energiseOc ? geoCache[energiseOc] : null) || null;
             }
 
             // Build matched applicants list alongside the count
