@@ -219,6 +219,21 @@
                     <label for="location">Location</label>
                     <input type="text" id="location" name="location">
                 </div>
+                <div class="field-container">
+                    <label for="contract">Contract</label>
+                    <select id="contract" name="contract">
+                        <option value="" disabled selected>Select contract…</option>
+                        <option value="Cadent">Cadent</option>
+                        <option value="National Grid">National Grid</option>
+                        <option value="SGN">SGN</option>
+                        <option value="Northern Gas Networks">Northern Gas Networks</option>
+                        <option value="Wales & West Utilities">Wales &amp; West Utilities</option>
+                        <option value="Electricity North West">Electricity North West</option>
+                        <option value="Western Power Distribution">Western Power Distribution</option>
+                        <option value="Internal">Internal</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
                 <!-- NEW FIELD: INDUCTION LOCATION -->
                 <div class="field-container">
                     <label for="induction-location">Induction Location</label>
@@ -484,6 +499,7 @@
                 department: formData.get('department'),
                 jobTitle: formData.get('job-title'),
                 location: formData.get('location'),
+                contract: formData.get('contract'),
                 inductionLocation: formData.get('induction-location'),
                 hiringManager: formData.get('hiring-manager'),
                 reportsTo: formData.get('reports-to')
@@ -548,6 +564,7 @@
                 department: formData.get('department'),
                 job_title: formData.get('job-title'),
                 location: formData.get('location') || 'N/A',
+                contract: formData.get('contract') || 'N/A',
                 induction_location: formData.get('induction-location') || 'N/A',
                 hiring_manager: formData.get('hiring-manager') || 'N/A',
                 urgency: formData.get('urgency') || 'N/A',
