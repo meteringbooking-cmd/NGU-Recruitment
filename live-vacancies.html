@@ -170,11 +170,84 @@
         }
         .contract-edit-row select:focus { outline: none; border-color: var(--accent-color); }
         .contract-edit-row select option { background: #2d3d50; color: var(--primary-text); font-weight: normal; }
+
+        /* Match Drawer */
+        .match-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+            backdrop-filter: blur(3px); z-index: 200;
+            opacity: 0; pointer-events: none; transition: opacity 0.25s;
+        }
+        .match-overlay.open { opacity: 1; pointer-events: all; }
+
+        .match-drawer {
+            position: fixed; top: 0; right: -420px; width: 400px; height: 100%;
+            background: #1c2938; border-left: 1px solid var(--panel-border);
+            z-index: 201; display: flex; flex-direction: column;
+            box-shadow: -8px 0 32px rgba(0,0,0,0.4);
+            transition: right 0.3s cubic-bezier(0.4,0,0.2,1);
+        }
+        .match-drawer.open { right: 0; }
+
+        .match-drawer-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 22px; border-bottom: 1px solid var(--panel-border);
+            background: rgba(0,0,0,0.15); flex-shrink: 0;
+        }
+        .match-drawer-header h3 { margin: 0; font-size: 1rem; color: var(--accent-color); font-weight: 700; }
+        .match-drawer-header p { margin: 2px 0 0; font-size: 0.78rem; color: var(--secondary-text); }
+        .match-close-btn {
+            background: rgba(255,255,255,0.06); border: 1px solid var(--panel-border);
+            color: var(--secondary-text); width: 30px; height: 30px;
+            border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s; flex-shrink: 0;
+        }
+        .match-close-btn:hover { background: rgba(255,255,255,0.12); color: var(--primary-text); }
+
+        .match-drawer-body { flex: 1; overflow-y: auto; padding: 16px; }
+        .match-drawer-body::-webkit-scrollbar { width: 4px; }
+        .match-drawer-body::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 2px; }
+
+        .match-row {
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(0,0,0,0.2); border: 1px solid var(--panel-border);
+            border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;
+            transition: border-color 0.15s;
+        }
+        .match-row:hover { border-color: var(--accent-color); }
+        .match-row-name { font-size: 0.92rem; font-weight: 700; color: var(--primary-text); }
+        .match-row-role { font-size: 0.78rem; color: var(--secondary-text); margin-top: 2px; }
+        .match-row-pc {
+            background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3);
+            color: var(--accent-color); font-size: 0.75rem; font-weight: 700;
+            padding: 4px 10px; border-radius: 20px; white-space: nowrap; letter-spacing: 0.04em;
+        }
+        .match-dist {
+            font-size: 0.7rem; color: #6ee7b7; margin-top: 3px; text-align: right;
+        }
+        .match-empty {
+            text-align: center; color: var(--secondary-text);
+            padding: 40px 20px; font-size: 0.9rem; font-style: italic;
+        }
     </style>
 </head>
 <body>
 
 <div class="main-container">
+
+<!-- MATCH DRAWER -->
+<div class="match-overlay" id="matchOverlay" onclick="closeMatchDrawer()"></div>
+<div class="match-drawer" id="matchDrawer">
+    <div class="match-drawer-header">
+        <div>
+            <h3 id="drawerVacTitle">Matched Applicants</h3>
+            <p id="drawerVacMeta"></p>
+        </div>
+        <button class="match-close-btn" onclick="closeMatchDrawer()" title="Close">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+    </div>
+    <div class="match-drawer-body" id="drawerMatchBody"></div>
+</div>
     <header class="page-header">
         <div class="header-brand-container">
             <a href="homepage.html" class="btn-link">← Hub</a>
@@ -456,30 +529,45 @@
                             null;
             }
 
+            // Build matched applicants list alongside the count
+            const matchedApplicants = [];
+
             allApplications.forEach(app => {
                 const safeAppPos = (app.position || '').trim().toLowerCase();
                 if (safeAppPos !== safeVacPos) return; // position must match
 
+                let isMatch = false;
+                let distMiles = null;
+
                 if (useDistance) {
-                    // Distance-based match (20-mile radius)
                     const appOutcode = getOutcode(app.personalDetails?.postcode || '');
                     const appCoords  = appOutcode ? geoCache[appOutcode] : null;
 
                     if (vacCoords && appCoords) {
-                        if (haversine(vacCoords.lat, vacCoords.lng, appCoords.lat, appCoords.lng) <= 20) {
-                            matchCount++;
-                        }
+                        const d = haversine(vacCoords.lat, vacCoords.lng, appCoords.lat, appCoords.lng);
+                        if (d <= 20) { isMatch = true; distMiles = Math.round(d * 10) / 10; }
                     } else {
-                        // Coords not yet available — fall back to prefix match
                         const appArea = getPostcodeArea(app.personalDetails?.postcode);
-                        if (appArea === vacArea && vacArea !== '') matchCount++;
+                        if (appArea === vacArea && vacArea !== '') isMatch = true;
                     }
                 } else {
-                    // SureServe / Callisen: prefix area match
                     const appArea = getPostcodeArea(app.personalDetails?.postcode);
-                    if (appArea === vacArea && vacArea !== '') matchCount++;
+                    if (appArea === vacArea && vacArea !== '') isMatch = true;
+                }
+
+                if (isMatch) {
+                    matchCount++;
+                    matchedApplicants.push({
+                        name:     app.fullName || 'Unknown',
+                        postcode: app.personalDetails?.postcode || '—',
+                        position: app.position || '—',
+                        dist:     distMiles
+                    });
                 }
             });
+
+            // Store for drawer access
+            vacMatchMap[vacancy.id] = { applicants: matchedApplicants, title: rawJobTitle, location: locationStr, contract };
 
             const matchLabel = useDistance ? 'within 20 mi' : 'Area Match';
 
@@ -519,7 +607,10 @@
             const badgeText  = matchCount === 1
                 ? `1 ${matchLabel} (${areaRef})`
                 : `${matchCount} ${matchLabel}${matchCount !== 1 ? 'es' : ''} (${areaRef})`;
-            const badgeIcon  = matchCount > 0 ? '📍 ' : '';
+            const badgeIcon  = matchCount > 0 ? '\uD83D\uDCCD ' : '';
+            const badgeHtml  = matchCount > 0
+                ? `<div class="${badgeClass}" onclick="openMatchDrawer('${vacancy.id}')" style="cursor:pointer;" title="Click to view matched applicants">${badgeIcon}${badgeText}</div>`
+                : `<div class="${badgeClass}">${badgeText}</div>`;
 
             const cardHtml = `
                 <div class="vacancy-card" id="card-${vacancy.id}">
@@ -527,7 +618,7 @@
                         <div class="card-title">${safeStr(rawJobTitle)}</div>
                         <div class="card-dept">${dept}</div>
                         ${contract ? `<div class="contract-pill">📋 ${contract}</div>` : ''}
-                        <div class="${badgeClass}">${badgeIcon}${badgeText}</div>
+                        ${badgeHtml}
                     </div>
                     <div class="card-body">
                         <div class="info-block full-width">
@@ -571,6 +662,49 @@
             gridContainer.insertAdjacentHTML('beforeend', cardHtml);
         });
     }
+
+    // Matched applicants map: vacancyId -> { applicants, title, location, contract }
+    const vacMatchMap = {};
+
+    window.openMatchDrawer = function(vacancyId) {
+        const data = vacMatchMap[vacancyId];
+        if (!data) return;
+
+        document.getElementById('drawerVacTitle').textContent = data.title || 'Matched Applicants';
+        document.getElementById('drawerVacMeta').textContent  = `${data.location}${data.contract ? '  ·  ' + data.contract : ''}`;
+
+        const body = document.getElementById('drawerMatchBody');
+        body.innerHTML = '';
+
+        if (!data.applicants.length) {
+            body.innerHTML = '<div class="match-empty">No matched applicants found.</div>';
+        } else {
+            data.applicants.forEach(a => {
+                const distHtml = a.dist !== null ? `<div class="match-dist">${a.dist} miles away</div>` : '';
+                const row = document.createElement('div');
+                row.className = 'match-row';
+                row.innerHTML = `
+                    <div>
+                        <div class="match-row-name">${a.name}</div>
+                        <div class="match-row-role">${a.position}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="match-row-pc">${a.postcode}</div>
+                        ${distHtml}
+                    </div>
+                `;
+                body.appendChild(row);
+            });
+        }
+
+        document.getElementById('matchDrawer').classList.add('open');
+        document.getElementById('matchOverlay').classList.add('open');
+    };
+
+    window.closeMatchDrawer = function() {
+        document.getElementById('matchDrawer').classList.remove('open');
+        document.getElementById('matchOverlay').classList.remove('open');
+    };
 
     async function updateAdvert(checkboxElement, reqId, fieldName) {
         const isChecked = checkboxElement.checked;
