@@ -118,6 +118,14 @@
             .header-brand-container { flex-direction: column; }
             .vacancy-grid { grid-template-columns: 1fr; }
         }
+
+        .contract-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3);
+            color: var(--accent-color); font-size: 0.75em; font-weight: 700;
+            padding: 3px 10px; border-radius: 20px; margin-top: 8px;
+            text-transform: uppercase; letter-spacing: 0.06em;
+        }
     </style>
 </head>
 <body>
@@ -236,8 +244,9 @@
 
         activeVacancies.forEach(vacancy => {
             const rawJobTitle = vacancy.requestInformation?.jobTitle || '';
-            const dept = safeStr(vacancy.requestInformation?.department);
+            const dept        = safeStr(vacancy.requestInformation?.department);
             const locationStr = safeStr(vacancy.requestInformation?.location);
+            const contract    = vacancy.requestInformation?.contract || '';
             
             // Format for safe matching
             const safeVacPos = rawJobTitle.trim().toLowerCase();
@@ -294,12 +303,17 @@
                     <div class="card-header">
                         <div class="card-title">${safeStr(rawJobTitle)}</div>
                         <div class="card-dept">${dept}</div>
+                        ${contract ? `<div class="contract-pill">📋 ${contract}</div>` : ''}
                         <div class="${badgeClass}">${badgeIcon}${badgeText}</div>
                     </div>
                     <div class="card-body">
                         <div class="info-block full-width">
                             <label>Desired Location</label>
                             <div class="value">${locationStr}</div>
+                        </div>
+                        <div class="info-block">
+                            <label>Contract</label>
+                            <div class="value">${contract || 'Not specified'}</div>
                         </div>
                         <div class="info-block">
                             <label>Date Approved</label>
