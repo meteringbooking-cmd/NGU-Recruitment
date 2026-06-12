@@ -250,6 +250,59 @@
         return match ? match[0].toUpperCase() : '';
     }
 
+    // --- OUTCODE EXTRACTOR (e.g. "NE8 3TS" -> "NE8", "SW1A 1AA" -> "SW1A") ---
+    function getOutcode(str) {
+        if (!str || typeof str !== 'string') return '';
+        const m = str.trim().match(/^([A-Z]{1,2}\d{1,2}[A-Z]?)/i);
+        return m ? m[1].toUpperCase() : '';
+    }
+
+    // --- HAVERSINE DISTANCE (miles) ---
+    function haversine(lat1, lon1, lat2, lon2) {
+        const R = 3958.8;
+        const toRad = d => d * Math.PI / 180;
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat/2)**2 +
+                  Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    // --- GEOCODE CACHE & BATCH LOOKUP ---
+    // Stores outcode -> { lat, lng } or null (meaning looked up but failed)
+    const geoCache = {};
+
+    async function batchGeocode(outcodes) {
+        const needed = [...new Set(outcodes)].filter(o => o && !Object.prototype.hasOwnProperty.call(geoCache, o));
+        if (!needed.length) return;
+        // Mark as pending so we don't re-request while in-flight
+        needed.forEach(o => { geoCache[o] = null; });
+        // postcodes.io /outcodes endpoint (one at a time — no bulk for outcodes)
+        await Promise.all(needed.map(async outcode => {
+            try {
+                const res = await fetch(`https://api.postcodes.io/outcodes/${encodeURIComponent(outcode)}`);
+                const json = await res.json();
+                if (json.status === 200 && json.result) {
+                    geoCache[outcode] = { lat: json.result.latitude, lng: json.result.longitude };
+                }
+            } catch(e) { /* leave as null */ }
+        }));
+    }
+
+    // Collect all outcodes from Energise vacancies + all applicants, geocode, then render
+    async function geocodeAndRender() {
+        const energiseVacLocations = activeVacancies
+            .filter(v => (v.requestInformation?.contract || '') === 'Energise')
+            .map(v => getOutcode(v.requestInformation?.location || ''));
+
+        const appOutcodes = allApplications
+            .map(a => getOutcode(a.personalDetails?.postcode || ''));
+
+        const all = [...energiseVacLocations, ...appOutcodes].filter(Boolean);
+        if (all.length) await batchGeocode(all);
+        renderGrid();
+    }
+
     // 1. Listen to Applications (Filter to ACTIVE ONLY)
     db.collection(appsCollection).onSnapshot((snapshot) => {
         allApplications = [];
@@ -266,7 +319,7 @@
                 allApplications.push(app);
             }
         });
-        renderGrid(); 
+        geocodeAndRender();
     });
 
     // 2. Listen to active workflows (Vacancies)
@@ -285,7 +338,7 @@
                   activeVacancies.push({ id: doc.id, ...data });
               }
           });
-          renderGrid(); 
+          geocodeAndRender();
       }, (error) => {
           console.error("Error fetching live vacancies: ", error);
           statusMsg.innerHTML = `<span style="color:var(--danger-color)">Error loading data. Check console.</span>`;
@@ -333,19 +386,39 @@
             const contract    = vacancy.requestInformation?.contract || '';
             
             // Format for safe matching
-            const safeVacPos = rawJobTitle.trim().toLowerCase();
-            const vacArea = getPostcodeArea(locationStr);
-            let matchCount = 0;
-            
+            const safeVacPos  = rawJobTitle.trim().toLowerCase();
+            const vacArea     = getPostcodeArea(locationStr);
+            const vacOutcode  = getOutcode(locationStr);
+            const isEnergise  = contract === 'Energise';
+            let matchCount    = 0;
+
             allApplications.forEach(app => {
-                const appArea = getPostcodeArea(app.personalDetails?.postcode);
                 const safeAppPos = (app.position || '').trim().toLowerCase();
-                
-                // MATCH: Job Titles match (ignoring case) AND Postcode Letters match exactly
-                if (safeAppPos === safeVacPos && appArea === vacArea && vacArea !== '') {
-                    matchCount++;
+                if (safeAppPos !== safeVacPos) return; // position must match
+
+                if (isEnergise) {
+                    // 20-mile radius match using geocoded outcode coordinates
+                    const vacCoords = vacOutcode ? geoCache[vacOutcode] : null;
+                    const appOutcode = getOutcode(app.personalDetails?.postcode || '');
+                    const appCoords = appOutcode ? geoCache[appOutcode] : null;
+
+                    if (vacCoords && appCoords) {
+                        if (haversine(vacCoords.lat, vacCoords.lng, appCoords.lat, appCoords.lng) <= 20) {
+                            matchCount++;
+                        }
+                    } else {
+                        // Coords not yet available — fall back to prefix match
+                        const appArea = getPostcodeArea(app.personalDetails?.postcode);
+                        if (appArea === vacArea && vacArea !== '') matchCount++;
+                    }
+                } else {
+                    // All other contracts: prefix area match
+                    const appArea = getPostcodeArea(app.personalDetails?.postcode);
+                    if (appArea === vacArea && vacArea !== '') matchCount++;
                 }
             });
+
+            const matchLabel = isEnergise ? 'within 20 mi' : 'Area Match';
 
             const dateApproved = vacancy.finalOutcome?.dateApproved || vacancy.approvalSignOff?.finalApprover?.date;
             const desiredStart = vacancy.recruitmentRequirements?.desiredStartDate;
@@ -379,8 +452,11 @@
             }
 
             const badgeClass = matchCount > 0 ? 'applicant-badge' : 'applicant-badge empty';
-            const badgeText = matchCount === 1 ? `1 Active Area Match (${vacArea})` : `${matchCount} Active Area Matches (${vacArea})`;
-            const badgeIcon = matchCount > 0 ? '📍 ' : '';
+            const areaRef    = isEnergise ? (vacOutcode || vacArea) : vacArea;
+            const badgeText  = matchCount === 1
+                ? `1 ${matchLabel} (${areaRef})`
+                : `${matchCount} ${matchLabel}${matchCount !== 1 ? 'es' : ''} (${areaRef})`;
+            const badgeIcon  = matchCount > 0 ? '📍 ' : '';
 
             const cardHtml = `
                 <div class="vacancy-card" id="card-${vacancy.id}">
