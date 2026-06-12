@@ -402,7 +402,37 @@
         return geocodePlace(str.trim());
     }
 
-    // Geocode all locations needed for Energise (outcode) + ImServe (place name) + all applicants, then render
+    // ── DEBOUNCED RENDER SCHEDULER ────────────────────────────────────
+    // Prevents the race condition where two simultaneous onSnapshot
+    // callbacks both call geocodeAndRender, causing one to render with
+    // in-flight null coords and show zero matches.
+    // ─────────────────────────────────────────────────────────
+    let _renderTimer   = null;
+    let _renderRunning = false;
+    let _renderQueued  = false;
+
+    function scheduleRender() {
+        // Debounce: collapse rapid successive calls into one
+        clearTimeout(_renderTimer);
+        _renderTimer = setTimeout(runGeocodeAndRender, 150);
+    }
+
+    async function runGeocodeAndRender() {
+        if (_renderRunning) {
+            // Another geocode pass is in progress; queue one more run for when it finishes
+            _renderQueued = true;
+            return;
+        }
+        _renderRunning = true;
+        _renderQueued  = false;
+        try {
+            await geocodeAndRender();
+        } finally {
+            _renderRunning = false;
+            if (_renderQueued) scheduleRender(); // run the queued pass
+        }
+    }
+
     async function geocodeAndRender() {
         const distanceContracts = ['Energise', 'ImServe'];
 
@@ -417,10 +447,10 @@
             .map(a => getOutcode(a.personalDetails?.postcode || ''))
             .filter(Boolean);
 
-        // Geocode applicant outcodes (bulk via postcodes.io)
+        // Geocode applicant outcodes in parallel (postcodes.io)
         if (appOutcodes.length) await batchGeocode([...new Set(appOutcodes)]);
 
-        // Geocode each vacancy location (place name or outcode) sequentially to respect Nominatim rate limits
+        // Geocode each vacancy location sequentially (respects Nominatim 1 req/s)
         for (const loc of [...new Set(vacLocationTasks)]) {
             await geocodeLocation(loc);
         }
@@ -444,7 +474,7 @@
                 allApplications.push(app);
             }
         });
-        geocodeAndRender();
+        scheduleRender();
     });
 
     // 2. Listen to active workflows (Vacancies)
@@ -463,7 +493,7 @@
                   activeVacancies.push({ id: doc.id, ...data });
               }
           });
-          geocodeAndRender();
+          scheduleRender();
       }, (error) => {
           console.error("Error fetching live vacancies: ", error);
           statusMsg.innerHTML = `<span style="color:var(--danger-color)">Error loading data. Check console.</span>`;
@@ -521,22 +551,13 @@
             let matchCount     = 0;
 
             // Resolve vacancy coords
-            // Use hasOwnProperty so a null (failed geocode) is distinguished from an uncached entry
-            let vacCoords     = null;
-            let geocodeFailed = false;
+            let vacCoords = null;
             if (isEnergise && vacOutcode) {
                 vacCoords = geoCache[vacOutcode] || null;
-                if (Object.prototype.hasOwnProperty.call(geoCache, vacOutcode) && !geoCache[vacOutcode]) geocodeFailed = true;
             }
             if (isImServe) {
                 const placeKey = rawLocation.trim().toLowerCase();
-                if (Object.prototype.hasOwnProperty.call(placeCache, placeKey)) {
-                    vacCoords     = placeCache[placeKey]; // may be null if geocode failed
-                    if (!vacCoords) geocodeFailed = true;
-                } else if (vacOutcode && Object.prototype.hasOwnProperty.call(geoCache, vacOutcode)) {
-                    vacCoords = geoCache[vacOutcode];
-                    if (!vacCoords) geocodeFailed = true;
-                }
+                vacCoords = placeCache[placeKey] || (vacOutcode ? geoCache[vacOutcode] : null) || null;
             }
 
             // Build matched applicants list alongside the count
@@ -557,13 +578,9 @@
                         // Both geocoded — use Haversine distance
                         const d = haversine(vacCoords.lat, vacCoords.lng, appCoords.lat, appCoords.lng);
                         if (d <= 20) { isMatch = true; distMiles = Math.round(d * 10) / 10; }
-                    } else if (!geocodeFailed && !vacCoords) {
-                        // Geocoding still in progress — skip (will re-render when done)
-                        isMatch = false;
-                    } else {
-                        // Geocoding failed for this location — skip (no reliable fallback for place names)
-                        isMatch = false;
                     }
+                    // If either side has no coords, skip — geocoding is still in progress
+                    // and scheduleRender will re-render once it completes
                 } else {
                     const appArea = getPostcodeArea(app.personalDetails?.postcode);
                     if (appArea === vacArea && vacArea !== '') isMatch = true;
