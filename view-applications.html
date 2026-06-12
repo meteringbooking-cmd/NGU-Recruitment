@@ -129,6 +129,33 @@
         .src-email     { background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.4); color: #a78bfa; }
         .src-teamhrs   { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: #fcd34d; }
         .src-manual    { background: rgba(139,154,174,0.1); border: 1px solid rgba(139,154,174,0.3); color: #8B9AAE; }
+
+        /* Search bar */
+        .search-wrap {
+            padding: 0.75rem 1.5rem 0;
+        }
+        .search-input-row {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--bg-input); border: 1px solid var(--border);
+            border-radius: 8px; padding: 0 10px;
+            transition: border-color 0.2s;
+        }
+        .search-input-row:focus-within { border-color: var(--accent); }
+        .search-input-row svg { color: var(--text-muted); flex-shrink: 0; }
+        .search-input-row input {
+            flex: 1; background: none; border: none; outline: none;
+            color: var(--text-light); font-family: inherit;
+            font-size: 0.88rem; padding: 0.6rem 0;
+        }
+        .search-input-row input::placeholder { color: var(--text-muted); }
+        .search-clear {
+            background: none; border: none; color: var(--text-muted);
+            cursor: pointer; padding: 2px; display: none;
+            line-height: 1; font-size: 1rem;
+            transition: color 0.15s;
+        }
+        .search-clear:hover { color: var(--text-light); }
+        .search-clear.visible { display: block; }
     </style>
 </head>
 <body>
@@ -172,6 +199,14 @@
             <button id="tabArchived" class="tab-btn" onclick="switchTab('archived')">Archived</button>
         </div>
         
+        <div class="search-wrap">
+            <div class="search-input-row">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                <input type="text" id="nameSearch" placeholder="Search by name…" autocomplete="off">
+                <button class="search-clear" id="searchClear" onclick="clearSearch()" title="Clear">&#x2715;</button>
+            </div>
+        </div>
+
         <div class="filter-container">
             <label class="filter-label">
                 <input type="checkbox" id="filterMatchesToggle">
@@ -223,6 +258,7 @@
     let interviewsData = []; 
     let liveVacancies = [];
     let showOnlyMatches = false;
+    let searchQuery = '';
     let selectedAppId = null; 
     let currentTab = 'active';
 
@@ -271,6 +307,19 @@
         showOnlyMatches = e.target.checked;
         renderSidebar(); 
     });
+
+    document.getElementById('nameSearch').addEventListener('input', (e) => {
+        searchQuery = e.target.value.trim().toLowerCase();
+        document.getElementById('searchClear').classList.toggle('visible', searchQuery.length > 0);
+        renderSidebar();
+    });
+
+    window.clearSearch = function() {
+        document.getElementById('nameSearch').value = '';
+        searchQuery = '';
+        document.getElementById('searchClear').classList.remove('visible');
+        renderSidebar();
+    };
 
     window.switchTab = function(tab) {
         currentTab = tab;
@@ -694,6 +743,13 @@
 
         // Silently drop junk applications from all views
         let filteredApps = applicationsData.filter(app => !isJunkApp(app));
+
+        // Name search filter
+        if (searchQuery) {
+            filteredApps = filteredApps.filter(app =>
+                (app.fullName || '').toLowerCase().includes(searchQuery)
+            );
+        }
 
         if (showOnlyMatches) {
             filteredApps = filteredApps.filter(app => isAreaMatch(app.position, app.personalDetails?.postcode));
