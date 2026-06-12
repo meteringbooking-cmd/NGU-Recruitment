@@ -1107,7 +1107,7 @@
 
     // ── GEOCODE CACHES ──
     const geoCache   = {};  // outcode  -> { lat, lng } | null
-    const placeCache = {};  // placename -> { lat, lng } | null
+    const placeCache = {};  // place names (postcodes.io /places)
 
     async function batchGeocode(outcodes) {
         const needed = [...new Set(outcodes)].filter(o => o && !Object.prototype.hasOwnProperty.call(geoCache, o));
@@ -1122,25 +1122,34 @@
         }));
     }
 
+    // Geocode a free-text UK place name via postcodes.io /places
+    // (CORS-friendly, no rate limits, UK-specific — replaces Nominatim)
     async function geocodePlace(name) {
         const key = name.trim().toLowerCase();
         if (!key) return null;
         if (Object.prototype.hasOwnProperty.call(placeCache, key)) return placeCache[key];
-        placeCache[key] = null;
-        try {
-            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name + ', UK')}&format=json&limit=1&countrycodes=gb`;
-            const r = await fetch(url, { headers: { 'User-Agent': 'NGU-RecruitmentPortal/1.0' } });
-            const j = await r.json();
-            if (j.length > 0) { placeCache[key] = { lat: parseFloat(j[0].lat), lng: parseFloat(j[0].lon) }; }
-            else {
-                const last = name.trim().split(/\s+/).pop();
-                if (last && last.toLowerCase() !== key) {
-                    const r2 = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(last + ', UK')}&format=json&limit=1&countrycodes=gb`, { headers: { 'User-Agent': 'NGU-RecruitmentPortal/1.0' } });
-                    const j2 = await r2.json();
-                    if (j2.length > 0) placeCache[key] = { lat: parseFloat(j2[0].lat), lng: parseFloat(j2[0].lon) };
+        placeCache[key] = null; // mark in-flight
+
+        const tryPlace = async (q) => {
+            try {
+                const r = await fetch(`https://api.postcodes.io/places?q=${encodeURIComponent(q)}&limit=1`);
+                const j = await r.json();
+                if (j.status === 200 && j.result && j.result.length > 0) {
+                    return { lat: j.result[0].latitude, lng: j.result[0].longitude };
                 }
+            } catch(e) {}
+            return null;
+        };
+
+        let coords = await tryPlace(name.trim());
+        if (!coords) {
+            // Fallback: try just the last word (e.g. "North London" -> "London")
+            const lastWord = name.trim().split(/\s+/).pop();
+            if (lastWord && lastWord.toLowerCase() !== key) {
+                coords = await tryPlace(lastWord);
             }
-        } catch(e) {}
+        }
+        placeCache[key] = coords;
         return placeCache[key];
     }
 
