@@ -268,38 +268,90 @@
         return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
-    // --- GEOCODE CACHE & BATCH LOOKUP ---
-    // Stores outcode -> { lat, lng } or null (meaning looked up but failed)
-    const geoCache = {};
+    // --- GEOCODE CACHE & BATCH LOOKUP (outcodes via postcodes.io) ---
+    // Stores outcode -> { lat, lng } or null
+    const geoCache   = {};  // postcode outcodes
+    const placeCache = {};  // place names (Nominatim)
 
     async function batchGeocode(outcodes) {
         const needed = [...new Set(outcodes)].filter(o => o && !Object.prototype.hasOwnProperty.call(geoCache, o));
         if (!needed.length) return;
-        // Mark as pending so we don't re-request while in-flight
         needed.forEach(o => { geoCache[o] = null; });
-        // postcodes.io /outcodes endpoint (one at a time — no bulk for outcodes)
         await Promise.all(needed.map(async outcode => {
             try {
-                const res = await fetch(`https://api.postcodes.io/outcodes/${encodeURIComponent(outcode)}`);
+                const res  = await fetch(`https://api.postcodes.io/outcodes/${encodeURIComponent(outcode)}`);
                 const json = await res.json();
                 if (json.status === 200 && json.result) {
                     geoCache[outcode] = { lat: json.result.latitude, lng: json.result.longitude };
                 }
-            } catch(e) { /* leave as null */ }
+            } catch(e) {}
         }));
     }
 
-    // Collect all outcodes from Energise vacancies + all applicants, geocode, then render
+    // Geocode a free-text UK place name via Nominatim (OpenStreetMap)
+    async function geocodePlace(name) {
+        const key = name.trim().toLowerCase();
+        if (!key) return null;
+        if (Object.prototype.hasOwnProperty.call(placeCache, key)) return placeCache[key];
+        placeCache[key] = null; // mark in-flight
+        try {
+            const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name + ', UK')}&format=json&limit=1&countrycodes=gb`;
+            const res  = await fetch(url, { headers: { 'User-Agent': 'NGU-RecruitmentPortal/1.0' } });
+            const json = await res.json();
+            if (json.length > 0) {
+                placeCache[key] = { lat: parseFloat(json[0].lat), lng: parseFloat(json[0].lon) };
+            } else {
+                // Try first word only as a fallback (e.g. "North London" -> "London")
+                const firstWord = name.trim().split(/\s+/).pop(); // last word often more specific
+                if (firstWord && firstWord.toLowerCase() !== key) {
+                    const url2 = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(firstWord + ', UK')}&format=json&limit=1&countrycodes=gb`;
+                    const res2  = await fetch(url2, { headers: { 'User-Agent': 'NGU-RecruitmentPortal/1.0' } });
+                    const json2 = await res2.json();
+                    if (json2.length > 0) {
+                        placeCache[key] = { lat: parseFloat(json2[0].lat), lng: parseFloat(json2[0].lon) };
+                    }
+                }
+            }
+        } catch(e) {}
+        return placeCache[key];
+    }
+
+    // Unified geocoder: returns { lat, lng } or null
+    // - If the string looks like a postcode outcode (NE8, SW1A, M1…) -> postcodes.io
+    // - Otherwise -> Nominatim place-name lookup
+    async function geocodeLocation(str) {
+        if (!str) return null;
+        const outcode = getOutcode(str.trim());
+        if (outcode) {
+            if (!Object.prototype.hasOwnProperty.call(geoCache, outcode)) await batchGeocode([outcode]);
+            return geoCache[outcode];
+        }
+        return geocodePlace(str.trim());
+    }
+
+    // Geocode all locations needed for Energise (outcode) + ImServe (place name) + all applicants, then render
     async function geocodeAndRender() {
-        const energiseVacLocations = activeVacancies
-            .filter(v => (v.requestInformation?.contract || '') === 'Energise')
-            .map(v => getOutcode(v.requestInformation?.location || ''));
+        const distanceContracts = ['Energise', 'ImServe'];
 
+        // Vacancy location strings for distance-based contracts
+        const vacLocationTasks = activeVacancies
+            .filter(v => distanceContracts.includes(v.requestInformation?.contract || ''))
+            .map(v => v.requestInformation?.location || '')
+            .filter(Boolean);
+
+        // Applicant postcodes (for all distance-based lookups)
         const appOutcodes = allApplications
-            .map(a => getOutcode(a.personalDetails?.postcode || ''));
+            .map(a => getOutcode(a.personalDetails?.postcode || ''))
+            .filter(Boolean);
 
-        const all = [...energiseVacLocations, ...appOutcodes].filter(Boolean);
-        if (all.length) await batchGeocode(all);
+        // Geocode applicant outcodes (bulk via postcodes.io)
+        if (appOutcodes.length) await batchGeocode([...new Set(appOutcodes)]);
+
+        // Geocode each vacancy location (place name or outcode) sequentially to respect Nominatim rate limits
+        for (const loc of [...new Set(vacLocationTasks)]) {
+            await geocodeLocation(loc);
+        }
+
         renderGrid();
     }
 
@@ -386,21 +438,32 @@
             const contract    = vacancy.requestInformation?.contract || '';
             
             // Format for safe matching
-            const safeVacPos  = rawJobTitle.trim().toLowerCase();
-            const vacArea     = getPostcodeArea(locationStr);
-            const vacOutcode  = getOutcode(locationStr);
-            const isEnergise  = contract === 'Energise';
-            let matchCount    = 0;
+            const safeVacPos   = rawJobTitle.trim().toLowerCase();
+            const vacArea      = getPostcodeArea(locationStr);
+            const vacOutcode   = getOutcode(locationStr);
+            const isEnergise   = contract === 'Energise';
+            const isImServe    = contract === 'ImServe';
+            const useDistance  = isEnergise || isImServe;
+            let matchCount     = 0;
+
+            // Resolve vacancy coords (outcode for Energise, place name for ImServe)
+            let vacCoords = null;
+            if (isEnergise && vacOutcode)  vacCoords = geoCache[vacOutcode] || null;
+            if (isImServe) {
+                const placeKey = locationStr.trim().toLowerCase();
+                vacCoords = placeCache[placeKey] ||
+                            (vacOutcode ? geoCache[vacOutcode] : null) ||
+                            null;
+            }
 
             allApplications.forEach(app => {
                 const safeAppPos = (app.position || '').trim().toLowerCase();
                 if (safeAppPos !== safeVacPos) return; // position must match
 
-                if (isEnergise) {
-                    // 20-mile radius match using geocoded outcode coordinates
-                    const vacCoords = vacOutcode ? geoCache[vacOutcode] : null;
+                if (useDistance) {
+                    // Distance-based match (20-mile radius)
                     const appOutcode = getOutcode(app.personalDetails?.postcode || '');
-                    const appCoords = appOutcode ? geoCache[appOutcode] : null;
+                    const appCoords  = appOutcode ? geoCache[appOutcode] : null;
 
                     if (vacCoords && appCoords) {
                         if (haversine(vacCoords.lat, vacCoords.lng, appCoords.lat, appCoords.lng) <= 20) {
@@ -412,13 +475,13 @@
                         if (appArea === vacArea && vacArea !== '') matchCount++;
                     }
                 } else {
-                    // All other contracts: prefix area match
+                    // SureServe / Callisen: prefix area match
                     const appArea = getPostcodeArea(app.personalDetails?.postcode);
                     if (appArea === vacArea && vacArea !== '') matchCount++;
                 }
             });
 
-            const matchLabel = isEnergise ? 'within 20 mi' : 'Area Match';
+            const matchLabel = useDistance ? 'within 20 mi' : 'Area Match';
 
             const dateApproved = vacancy.finalOutcome?.dateApproved || vacancy.approvalSignOff?.finalApprover?.date;
             const desiredStart = vacancy.recruitmentRequirements?.desiredStartDate;
