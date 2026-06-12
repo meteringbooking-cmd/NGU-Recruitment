@@ -426,6 +426,14 @@
         .pill-denied   { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--red); }
         .pill-live     { background: var(--green-dim);  border: 1px solid rgba(16,185,129,0.3); color: var(--green); font-size: 0.6rem; }
 
+        /* Contract chip in vacancies panel */
+        .contract-chip {
+            font-size: 0.6rem; font-weight: 700;
+            padding: 2px 7px; border-radius: 4px;
+            background: rgba(0,163,224,0.1); border: 1px solid rgba(0,163,224,0.25);
+            color: var(--accent); white-space: nowrap; flex-shrink: 0;
+        }
+
         .empty-msg {
             text-align: center;
             padding: 30px 16px;
@@ -816,6 +824,7 @@
             const title    = safe(v.requestInformation?.jobTitle, 'Untitled Role');
             const location = safe(v.requestInformation?.location, 'TBC');
             const dept     = v.requestInformation?.department || '';
+            const contract = v.requestInformation?.contract || '';
             const dateApp  = v.approvalSignOff?.finalApprover?.date;
 
             const row = document.createElement('div');
@@ -826,6 +835,7 @@
                     <div class="row-name">${title}</div>
                     <div class="row-meta"><b>${location}</b>${dept ? ' · ' + dept : ''}${dateApp ? ' · ' + formatDate(dateApp) : ''}</div>
                 </div>
+                ${contract ? `<span class="contract-chip">${contract}</span>` : ''}
                 <span class="pill pill-live">Live</span>
             `;
             listEl.appendChild(row);
