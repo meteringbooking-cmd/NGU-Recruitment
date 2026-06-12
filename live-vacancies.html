@@ -37,21 +37,26 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        body {
+        html, body {
+            height: 100%; overflow: hidden;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--body-bg);
             color: var(--primary-text);
             line-height: 1.6;
-            padding: 20px;
         }
 
-        .main-container { max-width: 1200px; margin: 0 auto; }
+        .main-container {
+            display: flex; flex-direction: column;
+            height: 100vh; padding: 16px 20px;
+            gap: 14px; overflow: hidden;
+        }
 
         .page-header {
-            background-color: var(--container-bg); padding: 20px 30px; border-radius: 12px;
-            border: 1px solid var(--panel-border); margin-bottom: 30px; display: flex;
-            justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            flex-wrap: wrap; gap: 15px;
+            background-color: var(--container-bg); padding: 14px 22px; border-radius: 12px;
+            border: 1px solid var(--panel-border); display: flex;
+            justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            flex-wrap: wrap; gap: 12px; flex-shrink: 0;
         }
 
         .header-brand-container { display: flex; align-items: center; gap: 20px; }
@@ -72,7 +77,11 @@
             border-radius: 8px; border: 1px solid var(--panel-border); max-width: 800px; margin: 0 auto;
         }
 
-        .vacancy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
+        .vacancy-scroll { flex: 1; overflow-y: auto; min-height: 0; }
+        .vacancy-scroll::-webkit-scrollbar { width: 4px; }
+        .vacancy-scroll::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 2px; }
+
+        .vacancy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; padding: 4px 2px; }
 
         .vacancy-card {
             background-color: var(--container-bg); border: 1px solid var(--panel-border); border-top: 4px solid var(--success-color);
@@ -119,6 +128,25 @@
             .vacancy-grid { grid-template-columns: 1fr; }
         }
 
+        /* Contract filter pills */
+        .filter-pills {
+            display: flex; align-items: center; gap: 7px; flex-wrap: wrap;
+        }
+        .filter-pill {
+            padding: 5px 14px; border-radius: 20px; border: 1px solid var(--panel-border);
+            background: var(--input-bg); color: var(--secondary-text);
+            font-size: 0.78em; font-weight: 700; cursor: pointer;
+            transition: all 0.18s; white-space: nowrap;
+            text-transform: uppercase; letter-spacing: 0.06em;
+        }
+        .filter-pill:hover { border-color: #4f5b66; color: var(--primary-text); }
+        .filter-pill.active { color: #fff; border-color: transparent; }
+        .filter-pill[data-contract="all"].active   { background: #334155; border-color: #475569; color: var(--primary-text); }
+        .filter-pill[data-contract="Energise"].active  { background: rgba(16,185,129,0.18); border-color: rgba(16,185,129,0.45); color: #6ee7b7; }
+        .filter-pill[data-contract="SureServe"].active { background: rgba(0,212,255,0.12); border-color: rgba(0,212,255,0.4); color: var(--accent-color); }
+        .filter-pill[data-contract="Callisen"].active  { background: rgba(139,92,246,0.15); border-color: rgba(139,92,246,0.45); color: #a78bfa; }
+        .filter-pill[data-contract="ImServe"].active   { background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.45); color: #fcd34d; }
+
         .contract-pill {
             display: inline-flex; align-items: center; gap: 6px;
             background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3);
@@ -155,11 +183,20 @@
                 <h1>Live Vacancies Board</h1>
             </div>
         </div>
+        <div class="filter-pills" id="filterPills">
+            <button class="filter-pill active" data-contract="all" onclick="setFilter('all')">All</button>
+            <button class="filter-pill" data-contract="Energise"  onclick="setFilter('Energise')">Energise</button>
+            <button class="filter-pill" data-contract="SureServe" onclick="setFilter('SureServe')">SureServe</button>
+            <button class="filter-pill" data-contract="Callisen"  onclick="setFilter('Callisen')">Callisen</button>
+            <button class="filter-pill" data-contract="ImServe"   onclick="setFilter('ImServe')">ImServe</button>
+        </div>
     </header>
 
-    <div id="status-message">⏳ Loading live vacancies...</div>
-    
-    <div id="vacancy-grid" class="vacancy-grid" style="display: none;"></div>
+    <div id="status-message" style="display:none; text-align:center; padding:40px; color:var(--secondary-text); background-color:var(--container-bg); border-radius:8px; border:1px solid var(--panel-border);">&#8987; Loading live vacancies...</div>
+
+    <div class="vacancy-scroll" id="vacancyScroll">
+        <div id="vacancy-grid" class="vacancy-grid" style="display: none;"></div>
+    </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
@@ -186,6 +223,16 @@
 
     let activeVacancies = [];
     let allApplications = [];
+    let activeContractFilter = 'all';
+
+    window.setFilter = function(contract) {
+        activeContractFilter = contract;
+        // Update pill active states
+        document.querySelectorAll('.filter-pill').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.contract === contract);
+        });
+        renderGrid();
+    };
 
     const safeStr = (val) => val || 'Not specified';
     const formatDate = (dateString) => {
@@ -248,8 +295,22 @@
     function renderGrid() {
         gridContainer.innerHTML = '';
 
+        // Apply contract filter
+        const filtered = activeContractFilter === 'all'
+            ? activeVacancies
+            : activeVacancies.filter(v =>
+                (v.requestInformation?.contract || '') === activeContractFilter
+              );
+
         if (activeVacancies.length === 0) {
-            statusMsg.textContent = "No fully approved live vacancies found.";
+            statusMsg.textContent = 'No fully approved live vacancies found.';
+            statusMsg.style.display = 'block';
+            gridContainer.style.display = 'none';
+            return;
+        }
+
+        if (filtered.length === 0) {
+            statusMsg.textContent = `No live vacancies for ${activeContractFilter}.`;
             statusMsg.style.display = 'block';
             gridContainer.style.display = 'none';
             return;
@@ -258,7 +319,7 @@
         statusMsg.style.display = 'none';
         gridContainer.style.display = 'grid';
 
-        activeVacancies.forEach(vacancy => {
+        filtered.forEach(vacancy => {
             const rawJobTitle = vacancy.requestInformation?.jobTitle || '';
             const dept        = safeStr(vacancy.requestInformation?.department);
             const locationStr = safeStr(vacancy.requestInformation?.location);
