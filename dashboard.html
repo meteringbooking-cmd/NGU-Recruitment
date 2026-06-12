@@ -537,6 +537,82 @@
             color: var(--amber);
             flex-shrink: 0;
         }
+
+        /* ── CONTRACT BREAKDOWN BAR ── */
+        .contract-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        .cb-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 11px 14px 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+        .cb-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 2px;
+        }
+        .cb-card.c-energise  { border-color: rgba(16,185,129,0.2); }  .cb-card.c-energise::after  { background: var(--green); }
+        .cb-card.c-sureserve { border-color: rgba(0,163,224,0.2); }   .cb-card.c-sureserve::after { background: var(--accent); }
+        .cb-card.c-callisen  { border-color: rgba(139,92,246,0.2); }  .cb-card.c-callisen::after  { background: #8B5CF6; }
+        .cb-card.c-imserve   { border-color: rgba(245,158,11,0.2); }  .cb-card.c-imserve::after   { background: var(--amber); }
+        .cb-icon {
+            font-size: 1.4rem; flex-shrink: 0;
+            width: 36px; height: 36px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px;
+        }
+        .c-energise  .cb-icon { background: var(--green-dim);  }
+        .c-sureserve .cb-icon { background: var(--accent-dim); }
+        .c-callisen  .cb-icon { background: rgba(139,92,246,0.1); }
+        .c-imserve   .cb-icon { background: var(--amber-dim);  }
+        .cb-info { min-width: 0; flex: 1; }
+        .cb-name {
+            font-size: 0.65rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.12em;
+            color: var(--muted); margin-bottom: 2px;
+        }
+        .cb-nums { display: flex; align-items: baseline; gap: 6px; }
+        .cb-vac {
+            font-family: 'DM Mono', monospace;
+            font-size: 1.4rem; font-weight: 800; line-height: 1;
+        }
+        .c-energise  .cb-vac { color: var(--green);  }
+        .c-sureserve .cb-vac { color: var(--accent); }
+        .c-callisen  .cb-vac { color: #8B5CF6; }
+        .c-imserve   .cb-vac { color: var(--amber);  }
+        .cb-vac-label { font-size: 0.62rem; color: var(--muted); }
+        .cb-match {
+            font-size: 0.62rem; font-weight: 700;
+            padding: 1px 6px; border-radius: 4px;
+            white-space: nowrap; flex-shrink: 0;
+        }
+        .c-energise  .cb-match { background: var(--green-dim);  border: 1px solid rgba(16,185,129,0.3); color: var(--green);  }
+        .c-sureserve .cb-match { background: var(--accent-dim); border: 1px solid rgba(0,163,224,0.3);  color: var(--accent); }
+        .c-callisen  .cb-match { background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); color: #a78bfa; }
+        .c-imserve   .cb-match { background: var(--amber-dim);  border: 1px solid rgba(245,158,11,0.3); color: var(--amber);  }
+
+        /* ── AREA MATCH TAG in pipeline ── */
+        .match-tag {
+            display: inline-block;
+            font-size: 0.58rem; font-weight: 700;
+            padding: 1px 5px; border-radius: 3px;
+            background: rgba(16,185,129,0.12);
+            border: 1px solid rgba(16,185,129,0.35);
+            color: #6ee7b7;
+            vertical-align: middle; margin-left: 5px;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -610,6 +686,42 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- CONTRACT BREAKDOWN BAR -->
+    <div class="contract-bar" id="contract-bar">
+        <div class="cb-card c-energise">
+            <div class="cb-icon">⚡</div>
+            <div class="cb-info">
+                <div class="cb-name">Energise</div>
+                <div class="cb-nums"><span class="cb-vac" id="cb-vac-energise">—</span><span class="cb-vac-label">vacancies</span></div>
+            </div>
+            <span class="cb-match" id="cb-match-energise">— matches</span>
+        </div>
+        <div class="cb-card c-sureserve">
+            <div class="cb-icon">🛡️</div>
+            <div class="cb-info">
+                <div class="cb-name">SureServe</div>
+                <div class="cb-nums"><span class="cb-vac" id="cb-vac-sureserve">—</span><span class="cb-vac-label">vacancies</span></div>
+            </div>
+            <span class="cb-match" id="cb-match-sureserve">— matches</span>
+        </div>
+        <div class="cb-card c-callisen">
+            <div class="cb-icon">📡</div>
+            <div class="cb-info">
+                <div class="cb-name">Callisen</div>
+                <div class="cb-nums"><span class="cb-vac" id="cb-vac-callisen">—</span><span class="cb-vac-label">vacancies</span></div>
+            </div>
+            <span class="cb-match" id="cb-match-callisen">— matches</span>
+        </div>
+        <div class="cb-card c-imserve">
+            <div class="cb-icon">🔧</div>
+            <div class="cb-info">
+                <div class="cb-name">ImServe</div>
+                <div class="cb-nums"><span class="cb-vac" id="cb-vac-imserve">—</span><span class="cb-vac-label">vacancies</span></div>
+            </div>
+            <span class="cb-match" id="cb-match-imserve">— matches</span>
+        </div>
     </div>
 
     <!-- PANELS ROW -->
@@ -698,10 +810,32 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Shared interviews cache — loaded once, used by applications renderer
-    let interviewsCache = [];
+    // Shared caches
+    let interviewsCache    = [];
+    let liveVacanciesCache = [];   // kept in sync by vacancy snapshot
+    let cleanAppsCache     = [];   // kept in sync by applications snapshot
 
     const safe = (v, fallback = 'Unknown') => v || fallback;
+
+    // ── POSTCODE AREA EXTRACTOR ──
+    function getPostcodeArea(str) {
+        if (!str || typeof str !== 'string') return '';
+        const m = str.trim().match(/^[a-zA-Z]+/);
+        return m ? m[0].toUpperCase() : '';
+    }
+
+    // ── AREA MATCH CHECK ──
+    // Returns true if applicant's position + postcode area matches any live vacancy
+    function isAreaMatch(app) {
+        const appArea = getPostcodeArea(app.personalDetails?.postcode || '');
+        const appPos  = (app.position || '').trim().toLowerCase();
+        if (!appArea || !appPos) return false;
+        return liveVacanciesCache.some(v => {
+            const vacArea = getPostcodeArea(v.requestInformation?.location || '');
+            const vacPos  = (v.requestInformation?.jobTitle || '').trim().toLowerCase();
+            return vacArea === appArea && vacPos === appPos;
+        });
+    }
 
     function formatDate(timestamp) {
         if (!timestamp) return '—';
@@ -812,6 +946,10 @@
             }
         });
 
+        liveVacanciesCache = live;   // keep cache updated
+        renderContractBar();         // refresh breakdown bar
+        if (lastAppsSnapshot) renderApplications(lastAppsSnapshot); // refresh match tags
+
         animateCount(document.getElementById('stat-vacancies'), live.length);
         document.getElementById('vac-count-badge').textContent = `${live.length} open`;
 
@@ -901,6 +1039,10 @@
         // Filter out junk phone numbers
         const clean = all.filter(a => !isJunk(a));
 
+        // Keep a clean copy for the contract bar to use for match counting
+        cleanAppsCache = clean;
+        renderContractBar();
+
         // Render agency leaderboard using the full clean set (all-time, not just active)
         renderAgencies(clean);
 
@@ -932,7 +1074,6 @@
             return;
         }
 
-        // Sort: stage-decision first, then stage-reviewing, then stage-namecheck, then interview, then new
         const stageOrder = { 'stage-decision': 0, 'stage-reviewing': 1, 'stage-namecheck': 2, 'stage-interview': 3, 'stage-new': 4 };
         active.sort((a, b) => {
             const sa = resolveStage(a, interviewsCache).cssClass;
@@ -944,6 +1085,7 @@
             const stage = resolveStage(a, interviewsCache);
             const wt    = waitTime(a.submittedAt);
             const postcode = a.personalDetails?.postcode || '';
+            const matched  = isAreaMatch(a);
 
             const row = document.createElement('div');
             row.className = 'app-row';
@@ -952,7 +1094,7 @@
             row.style.animationDelay = `${i * 0.025}s`;
             row.innerHTML = `
                 <div class="app-row-info">
-                    <div class="app-row-name">${safe(a.fullName, 'Unnamed Applicant')}${a.recruitmentAgency?.isAgency ? `<span class="agency-tag">🏢 ${a.recruitmentAgency.agencyName || 'Agency'}</span>` : ''}${getSourceTag(a)}</div>
+                    <div class="app-row-name">${safe(a.fullName, 'Unnamed Applicant')}${a.recruitmentAgency?.isAgency ? `<span class="agency-tag">🏢 ${a.recruitmentAgency.agencyName || 'Agency'}</span>` : ''}${getSourceTag(a)}${matched ? '<span class="match-tag">📍 Match</span>' : ''}</div>
                     <div class="app-row-meta"><b>${safe(a.position, 'No role')}</b>${postcode ? ' · ' + postcode : ''} · ${formatDate(a.submittedAt)}</div>
                 </div>
                 <span class="stage-badge ${stage.cssClass}"><span class="dot"></span>${stage.label}</span>
@@ -964,12 +1106,31 @@
         updateTimestamp();
     }
 
-    // ── 5. RECRUITMENT AGENCIES ───────────────────────────────
-    // Rendered whenever the applications snapshot updates — re-uses the same snapshot.
-    function renderAgencies(allApps) {
-        // Build a map: agencyName -> { total, active }
-        const agencyMap = new Map();
+    function renderContractBar() {
+        const contracts = ['Energise', 'SureServe', 'Callisen', 'ImServe'];
+        contracts.forEach(name => {
+            const key = name.toLowerCase();
+            const vacancies = liveVacanciesCache.filter(v => (v.requestInformation?.contract || '').toLowerCase() === key);
+            const matchCount = cleanAppsCache.filter(app => {
+                const appArea = getPostcodeArea(app.personalDetails?.postcode || '');
+                const appPos  = (app.position || '').trim().toLowerCase();
+                if (!appArea || !appPos) return false;
+                return vacancies.some(v => {
+                    const vacArea = getPostcodeArea(v.requestInformation?.location || '');
+                    const vacPos  = (v.requestInformation?.jobTitle || '').trim().toLowerCase();
+                    return vacArea === appArea && vacPos === appPos;
+                });
+            }).length;
+            const vacEl   = document.getElementById(`cb-vac-${key}`);
+            const matchEl = document.getElementById(`cb-match-${key}`);
+            if (vacEl)   vacEl.textContent   = vacancies.length;
+            if (matchEl) matchEl.textContent = `${matchCount} match${matchCount !== 1 ? 'es' : ''}`;
+        });
+    }
 
+    // ── 5. RECRUITMENT AGENCIES ───────────────────────────────
+    function renderAgencies(allApps) {
+        const agencyMap = new Map();
         allApps.forEach(a => {
             if (!a.recruitmentAgency?.isAgency) return;
             const name = (a.recruitmentAgency.agencyName || 'Unknown Agency').trim();
