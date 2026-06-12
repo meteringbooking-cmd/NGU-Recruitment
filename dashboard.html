@@ -450,6 +450,24 @@
             white-space: nowrap;
         }
 
+        /* ── SOURCE PLATFORM TAG (inline in pipeline) ── */
+        .src-tag {
+            display: inline-block;
+            font-size: 0.58rem;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 3px;
+            vertical-align: middle;
+            margin-left: 4px;
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+        .src-tag-linkedin { background: rgba(10,102,194,0.15); border: 1px solid rgba(10,102,194,0.35); color: #60a5fa; }
+        .src-tag-referral { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.35); color: #6ee7b7; }
+        .src-tag-email    { background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.35); color: #a78bfa; }
+        .src-tag-teamhrs  { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.35); color: #fcd34d; }
+        .src-tag-manual   { background: rgba(139,154,174,0.08); border: 1px solid rgba(139,154,174,0.25); color: #8B9AAE; }
+
         /* ── AGENCY LEADERBOARD ROWS ── */
         .agency-row {
             display: flex;
@@ -699,9 +717,23 @@
 
     // ── JUNK FILTER (mirrors view-applications logic) ─────────
     function isJunk(app) {
+        if (app.manualEntry) return false; // manually added — always valid
         const phone = (app.personalDetails?.phone || '').trim().replace(/\s+/g, '');
         if (!phone) return true;
         return !phone.match(/^(\+44|07|01|02)/);
+    }
+
+    // ── SOURCE TAG HELPER ──────────────────────────────────────
+    const SRC = {
+        linkedin: { icon: '💼', label: 'LinkedIn', cls: 'src-tag-linkedin' },
+        referral: { icon: '🤝', label: 'Referral', cls: 'src-tag-referral' },
+        email:    { icon: '✉️',  label: 'Email',   cls: 'src-tag-email'    },
+        teamhrs:  { icon: '👥', label: 'Team HRS',cls: 'src-tag-teamhrs' },
+    };
+    function getSourceTag(app) {
+        if (!app.manualEntry) return '';
+        const m = SRC[app.source] || { icon: '📋', label: 'Manual', cls: 'src-tag-manual' };
+        return `<span class="src-tag ${m.cls}">${m.icon} ${m.label}</span>`;
     }
 
     // ── STAGE RESOLVER ────────────────────────────────────────
@@ -897,7 +929,7 @@
             row.style.animationDelay = `${i * 0.025}s`;
             row.innerHTML = `
                 <div class="app-row-info">
-                    <div class="app-row-name">${safe(a.fullName, 'Unnamed Applicant')}${a.recruitmentAgency?.isAgency ? `<span class="agency-tag">🏢 ${a.recruitmentAgency.agencyName || 'Agency'}</span>` : ''}</div>
+                    <div class="app-row-name">${safe(a.fullName, 'Unnamed Applicant')}${a.recruitmentAgency?.isAgency ? `<span class="agency-tag">🏢 ${a.recruitmentAgency.agencyName || 'Agency'}</span>` : ''}${getSourceTag(a)}</div>
                     <div class="app-row-meta"><b>${safe(a.position, 'No role')}</b>${postcode ? ' · ' + postcode : ''} · ${formatDate(a.submittedAt)}</div>
                 </div>
                 <span class="stage-badge ${stage.cssClass}"><span class="dot"></span>${stage.label}</span>
