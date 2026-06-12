@@ -126,6 +126,22 @@
             padding: 3px 10px; border-radius: 20px; margin-top: 8px;
             text-transform: uppercase; letter-spacing: 0.06em;
         }
+
+        /* Inline contract editor — sits in card body */
+        .contract-edit-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            background-color: var(--input-bg); padding: 10px 15px;
+            border-radius: 6px; border: 1px solid var(--panel-border);
+        }
+        .contract-edit-row select {
+            flex: 1; padding: 6px 10px; background: var(--input-bg);
+            border: 1px solid rgba(0,212,255,0.35); border-radius: 5px;
+            color: var(--accent-color); font-size: 0.9em; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .contract-edit-row select:focus { outline: none; border-color: var(--accent-color); }
+        .contract-edit-row select option { background: #2d3d50; color: var(--primary-text); font-weight: normal; }
     </style>
 </head>
 <body>
@@ -311,9 +327,18 @@
                             <label>Desired Location</label>
                             <div class="value">${locationStr}</div>
                         </div>
-                        <div class="info-block">
+                        <div class="info-block full-width">
                             <label>Contract</label>
-                            <div class="value">${contract || 'Not specified'}</div>
+                            <div class="contract-edit-row">
+                                <select id="contract-sel-${vacancy.id}" onchange="updateContract(this, '${vacancy.id}')">
+                                    <option value="">— Not set —</option>
+                                    <option value="Energise"  ${contract === 'Energise'  ? 'selected' : ''}>Energise</option>
+                                    <option value="SureServe" ${contract === 'SureServe' ? 'selected' : ''}>SureServe</option>
+                                    <option value="Callisen"  ${contract === 'Callisen'  ? 'selected' : ''}>Callisen</option>
+                                    <option value="ImServe"   ${contract === 'ImServe'   ? 'selected' : ''}>ImServe</option>
+                                </select>
+                                <span class="saving-indicator" id="save-ind-contract-${vacancy.id}">Saved ✓</span>
+                            </div>
                         </div>
                         <div class="info-block">
                             <label>Date Approved</label>
@@ -350,6 +375,31 @@
         } catch (error) {
             indicator.textContent = 'Error!'; indicator.style.color = 'var(--danger-color)';
             checkboxElement.checked = !isChecked; setTimeout(() => { indicator.classList.remove('show'); indicator.style.color = 'var(--accent-color)'; }, 3000);
+        }
+    }
+
+    async function updateContract(selectEl, reqId) {
+        const value     = selectEl.value;
+        const indicator = document.getElementById(`save-ind-contract-${reqId}`);
+        // Also update the pill in the card header
+        const pill = document.querySelector(`#card-${reqId} .contract-pill`);
+
+        indicator.textContent = 'Saving…'; indicator.classList.add('show');
+        try {
+            await db.collection(collectionName).doc(reqId).update({
+                'requestInformation.contract': value
+            });
+            indicator.textContent = 'Saved ✓';
+            // Update pill
+            if (pill) {
+                pill.textContent = value ? `📋 ${value}` : '';
+                pill.style.display = value ? '' : 'none';
+            }
+            setTimeout(() => { indicator.classList.remove('show'); }, 2000);
+        } catch (err) {
+            indicator.textContent = 'Error!';
+            indicator.style.color = 'var(--danger-color)';
+            setTimeout(() => { indicator.classList.remove('show'); indicator.style.color = 'var(--accent-color)'; }, 3000);
         }
     }
 
