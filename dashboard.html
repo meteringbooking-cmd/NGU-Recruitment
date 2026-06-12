@@ -873,6 +873,14 @@
 
 </div>
 
+<!-- EmailJS for daily digest -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+    (function() {
+        emailjs.init('ziLnha91scpGjFABh');
+    })();
+</script>
+
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getFirestore, collection, query, where, orderBy, onSnapshot }
@@ -894,6 +902,183 @@
     let interviewsCache    = [];
     let liveVacanciesCache = [];   // kept in sync by vacancy snapshot
     let cleanAppsCache     = [];   // kept in sync by applications snapshot
+
+    // ══════════════════════════════════════════════════════════════
+    // ── DAILY DIGEST ENGINE ───────────────────────────────────────
+    // Sends a 4pm weekday email summary via EmailJS.
+    // Tracks applicant state transitions throughout the day.
+    // ══════════════════════════════════════════════════════════════
+
+    const DIGEST_SERVICE  = 'service_oib1944';
+    const DIGEST_TEMPLATE = 'template_k4q4jcd';
+    const today = () => new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+    // ── State keys we watch for changes ──
+    function getAppState(app) {
+        return {
+            id:                     app.id,
+            name:                   app.fullName || 'Unknown',
+            position:               app.position || '',
+            reviewCount:            (app.reviews || []).length,
+            nameChecksRequested:    !!app.nameChecksRequested,
+            nameChecksCompleted:    !!app.nameChecksCompleted,
+            interviewDecision:      app.interviewDecision || '',
+            finalDecision:          app.finalRecruitmentDecision || '',
+            status:                 app.status || '',
+        };
+    }
+
+    // ── Human-readable change descriptions ──
+    function describeChanges(prev, curr) {
+        const lines = [];
+        if (curr.reviewCount > prev.reviewCount) {
+            lines.push(`Review ${curr.reviewCount}/2 submitted`);
+        }
+        if (!prev.nameChecksRequested && curr.nameChecksRequested) {
+            lines.push('Name checks requested');
+        }
+        if (!prev.nameChecksCompleted && curr.nameChecksCompleted) {
+            lines.push('Name checks completed — ready for interview invite');
+        }
+        if (prev.interviewDecision !== curr.interviewDecision && curr.interviewDecision) {
+            lines.push(`Interview decision: ${curr.interviewDecision}`);
+        }
+        if (prev.finalDecision !== curr.finalDecision && curr.finalDecision) {
+            lines.push(`Final decision: ${curr.finalDecision}`);
+        }
+        if (prev.status !== curr.status && curr.status) {
+            lines.push(`Status → ${curr.status}`);
+        }
+        return lines;
+    }
+
+    // ── Detect changes against today's opening snapshot ──
+    function detectChanges(apps) {
+        const dateKey      = today();
+        const snapshotKey  = `ngu_snapshot_${dateKey}`;
+        const changesKey   = `ngu_changes_${dateKey}`;
+
+        const currentStates = {};
+        apps.forEach(a => { currentStates[a.id] = getAppState(a); });
+
+        // On first call today, save the opening snapshot
+        let openingSnapshot = JSON.parse(localStorage.getItem(snapshotKey) || 'null');
+        if (!openingSnapshot) {
+            localStorage.setItem(snapshotKey, JSON.stringify(currentStates));
+            return; // nothing to diff yet
+        }
+
+        // Load accumulated changes for today
+        const accChanges = JSON.parse(localStorage.getItem(changesKey) || '[]');
+        const now = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+
+        apps.forEach(a => {
+            const prev = openingSnapshot[a.id];
+            const curr = currentStates[a.id];
+            if (!prev) {
+                // Brand new applicant today
+                accChanges.push({ time: now, name: a.fullName || 'Unknown', detail: `New application received (${a.position || 'Unknown role'})` });
+                return;
+            }
+            const diffs = describeChanges(prev, curr);
+            diffs.forEach(d => {
+                // Avoid duplicate log entries
+                const dup = accChanges.some(c => c.name === curr.name && c.detail === d);
+                if (!dup) accChanges.push({ time: now, name: curr.name, detail: d });
+            });
+        });
+
+        localStorage.setItem(changesKey, JSON.stringify(accChanges));
+    }
+
+    // ── Build and send the digest email ──
+    async function sendDailyDigest() {
+        const dateKey    = today();
+        const sentKey    = `ngu_digest_sent_${dateKey}`;
+        if (localStorage.getItem(sentKey)) return; // already sent today
+
+        // Mark as sent immediately to prevent duplicate sends
+        localStorage.setItem(sentKey, '1');
+
+        const dateLabel  = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+
+        // ── Today's counts ──
+        const newApplicantsToday = cleanAppsCache.filter(a => {
+            const d = a.submittedAt?.toDate ? a.submittedAt.toDate() : new Date(a.submittedAt);
+            return d >= todayStart;
+        }).length;
+
+        const totalActive   = cleanAppsCache.filter(a =>
+            a.finalRecruitmentDecision !== 'Approved' &&
+            a.finalRecruitmentDecision !== 'Rejected' &&
+            a.interviewDecision !== 'Interview Rejected'
+        ).length;
+
+        const awaitingReview = cleanAppsCache.filter(a =>
+            !a.finalRecruitmentDecision &&
+            a.interviewDecision !== 'Interview Rejected' &&
+            (a.reviews || []).length < 2
+        ).length;
+
+        // ── Contract breakdown ──
+        const contracts = ['Energise', 'SureServe', 'Callisen', 'ImServe'];
+        const contractLines = contracts.map(name => {
+            const key  = name.toLowerCase();
+            const vacs = liveVacanciesCache.filter(v =>
+                (v.requestInformation?.contract || '').toLowerCase() === key
+            ).length;
+            const matches = cleanAppsCache.filter(a => isAreaMatch(a)).length; // broad — uses current cache
+            const vacEl   = document.getElementById(`cb-vac-${key}`);
+            const matchEl = document.getElementById(`cb-match-${key}`);
+            const vacCount   = vacEl   ? vacEl.textContent   : vacs;
+            const matchCount = matchEl ? matchEl.textContent : '';
+            return `${name}: ${vacCount} vacancies — ${matchCount}`;
+        }).join('\n');
+
+        // ── Changes today ──
+        const changes = JSON.parse(localStorage.getItem(`ngu_changes_${dateKey}`) || '[]');
+        const changesText = changes.length
+            ? changes.map(c => `[${c.time}] ${c.name} — ${c.detail}`).join('\n')
+            : 'No status changes recorded today.';
+
+        // ── Compose params ──
+        const params = {
+            report_date:       dateLabel,
+            contract_summary:  contractLines,
+            new_applicants:    newApplicantsToday,
+            total_active:      totalActive,
+            awaiting_review:   awaitingReview,
+            changes_today:     changesText,
+            dashboard_link:    window.location.href,
+        };
+
+        try {
+            await emailjs.send(DIGEST_SERVICE, DIGEST_TEMPLATE, params);
+            console.log('[Digest] Daily report sent successfully.');
+        } catch (err) {
+            console.error('[Digest] Failed to send daily report:', err);
+            // Remove sent flag so it can retry next minute
+            localStorage.removeItem(sentKey);
+        }
+    }
+
+    // ── 4pm weekday scheduler — checks every 60 seconds ──
+    function startDigestScheduler() {
+        setInterval(() => {
+            const now     = new Date();
+            const weekday = now.getDay(); // 0=Sun, 6=Sat
+            const hour    = now.getHours();
+            const minute  = now.getMinutes();
+            if (weekday >= 1 && weekday <= 5 && hour === 16 && minute === 0) {
+                sendDailyDigest();
+            }
+        }, 60_000);
+    }
+
+    startDigestScheduler();
+
+    // ── END DAILY DIGEST ENGINE ───────────────────────────────────
 
     const safe = (v, fallback = 'Unknown') => v || fallback;
 
@@ -1222,6 +1407,7 @@
 
         // Keep a clean copy for the contract bar to use for match counting
         cleanAppsCache = clean;
+        detectChanges(clean); // record any state transitions since this morning
         renderContractBar();
 
         // Render agency leaderboard using the full clean set (all-time, not just active)
