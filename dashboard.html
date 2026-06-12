@@ -1572,17 +1572,12 @@
             (v.requestInformation?.contract || '').toLowerCase() === key
         );
 
-        // Matched applicants
-        const matched = cleanAppsCache.filter(app => {
-            const appArea = getPostcodeArea(app.personalDetails?.postcode || '');
-            const appPos  = (app.position || '').trim().toLowerCase();
-            if (!appArea || !appPos) return false;
-            return vacancies.some(v => {
-                const vacArea = getPostcodeArea(v.requestInformation?.location || '');
-                const vacPos  = (v.requestInformation?.jobTitle || '').trim().toLowerCase();
-                return vacArea === appArea && vacPos === appPos;
-            });
-        });
+        // Matched applicants — use isAreaMatch scoped to this contract's vacancies
+        // Temporarily swap liveVacanciesCache so isAreaMatch only checks this contract
+        const _fullCache = liveVacanciesCache;
+        liveVacanciesCache = vacancies;
+        const matched = cleanAppsCache.filter(app => isAreaMatch(app));
+        liveVacanciesCache = _fullCache;
 
         // Section: Vacancies
         const vacSection = document.createElement('div');
