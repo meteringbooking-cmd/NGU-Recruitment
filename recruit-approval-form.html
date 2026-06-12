@@ -3,418 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submit Recruitment Request - NGU Portal</title>
+    <title>Live Vacancies Board - NGU Portal</title>
     
-    <!-- 
-      --- PROTOTYPE SECURITY SCRIPT ---
-    -->
     <script>
         (function() {
             const username = localStorage.getItem('ngu_portal_username');
-            const hasAccess = localStorage.getItem('ngu_portal_access_submission');
+            const hasAccess = localStorage.getItem('ngu_portal_access_management'); 
 
             if (!username) {
-                console.log("No session found, redirecting to login.");
                 window.location.href = 'login.html';
-                return; 
+                return;
             }
-
             if (hasAccess !== 'true') {
-                console.log("User lacks submission permission.");
-                alert("Access Denied: You do not have permission to submit requests.");
+                alert("Access Denied: You do not have permission to view the Live Vacancies board.");
                 window.location.href = 'homepage.html';
-                return; 
+                return;
             }
-
-            console.log("Access granted to user: ", username);
         })();
     </script>
     
     <style>
         :root {
-            var(--body-bg): #141d26;
-            --container-bg: #1c2938; 
-            --input-bg: #2d3d50;     
-            --panel-border: #38444d; 
-            
-            --primary-text: #e1e8ed;   
-            --secondary-text: #8899a6; 
-            
-            --accent-color: #00d4ff;   
-            --danger-color: #ef4444;   
+            --body-bg: #141d26;
+            --container-bg: #1c2938;
+            --input-bg: #2d3d50;
+            --panel-border: #38444d;
+            --primary-text: #e1e8ed;
+            --secondary-text: #8899a6;
+            --accent-color: #00d4ff; 
+            --success-color: #2ecc71;
+            --danger-color: #ef4444;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #141d26;
-            color: #e1e8ed;
+            background-color: var(--body-bg);
+            color: var(--primary-text);
             line-height: 1.6;
             padding: 20px;
         }
 
-        .container {
-            max-width: 950px;
-            margin: 0 auto;
-            background-color: var(--container-bg);
-            padding: 40px;
-            border-radius: 12px;
-            border: 1px solid var(--panel-border);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        .main-container { max-width: 1200px; margin: 0 auto; }
+
+        .page-header {
+            background-color: var(--container-bg); padding: 20px 30px; border-radius: 12px;
+            border: 1px solid var(--panel-border); margin-bottom: 30px; display: flex;
+            justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            flex-wrap: wrap; gap: 15px;
         }
 
-        .action-bar { margin-bottom: 20px; display: flex; justify-content: flex-start; }
+        .header-brand-container { display: flex; align-items: center; gap: 20px; }
+        .header-brand { display: flex; align-items: center; gap: 15px; }
+        .logo { height: 40px; width: auto; }
 
-        .header {
-            text-align: center;
-            border-bottom: 2px solid var(--panel-border);
-            padding-bottom: 30px;
-            margin-bottom: 30px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 15px;
+        .page-header h1 { font-size: 1.4em; color: var(--primary-text); text-transform: uppercase; letter-spacing: 0.1em; margin: 0; }
+
+        .btn-link {
+            border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: all 0.2s;
+            text-decoration: none; display: inline-flex; align-items: center; font-weight: 600;
+            border: 1px solid var(--panel-border); background-color: var(--input-bg); color: var(--primary-text); padding: 8px 15px;
+        }
+        .btn-link:hover { background-color: #38444d; border-color: #4f5b66; }
+
+        #status-message {
+            text-align: center; padding: 40px; color: var(--secondary-text); background-color: var(--container-bg);
+            border-radius: 8px; border: 1px solid var(--panel-border); max-width: 800px; margin: 0 auto;
         }
 
-        .header img.logo { height: 60px; width: auto; }
+        .vacancy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
 
-        .header h1 {
-            margin: 10px 0 0; color: var(--primary-text); font-weight: 800;
-            text-transform: uppercase; letter-spacing: 0.15em; font-size: 1.8em;
+        .vacancy-card {
+            background-color: var(--container-bg); border: 1px solid var(--panel-border); border-top: 4px solid var(--success-color);
+            border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: transform 0.2s ease;
         }
+        .vacancy-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
 
-        .header h2 {
-            margin: 5px 0 0; color: var(--secondary-text); font-weight: 500;
-            text-transform: uppercase; letter-spacing: 0.05em; font-size: 1em;
-        }
+        .card-header { padding: 20px; border-bottom: 1px solid var(--panel-border); background-color: rgba(0,0,0,0.1); position: relative; }
+        .card-title { font-size: 1.2em; color: var(--accent-color); font-weight: 700; margin-bottom: 5px; padding-right: 40px; }
+        .card-dept { font-size: 0.9em; color: var(--secondary-text); text-transform: uppercase; letter-spacing: 0.05em; }
 
-        .info-box {
-            margin: 20px 0 0; color: var(--primary-text); font-weight: 500;
-            background-color: rgba(0, 212, 255, 0.1); border: 1px solid var(--accent-color);
-            padding: 15px; border-radius: 8px; font-size: 0.95em; max-width: 700px;
-        }
-
-        fieldset {
-            border: 1px solid var(--panel-border); border-radius: 8px;
-            padding: 25px; margin-bottom: 30px; background-color: rgba(255,255,255,0.01);
-        }
-
-        legend {
-            font-size: 0.95em; font-weight: 700; color: var(--accent-color);
-            padding: 0 15px; text-transform: uppercase; letter-spacing: 0.1em;
-        }
-
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card-body { padding: 20px; flex-grow: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .info-block label { display: block; color: var(--secondary-text); font-size: 0.75em; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+        .info-block .value { color: var(--primary-text); font-size: 0.95em; font-weight: 500; }
         .full-width { grid-column: 1 / -1; }
-        .field-container { margin-bottom: 5px; }
 
-        label {
-            display: block; font-weight: 600; margin-bottom: 8px;
-            color: var(--secondary-text); font-size: 0.85em;
-            text-transform: uppercase; letter-spacing: 0.05em;
+        .card-footer { padding: 20px; border-top: 1px solid var(--panel-border); background-color: rgba(255,255,255,0.02); display: flex; flex-direction: column; }
+        .footer-title { font-size: 0.85em; color: var(--primary-text); font-weight: 600; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .advert-toggles { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+        .toggle-row { display: flex; align-items: center; justify-content: space-between; background-color: var(--input-bg); padding: 10px 15px; border-radius: 6px; border: 1px solid var(--panel-border); }
+        .toggle-row label { font-size: 0.9em; color: var(--primary-text); cursor: pointer; user-select: none; display: flex; align-items: center; gap: 10px; }
+        input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--success-color); cursor: pointer; }
+
+        .saving-indicator { font-size: 0.75em; color: var(--accent-color); opacity: 0; transition: opacity 0.3s; }
+        .saving-indicator.show { opacity: 1; }
+
+        .btn-close-vacancy {
+            width: 100%; padding: 10px; background-color: transparent; border: 1px solid var(--danger-color); color: var(--danger-color);
+            border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.05em;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
         }
+        .btn-close-vacancy:hover { background-color: rgba(239, 68, 68, 0.1); }
 
-        input[type="text"], input[type="date"], select, textarea {
-            width: 100%; padding: 12px 15px; background-color: var(--input-bg);
-            border: 1px solid var(--panel-border); border-radius: 6px;
-            font-family: inherit; color: var(--primary-text); font-size: 1em;
-            transition: all 0.2s ease;
+        .applicant-badge {
+            background-color: rgba(46, 204, 113, 0.15); color: var(--success-color); border: 1px solid rgba(46, 204, 113, 0.4);
+            padding: 6px 12px; border-radius: 6px; font-size: 0.85em; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
         }
-
-        input:hover, select:hover, textarea:hover { border-color: #4f5b66; }
-        input:focus, select:focus, textarea:focus {
-            outline: none; border-color: var(--accent-color);
-            background-color: #314358; box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.15);
-        }
-
-        ::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
-
-        .checkbox-group, .radio-group {
-            display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px;
-            padding: 10px; background-color: rgba(0,0,0,0.1); border-radius: 6px;
-        }
-
-        .checkbox-group label, .radio-group label {
-            font-weight: normal; display: flex; align-items: center; gap: 10px;
-            cursor: pointer; color: var(--primary-text); text-transform: none;
-            letter-spacing: normal; font-size: 0.95em;
-        }
-
-        .checkbox-group input, .radio-group input {
-            cursor: pointer; width: 18px; height: 18px; margin: 0; accent-color: var(--accent-color);
-        }
-
-        .actions {
-            display: flex; justify-content: flex-end; gap: 15px; margin-top: 30px;
-            padding-top: 30px; border-top: 1px solid var(--panel-border); align-items: center;
-        }
-
-        button, .btn-link {
-            padding: 14px 30px; border: none; border-radius: 6px; font-size: 1em;
-            font-weight: 700; cursor: pointer; transition: all 0.2s ease;
-            text-transform: uppercase; letter-spacing: 0.05em; text-decoration: none;
-            display: inline-flex; align-items: center;
-        }
-
-        .btn-submit { background-color: var(--accent-color); color: #000; }
-        .btn-submit:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        .btn-submit:disabled { background-color: var(--secondary-text); cursor: not-allowed; opacity: 0.5; }
-
-        .btn-secondary { background-color: var(--input-bg); color: var(--primary-text); border: 1px solid var(--panel-border); font-size: 0.9em; padding: 10px 20px; }
-        .btn-secondary:hover { background-color: #38444d; }
-
-        .btn-logout { background: none; color: var(--secondary-text); text-transform: none; letter-spacing: normal; font-weight: normal; font-size: 0.9em; padding: 10px; }
-        .btn-logout:hover { color: var(--danger-color); text-decoration: underline; }
+        .applicant-badge.empty { background-color: rgba(136, 153, 166, 0.1); color: var(--secondary-text); border-color: rgba(136, 153, 166, 0.3); }
 
         @media (max-width: 768px) {
-            .container { padding: 20px; } .form-grid { grid-template-columns: 1fr; }
-            .checkbox-group, .radio-group { gap: 10px; }
-            .actions { flex-direction: column-reverse; gap: 10px; align-items: stretch;}
-            .btn-link { justify-content: center; }
+            .page-header { flex-direction: column; text-align: center; justify-content: center;}
+            .header-brand-container { flex-direction: column; }
+            .vacancy-grid { grid-template-columns: 1fr; }
         }
+
+        .contract-pill {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: rgba(0,212,255,0.1); border: 1px solid rgba(0,212,255,0.3);
+            color: var(--accent-color); font-size: 0.75em; font-weight: 700;
+            padding: 3px 10px; border-radius: 20px; margin-top: 8px;
+            text-transform: uppercase; letter-spacing: 0.06em;
+        }
+
+        /* Inline contract editor — sits in card body */
+        .contract-edit-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            background-color: var(--input-bg); padding: 10px 15px;
+            border-radius: 6px; border: 1px solid var(--panel-border);
+        }
+        .contract-edit-row select {
+            flex: 1; padding: 6px 10px; background: var(--input-bg);
+            border: 1px solid rgba(0,212,255,0.35); border-radius: 5px;
+            color: var(--accent-color); font-size: 0.9em; font-weight: 600;
+            cursor: pointer; font-family: inherit;
+            transition: border-color 0.2s;
+        }
+        .contract-edit-row select:focus { outline: none; border-color: var(--accent-color); }
+        .contract-edit-row select option { background: #2d3d50; color: var(--primary-text); font-weight: normal; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="action-bar">
-        <a href="homepage.html" class="btn-link btn-secondary">← Back to Hub</a>
-    </div>
-
-    <div class="header">
-        <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
-        <div class="header-text">
-            <h1>Recruitment Portal</h1>
-            <h2>Submit Authorisation Request</h2>
+<div class="main-container">
+    <header class="page-header">
+        <div class="header-brand-container">
+            <a href="homepage.html" class="btn-link">← Hub</a>
+            <div class="header-brand">
+                <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=6cy1lbvp&dl=1" alt="NGU Logo" class="logo">
+                <h1>Live Vacancies Board</h1>
+            </div>
         </div>
-        <div class="info-box">
-            Complete the sections below to submit a new recruitment request for approval. You are currently logged in as <strong id="display-username" style="color:white;">User</strong>.
-        </div>
-    </div>
+    </header>
 
-    <form id="recruitAuthorisationForm">
-        
-        <!-- Request Information -->
-        <fieldset>
-            <legend>Request Information</legend>
-            <div class="form-grid">
-                <div class="field-container">
-                    <label for="date-of-request">Date of Request</label>
-                    <input type="date" id="date-of-request" name="date-of-request" required>
-                </div>
-                <div class="field-container">
-                    <label for="requested-by">Requested By</label>
-                    <input type="text" id="requested-by" name="requested-by" required readonly>
-                </div>
-                <div class="field-container">
-                    <label for="department">Department</label>
-                    <input type="text" id="department" name="department" required>
-                </div>
-                <div class="field-container">
-                    <label for="job-title">Job Title</label>
-                    <input type="text" id="job-title" name="job-title" required>
-                </div>
-                <div class="field-container">
-                    <label for="location">Location</label>
-                    <input type="text" id="location" name="location">
-                </div>
-                <div class="field-container">
-                    <label for="contract">Contract</label>
-                    <select id="contract" name="contract">
-                        <option value="" disabled selected>Select contract…</option>
-                        <option value="Energise">Energise</option>
-                        <option value="SureServe">SureServe</option>
-                        <option value="Callisen">Callisen</option>
-                        <option value="ImServe">ImServe</option>
-                    </select>
-                </div>
-                <!-- NEW FIELD: INDUCTION LOCATION -->
-                <div class="field-container">
-                    <label for="induction-location">Induction Location</label>
-                    <input type="text" id="induction-location" name="induction-location">
-                </div>
-                <div class="field-container">
-                    <label for="hiring-manager">Hiring Manager</label>
-                    <input type="text" id="hiring-manager" name="hiring-manager">
-                </div>
-                <div class="field-container">
-                    <label for="reports-to">Reports To</label>
-                    <input type="text" id="reports-to" name="reports-to">
-                </div>
-            </div>
-        </fieldset>
-
-        <!-- Vacancy Type -->
-        <fieldset>
-            <legend>Vacancy Type</legend>
-            <div class="checkbox-group">
-                <label><input type="checkbox" name="vacancy-type" value="New Headcount"> New Headcount</label>
-                <label><input type="checkbox" name="vacancy-type" value="Replacement Role"> Replacement Role</label>
-                <label><input type="checkbox" name="vacancy-type" value="Temporary Cover"> Temporary Cover</label>
-                <label><input type="checkbox" name="vacancy-type" value="Fixed Term Contract"> Fixed Term Contract</label>
-                <label><input type="checkbox" name="vacancy-type" value="Permanent Role"> Permanent Role</label>
-            </div>
-        </fieldset>
-
-        <!-- Replacement Details -->
-        <fieldset>
-            <legend>Replacement Details (if applicable)</legend>
-            <div class="form-grid">
-                <div class="field-container">
-                    <label for="employee-name">Employee Name</label>
-                    <input type="text" id="employee-name" name="employee-name">
-                </div>
-                <div class="field-container">
-                    <label for="leaving-date">Leaving Date</label>
-                    <input type="date" id="leaving-date" name="leaving-date">
-                </div>
-                <div class="field-container full-width">
-                    <label for="reason-vacancy">Reason for Vacancy</label>
-                    <textarea id="reason-vacancy" name="reason-vacancy" rows="2" placeholder="Brief explanation..."></textarea>
-                </div>
-            </div>
-        </fieldset>
-
-        <!-- Business Case -->
-        <fieldset>
-            <legend>Business Case</legend>
-            <div class="form-grid">
-                <div class="field-container full-width">
-                    <label for="why-required">Why is this role required?</label>
-                    <textarea id="why-required" name="why-required" rows="4" required></textarea>
-                </div>
-                <div class="field-container full-width">
-                    <label for="impact-not-filled">What is the impact if this role is not filled?</label>
-                    <textarea id="impact-not-filled" name="impact-not-filled" rows="4" required></textarea>
-                </div>
-                <div class="field-container full-width">
-                    <label>Role Criticality</label>
-                    <div class="checkbox-group">
-                        <label><input type="checkbox" name="impact" value="Operationally Critical"> Customer / Operationally Critical</label>
-                        <label><input type="checkbox" name="impact" value="Revenue Generating"> Revenue Generating Role</label>
-                    </div>
-                </div>
-            </div>
-        </fieldset>
-
-        <!-- Budget & Salary -->
-        <fieldset>
-            <legend>Budget & Salary</legend>
-            <div class="form-grid">
-                <div class="field-container">
-                    <label for="proposed-salary">Proposed Salary / Rate</label>
-                    <input type="text" id="proposed-salary" name="proposed-salary">
-                </div>
-                <div class="field-container">
-                    <label for="cost-centre">Cost Centre</label>
-                    <input type="text" id="cost-centre" name="cost-centre">
-                </div>
-                <div class="field-container">
-                    <label>Budget Confirmed</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="budget-confirmed" value="Yes"> Yes</label>
-                        <label><input type="radio" name="budget-confirmed" value="No"> No</label>
-                    </div>
-                </div>
-                <div class="field-container">
-                    <label for="additional-costs">Additional Costs</label>
-                    <input type="text" id="additional-costs" name="additional-costs" placeholder="e.g., equipment, onboarding">
-                </div>
-            </div>
-        </fieldset>
-
-        <!-- Recruitment Requirements -->
-        <fieldset>
-            <legend>Recruitment Requirements</legend>
-            <div class="form-grid">
-                <div class="field-container">
-                    <label for="desired-start">Desired Start Date</label>
-                    <input type="date" id="desired-start" name="desired-start">
-                </div>
-                <div class="field-container">
-                    <label for="latest-start">Latest Start Date</label>
-                    <input type="date" id="latest-start" name="latest-start">
-                </div>
-                <div class="field-container">
-                    <label for="urgency">Urgency</label>
-                    <select id="urgency" name="urgency">
-                        <option value="" disabled selected>Select level...</option>
-                        <option value="Low">Low</option>
-                        <option value="Medium">Medium</option>
-                        <option value="High">High</option>
-                    </select>
-                </div>
-                <div class="field-container">
-                    <label>Internal Advert Required</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="internal-ad" value="Yes"> Yes</label>
-                        <label><input type="radio" name="internal-ad" value="No"> No</label>
-                    </div>
-                </div>
-                <div class="field-container">
-                    <label>External Advert Required</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="external-ad" value="Yes"> Yes</label>
-                        <label><input type="radio" name="external-ad" value="No"> No</label>
-                    </div>
-                </div>
-                <div class="field-container full-width">
-                    <label for="qualifications">Essential Qualifications / Licences</label>
-                    <textarea id="qualifications" name="qualifications" rows="3"></textarea>
-                </div>
-                <div class="field-container full-width">
-                    <label for="experience">Experience Required</label>
-                    <textarea id="experience" name="experience" rows="3"></textarea>
-                </div>
-            </div>
-        </fieldset>
-
-        <!-- Declaration -->
-        <fieldset>
-            <legend>Declaration</legend>
-            <p style="font-size:0.95em; color: var(--primary-text); margin-bottom: 20px;">I confirm the information provided in this request is accurate and complete to the best of my knowledge.</p>
-            <div class="form-grid">
-                <div class="field-container">
-                    <label for="decl-name">Requestor Name</label>
-                    <input type="text" id="decl-name" name="decl-name" required readonly placeholder="Type full name">
-                </div>
-                <div class="field-container">
-                    <label for="decl-date">Date Signed</label>
-                    <input type="date" id="decl-date" name="decl-date" required readonly>
-                </div>
-                <div class="field-container full-width">
-                    <label for="decl-signature">Digital Signature (Type Full Name)</label>
-                    <input type="text" id="decl-signature" name="decl-signature" required style="font-style: italic; font-family: 'Georgia', serif; color: var(--accent-color);">
-                </div>
-            </div>
-        </fieldset>
-
-        <!-- Action Buttons -->
-        <div class="actions">
-            <button type="button" class="btn-logout" id="logout-btn">Logout</button>
-            <button type="submit" class="btn-submit">Submit Request</button>
-        </div>
-
-    </form>
+    <div id="status-message">⏳ Loading live vacancies...</div>
+    
+    <div id="vacancy-grid" class="vacancy-grid" style="display: none;"></div>
 </div>
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-<!-- EmailJS SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-
 <script>
-    // --- Initialize EmailJS ---
-    (function() {
-        emailjs.init({
-          publicKey: "ziLnha91scpGjFABh",
-        });
-    })();
-
-    // --- Firebase Configuration ---
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
         authDomain: "oesperformance-a54c0.firebaseapp.com",
@@ -427,183 +178,239 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const collectionName = "NGU Recuitment Approval Form";
+    const appsCollection = "NGUO New Applicants";
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const now = new Date();
-        const day = ("0" + now.getDate()).slice(-2);
-        const month = ("0" + (now.getMonth() + 1)).slice(-2);
-        const today = now.getFullYear()+"-"+(month)+"-"+(day) ;
-        
-        const dateFields = ['date-of-request', 'decl-date'];
-        dateFields.forEach(id => {
-            const field = document.getElementById(id);
-            if(field) field.value = today;
+    const gridContainer = document.getElementById('vacancy-grid');
+    const statusMsg = document.getElementById('status-message');
+
+    let activeVacancies = [];
+    let allApplications = [];
+
+    const safeStr = (val) => val || 'Not specified';
+    const formatDate = (dateString) => {
+        if (!dateString) return 'Not specified';
+        const d = new Date(dateString);
+        if (isNaN(d.getTime())) return dateString; 
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    };
+
+    // --- AREA PREFIX EXTRACTOR ---
+    // Grabs ONLY the starting letters (e.g. "NE8 3TS" -> "NE", "B1 1AA" -> "B")
+    function getPostcodeArea(str) {
+        if (!str || typeof str !== 'string') return '';
+        const match = str.trim().match(/^[a-zA-Z]+/);
+        return match ? match[0].toUpperCase() : '';
+    }
+
+    // 1. Listen to Applications (Filter to ACTIVE ONLY)
+    db.collection(appsCollection).onSnapshot((snapshot) => {
+        allApplications = [];
+        snapshot.forEach(doc => {
+            const app = doc.data();
+            
+            // Define what makes an application "Inactive"
+            const isArchived = app.archived === true || app.isArchived === true || app.status === 'Archived';
+            const isRejected = app.status === 'Rejected' || app.status === 'Declined';
+            const isHired = app.contractAccepted === true || app.offerAccepted === true || app.onboardingCompleted === true;
+            
+            // Only push to array if they are an active candidate looking for a role
+            if (!isArchived && !isRejected && !isHired) {
+                allApplications.push(app);
+            }
         });
-
-        const username = localStorage.getItem('ngu_portal_username');
-        const displayUsername = document.getElementById('display-username');
-        if(displayUsername) displayUsername.textContent = username;
-
-        const requestedByField = document.getElementById('requested-by');
-        const declNameField = document.getElementById('decl-name');
-        if(requestedByField) requestedByField.value = username;
-        if(declNameField) declNameField.value = username;
+        renderGrid(); 
     });
 
-    const logoutBtn = document.getElementById('logout-btn');
-    if(logoutBtn) {
-        logoutBtn.addEventListener('click', () => {
-            localStorage.clear();
-            window.location.href = 'login.html';
+    // 2. Listen to active workflows (Vacancies)
+    db.collection(collectionName)
+      .where('workflowClosed', '==', false)
+      .onSnapshot((snapshot) => {
+          activeVacancies = [];
+          snapshot.forEach(doc => {
+              const data = doc.data();
+              const approvals = data.approvalSignOff || {};
+              const isLive = approvals.departmentHead?.decision === 'Approve' &&
+                             approvals.finance?.decision === 'Approve' &&
+                             approvals.finalApprover?.decision === 'Approve';
+
+              if (isLive) {
+                  activeVacancies.push({ id: doc.id, ...data });
+              }
+          });
+          renderGrid(); 
+      }, (error) => {
+          console.error("Error fetching live vacancies: ", error);
+          statusMsg.innerHTML = `<span style="color:var(--danger-color)">Error loading data. Check console.</span>`;
+      });
+
+    // Main Render Function
+    function renderGrid() {
+        gridContainer.innerHTML = '';
+
+        if (activeVacancies.length === 0) {
+            statusMsg.textContent = "No fully approved live vacancies found.";
+            statusMsg.style.display = 'block';
+            gridContainer.style.display = 'none';
+            return;
+        }
+
+        statusMsg.style.display = 'none';
+        gridContainer.style.display = 'grid';
+
+        activeVacancies.forEach(vacancy => {
+            const rawJobTitle = vacancy.requestInformation?.jobTitle || '';
+            const dept        = safeStr(vacancy.requestInformation?.department);
+            const locationStr = safeStr(vacancy.requestInformation?.location);
+            const contract    = vacancy.requestInformation?.contract || '';
+            
+            // Format for safe matching
+            const safeVacPos = rawJobTitle.trim().toLowerCase();
+            const vacArea = getPostcodeArea(locationStr);
+            let matchCount = 0;
+            
+            allApplications.forEach(app => {
+                const appArea = getPostcodeArea(app.personalDetails?.postcode);
+                const safeAppPos = (app.position || '').trim().toLowerCase();
+                
+                // MATCH: Job Titles match (ignoring case) AND Postcode Letters match exactly
+                if (safeAppPos === safeVacPos && appArea === vacArea && vacArea !== '') {
+                    matchCount++;
+                }
+            });
+
+            const dateApproved = vacancy.finalOutcome?.dateApproved || vacancy.approvalSignOff?.finalApprover?.date;
+            const desiredStart = vacancy.recruitmentRequirements?.desiredStartDate;
+            const externalReq = vacancy.recruitmentRequirements?.externalAdvertRequired === 'Yes';
+            const internalReq = vacancy.recruitmentRequirements?.internalAdvertRequired === 'Yes';
+            const advertStatus = vacancy.advertStatus || {};
+
+            let advertHtml = '';
+            if (externalReq) {
+                advertHtml += `
+                    <div class="toggle-row">
+                        <label><input type="checkbox" onchange="updateAdvert(this, '${vacancy.id}', 'linkedinLive')" ${advertStatus.linkedinLive ? 'checked' : ''}> LinkedIn Advert Live</label>
+                        <span class="saving-indicator" id="save-ind-linkedinLive-${vacancy.id}">Saved ✓</span>
+                    </div>
+                    <div class="toggle-row">
+                        <label><input type="checkbox" onchange="updateAdvert(this, '${vacancy.id}', 'indeedLive')" ${advertStatus.indeedLive ? 'checked' : ''}> Indeed Advert Live</label>
+                        <span class="saving-indicator" id="save-ind-indeedLive-${vacancy.id}">Saved ✓</span>
+                    </div>
+                `;
+            }
+            if (internalReq) {
+                advertHtml += `
+                    <div class="toggle-row">
+                        <label><input type="checkbox" onchange="updateAdvert(this, '${vacancy.id}', 'internalEmailSent')" ${advertStatus.internalEmailSent ? 'checked' : ''}> Internal Email Distributed</label>
+                        <span class="saving-indicator" id="save-ind-internalEmailSent-${vacancy.id}">Saved ✓</span>
+                    </div>
+                `;
+            }
+            if (!externalReq && !internalReq) {
+                advertHtml = `<div style="color: var(--secondary-text); font-size: 0.9em; font-style: italic;">No advertising required specified on form.</div>`;
+            }
+
+            const badgeClass = matchCount > 0 ? 'applicant-badge' : 'applicant-badge empty';
+            const badgeText = matchCount === 1 ? `1 Active Area Match (${vacArea})` : `${matchCount} Active Area Matches (${vacArea})`;
+            const badgeIcon = matchCount > 0 ? '📍 ' : '';
+
+            const cardHtml = `
+                <div class="vacancy-card" id="card-${vacancy.id}">
+                    <div class="card-header">
+                        <div class="card-title">${safeStr(rawJobTitle)}</div>
+                        <div class="card-dept">${dept}</div>
+                        ${contract ? `<div class="contract-pill">📋 ${contract}</div>` : ''}
+                        <div class="${badgeClass}">${badgeIcon}${badgeText}</div>
+                    </div>
+                    <div class="card-body">
+                        <div class="info-block full-width">
+                            <label>Desired Location</label>
+                            <div class="value">${locationStr}</div>
+                        </div>
+                        <div class="info-block full-width">
+                            <label>Contract</label>
+                            <div class="contract-edit-row">
+                                <select id="contract-sel-${vacancy.id}" onchange="updateContract(this, '${vacancy.id}')">
+                                    <option value="">— Not set —</option>
+                                    <option value="Energise"  ${contract === 'Energise'  ? 'selected' : ''}>Energise</option>
+                                    <option value="SureServe" ${contract === 'SureServe' ? 'selected' : ''}>SureServe</option>
+                                    <option value="Callisen"  ${contract === 'Callisen'  ? 'selected' : ''}>Callisen</option>
+                                    <option value="ImServe"   ${contract === 'ImServe'   ? 'selected' : ''}>ImServe</option>
+                                </select>
+                                <span class="saving-indicator" id="save-ind-contract-${vacancy.id}">Saved ✓</span>
+                            </div>
+                        </div>
+                        <div class="info-block">
+                            <label>Date Approved</label>
+                            <div class="value">${formatDate(dateApproved)}</div>
+                        </div>
+                        <div class="info-block">
+                            <label>Desired Start Date</label>
+                            <div class="value">${formatDate(desiredStart)}</div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <div class="footer-title">Advert Tracking</div>
+                        <div class="advert-toggles">
+                            ${advertHtml}
+                        </div>
+                        <button class="btn-close-vacancy" onclick="closeVacancy('${vacancy.id}')">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            Close Vacancy
+                        </button>
+                    </div>
+                </div>
+            `;
+            gridContainer.insertAdjacentHTML('beforeend', cardHtml);
         });
     }
 
-    document.getElementById('recruitAuthorisationForm').addEventListener('submit', function(e) {
-        e.preventDefault(); 
-
-        const username = localStorage.getItem('ngu_portal_username');
-        const signatureField = document.getElementById('decl-signature');
-        const signature = signatureField ? signatureField.value.trim() : '';
-        const submitButton = this.querySelector('.btn-submit');
-
-        if (signature !== username) {
-            alert(`⚠️ Signature Mismatch:\nThe Digital Signature must exactly match your logged-in username: "${username}"`);
-            if(submitButton) {
-                submitButton.disabled = false;
-                submitButton.textContent = 'Submit Request';
-            }
-            return; 
+    async function updateAdvert(checkboxElement, reqId, fieldName) {
+        const isChecked = checkboxElement.checked;
+        const indicator = document.getElementById(`save-ind-${fieldName}-${reqId}`);
+        indicator.textContent = 'Saving...'; indicator.classList.add('show');
+        try {
+            await db.collection(collectionName).doc(reqId).set({ advertStatus: { [fieldName]: isChecked } }, { merge: true });
+            indicator.textContent = 'Saved ✓'; setTimeout(() => { indicator.classList.remove('show'); }, 2000);
+        } catch (error) {
+            indicator.textContent = 'Error!'; indicator.style.color = 'var(--danger-color)';
+            checkboxElement.checked = !isChecked; setTimeout(() => { indicator.classList.remove('show'); indicator.style.color = 'var(--accent-color)'; }, 3000);
         }
+    }
 
-        if(submitButton) {
-            submitButton.disabled = true;
-            submitButton.textContent = 'Submitting...';
+    async function updateContract(selectEl, reqId) {
+        const value     = selectEl.value;
+        const indicator = document.getElementById(`save-ind-contract-${reqId}`);
+        // Also update the pill in the card header
+        const pill = document.querySelector(`#card-${reqId} .contract-pill`);
+
+        indicator.textContent = 'Saving…'; indicator.classList.add('show');
+        try {
+            await db.collection(collectionName).doc(reqId).update({
+                'requestInformation.contract': value
+            });
+            indicator.textContent = 'Saved ✓';
+            // Update pill
+            if (pill) {
+                pill.textContent = value ? `📋 ${value}` : '';
+                pill.style.display = value ? '' : 'none';
+            }
+            setTimeout(() => { indicator.classList.remove('show'); }, 2000);
+        } catch (err) {
+            indicator.textContent = 'Error!';
+            indicator.style.color = 'var(--danger-color)';
+            setTimeout(() => { indicator.classList.remove('show'); indicator.style.color = 'var(--accent-color)'; }, 3000);
         }
+    }
 
-        const formData = new FormData(this);
-        
-        const getRadioValue = (name) => {
-            const radio = document.querySelector(`input[name="${name}"]:checked`);
-            return radio ? radio.value : null;
-        };
-
-        const dataToSave = {
-            requestInformation: {
-                dateOfRequest: formData.get('date-of-request'),
-                requestedBy: formData.get('requested-by'),
-                department: formData.get('department'),
-                jobTitle: formData.get('job-title'),
-                location: formData.get('location'),
-                contract: formData.get('contract'),
-                inductionLocation: formData.get('induction-location'),
-                hiringManager: formData.get('hiring-manager'),
-                reportsTo: formData.get('reports-to')
-            },
-            vacancyType: formData.getAll('vacancy-type'), 
-            replacementDetails: {
-                employeeName: formData.get('employee-name'),
-                leavingDate: formData.get('leaving-date'),
-                reasonForVacancy: formData.get('reason-vacancy')
-            },
-            businessCase: {
-                whyRoleRequired: formData.get('why-required'),
-                impactIfNotFilled: formData.get('impact-not-filled'),
-                impactTags: formData.getAll('impact') 
-            },
-            budgetSalary: {
-                proposedSalary: formData.get('proposed-salary'),
-                costCentre: formData.get('cost-centre'),
-                budgetConfirmed: getRadioValue('budget-confirmed'),
-                additionalCosts: formData.get('additional-costs')
-            },
-            recruitmentRequirements: {
-                desiredStartDate: formData.get('desired-start'),
-                latestStartDate: formData.get('latest-start'),
-                urgency: formData.get('urgency'),
-                internalAdvertRequired: getRadioValue('internal-ad'),
-                externalAdvertRequired: getRadioValue('external-ad'),
-                qualifications: formData.get('qualifications'),
-                experience: formData.get('experience')
-            },
-            declaration: {
-                name: formData.get('decl-name'),
-                date: formData.get('decl-date'),
-                signature: signature 
-            },
-            approvalSignOff: { 
-                departmentHead: { decision: 'Pending', comments: '', date: '' },
-                finance: { decision: 'Pending', comments: '', date: '' },
-                finalApprover: { decision: 'Pending', comments: '', date: '' }
-            },
-            finalOutcome: {
-                approvedToRecruit: null, 
-                dateApproved: '',
-                recruitmentReference: '',
-                recruitmentTeamNotified: null
-            },
-            workflowClosed: false,
-            submittedAt: firebase.firestore.FieldValue.serverTimestamp() 
-        };
-
-        db.collection("NGU Recuitment Approval Form").add(dataToSave)
-        .then((docRef) => {
-            console.log("Document written to Firebase with ID: ", docRef.id);
-            
-            const internalAdVal = getRadioValue('internal-ad');
-            const promises = [];
-
-            // Email 1: Standard Approval Notification (template_qfkx1r6)
-            const approvalParams = {
-                requested_by: formData.get('requested-by'),
-                date_of_request: formData.get('date-of-request'),
-                department: formData.get('department'),
-                job_title: formData.get('job-title'),
-                location: formData.get('location') || 'N/A',
-                contract: formData.get('contract') || 'N/A',
-                induction_location: formData.get('induction-location') || 'N/A',
-                hiring_manager: formData.get('hiring-manager') || 'N/A',
-                urgency: formData.get('urgency') || 'N/A',
-                vacancy_type: formData.getAll('vacancy-type').join(', ') || 'N/A',
-                why_required: formData.get('why-required'),
-                proposed_salary: formData.get('proposed-salary') || 'N/A',
-                firebase_id: docRef.id,
-                workflow_link: "https://ngu-recruitment-portal.vercel.app/recruit-approval-form-display.html"
-            };
-
-            promises.push(emailjs.send('service_t9mebjl', 'template_qfkx1r6', approvalParams));
-
-            // Email 2: Internal Advert Notification (template_w04kxy8) - Conditional
-            if (internalAdVal === 'Yes') {
-                const internalAdParams = {
-                    job_title: formData.get('job-title'),
-                    location: formData.get('location') || 'N/A',
-                    vacancy_type: formData.getAll('vacancy-type').join(', ') || 'N/A',
-                    qualifications: formData.get('qualifications') || 'None specified',
-                    experience: formData.get('experience') || 'None specified',
-                    referral_link: "https://ngu-recruitment-portal.vercel.app/candidate-referral-bonus.html"
-                };
-                promises.push(emailjs.send('service_t9mebjl', 'template_w04kxy8', internalAdParams));
-            }
-
-            return Promise.all(promises);
-        })
-        .then((responses) => {
-            console.log("EmailJS SUCCESS!");
-            alert('Request submitted and notification(s) sent successfully!');
-            location.reload(); 
-        })
-        .catch((error) => {
-            console.error("Error adding document or sending email: ", error);
-            alert('There was an error submitting the request. Please try again or contact IT support.');
-        })
-        .finally(() => {
-            if(submitButton) {
-                submitButton.disabled = false;
-                submitButton.textContent = 'Submit Request';
-            }
-        });
-    });
+    async function closeVacancy(reqId) {
+        if (!confirm("Are you sure you want to close this vacancy? This will archive the role and remove it from the live board.")) return;
+        try {
+            await db.collection(collectionName).doc(reqId).update({
+                workflowClosed: true, vacancyClosedAt: new Date().toISOString(), vacancyClosedBy: localStorage.getItem('ngu_portal_username') || 'Unknown User'
+            });
+        } catch (error) { alert("Failed to close vacancy. Please check your connection and try again."); }
+    }
 </script>
-
 </body>
 </html>
