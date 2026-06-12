@@ -401,6 +401,16 @@
         }
         .wait-chip.urgent { color: var(--amber); border-color: rgba(245,158,11,0.3); background: var(--amber-dim); }
 
+        /* ── WAIT-TIME GLOW RINGS ── */
+        .app-row.glow-amber {
+            box-shadow: 0 0 0 1.5px rgba(245,158,11,0.45), 0 0 10px rgba(245,158,11,0.18);
+            border-color: rgba(245,158,11,0.35);
+        }
+        .app-row.glow-red {
+            box-shadow: 0 0 0 1.5px rgba(239,68,68,0.5), 0 0 12px rgba(239,68,68,0.2);
+            border-color: rgba(239,68,68,0.4);
+        }
+
         .pill {
             font-size: 0.62rem;
             font-weight: 700;
@@ -692,12 +702,13 @@
     }
 
     function waitTime(submittedAt) {
-        if (!submittedAt) return { label: '—', urgent: false };
+        if (!submittedAt) return { label: '—', urgent: false, totalHrs: 0 };
         const past = submittedAt.toDate ? submittedAt.toDate() : new Date(submittedAt);
-        const diffMs = Math.max(0, Date.now() - past);
-        const days = Math.floor(diffMs / 86400000);
-        const hrs  = Math.floor((diffMs % 86400000) / 3600000);
-        return { label: days > 0 ? `${days}d ${hrs}h` : `${hrs}h`, urgent: days >= 2 };
+        const diffMs   = Math.max(0, Date.now() - past);
+        const totalHrs = Math.floor(diffMs / 3600000);
+        const days     = Math.floor(diffMs / 86400000);
+        const hrs      = Math.floor((diffMs % 86400000) / 3600000);
+        return { label: days > 0 ? `${days}d ${hrs}h` : `${hrs}h`, urgent: days >= 2, totalHrs };
     }
 
     function animateCount(el, target) {
@@ -926,6 +937,8 @@
 
             const row = document.createElement('div');
             row.className = 'app-row';
+            if (wt.totalHrs >= 24)      row.classList.add('glow-red');
+            else if (wt.totalHrs >= 12) row.classList.add('glow-amber');
             row.style.animationDelay = `${i * 0.025}s`;
             row.innerHTML = `
                 <div class="app-row-info">
