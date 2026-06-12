@@ -1210,6 +1210,7 @@
     onSnapshot(appQuery, (snapshot) => {
         lastAppsSnapshot = snapshot;
         renderApplications(snapshot);
+        geocodeAndRerender(); // geocode applicant postcodes then re-render with distance matches
     });
 
     function renderApplications(snapshot) {
