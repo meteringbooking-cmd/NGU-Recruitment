@@ -512,21 +512,32 @@
             
             // Format for safe matching
             const safeVacPos   = rawJobTitle.trim().toLowerCase();
+            const rawLocation  = vacancy.requestInformation?.location || ''; // raw, for geocache key consistency
+            const locationStr  = rawLocation || 'Not specified';              // display string
             const vacArea      = getPostcodeArea(locationStr);
-            const vacOutcode   = getOutcode(locationStr);
+            const vacOutcode   = getOutcode(rawLocation);
             const isEnergise   = contract === 'Energise';
             const isImServe    = contract === 'ImServe';
             const useDistance  = isEnergise || isImServe;
             let matchCount     = 0;
 
-            // Resolve vacancy coords (outcode for Energise, place name for ImServe)
-            let vacCoords = null;
-            if (isEnergise && vacOutcode)  vacCoords = geoCache[vacOutcode] || null;
+            // Resolve vacancy coords
+            // Use hasOwnProperty so a null (failed geocode) is distinguished from an uncached entry
+            let vacCoords     = null;
+            let geocodeFailed = false;
+            if (isEnergise && vacOutcode) {
+                vacCoords = geoCache[vacOutcode] || null;
+                if (Object.prototype.hasOwnProperty.call(geoCache, vacOutcode) && !geoCache[vacOutcode]) geocodeFailed = true;
+            }
             if (isImServe) {
-                const placeKey = locationStr.trim().toLowerCase();
-                vacCoords = placeCache[placeKey] ||
-                            (vacOutcode ? geoCache[vacOutcode] : null) ||
-                            null;
+                const placeKey = rawLocation.trim().toLowerCase();
+                if (Object.prototype.hasOwnProperty.call(placeCache, placeKey)) {
+                    vacCoords     = placeCache[placeKey]; // may be null if geocode failed
+                    if (!vacCoords) geocodeFailed = true;
+                } else if (vacOutcode && Object.prototype.hasOwnProperty.call(geoCache, vacOutcode)) {
+                    vacCoords = geoCache[vacOutcode];
+                    if (!vacCoords) geocodeFailed = true;
+                }
             }
 
             // Build matched applicants list alongside the count
@@ -544,11 +555,15 @@
                     const appCoords  = appOutcode ? geoCache[appOutcode] : null;
 
                     if (vacCoords && appCoords) {
+                        // Both geocoded — use Haversine distance
                         const d = haversine(vacCoords.lat, vacCoords.lng, appCoords.lat, appCoords.lng);
                         if (d <= 20) { isMatch = true; distMiles = Math.round(d * 10) / 10; }
+                    } else if (!geocodeFailed && !vacCoords) {
+                        // Geocoding still in progress — skip (will re-render when done)
+                        isMatch = false;
                     } else {
-                        const appArea = getPostcodeArea(app.personalDetails?.postcode);
-                        if (appArea === vacArea && vacArea !== '') isMatch = true;
+                        // Geocoding failed for this location — skip (no reliable fallback for place names)
+                        isMatch = false;
                     }
                 } else {
                     const appArea = getPostcodeArea(app.personalDetails?.postcode);
