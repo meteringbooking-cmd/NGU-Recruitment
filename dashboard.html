@@ -434,6 +434,18 @@
             color: var(--accent); white-space: nowrap; flex-shrink: 0;
         }
 
+        /* Per-vacancy match count badge */
+        .vac-match-chip {
+            font-size: 0.6rem; font-weight: 700;
+            padding: 2px 7px; border-radius: 4px;
+            background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3);
+            color: var(--green); white-space: nowrap; flex-shrink: 0;
+        }
+        .vac-match-chip.no-match {
+            background: rgba(82,104,130,0.1); border-color: rgba(82,104,130,0.2);
+            color: var(--muted);
+        }
+
         .empty-msg {
             text-align: center;
             padding: 30px 16px;
@@ -1211,6 +1223,7 @@
         }
         if (lastAppsSnapshot) renderApplications(lastAppsSnapshot);
         renderContractBar();
+        renderVacancyList(liveVacanciesCache); // refresh match badges after geocoding
     }
 
     // ── AREA MATCH CHECK (distance-aware) ──
@@ -1347,6 +1360,74 @@
     // ── 1. LIVE VACANCIES ─────────────────────────────────────
     const vacQuery = query(collection(db, 'NGU Recuitment Approval Form'), where('workflowClosed', '==', false));
 
+    // Per-vacancy match count using distance-aware logic
+    function getVacancyMatchCount(vac) {
+        const vacPos     = (vac.requestInformation?.jobTitle || '').trim().toLowerCase();
+        const vacLoc     = vac.requestInformation?.location || '';
+        const contract   = vac.requestInformation?.contract || '';
+        const isEnergise = contract === 'Energise';
+        const isImServe  = contract === 'ImServe';
+        const vacArea    = getPostcodeArea(vacLoc);
+        const energiseOc = isEnergise ? getEnergiseOutcode(vacLoc) : '';
+        const vacCoords  = isEnergise
+            ? (energiseOc ? geoCache[energiseOc] : null)
+            : isImServe
+                ? (placeCache[vacLoc.trim().toLowerCase()] || null)
+                : null;
+        if (!vacPos) return 0;
+
+        return cleanAppsCache.filter(app => {
+            if ((app.position || '').trim().toLowerCase() !== vacPos) return false;
+            if (isEnergise || isImServe) {
+                const appOutcode = getOutcode(app.personalDetails?.postcode || '');
+                const appCoords  = appOutcode ? geoCache[appOutcode] : null;
+                if (vacCoords && appCoords) {
+                    return haversine(vacCoords.lat, vacCoords.lng, appCoords.lat, appCoords.lng) <= 20;
+                }
+                // Geocoding pending or failed — prefix fallback
+                return getPostcodeArea(app.personalDetails?.postcode || '') === vacArea && vacArea !== '';
+            }
+            return getPostcodeArea(app.personalDetails?.postcode || '') === vacArea && vacArea !== '';
+        }).length;
+    }
+
+    // Renders the vacancy list with per-vacancy match badges
+    // Called from snapshot AND after geocoding completes
+    function renderVacancyList(vacancies) {
+        const listEl = document.getElementById('vacancies-list');
+        if (!listEl) return;
+        listEl.innerHTML = '';
+        if (!vacancies.length) {
+            listEl.innerHTML = '<div class="empty-msg">No live vacancies.</div>';
+            return;
+        }
+        vacancies.forEach((v, i) => {
+            const title      = safe(v.requestInformation?.jobTitle, 'Untitled Role');
+            const location   = safe(v.requestInformation?.location, 'TBC');
+            const dept       = v.requestInformation?.department || '';
+            const contract   = v.requestInformation?.contract || '';
+            const dateApp    = v.approvalSignOff?.finalApprover?.date;
+            const matchCount = getVacancyMatchCount(v);
+            const matchClass = matchCount > 0 ? 'vac-match-chip' : 'vac-match-chip no-match';
+            const matchText  = matchCount === 1 ? '1 match' : `${matchCount} matches`;
+
+            const row = document.createElement('div');
+            row.className = 'row-item';
+            row.style.animationDelay = `${i * 0.05}s`;
+            row.innerHTML = `
+                <div class="row-main">
+                    <div class="row-name">${title}</div>
+                    <div class="row-meta"><b>${location}</b>${dept ? ' · ' + dept : ''}${dateApp ? ' · ' + formatDate(dateApp) : ''}</div>
+                </div>
+                ${contract ? `<span class="contract-chip">${contract}</span>` : ''}
+                <span class="${matchClass}">${matchText}</span>
+                <span class="pill pill-live">Live</span>
+            `;
+            listEl.appendChild(row);
+        });
+    }
+
+
     onSnapshot(vacQuery, (snapshot) => {
         const live = [];
         snapshot.forEach(doc => {
@@ -1365,31 +1446,7 @@
         animateCount(document.getElementById('stat-vacancies'), live.length);
         document.getElementById('vac-count-badge').textContent = `${live.length} open`;
 
-        const listEl = document.getElementById('vacancies-list');
-        listEl.innerHTML = '';
-
-        if (!live.length) { listEl.innerHTML = '<div class="empty-msg">No live vacancies.</div>'; return; }
-
-        live.forEach((v, i) => {
-            const title    = safe(v.requestInformation?.jobTitle, 'Untitled Role');
-            const location = safe(v.requestInformation?.location, 'TBC');
-            const dept     = v.requestInformation?.department || '';
-            const contract = v.requestInformation?.contract || '';
-            const dateApp  = v.approvalSignOff?.finalApprover?.date;
-
-            const row = document.createElement('div');
-            row.className = 'row-item';
-            row.style.animationDelay = `${i * 0.05}s`;
-            row.innerHTML = `
-                <div class="row-main">
-                    <div class="row-name">${title}</div>
-                    <div class="row-meta"><b>${location}</b>${dept ? ' · ' + dept : ''}${dateApp ? ' · ' + formatDate(dateApp) : ''}</div>
-                </div>
-                ${contract ? `<span class="contract-chip">${contract}</span>` : ''}
-                <span class="pill pill-live">Live</span>
-            `;
-            listEl.appendChild(row);
-        });
+        renderVacancyList(live);
         updateTimestamp();
     });
 
