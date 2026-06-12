@@ -190,6 +190,16 @@
         .platform-option input:checked + .platform-label.lbl-referral  { border-color: var(--green); background: var(--green-dim); color: var(--green); }
         .platform-option input:checked + .platform-label.lbl-email     { border-color: #8b5cf6; background: rgba(139,92,246,0.1); color: #a78bfa; }
         .platform-option input:checked + .platform-label.lbl-teamhrs   { border-color: var(--amber); background: var(--amber-dim); color: var(--amber); }
+        .platform-option input:checked + .platform-label.lbl-agency     { border-color: #fcd34d; background: rgba(252,211,77,0.1); color: #fcd34d; }
+
+        /* Agency name slide-in */
+        .agency-name-wrap {
+            display: none;
+            margin-top: 0.7rem;
+            animation: slideDown 0.18s ease;
+        }
+        .agency-name-wrap.visible { display: block; }
+        @keyframes slideDown { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
 
         /* ── SUBMIT ── */
         .btn-submit {
@@ -269,6 +279,7 @@
         .chip-referral  { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: var(--green); }
         .chip-email     { background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.3); color: #a78bfa; }
         .chip-teamhrs   { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); color: var(--amber); }
+        .chip-agency    { background: rgba(252,211,77,0.12);  border: 1px solid rgba(252,211,77,0.35); color: #fcd34d; }
     </style>
 </head>
 <body>
@@ -337,6 +348,15 @@
                             <span class="platform-icon">👥</span> Team HRS
                         </label>
                     </div>
+                    <div class="platform-option" style="grid-column: 1 / -1;">
+                        <input type="radio" name="platform" id="p-agency" value="agency">
+                        <label class="platform-label lbl-agency" for="p-agency">
+                            <span class="platform-icon">🏢</span> Recruitment Agency
+                        </label>
+                    </div>
+                </div>
+                <div class="agency-name-wrap" id="agencyNameWrap">
+                    <input type="text" id="agencyName" placeholder="Agency / company name…">
                 </div>
             </div>
 
@@ -435,21 +455,33 @@
     const platformLabel = {
         linkedin: 'LinkedIn',
         referral: 'Referral',
-        email: 'Email',
-        teamhrs: 'Team HRS'
+        email:    'Email',
+        teamhrs:  'Team HRS',
+        agency:   'Agency'
     };
     const platformChipClass = {
         linkedin: 'chip-linkedin',
         referral: 'chip-referral',
         email:    'chip-email',
-        teamhrs:  'chip-teamhrs'
+        teamhrs:  'chip-teamhrs',
+        agency:   'chip-agency'
     };
     const platformIcon = {
         linkedin: '💼',
         referral: '🤝',
         email:    '✉️',
-        teamhrs:  '👥'
+        teamhrs:  '👥',
+        agency:   '🏢'
     };
+
+    // ── Show/hide agency name field ────────────────────────────
+    document.querySelectorAll('input[name="platform"]').forEach(r => {
+        r.addEventListener('change', () => {
+            const wrap = document.getElementById('agencyNameWrap');
+            wrap.classList.toggle('visible', r.value === 'agency' && r.checked);
+            if (r.value !== 'agency') document.getElementById('agencyName').value = '';
+        });
+    });
 
     const sessionEntries = [];
 
@@ -465,18 +497,20 @@
         msgEl.className = 'msg';
         msgEl.textContent = '';
 
-        const fullName  = document.getElementById('fullName').value.trim();
-        const position  = document.getElementById('position').value;
-        const postcode  = document.getElementById('postcode').value.trim();
-        const platform  = getSelectedPlatform();
-        const notes     = document.getElementById('notes').value.trim();
+        const fullName   = document.getElementById('fullName').value.trim();
+        const position   = document.getElementById('position').value;
+        const postcode   = document.getElementById('postcode').value.trim();
+        const platform   = getSelectedPlatform();
+        const agencyName = platform === 'agency' ? document.getElementById('agencyName').value.trim() : '';
+        const notes      = document.getElementById('notes').value.trim();
 
         // Validation
         const missing = [];
-        if (!fullName)  missing.push('Full Name');
-        if (!position)  missing.push('Position');
-        if (!postcode)  missing.push('Postcode');
-        if (!platform)  missing.push('Platform');
+        if (!fullName)                          missing.push('Full Name');
+        if (!position)                          missing.push('Position');
+        if (!postcode)                          missing.push('Postcode');
+        if (!platform)                          missing.push('Platform');
+        if (platform === 'agency' && !agencyName) missing.push('Agency Name');
 
         if (missing.length) {
             msgEl.className = 'msg err';
@@ -488,6 +522,7 @@
         btn.innerHTML = '<div class="spinner"></div> Adding…';
 
         try {
+            const isAgency = platform === 'agency';
             await addDoc(col, {
                 submittedAt:  serverTimestamp(),
                 fullName,
@@ -498,16 +533,20 @@
                 notes:        notes || '',
                 // Empty stubs so the rest of the portal doesn't break
                 reviews:      [],
-                recruitmentAgency: { isAgency: false }
+                recruitmentAgency: {
+                    isAgency,
+                    agencyName: isAgency ? agencyName : ''
+                }
             });
 
             // Log to session list
-            sessionEntries.unshift({ fullName, position, postcode, platform });
+            sessionEntries.unshift({ fullName, position, postcode, platform, agencyName });
             renderRecent();
 
             // Show success screen
+            const sourceLabel = platform === 'agency' && agencyName ? `${agencyName}` : platformLabel[platform];
             document.getElementById('successText').textContent =
-                `${fullName} has been added to the pipeline via ${platformLabel[platform]}.`;
+                `${fullName} has been added to the pipeline via ${sourceLabel}.`;
             document.getElementById('formView').style.display = 'none';
             document.getElementById('successScreen').style.display = 'block';
 
@@ -525,7 +564,8 @@
         document.getElementById('fullName').value = '';
         document.getElementById('postcode').value = '';
         document.getElementById('notes').value = '';
-        document.querySelector('input[name="platform"]:checked')?.setAttribute('checked', false);
+        document.getElementById('agencyName').value = '';
+        document.getElementById('agencyNameWrap').classList.remove('visible');
         document.querySelectorAll('input[name="platform"]').forEach(r => r.checked = false);
         document.getElementById('successScreen').style.display = 'none';
         document.getElementById('formView').style.display = 'block';
@@ -543,12 +583,13 @@
         sessionEntries.slice(0, 5).forEach(e => {
             const div = document.createElement('div');
             div.className = 'recent-item';
+            const chipLabel = e.platform === 'agency' && e.agencyName ? e.agencyName : platformLabel[e.platform];
             div.innerHTML = `
                 <div>
                     <div class="recent-name">${e.fullName}</div>
                     <div class="recent-meta">${e.position} · ${e.postcode}</div>
                 </div>
-                <span class="source-chip ${platformChipClass[e.platform]}">${platformIcon[e.platform]} ${platformLabel[e.platform]}</span>
+                <span class="source-chip ${platformChipClass[e.platform]}">${platformIcon[e.platform]} ${chipLabel}</span>
             `;
             listEl.appendChild(div);
         });
