@@ -477,8 +477,20 @@
             .filter(Boolean);
 
         // Geocode applicant outcodes + Energise vacancy outcodes in parallel (postcodes.io)
-        const allOutcodes = [...new Set([...appOutcodes, ...energiseOutcodes])];
+        const uniqueEnergiseOcs = [...new Set(energiseOutcodes)];
+        const allOutcodes = [...new Set([...appOutcodes, ...uniqueEnergiseOcs])];
         if (allOutcodes.length) await batchGeocode(allOutcodes);
+
+        // Some postcode areas use 2-digit districts (e.g. AB uses AB10-AB99, not AB1).
+        // For any Energise outcode that returned null, retry with a "10" suffix.
+        for (const oc of uniqueEnergiseOcs) {
+            if (geoCache[oc]) continue; // already resolved
+            const letters = oc.replace(/\d+$/, ''); // strip trailing digit(s) -> "AB"
+            const alt     = letters + '10';           // try "AB10"
+            if (alt === oc) continue;
+            if (!Object.prototype.hasOwnProperty.call(geoCache, alt)) await batchGeocode([alt]);
+            if (geoCache[alt]) geoCache[oc] = geoCache[alt]; // alias result to original key
+        }
 
         // Geocode ImServe place names sequentially (one API call each)
         for (const loc of [...new Set(imServePlaces)]) {
@@ -616,9 +628,14 @@
                         // Both geocoded — use Haversine distance
                         const d = haversine(vacCoords.lat, vacCoords.lng, appCoords.lat, appCoords.lng);
                         if (d <= 20) { isMatch = true; distMiles = Math.round(d * 10) / 10; }
+                    } else if (isEnergise && !vacCoords) {
+                        // Energise geocoding failed (e.g. AB1 not a valid outcode) —
+                        // fall back to prefix match: does applicant's area code start with vacancy area?
+                        const areaCode = getPostcodeArea(rawLocation);  // "AB" from "AB"
+                        const appArea  = getPostcodeArea(app.personalDetails?.postcode || '');
+                        if (areaCode && appArea === areaCode) isMatch = true;
                     }
-                    // If either side has no coords, skip — geocoding is still in progress
-                    // and scheduleRender will re-render once it completes
+                    // ImServe with no coords: geocoding still pending, skip for now
                 } else {
                     const appArea = getPostcodeArea(app.personalDetails?.postcode);
                     if (appArea === vacArea && vacArea !== '') isMatch = true;
