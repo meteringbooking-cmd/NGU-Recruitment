@@ -437,6 +437,22 @@
             if (oc) { if (!Object.prototype.hasOwnProperty.call(geoCache, oc)) await batchGeocode([oc]); }
             else { await geocodePlace(loc); }
         }
+        // Some postcode areas use 2-digit districts (e.g. AB uses AB10-AB99, not AB1).
+        // Retry any failed Energise outcodes with a "10" suffix.
+        const energiseVacOcs = [...new Set(
+            liveVacancies
+                .filter(v => v.contract === 'Energise')
+                .map(v => v.energiseOc || getEnergiseOutcode(v.location || ''))
+                .filter(Boolean)
+        )];
+        for (const oc of energiseVacOcs) {
+            if (geoCache[oc]) continue;
+            const letters = oc.replace(/\d+$/, '');
+            const alt     = letters + '10';
+            if (alt === oc) continue;
+            if (!Object.prototype.hasOwnProperty.call(geoCache, alt)) await batchGeocode([alt]);
+            if (geoCache[alt]) geoCache[oc] = geoCache[alt];
+        }
         renderSidebar();
     }
 
@@ -827,6 +843,7 @@
                 const vacOc     = v.energiseOc || getEnergiseOutcode(vacLoc);
                 const vacCoords = vacOc ? geoCache[vacOc] : null;
                 if (vacCoords && appCoords) return haversine(vacCoords.lat, vacCoords.lng, appCoords.lat, appCoords.lng) <= 20;
+                // Geocoding failed (e.g. AB1 not valid) — fall back to area prefix match
                 return v.locationArea === appArea && appArea !== '';
             }
             if (contr === 'ImServe') {
