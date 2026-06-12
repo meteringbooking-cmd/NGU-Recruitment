@@ -218,7 +218,7 @@
             flex: 1;
             min-height: 0;
             display: grid;
-            grid-template-columns: 1fr 1fr 2fr;
+            grid-template-columns: 1fr 1fr 1.4fr 1fr;
             gap: 14px;
         }
 
@@ -433,6 +433,74 @@
             margin-bottom: 4px;
         }
         @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+        /* ── AGENCY TAG (inline in pipeline) ── */
+        .agency-tag {
+            display: inline-block;
+            font-size: 0.58rem;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 3px;
+            background: rgba(245,158,11,0.15);
+            border: 1px solid rgba(245,158,11,0.4);
+            color: #fcd34d;
+            vertical-align: middle;
+            margin-left: 5px;
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+
+        /* ── AGENCY LEADERBOARD ROWS ── */
+        .agency-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            margin-bottom: 6px;
+            animation: fadeUp 0.25s ease forwards;
+            transition: border-color 0.2s;
+        }
+        .agency-row:last-child { margin-bottom: 0; }
+        .agency-row:hover { border-color: rgba(245,158,11,0.3); }
+        .agency-rank {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--muted);
+            width: 18px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .agency-rank.top { color: var(--amber); }
+        .agency-info { flex: 1; min-width: 0; }
+        .agency-name {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .agency-sub {
+            font-size: 0.64rem;
+            color: var(--muted);
+            font-family: 'DM Mono', monospace;
+            margin-top: 1px;
+        }
+        .agency-count-badge {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 9px;
+            border-radius: 5px;
+            background: rgba(245,158,11,0.12);
+            border: 1px solid rgba(245,158,11,0.35);
+            color: var(--amber);
+            flex-shrink: 0;
+        }
     </style>
 </head>
 <body>
@@ -555,6 +623,21 @@
                 <div class="app-row"><div class="app-row-info"><span class="skeleton" style="width:65%"></span><span class="skeleton" style="width:60%"></span></div></div>
                 <div class="app-row"><div class="app-row-info"><span class="skeleton" style="width:50%"></span><span class="skeleton" style="width:75%"></span></div></div>
                 <div class="app-row"><div class="app-row-info"><span class="skeleton" style="width:70%"></span><span class="skeleton" style="width:55%"></span></div></div>
+            </div>
+        </div>
+
+        <!-- RECRUITMENT AGENCIES -->
+        <div class="panel" style="border-color: rgba(245,158,11,0.2);">
+            <div class="panel-head">
+                <div class="panel-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--amber);"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+                    Recruitment Agencies
+                </div>
+                <div class="panel-count" id="agency-count-badge" style="background:rgba(245,158,11,0.1);border-color:rgba(245,158,11,0.25);color:var(--amber);">—</div>
+            </div>
+            <div class="panel-body" id="agency-list">
+                <div class="agency-row"><div class="agency-info"><span class="skeleton" style="width:70%"></span><span class="skeleton" style="width:40%"></span></div></div>
+                <div class="agency-row"><div class="agency-info"><span class="skeleton" style="width:55%"></span><span class="skeleton" style="width:40%"></span></div></div>
             </div>
         </div>
 
@@ -765,6 +848,9 @@
         // Filter out junk phone numbers
         const clean = all.filter(a => !isJunk(a));
 
+        // Render agency leaderboard using the full clean set (all-time, not just active)
+        renderAgencies(clean);
+
         // Filter to active only — exclude archived/DNP
         const active = clean.filter(a => {
             if (a.finalRecruitmentDecision === 'Approved') return false;
@@ -811,7 +897,7 @@
             row.style.animationDelay = `${i * 0.025}s`;
             row.innerHTML = `
                 <div class="app-row-info">
-                    <div class="app-row-name">${safe(a.fullName, 'Unnamed Applicant')}</div>
+                    <div class="app-row-name">${safe(a.fullName, 'Unnamed Applicant')}${a.recruitmentAgency?.isAgency ? `<span class="agency-tag">🏢 ${a.recruitmentAgency.agencyName || 'Agency'}</span>` : ''}</div>
                     <div class="app-row-meta"><b>${safe(a.position, 'No role')}</b>${postcode ? ' · ' + postcode : ''} · ${formatDate(a.submittedAt)}</div>
                 </div>
                 <span class="stage-badge ${stage.cssClass}"><span class="dot"></span>${stage.label}</span>
@@ -821,6 +907,57 @@
         });
 
         updateTimestamp();
+    }
+
+    // ── 5. RECRUITMENT AGENCIES ───────────────────────────────
+    // Rendered whenever the applications snapshot updates — re-uses the same snapshot.
+    function renderAgencies(allApps) {
+        // Build a map: agencyName -> { total, active }
+        const agencyMap = new Map();
+
+        allApps.forEach(a => {
+            if (!a.recruitmentAgency?.isAgency) return;
+            const name = (a.recruitmentAgency.agencyName || 'Unknown Agency').trim();
+            if (!agencyMap.has(name)) agencyMap.set(name, { total: 0, active: 0 });
+            const entry = agencyMap.get(name);
+            entry.total++;
+
+            // Count as active if not archived
+            const isArchived =
+                a.finalRecruitmentDecision === 'Approved' ||
+                a.finalRecruitmentDecision === 'Rejected' ||
+                a.interviewDecision === 'Interview Rejected';
+            if (!isArchived) entry.active++;
+        });
+
+        // Sort by total submissions descending
+        const sorted = [...agencyMap.entries()].sort((a, b) => b[1].total - a[1].total);
+
+        const listEl = document.getElementById('agency-list');
+        listEl.innerHTML = '';
+
+        document.getElementById('agency-count-badge').textContent = `${sorted.length} agenc${sorted.length === 1 ? 'y' : 'ies'}`;
+
+        if (!sorted.length) {
+            listEl.innerHTML = '<div class="empty-msg">No agency submissions yet.</div>';
+            return;
+        }
+
+        sorted.forEach(([name, counts], i) => {
+            const row = document.createElement('div');
+            row.className = 'agency-row';
+            row.style.animationDelay = `${i * 0.04}s`;
+            const rankClass = i < 3 ? 'top' : '';
+            row.innerHTML = `
+                <div class="agency-rank ${rankClass}">#${i + 1}</div>
+                <div class="agency-info">
+                    <div class="agency-name">${name}</div>
+                    <div class="agency-sub">${counts.active} active · ${counts.total} total</div>
+                </div>
+                <div class="agency-count-badge">${counts.total}</div>
+            `;
+            listEl.appendChild(row);
+        });
     }
 </script>
 
