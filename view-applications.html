@@ -120,6 +120,15 @@
 
         .agency-badge { display: inline-flex; align-items: center; gap: 4px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.45); color: #fcd34d; font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
         .agency-badge-large { display: inline-flex; align-items: center; gap: 5px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.45); color: #fcd34d; padding: 0.35rem 0.9rem; border-radius: 20px; font-weight: 700; font-size: 0.82rem; white-space: nowrap; }
+
+        /* Source platform badges */
+        .src-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.68rem; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap; }
+        .src-badge-large { display: inline-flex; align-items: center; gap: 5px; padding: 0.35rem 0.9rem; border-radius: 20px; font-weight: 700; font-size: 0.82rem; white-space: nowrap; }
+        .src-linkedin  { background: rgba(10,102,194,0.15); border: 1px solid rgba(10,102,194,0.4); color: #60a5fa; }
+        .src-referral  { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.4); color: #6ee7b7; }
+        .src-email     { background: rgba(139,92,246,0.12); border: 1px solid rgba(139,92,246,0.4); color: #a78bfa; }
+        .src-teamhrs   { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: #fcd34d; }
+        .src-manual    { background: rgba(139,154,174,0.1); border: 1px solid rgba(139,154,174,0.3); color: #8B9AAE; }
     </style>
 </head>
 <body>
@@ -235,11 +244,26 @@
 
     // --- JUNK APPLICATION FILTER ---
     // Silently excludes applications with invalid/non-UK phone numbers.
-    // These are hidden from both Active and Archived tabs and receive no emails.
+    // Manual entries (manualEntry: true) are always passed through.
     function isJunkApp(app) {
+        if (app.manualEntry) return false; // manually added — always valid
         const phone = (app.personalDetails?.phone || '').trim().replace(/\s+/g, '');
         if (!phone) return true;
         return !phone.match(/^(\+44|07|01|02)/);
+    }
+
+    // --- SOURCE BADGE HELPER ---
+    const SOURCE_META = {
+        linkedin: { icon: '💼', label: 'LinkedIn',  cls: 'src-linkedin' },
+        referral: { icon: '🤝', label: 'Referral',  cls: 'src-referral' },
+        email:    { icon: '✉️', label: 'Email',      cls: 'src-email'    },
+        teamhrs:  { icon: '👥', label: 'Team HRS',  cls: 'src-teamhrs'  },
+    };
+    function getSourceBadge(app, large = false) {
+        if (!app.manualEntry) return '';
+        const m = SOURCE_META[app.source] || { icon: '📋', label: 'Manual', cls: 'src-manual' };
+        const cls = large ? `src-badge-large ${m.cls}` : `src-badge ${m.cls}`;
+        return `<span class="${cls}">${m.icon} ${m.label}</span>`;
     }
 
     // --- EVENT LISTENERS ---
@@ -752,6 +776,7 @@
                 <div class="app-date"><span>${dateStr}</span>${reviewStatus}</div>
                 ${matchStatus ? `<div class="match-badge">📍 Area Match (${appArea})</div>` : ''}
                 ${isAgency ? `<div class="agency-badge">🏢 Agency${agencyName ? ': ' + agencyName : ''}</div>` : ''}
+                ${getSourceBadge(app)}
             `;
             
             div.onclick = () => {
@@ -1046,9 +1071,10 @@
         const agencyHeaderBadge = _isAgency
             ? `<span class="agency-badge-large">🏢 Recruitment Agency${_agencyName ? ': ' + _agencyName : ''}</span>`
             : '';
+        const sourceHeaderBadge = getSourceBadge(app, true);
 
         mainEl.innerHTML = `
-            <div class="app-header"><h1>${app.fullName} ${matchBadgeHtml} ${agencyHeaderBadge}</h1><div style="width:100%; margin-top:10px;"><div class="badge">${app.position}</div></div></div>
+            <div class="app-header"><h1>${app.fullName} ${matchBadgeHtml} ${agencyHeaderBadge} ${sourceHeaderBadge}</h1><div style="width:100%; margin-top:10px;"><div class="badge">${app.position}</div>${app.notes ? `<span style="font-size:0.82rem;color:var(--text-muted);margin-left:12px;">📝 ${app.notes}</span>` : ''}</div></div>
             
             ${credsHtml}
             ${interviewResultsHtml}
