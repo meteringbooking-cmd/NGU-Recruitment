@@ -8,9 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     
-    <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <!-- HTML2PDF SDK for Contract Downloads -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -117,7 +115,6 @@
 </head>
 <body>
 
-    <!-- 1. LOGIN SCREEN -->
     <div id="loginScreen">
         <div class="login-card">
             <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
@@ -136,7 +133,6 @@
         </div>
     </div>
 
-    <!-- 2. PORTAL SCREEN -->
     <div id="portalScreen">
         <div class="portal-header">
             <div>
@@ -175,24 +171,22 @@
                 <div class="data-item"><div class="data-label">Unspent Criminal Convictions</div><div class="data-value" id="pConvictions"></div></div>
                 <div class="data-item"><div class="data-label">Medical Adjustments Needed</div><div class="data-value" id="pMedical"></div></div>
             </div>
+            
         </div>
         
         <div class="section">
             <h3>Employment History</h3>
             <div id="employmentContainer">
-                <!-- Dynamically Populated -->
-            </div>
+                </div>
         </div>
 
         <div class="section">
             <h3>Uploaded Certificates</h3>
             <div id="certContainer">
-                <!-- Dynamically Populated -->
-            </div>
+                </div>
         </div>
     </div>
 
-    <!-- 3. OFFER SUMMARY MODAL -->
     <div class="modal-overlay" id="offerModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -228,11 +222,9 @@
         </div>
     </div>
 
-    <!-- 4. CONTRACT WIZARD MODAL -->
     <div class="modal-overlay" id="contractModal">
         <div class="modal-content wide" style="padding: 0;">
             
-            <!-- Step 1: Warning -->
             <div id="contractStep1" class="wizard-step active" style="padding: 4rem 2rem; text-align: center;">
                 <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
                 <h2 style="color: var(--warning); margin-bottom: 1rem;">Contract Review</h2>
@@ -243,14 +235,12 @@
                 <button class="btn-primary" style="width: 200px;" onclick="goToContractStep(2)">View Contract ➔</button>
             </div>
 
-            <!-- Step 2: Contract Viewer -->
             <div id="contractStep2" class="wizard-step" style="padding: 2rem;">
                 <div class="modal-header">
                     <div class="modal-title">Employment Contract</div>
                     <button class="close-btn" onclick="closeContractModal()">×</button>
                 </div>
                 
-                <!-- This Div is targeted by html2pdf -->
                 <div id="contractDocumentData" class="contract-viewer">Loading contract...</div>
                 
                 <div class="modal-actions row" id="contractActions">
@@ -269,7 +259,6 @@
                 </div>
             </div>
 
-            <!-- Step 3: Digital Signature -->
             <div id="contractStep3" class="wizard-step" style="padding: 2rem;">
                 <div class="modal-header">
                     <div class="modal-title">Sign & Accept</div>
@@ -305,14 +294,12 @@
                 </div>
             </div>
 
-            <!-- Step 4: Success state -->
             <div id="contractStep4" class="wizard-step" style="padding: 4rem 2rem; text-align: center;">
                 <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
                 <h2 style="color: var(--success); margin-bottom: 1rem;">Contract Accepted!</h2>
                 <p style="color: var(--text-light); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
                     Congratulations! Your signed contract has been securely saved and emailed to recruitment.
                 </p>
-                <!-- This triggers the Welcome Popup instead of closing -->
                 <button class="btn-primary" style="width: 200px;" onclick="transitionToOnboarding()">Continue ➔</button>
             </div>
 
@@ -326,10 +313,10 @@
     // --- EMAILJS CONFIG ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
     const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
-    const EMAILJS_Q_OFFER = 'template_vzmdy3a'; // Rec Query
-    const EMAILJS_Q_CONTRACT = 'template_z4p2v26'; // FTL Query
-    const EMAILJS_REC_CONFIRM = 'template_ada5v6u'; // Recruitment Accept Confirm
-    const EMAILJS_EMP_CONFIRM = 'template_qqpzv88'; // Employee Accept Confirm
+    const EMAILJS_Q_OFFER = 'template_vzmdy3a'; 
+    const EMAILJS_Q_CONTRACT = 'template_z4p2v26'; 
+    const EMAILJS_REC_CONFIRM = 'template_ada5v6u'; 
+    const EMAILJS_EMP_CONFIRM = 'template_qqpzv88'; 
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
     const firebaseConfig = {
@@ -347,7 +334,6 @@
     let currentApplicant = null;
     let currentVacancy = null;
 
-    // FTL Mapping
     const ftlEmails = {
         "Richard Wiecko": "richard.wiecko@next-gen.uk",
         "Scott Carson": "scott.carson@next-gen.uk",
@@ -355,7 +341,6 @@
         "Tom Green": "tom.green@next-gen.uk"
     };
 
-    // --- HELPERS ---
     function getPostcodeArea(str) {
         if (!str || typeof str !== 'string') return '';
         const match = str.trim().match(/^[a-zA-Z]+/);
@@ -373,7 +358,6 @@
         return strVal;
     }
 
-    // --- LOGIN LOGIC ---
     window.attemptLogin = async function() {
         const user = document.getElementById('loginUser').value.trim();
         const pass = document.getElementById('loginPass').value.trim();
@@ -399,17 +383,15 @@
 
             querySnapshot.forEach((doc) => { currentApplicant = { id: doc.id, ...doc.data() }; });
 
-            // ✅ Saves the username so complete-onboarding.html can re-authenticate
             localStorage.setItem('ngu_applicant_user', user);
 
             await fetchVacancyData(currentApplicant.position, currentApplicant.personalDetails?.postcode);
 
             populatePortalData();
             
-            // Check if contract already accepted upon login
             if(currentApplicant.contractAccepted) {
-                document.getElementById('btnViewOffer').style.display = 'none'; // Hide offer button
-                transitionToOnboarding(); // Skip directly to onboarding flow
+                document.getElementById('btnViewOffer').style.display = 'none'; 
+                transitionToOnboarding(); 
             }
 
             document.getElementById('loginScreen').style.display = 'none';
@@ -423,7 +405,6 @@
         }
     };
 
-    // --- FETCH VACANCY LOGIC ---
     async function fetchVacancyData(jobTitle, postcode) {
         currentVacancy = { salary: 'TBC', type: 'Full-Time', location: 'TBC' }; 
         if (!jobTitle) return;
@@ -431,7 +412,7 @@
         const safeAppPos = jobTitle.trim().toLowerCase();
 
         try {
-            const vacQ = query(collection(db, "NGU Recuitment Approval Form"), where("workflowClosed", "==", false));
+            const vacQ = query(collection(db, "NGU Recruitment Approval Form"), where("workflowClosed", "==", false));
             const vacSnap = await getDocs(vacQ);
             
             vacSnap.forEach(doc => {
@@ -451,16 +432,17 @@
         } catch (e) { console.error("Failed to fetch vacancy details:", e); }
     }
 
-    // --- RENDER PORTAL DATA ---
     function populatePortalData() {
         const a = currentApplicant;
         const p = a.personalDetails || {};
         const c = a.certificates || {};
         
-        document.getElementById('welcomeName').textContent = a.fullName ? a.fullName.split(' ')[0] : 'Engineer';
+        // Assembled name using split-string data structures
+        const derivedFullName = `${p.forename || ''} ${p.surname || ''}`.trim() || a.fullName || 'N/A';
+        document.getElementById('welcomeName').textContent = p.forename || 'Engineer';
 
         document.getElementById('pTitle').textContent = p.title || 'N/A';
-        document.getElementById('pName').textContent = a.fullName || 'N/A';
+        document.getElementById('pName').textContent = derivedFullName;
         document.getElementById('pEmail').textContent = p.email || 'N/A';
         document.getElementById('pPhone').textContent = p.phone || 'N/A';
         document.getElementById('pAddress').textContent = p.address || 'N/A';
@@ -531,7 +513,6 @@
         document.getElementById('offManager').textContent = a.assignedFTL || 'TBC';
     }
 
-    // --- OFFER MODAL CONTROLS ---
     window.openOfferModal = function() {
         document.getElementById('actionButtons').style.display = 'flex';
         document.getElementById('offerQuestionBlock').style.display = 'none';
@@ -542,7 +523,6 @@
 
     window.closeOfferModal = function() { document.getElementById('offerModal').classList.remove('active'); };
 
-    // --- MULTI-USE QUESTION BLOCK ---
     window.toggleQuestionBlock = function(type) {
         let blockId = type === 'offer' ? 'offerQuestionBlock' : 'contractQuestionBlock';
         let actionId = type === 'offer' ? 'actionButtons' : 'contractActions';
@@ -574,7 +554,7 @@
         try {
             if (type === 'offer') {
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_Q_OFFER, {
-                    applicant_name: currentApplicant.fullName,
+                    applicant_name: currentApplicant.fullName || `${currentApplicant.personalDetails?.forename} ${currentApplicant.personalDetails?.surname}`,
                     question: text,
                     reply_to: currentApplicant.personalDetails?.email
                 });
@@ -589,7 +569,7 @@
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_Q_CONTRACT, {
                     ftl_email: ftlEmail,
                     ftl_name: currentApplicant.assignedFTL || 'Reporting Manager',
-                    applicant_name: currentApplicant.fullName,
+                    applicant_name: currentApplicant.fullName || `${currentApplicant.personalDetails?.forename} ${currentApplicant.personalDetails?.surname}`,
                     question: text,
                     reply_to: currentApplicant.personalDetails?.email
                 });
@@ -605,7 +585,6 @@
         }
     };
 
-    // --- CONTRACT WIZARD & SIGNATURE LOGIC ---
     let canvas, ctx, drawing = false;
 
     function resizeCanvas() {
@@ -688,15 +667,37 @@
                 if (!contractText) {
                     docEl.innerHTML = "<span style='color:var(--error); font-weight:bold;'>Contract Document Missing.</span><br><br>Your contract is still being drafted by the recruitment team. Please use the 'Ask a Question' button to notify them.";
                 } else {
-                    const empName = currentApplicant.fullName || '';
-                    const empAddr = `${currentApplicant.personalDetails?.address || ''}, ${currentApplicant.personalDetails?.postcode || ''}`;
+                    const p = currentApplicant.personalDetails || {};
+                    const todayStr = new Date().toLocaleDateString('en-GB');
+                    const rawStart = currentApplicant.startDate || '';
+                    const formattedStart = rawStart ? new Date(rawStart).toLocaleDateString('en-GB') : 'TBC';
+                    const signedCandidateDate = currentApplicant.declaration?.date ? new Date(currentApplicant.declaration.date).toLocaleDateString('en-GB') : 'Pending';
+
+                    // Native Dot-notation escaping to render database mappings cleanly
+                    contractText = contractText
+                        .replace(/{{personalDetails\.title}}/g, p.title || 'Mr/Ms')
+                        .replace(/{{personalDetails\.forename}}/g, p.forename || '')
+                        .replace(/{{personalDetails\.surname}}/g, p.surname || '')
+                        .replace(/{{personalDetails\.address}}/g, p.address || '')
+                        .replace(/{{personalDetails\.postcode}}/g, p.postcode || '')
+                        .replace(/{{position}}/g, currentApplicant.position || 'Smart Metering Engineer')
+                        .replace(/{{startDate}}/g, formattedStart)
+                        .replace(/{{current_date}}/g, todayStr)
+                        .replace(/{{declaration\.date}}/g, signedCandidateDate);
+
+                    if (currentApplicant.declaration?.signature) {
+                        contractText = contractText.replace(/{{declaration\.signature}}/g, `<img src="${currentApplicant.declaration.signature}" style="max-height:80px; background:white; padding:4px;" />`);
+                    } else {
+                        contractText = contractText.replace(/{{declaration\.signature}}/g, '___________________');
+                    }
                     
-                    contractText = contractText.replace(/\[Employee Name\]/gi, `<strong style="color:var(--primary);">${empName}</strong>`);
-                    contractText = contractText.replace(/\[Employee Address\]/gi, `<strong style="color:var(--primary);">${empAddr}</strong>`);
+                    // Fallback support for old bracket templates
+                    const legacyName = `${p.forename || ''} ${p.surname || ''}`.trim() || currentApplicant.fullName || '';
+                    const legacyAddr = `${p.address || ''}, ${p.postcode || ''}`;
+                    contractText = contractText.replace(/\[Employee Name\]/gi, legacyName);
+                    contractText = contractText.replace(/\[Employee Address\]/gi, legacyAddr);
                     
-                    // Convert line breaks to HTML breaks so PDF engine reads them properly
                     contractText = contractText.replace(/\n/g, '<br>');
-                    
                     docEl.innerHTML = contractText;
                 }
             } catch (e) {
@@ -724,16 +725,14 @@
         }
     };
 
-    // --- RENDER FULL LENGTH PDF DOCUMENT NATIVELY ---
     window.downloadContractPDF = function() {
         const btn = document.getElementById('btnDownloadPDF');
         btn.disabled = true;
         btn.textContent = 'Generating PDF...';
 
-        // 1. Grab the raw HTML content from the viewer
         const rawHTML = document.getElementById('contractDocumentData').innerHTML;
+        const derivedName = currentApplicant.fullName || `${currentApplicant.personalDetails?.forename}_${currentApplicant.personalDetails?.surname}`;
         
-        // 2. Wrap it in a clean, print-friendly container string
         const printContent = `
             <div style="font-family: 'Times New Roman', serif; font-size: 14px; line-height: 1.6; color: black; background: white; padding: 20px; white-space: pre-wrap;">
                 ${rawHTML}
@@ -742,14 +741,13 @@
 
         const opt = {
             margin:       0.5,
-            filename:     `${currentApplicant.fullName.replace(/\s+/g, '_')}_Contract.pdf`,
+            filename:     `${derivedName.replace(/\s+/g, '_')}_Contract.pdf`,
             image:        { type: 'jpeg', quality: 0.98 },
             html2canvas:  { scale: 2, useCORS: true },
             jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
             pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
         };
 
-        // 3. Feed the string directly into html2pdf
         html2pdf().set(opt).from(printContent).save().then(() => {
             btn.disabled = false;
             btn.textContent = '📄 Download PDF';
@@ -798,14 +796,16 @@
             currentApplicant.contractAccepted = true; 
             document.getElementById('btnViewOffer').style.display = 'none';
 
+            const dynamicNameString = currentApplicant.fullName || `${currentApplicant.personalDetails?.forename} ${currentApplicant.personalDetails?.surname}`;
+
             const pRec = emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REC_CONFIRM, {
-                applicant_name: currentApplicant.fullName,
+                applicant_name: dynamicNameString,
                 job_title: currentApplicant.position
             });
 
             const pEmp = emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EMP_CONFIRM, {
                 to_email: currentApplicant.personalDetails?.email,
-                applicant_name: currentApplicant.fullName
+                applicant_name: dynamicNameString
             });
 
             await Promise.allSettled([pRec, pEmp]);
@@ -819,7 +819,6 @@
         }
     };
 
-    // --- ONBOARDING TRANSITION ---
     window.transitionToOnboarding = function() {
         closeContractModal();
         
@@ -840,7 +839,6 @@
         `;
         document.body.insertAdjacentHTML('beforeend', welcomeHtml);
     };
-
 </script>
 </body>
 </html>
