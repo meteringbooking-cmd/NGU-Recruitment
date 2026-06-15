@@ -48,7 +48,7 @@
         .app-header .role-badge { display: inline-block; background: rgba(0,163,224,0.15); color: var(--accent); padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem; }
         
         .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.8rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .section h3 { font-size: 1.2rem; color: var(--accent); margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;}
+        .section h3 { font-size: 1.2rem; color: var(--accent); margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 8px;}
         
         .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem 2rem; }
         .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem 2rem; }
@@ -58,13 +58,19 @@
         .data-value { font-size: 1rem; color: var(--text-light); word-break: break-word; }
         .data-value.mono { font-family: 'DM Mono', monospace; font-size: 1.1rem; letter-spacing: 0.05em; color: white; }
         
-        .missing-data { color: var(--warning); font-style: italic; font-size: 0.9rem; }
+        .missing-data { color: var(--warning); font-style: italic; font-size: 0.9rem; font-weight: 500; }
+        .signature-img { max-height: 80px; background: white; padding: 5px; border-radius: 4px; border: 1px solid var(--border); margin-top: 5px; }
 
         .btn-action { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; padding: 0.8rem 1.5rem; border-radius: 8px; font-size: 1rem; font-weight: 700; transition: all 0.2s; cursor: pointer; }
         .btn-action:hover { background: rgba(16, 185, 129, 0.2); transform: translateY(-2px); }
-        .btn-action:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
+        .btn-download { display: inline-flex; align-items: center; justify-content: center; background: rgba(0, 163, 224, 0.1); border: 1px solid rgba(0, 163, 224, 0.4); color: var(--accent); padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; text-decoration: none; transition: all 0.2s; margin-top: 0.5rem;}
+        .btn-download:hover { background: rgba(0, 163, 224, 0.2); }
+        
         .banner-warning { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 1rem; border-radius: 8px; color: #fcd34d; margin-bottom: 1.5rem; font-weight: 600; }
+        .doc-item { background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
+
+        .holiday-chip { display: inline-block; background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; margin-right: 8px; margin-bottom: 8px; }
     </style>
 </head>
 <body>
@@ -77,7 +83,7 @@
         
         <div class="search-wrap">
             <div class="search-input-row">
-                🔍 <input type="text" id="nameSearch" placeholder="Search onboardings…">
+                🔍 <input type="text" id="nameSearch" placeholder="Search onboardings…" autocomplete="off">
             </div>
         </div>
 
@@ -122,7 +128,6 @@
         applicationsData = [];
         snapshot.forEach(doc => applicationsData.push({ id: doc.id, ...doc.data() }));
         
-        // Sort: Submitted first, then pending, then processed
         applicationsData.sort((a, b) => {
             if (a.onboardingProcessed && !b.onboardingProcessed) return 1;
             if (!a.onboardingProcessed && b.onboardingProcessed) return -1;
@@ -163,7 +168,7 @@
             } else if (app.onboardingCompleted) {
                 statusBadge = `<span class="status-badge status-submitted">🟢 Data Submitted</span>`;
             } else {
-                statusBadge = `<span class="status-badge status-pending">🟡 Pending Form</span>`;
+                statusBadge = `<span class="status-badge status-pending">🟡 Pending Forms</span>`;
             }
 
             const div = document.createElement('div');
@@ -189,7 +194,7 @@
     }
 
     function safeVal(val) { 
-        return val ? val : `<span class="missing-data">Not provided yet</span>`; 
+        return val ? val : `<span class="missing-data">Awaiting submission</span>`; 
     }
 
     window.markAsProcessed = async function(appId) {
@@ -210,15 +215,23 @@
 
     function renderDetails(app) {
         const mainEl = document.getElementById('mainContent');
-        const p = app.personalDetails || {};
-        const ob = app.onboardingData || {}; 
         
-        const computedFullName = app.fullName || `${p.forename || ''} ${p.surname || ''}`.trim() || 'Applicant';
+        // Map to exact variables populated by complete-onboarding.html
+        const pOriginal = app.personalDetails || {};
+        const pNew = app.onboardingDetails || {};
+        const bk = app.bankDetails || {};
+        const ec = app.emergencyContact || {};
+        const uni = app.uniformData || {};
+        const hmrc = app.hmrcChecklist || {};
+        const docs = app.onboardingDocs || {};
+        
+        const computedFullName = app.fullName || `${pNew.firstName || pOriginal.forename || ''} ${pNew.lastName || pOriginal.surname || ''}`.trim() || 'Applicant';
         const formatStart = app.startDate ? new Date(app.startDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'TBC';
+        const contractDate = app.contractAcceptedAt ? new Date(app.contractAcceptedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short'}) : 'Unknown';
 
         let warningBanner = '';
         if (!app.onboardingCompleted) {
-            warningBanner = `<div class="banner-warning">⚠️ The applicant has accepted their contract but has NOT submitted their final onboarding data form yet.</div>`;
+            warningBanner = `<div class="banner-warning">⚠️ The applicant has accepted their contract but has NOT submitted their final onboarding data form yet. Pending fields will populate once they complete the workflow.</div>`;
         }
 
         let actionHtml = '';
@@ -226,6 +239,53 @@
             actionHtml = `<div style="text-align: right; margin-top: 1rem;"><button class="btn-action" onclick="markAsProcessed('${app.id}')">Mark File as HR Processed</button></div>`;
         } else if (app.onboardingProcessed) {
             actionHtml = `<div style="text-align: right; margin-top: 1rem; color: var(--accent); font-weight: 600;">✓ Processed by ${app.onboardingProcessedBy || 'Admin'}</div>`;
+        }
+
+        // Generate Documents HTML
+        let docsHtml = '';
+        if (Object.keys(docs).length > 0) {
+            const docLabels = {
+                passport: 'Passport / ID', idphoto: 'ID Headshot', dlfront: 'Driving Licence (Front)', dlback: 'Driving Licence (Back)', poa: 'Proof of Address', p45: 'P45 Document'
+            };
+            Object.keys(docs).forEach(key => {
+                const f = docs[key];
+                const title = docLabels[key] || key.toUpperCase();
+                docsHtml += `<div class="doc-item">
+                                <div><strong>${title}</strong><br><small style="color:var(--text-muted);">${f.filename}</small></div>
+                                <a href="${f.url}" target="_blank" class="btn-download">View Document</a>
+                             </div>`;
+            });
+        } else {
+            docsHtml = `<div class="missing-data">No documents uploaded yet.</div>`;
+        }
+
+        // Generate Holidays HTML
+        let holidaysHtml = '';
+        if (pNew.holidays && pNew.holidays.length > 0) {
+            pNew.holidays.forEach(h => {
+                holidaysHtml += `<span class="holiday-chip">${h.from} to ${h.to}</span>`;
+            });
+        } else {
+            holidaysHtml = `<span style="color:var(--text-muted); font-size:0.9rem;">None declared</span>`;
+        }
+
+        // Generate HMRC Statement / Plan Text
+        let taxBlock = `<div class="missing-data">Checklist pending</div>`;
+        if (app.hasP45 === true) {
+            taxBlock = `<div style="color:var(--success); font-weight:bold;">Applicant provided a P45. (See Documents)</div>`;
+        } else if (app.hasP45 === false && hmrc.calculatedStatementOutcome) {
+            taxBlock = `<div style="background:rgba(0,0,0,0.2); padding:1rem; border-radius:6px; border:1px solid var(--border);">
+                            <div style="color:var(--accent); font-weight:bold; margin-bottom:0.5rem;">${hmrc.calculatedStatementOutcome} Selected</div>
+                            <div style="font-size:0.85rem; color:var(--text-light); margin-bottom:10px;">
+                                Another Job: <strong>${hmrc.anotherJobQuestion || '-'}</strong> | 
+                                Pension: <strong>${hmrc.pensionQuestion || '-'}</strong> | 
+                                Benefits: <strong>${hmrc.benefitsQuestion || '-'}</strong>
+                            </div>
+                            <div style="border-top:1px solid var(--border); padding-top:0.5rem; font-size:0.85rem; color:var(--text-light);">
+                                Student Loan: <strong>${hmrc.hasLoanQuestion || '-'}</strong><br>
+                                Plan Type: <strong style="color:var(--success);">${hmrc.selectedPlan || 'None'}</strong> | Postgrad: <strong>${hmrc.postgradLoanSelected ? 'Yes' : 'No'}</strong>
+                            </div>
+                        </div>`;
         }
 
         mainEl.innerHTML = `
@@ -243,47 +303,85 @@
             </div>
 
             <div class="section">
-                <h3>👤 Basic Employee Details</h3>
-                <div class="grid-2">
-                    <div class="data-group"><div class="data-label">Email</div><div class="data-value">${safeVal(p.email)}</div></div>
-                    <div class="data-group"><div class="data-label">Phone</div><div class="data-value">${safeVal(p.phone)}</div></div>
-                    <div class="data-group" style="grid-column: 1 / -1;"><div class="data-label">Home Address</div><div class="data-value">${safeVal(p.address)}, ${safeVal(p.postcode)}</div></div>
-                </div>
+                <h3>📄 Uploaded Identification & Documents</h3>
+                ${docsHtml}
             </div>
 
-            <div class="section">
-                <h3>💳 Payroll & Bank Details</h3>
+            <div class="section" style="border-color: ${app.onboardingCompleted ? 'var(--border)' : 'var(--warning)'}">
+                <h3>👤 Core Employee Details</h3>
                 <div class="grid-3">
-                    <div class="data-group"><div class="data-label">Name on Account</div><div class="data-value">${safeVal(ob.bankAccountName || ob.accountName)}</div></div>
-                    <div class="data-group"><div class="data-label">Sort Code</div><div class="data-value mono">${safeVal(ob.bankSortCode || ob.sortCode)}</div></div>
-                    <div class="data-group"><div class="data-label">Account Number</div><div class="data-value mono">${safeVal(ob.bankAccountNumber || ob.accountNumber)}</div></div>
+                    <div class="data-group"><div class="data-label">Legal Name</div><div class="data-value">${safeVal(pNew.firstName)} ${safeVal(pNew.lastName)}</div></div>
+                    <div class="data-group"><div class="data-label">Preferred Name</div><div class="data-value">${safeVal(pNew.preferredName)}</div></div>
+                    <div class="data-group"><div class="data-label">Date of Birth</div><div class="data-value">${safeVal(pNew.dob)}</div></div>
+                    <div class="data-group"><div class="data-label">National Insurance</div><div class="data-value mono">${safeVal(pNew.niNumber)}</div></div>
+                    <div class="data-group"><div class="data-label">Personal Email</div><div class="data-value">${safeVal(pNew.personalEmail)}</div></div>
+                    <div class="data-group"><div class="data-label">Phone</div><div class="data-value">${safeVal(pNew.phone)}</div></div>
+                    <div class="data-group" style="grid-column: 1 / span 2;"><div class="data-label">Home Address</div><div class="data-value">${safeVal(pNew.address)}, ${safeVal(pNew.postcode)}</div></div>
+                    <div class="data-group"><div class="data-label">Time at Address</div><div class="data-value">${safeVal(pNew.timeAtAddress)}</div></div>
+                    <div class="data-group" style="grid-column: 1 / -1;"><div class="data-label">Previous Address History</div><div class="data-value" style="white-space:pre-wrap;">${safeVal(pNew.addressHistory)}</div></div>
+                </div>
+                
+                <div style="border-top:1px solid var(--border); margin-top:1.5rem; padding-top:1.5rem;">
+                    <div class="data-label" style="color:var(--accent);">Pre-Booked Holidays</div>
+                    <div style="margin-top:0.5rem;">${holidaysHtml}</div>
                 </div>
             </div>
 
-            <div class="section">
+            <div class="section" style="border-color: ${app.onboardingCompleted ? 'var(--border)' : 'var(--warning)'}">
+                <h3>💳 Payroll, Bank & HMRC</h3>
+                <div class="grid-3" style="margin-bottom: 1.5rem;">
+                    <div class="data-group"><div class="data-label">Name on Account</div><div class="data-value">${safeVal(bk.accountName)}</div></div>
+                    <div class="data-group"><div class="data-label">Sort Code</div><div class="data-value mono">${safeVal(bk.sortCode)}</div></div>
+                    <div class="data-group"><div class="data-label">Account Number</div><div class="data-value mono">${safeVal(bk.accountNumber)}</div></div>
+                    <div class="data-group"><div class="data-label">Bank Name</div><div class="data-value">${safeVal(bk.bankName)}</div></div>
+                </div>
+                
+                <div style="border-top:1px dashed var(--border); padding-top:1.5rem;">
+                    <div class="data-label" style="color:var(--accent); margin-bottom:1rem;">HMRC Starter Profile</div>
+                    ${taxBlock}
+                </div>
+            </div>
+
+            <div class="section" style="border-color: ${app.onboardingCompleted ? 'var(--border)' : 'var(--warning)'}">
                 <h3>🚨 Emergency Contact (Next of Kin)</h3>
                 <div class="grid-3">
-                    <div class="data-group"><div class="data-label">Full Name</div><div class="data-value">${safeVal(ob.nokName || ob.emergencyName)}</div></div>
-                    <div class="data-group"><div class="data-label">Relationship</div><div class="data-value">${safeVal(ob.nokRelation || ob.emergencyRelation)}</div></div>
-                    <div class="data-group"><div class="data-label">Contact Number</div><div class="data-value">${safeVal(ob.nokPhone || ob.emergencyPhone)}</div></div>
+                    <div class="data-group"><div class="data-label">Full Name</div><div class="data-value">${safeVal(ec.name)}</div></div>
+                    <div class="data-group"><div class="data-label">Relationship</div><div class="data-value">${safeVal(ec.relationship)}</div></div>
+                    <div class="data-group"><div class="data-label">Primary Number</div><div class="data-value">${safeVal(ec.phone)}</div></div>
+                    <div class="data-group"><div class="data-label">Alt Number</div><div class="data-value">${safeVal(ec.altPhone)}</div></div>
+                </div>
+            </div>
+
+            <div class="section" style="border-color: ${app.onboardingCompleted ? 'var(--border)' : 'var(--warning)'}">
+                <h3>👕 Uniform & Background Checks</h3>
+                <div class="grid-3" style="margin-bottom: 1.5rem;">
+                    <div class="data-group"><div class="data-label">T-Shirt</div><div class="data-value">${safeVal(uni.tshirt)}</div></div>
+                    <div class="data-group"><div class="data-label">Hoodie</div><div class="data-value">${safeVal(uni.hoodie)}</div></div>
+                    <div class="data-group"><div class="data-label">FR Jacket</div><div class="data-value">${safeVal(uni.frJacket)}</div></div>
+                    <div class="data-group"><div class="data-label">Regatta Jacket</div><div class="data-value">${safeVal(uni.regattaJacket)}</div></div>
+                    <div class="data-group"><div class="data-label">Trousers</div><div class="data-value">W: ${safeVal(uni.trouserWaist)} | L: ${safeVal(uni.trouserLength)}</div></div>
+                    <div class="data-group"><div class="data-label">Boots / Gloves</div><div class="data-value">B: ${safeVal(uni.boots)} | G: ${safeVal(uni.gloves)}</div></div>
+                </div>
+                
+                <div style="border-top:1px dashed var(--border); padding-top:1.5rem;">
+                    <div class="data-group">
+                        <div class="data-label" style="color:var(--accent);">DBS Background Check Preference</div>
+                        <div class="data-value" style="margin-top:0.5rem; font-weight:bold;">
+                            ${app.dbsInfo?.choice === 'yes' ? '<span style="color:var(--success);">Yes, process on my behalf</span> (Consent Given)' : (app.dbsInfo?.choice === 'no' ? '<span style="color:var(--warning);">No, I will provide a recent valid certificate</span>' : '<span class="missing-data">Pending</span>')}
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div class="section">
-                <h3>👕 Uniform & PPE Requirements</h3>
-                <div class="grid-3">
-                    <div class="data-group"><div class="data-label">Top / Shirt Size</div><div class="data-value">${safeVal(ob.uniformTop || ob.shirtSize)}</div></div>
-                    <div class="data-group"><div class="data-label">Trouser Size (Waist/Leg)</div><div class="data-value">${safeVal(ob.uniformTrouser || ob.trouserSize)}</div></div>
-                    <div class="data-group"><div class="data-label">Boot Size (UK)</div><div class="data-value">${safeVal(ob.uniformBoots || ob.bootSize)}</div></div>
-                </div>
-            </div>
-
-            <div class="section">
-                <h3>🚐 Fleet & Compliance</h3>
+                <h3>✍️ Contract Acceptance Record</h3>
                 <div class="grid-2">
-                    <div class="data-group"><div class="data-label">DVLA Check Code</div><div class="data-value mono" style="color: var(--accent);">${safeVal(ob.dvlaCheckCode)}</div></div>
-                    <div class="data-group"><div class="data-label">National Insurance Number</div><div class="data-value mono">${safeVal(ob.niNumber)}</div></div>
-                    <div class="data-group"><div class="data-label">Overnight Parking Details</div><div class="data-value">${safeVal(ob.parkingDetails)}</div></div>
+                    <div class="data-group"><div class="data-label">Date Accepted</div><div class="data-value">${contractDate}</div></div>
+                    <div class="data-group"><div class="data-label">Print Name</div><div class="data-value">${app.contractSignName || 'N/A'}</div></div>
+                    <div class="data-group" style="grid-column: 1 / -1;">
+                        <div class="data-label">Digital Signature Mark</div>
+                        ${app.contractSignature ? `<img src="${app.contractSignature}" class="signature-img">` : '<div class="missing-data">No digital signature image found</div>'}
+                    </div>
                 </div>
             </div>
 
