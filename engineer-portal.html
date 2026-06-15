@@ -8,7 +8,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     
+    <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <!-- HTML2PDF SDK for Contract Downloads -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -115,6 +117,7 @@
 </head>
 <body>
 
+    <!-- 1. LOGIN SCREEN -->
     <div id="loginScreen">
         <div class="login-card">
             <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
@@ -133,6 +136,7 @@
         </div>
     </div>
 
+    <!-- 2. PORTAL SCREEN -->
     <div id="portalScreen">
         <div class="portal-header">
             <div>
@@ -171,22 +175,24 @@
                 <div class="data-item"><div class="data-label">Unspent Criminal Convictions</div><div class="data-value" id="pConvictions"></div></div>
                 <div class="data-item"><div class="data-label">Medical Adjustments Needed</div><div class="data-value" id="pMedical"></div></div>
             </div>
-            
         </div>
         
         <div class="section">
             <h3>Employment History</h3>
             <div id="employmentContainer">
-                </div>
+                <!-- Dynamically Populated -->
+            </div>
         </div>
 
         <div class="section">
             <h3>Uploaded Certificates</h3>
             <div id="certContainer">
-                </div>
+                <!-- Dynamically Populated -->
+            </div>
         </div>
     </div>
 
+    <!-- 3. OFFER SUMMARY MODAL -->
     <div class="modal-overlay" id="offerModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -222,9 +228,11 @@
         </div>
     </div>
 
+    <!-- 4. CONTRACT WIZARD MODAL -->
     <div class="modal-overlay" id="contractModal">
         <div class="modal-content wide" style="padding: 0;">
             
+            <!-- Step 1: Warning -->
             <div id="contractStep1" class="wizard-step active" style="padding: 4rem 2rem; text-align: center;">
                 <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
                 <h2 style="color: var(--warning); margin-bottom: 1rem;">Contract Review</h2>
@@ -235,12 +243,14 @@
                 <button class="btn-primary" style="width: 200px;" onclick="goToContractStep(2)">View Contract ➔</button>
             </div>
 
+            <!-- Step 2: Contract Viewer -->
             <div id="contractStep2" class="wizard-step" style="padding: 2rem;">
                 <div class="modal-header">
                     <div class="modal-title">Employment Contract</div>
                     <button class="close-btn" onclick="closeContractModal()">×</button>
                 </div>
                 
+                <!-- This Div is targeted by html2pdf -->
                 <div id="contractDocumentData" class="contract-viewer">Loading contract...</div>
                 
                 <div class="modal-actions row" id="contractActions">
@@ -259,6 +269,7 @@
                 </div>
             </div>
 
+            <!-- Step 3: Digital Signature -->
             <div id="contractStep3" class="wizard-step" style="padding: 2rem;">
                 <div class="modal-header">
                     <div class="modal-title">Sign & Accept</div>
@@ -294,6 +305,7 @@
                 </div>
             </div>
 
+            <!-- Step 4: Success state -->
             <div id="contractStep4" class="wizard-step" style="padding: 4rem 2rem; text-align: center;">
                 <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
                 <h2 style="color: var(--success); margin-bottom: 1rem;">Contract Accepted!</h2>
@@ -412,6 +424,7 @@
         const safeAppPos = jobTitle.trim().toLowerCase();
 
         try {
+            // 🛠️ FIX: Corrected internal typo spelling from "Recuitment" to "Recruitment"
             const vacQ = query(collection(db, "NGU Recruitment Approval Form"), where("workflowClosed", "==", false));
             const vacSnap = await getDocs(vacQ);
             
@@ -437,7 +450,6 @@
         const p = a.personalDetails || {};
         const c = a.certificates || {};
         
-        // Assembled name using split-string data structures
         const derivedFullName = `${p.forename || ''} ${p.surname || ''}`.trim() || a.fullName || 'N/A';
         document.getElementById('welcomeName').textContent = p.forename || 'Engineer';
 
@@ -672,14 +684,16 @@
                     const rawStart = currentApplicant.startDate || '';
                     const formattedStart = rawStart ? new Date(rawStart).toLocaleDateString('en-GB') : 'TBC';
                     const signedCandidateDate = currentApplicant.declaration?.date ? new Date(currentApplicant.declaration.date).toLocaleDateString('en-GB') : 'Pending';
+                    const computedFullName = `${p.forename || ''} ${p.surname || ''}`.trim() || currentApplicant.fullName || '';
 
-                    // Native Dot-notation escaping to render database mappings cleanly
+                    // 🛠️ SAFE MULTI-REPLACEMENT ENGINE (Fixes both escaped dot maps and legacy fallback hooks)
                     contractText = contractText
                         .replace(/{{personalDetails\.title}}/g, p.title || 'Mr/Ms')
                         .replace(/{{personalDetails\.forename}}/g, p.forename || '')
                         .replace(/{{personalDetails\.surname}}/g, p.surname || '')
                         .replace(/{{personalDetails\.address}}/g, p.address || '')
                         .replace(/{{personalDetails\.postcode}}/g, p.postcode || '')
+                        .replace(/{{fullName}}/g, computedFullName) 
                         .replace(/{{position}}/g, currentApplicant.position || 'Smart Metering Engineer')
                         .replace(/{{startDate}}/g, formattedStart)
                         .replace(/{{current_date}}/g, todayStr)
@@ -691,10 +705,9 @@
                         contractText = contractText.replace(/{{declaration\.signature}}/g, '___________________');
                     }
                     
-                    // Fallback support for old bracket templates
-                    const legacyName = `${p.forename || ''} ${p.surname || ''}`.trim() || currentApplicant.fullName || '';
+                    // Legacy Fallback Checks
                     const legacyAddr = `${p.address || ''}, ${p.postcode || ''}`;
-                    contractText = contractText.replace(/\[Employee Name\]/gi, legacyName);
+                    contractText = contractText.replace(/\[Employee Name\]/gi, computedFullName);
                     contractText = contractText.replace(/\[Employee Address\]/gi, legacyAddr);
                     
                     contractText = contractText.replace(/\n/g, '<br>');
