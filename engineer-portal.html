@@ -3,320 +3,96 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>NGU — Engineer Onboarding Portal</title>
+    <title>NGU — Onboarding Review Hub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
     <style>
         :root {
             --primary: #005EB8; --accent: #00A3E0;
             --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
             --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
             --success: #10B981; --error: #EF4444; --warning: #F59E0B;
+            --sidebar-width: 340px;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: 'Work Sans', sans-serif; background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%); color: var(--text-light); min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
-        body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(circle at 15% 20%, rgba(0,163,224,0.08) 0%, transparent 55%), radial-gradient(circle at 85% 75%, rgba(0,94,184,0.07) 0%, transparent 55%); pointer-events: none; z-index: -1; }
-
-        /* --- LOGIN SCREEN --- */
-        #loginScreen { width: 100%; max-width: 400px; padding: 2rem; margin-top: 10vh; }
-        .login-card { background: var(--bg-card); padding: 2.5rem; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; }
-        .logo { max-height: 50px; margin-bottom: 1.5rem; }
-        .login-card h2 { color: var(--accent); margin-bottom: 0.5rem; font-size: 1.4rem; }
-        .login-card p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 2rem; }
-        .input-group { margin-bottom: 1.5rem; text-align: left; }
-        .input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        .input-group input { width: 100%; padding: 0.9rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: white; font-family: inherit; font-size: 1rem; outline: none; transition: border-color 0.2s;}
-        .input-group input:focus { border-color: var(--accent); }
-        .btn-primary { width: 100%; padding: 0.9rem; border: none; border-radius: 8px; background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; font-weight: 700; font-size: 1rem; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; font-family: inherit; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.3); }
-
-        /* --- PORTAL SCREEN --- */
-        #portalScreen { width: 100%; max-width: 1000px; padding: 2rem; display: none; animation: fadeIn 0.4s ease; }
-        .portal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 15px;}
-        .portal-header h1 { font-size: 1.8rem; color: white; }
-        .portal-header span { color: var(--accent); }
+        body { font-family: 'Work Sans', sans-serif; background: var(--bg-dark); color: var(--text-light); height: 100vh; display: flex; overflow: hidden; }
         
-        .pulse-btn { background: rgba(16, 185, 129, 0.15); border: 2px solid var(--success); color: #6ee7b7; padding: 0.8rem 1.5rem; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; animation: pulse 2s infinite; transition: all 0.2s; }
-        .pulse-btn:hover { background: rgba(16, 185, 129, 0.3); }
-        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
-
-        .section { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); padding: 1.8rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .section h3 { color: var(--accent); font-size: 1.2rem; margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; }
+        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border); background: #111d31; }
+        .logo { max-height: 40px; display: block; margin-bottom: 1rem; }
+        .sidebar-header h2 { font-size: 1.2rem; color: var(--accent); }
         
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
-        .data-item { background: var(--bg-input); padding: 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
-        .data-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.4rem; font-weight: 600; }
-        .data-value { font-size: 1.05rem; font-weight: 500; color: white; word-break: break-word; }
-
-        .data-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; background: var(--bg-input); border-radius: 8px; overflow: hidden; }
-        .data-table th, .data-table td { padding: 1rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.95rem; }
-        .data-table th { color: var(--accent); font-weight: 600; text-transform: uppercase; font-size: 0.8rem; background: rgba(0,0,0,0.3); }
-
-        /* --- MODALS --- */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;}
-        .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease;}
-        .modal-content { background: var(--bg-card); width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; border-radius: 12px; border: 1px solid var(--border); padding: 2.5rem; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
-        .modal-content.wide { max-width: 850px; }
+        .search-wrap { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); background: var(--bg-dark); }
+        .search-input-row { display: flex; align-items: center; gap: 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 0 10px; transition: border-color 0.2s; }
+        .search-input-row:focus-within { border-color: var(--accent); }
+        .search-input-row input { flex: 1; background: none; border: none; outline: none; color: var(--text-light); font-family: inherit; font-size: 0.88rem; padding: 0.6rem 0; }
         
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
-        .modal-title { font-size: 1.6rem; color: var(--accent); font-weight: 800; margin: 0; }
-        .close-btn { background: transparent; border: none; color: var(--text-muted); font-size: 1.8rem; cursor: pointer; transition: color 0.2s; padding: 0; line-height: 1; }
-        .close-btn:hover { color: var(--error); }
+        .applicant-list { flex: 1; overflow-y: auto; padding: 1rem; }
+        .applicant-item { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; cursor: pointer; transition: all 0.2s; }
+        .applicant-item:hover, .applicant-item.active { border-color: var(--accent); background: rgba(0, 163, 224, 0.1); }
+        .app-name { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.2rem; }
+        .app-pos { font-size: 0.85rem; color: var(--accent); margin-bottom: 0.4rem; }
         
-        .offer-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 2rem; }
-        .offer-item { display: flex; justify-content: space-between; padding: 12px; background: var(--bg-input); border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
-        .offer-item span:first-child { color: var(--text-muted); font-weight: 600; }
-        .offer-item span:last-child { color: white; font-weight: 700; text-align: right; }
+        .status-badge { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 5px; }
+        .status-pending { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .status-submitted { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .status-processed { background: rgba(0, 163, 224, 0.15); color: var(--accent); border: 1px solid rgba(0, 163, 224, 0.4); }
 
-        .modal-actions { display: flex; gap: 10px; flex-direction: column; margin-top: 1.5rem; }
-        .modal-actions.row { flex-direction: row; }
-        .modal-actions.row button { flex: 1; }
+        .main-content { flex: 1; overflow-y: auto; padding: 2rem 3rem; background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%); }
+        .empty-state { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 1.2rem; }
         
-        .btn-success { background: rgba(16, 185, 129, 0.15); border: 2px solid var(--success); color: #6ee7b7; padding: 1rem; border-radius: 8px; font-weight: 800; font-size: 1rem; cursor: pointer; transition: all 0.2s; }
-        .btn-success:hover { background: rgba(16, 185, 129, 0.3); transform: translateY(-2px); }
-        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-light); padding: 1rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s; }
-        .btn-outline:hover { border-color: var(--accent); color: var(--accent); background: rgba(0, 163, 224, 0.05); }
-        .btn-danger { background: rgba(239, 68, 68, 0.1); border: 2px solid var(--error); color: #fca5a5; padding: 1rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.2s; }
-        .btn-danger:hover { background: rgba(239, 68, 68, 0.2); }
-
-        /* --- CONTRACT SPECIFICS --- */
-        .contract-viewer { background: white; color: black; padding: 2rem; border-radius: 8px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; font-family: 'Times New Roman', serif; font-size: 0.95rem; line-height: 1.6; border: 1px solid var(--border); margin-bottom: 1.5rem; }
+        .app-header { margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: flex-end; }
+        .app-header h1 { font-size: 2.2rem; margin-bottom: 0.5rem; }
+        .app-header .role-badge { display: inline-block; background: rgba(0,163,224,0.15); color: var(--accent); padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem; }
         
-        .checklist-item { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; background: var(--bg-input); padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
-        .checklist-item input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--accent); cursor: pointer; }
-        .checklist-item label { cursor: pointer; font-size: 1rem; font-weight: 600; width: 100%; color: var(--text-light); }
+        .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.8rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .section h3 { font-size: 1.2rem; color: var(--accent); margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 8px;}
+        
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem 2rem; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem 2rem; }
+        
+        .data-group { margin-bottom: 1rem; }
+        .data-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; font-weight: 600; }
+        .data-value { font-size: 1rem; color: var(--text-light); word-break: break-word; }
+        .data-value.mono { font-family: 'DM Mono', monospace; font-size: 1.1rem; letter-spacing: 0.05em; color: white; }
+        
+        .missing-data { color: var(--warning); font-style: italic; font-size: 0.9rem; font-weight: 500; }
+        .signature-img { max-height: 80px; background: white; padding: 5px; border-radius: 4px; border: 1px solid var(--border); margin-top: 5px; }
 
-        .signature-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 1.5rem; }
-        .signature-box input { width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: white; font-size: 1rem; outline: none; }
-        .signature-box input:focus { border-color: var(--accent); }
-        .canvas-container { background: white; border-radius: 8px; border: 2px dashed var(--border); position: relative; overflow: hidden; }
-        canvas { display: block; width: 100%; height: 200px; touch-action: none; cursor: crosshair; }
-        .clear-btn { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.1); border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; color: black; font-weight: bold;}
-
-        /* Hide elements by default in wizard */
-        .wizard-step { display: none; }
-        .wizard-step.active { display: block; animation: fadeIn 0.3s ease; }
-
-        textarea.question-box { width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-input); color: white; font-family: inherit; font-size: 0.95rem; outline: none; resize: vertical; margin-bottom: 1rem; }
-        textarea.question-box:focus { border-color: var(--warning); }
-        #successMessage { display: none; text-align: center; color: #6ee7b7; font-weight: 700; padding: 1.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; margin-top: 1.5rem; }
-
-        .cert-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 0.5rem; }
-        .cert-name { font-weight: 600; }
-        .cert-status { font-size: 0.85rem; padding: 3px 8px; border-radius: 4px; background: rgba(16, 185, 129, 0.1); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
-
-        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+        .btn-action { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; padding: 0.8rem 1.5rem; border-radius: 8px; font-size: 1rem; font-weight: 700; transition: all 0.2s; cursor: pointer; }
+        .btn-action:hover { background: rgba(16, 185, 129, 0.2); transform: translateY(-2px); }
+        
+        .banner-warning { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 1rem; border-radius: 8px; color: #fcd34d; margin-bottom: 1.5rem; font-weight: 600; }
     </style>
 </head>
 <body>
 
-    <div id="loginScreen">
-        <div class="login-card">
+    <aside class="sidebar">
+        <div class="sidebar-header">
             <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
-            <h2>Engineer Onboarding Portal</h2>
-            <p>Enter your credentials to access your onboarding information.</p>
-            <div class="input-group">
-                <label for="loginUser">Username</label>
-                <input type="text" id="loginUser" placeholder="Your portal username" autocomplete="username">
-            </div>
-            <div class="input-group">
-                <label for="loginPass">Password</label>
-                <input type="password" id="loginPass" placeholder="Your portal password" autocomplete="current-password" onkeydown="if(event.key==='Enter') attemptLogin()">
-            </div>
-            <p id="loginError" style="display:none; color:var(--error); font-size:0.9rem; margin-bottom:1rem;">❌ Invalid username or password. Please try again.</p>
-            <button class="btn-primary" id="loginBtn" onclick="attemptLogin()">Access Portal</button>
-        </div>
-    </div>
-
-    <div id="portalScreen">
-        <div class="portal-header">
-            <div>
-                <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo" style="margin-bottom:0;">
-                <h1 style="margin-top: 10px;">Hello, <span id="welcomeName"></span>!</h1>
-                <p style="color: var(--text-muted); font-size: 0.95rem;">Review your details and finalize your onboarding below.</p>
-            </div>
-            <button class="pulse-btn" id="btnViewOffer" onclick="openOfferModal()">📄 View Offer Summary</button>
-        </div>
-
-        <div class="section">
-            <h3>Personal & Contact Information</h3>
-            <div class="grid-2">
-                <div class="data-item"><div class="data-label">Title</div><div class="data-value" id="pTitle"></div></div>
-                <div class="data-item"><div class="data-label">Full Name</div><div class="data-value" id="pName"></div></div>
-                <div class="data-item"><div class="data-label">Email Address</div><div class="data-value" id="pEmail"></div></div>
-                <div class="data-item"><div class="data-label">Telephone</div><div class="data-value" id="pPhone"></div></div>
-                <div class="data-item" style="grid-column: 1 / -1;"><div class="data-label">Full Address</div><div class="data-value" id="pAddress"></div></div>
-                <div class="data-item"><div class="data-label">Home Postcode</div><div class="data-value" id="pPostcode"></div></div>
-            </div>
-        </div>
-
-        <div class="section">
-            <h3>Licences & Registrations</h3>
-            <div class="grid-2">
-                <div class="data-item"><div class="data-label">Driving Licence</div><div class="data-value" id="pDvlaDetail"></div></div>
-                <div class="data-item"><div class="data-label">EUSR Card</div><div class="data-value" id="pEusrDetail"></div></div>
-                <div class="data-item"><div class="data-label">Gas Safe Registration</div><div class="data-value" id="pGasSafe"></div></div>
-            </div>
-        </div>
-
-        <div class="section">
-            <h3>Compliance & Right to Work</h3>
-            <div class="grid-2">
-                <div class="data-item"><div class="data-label">Right to Work in UK</div><div class="data-value" id="pRightToWork"></div></div>
-                <div class="data-item"><div class="data-label">Unspent Criminal Convictions</div><div class="data-value" id="pConvictions"></div></div>
-                <div class="data-item"><div class="data-label">Medical Adjustments Needed</div><div class="data-value" id="pMedical"></div></div>
-            </div>
+            <h2>Onboarding Review Hub</h2>
         </div>
         
-        <div class="section">
-            <h3>Employment History</h3>
-            <div id="employmentContainer">
-                </div>
+        <div class="search-wrap">
+            <div class="search-input-row">
+                🔍 <input type="text" id="nameSearch" placeholder="Search onboardings…" autocomplete="off">
+            </div>
         </div>
 
-        <div class="section">
-            <h3>Uploaded Certificates</h3>
-            <div id="certContainer">
-                </div>
+        <div class="applicant-list" id="applicantList">
+            <div class="empty-state" style="font-size: 1rem;">Loading records...</div>
         </div>
-    </div>
+    </aside>
 
-    <div class="modal-overlay" id="offerModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">Your Job Offer Summary</div>
-                <button class="close-btn" onclick="closeOfferModal()">×</button>
-            </div>
-            
-            <div class="offer-list">
-                <div class="offer-item"><span>Job Title</span><span id="offTitle"></span></div>
-                <div class="offer-item"><span>Proposed Salary</span><span id="offSalary" style="color: #6ee7b7;"></span></div>
-                <div class="offer-item"><span>Hours</span><span id="offHours">Monday to Friday 8am to 5pm, 1 in 6 callout rota where applicable</span></div>
-                <div class="offer-item"><span>Proposed Start Date</span><span id="offStartDate"></span></div>
-                <div class="offer-item"><span>Location / Area</span><span id="offLocation"></span></div>
-                <div class="offer-item"><span>Contract Type</span><span id="offContract"></span></div>
-                <div class="offer-item"><span>Reporting Manager</span><span id="offManager" style="color: var(--accent);"></span></div>
-            </div>
-
-            <div class="modal-actions" id="actionButtons" style="display: none;">
-                <button class="btn-success" onclick="startContractFlow()">✅ Accept and Continue</button>
-                <button class="btn-outline" onclick="toggleQuestionBlock('offer')">❓ Ask a Question</button>
-            </div>
-
-            <div id="offerQuestionBlock" style="display: none; margin-top: 1.5rem; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
-                <label style="display:block; color:var(--text-light); margin-bottom:0.5rem; font-weight:600;">How can we help?</label>
-                <textarea id="offerQuestionText" class="question-box" rows="4" placeholder="Type your question for the recruitment team here..."></textarea>
-                <div style="display:flex; gap:10px;">
-                    <button class="btn-outline" style="flex:1; padding:0.8rem;" onclick="toggleQuestionBlock('offer')">Cancel</button>
-                    <button class="btn-primary" style="flex:2; padding:0.8rem; background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);" onclick="submitQuestion('offer')">Submit Question</button>
-                </div>
-            </div>
-
-            <div id="successMessage"></div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="contractModal">
-        <div class="modal-content wide" style="padding: 0;">
-            
-            <div id="contractStep1" class="wizard-step active" style="padding: 4rem 2rem; text-align: center;">
-                <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
-                <h2 style="color: var(--warning); margin-bottom: 1rem;">Contract Review</h2>
-                <p style="color: var(--text-light); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
-                    Please review your employment contract carefully on the next page.<br>
-                    You will be required to digitally sign the document to formally accept your offer of employment.
-                </p>
-                <button class="btn-primary" style="width: 200px;" onclick="goToContractStep(2)">View Contract ➔</button>
-            </div>
-
-            <div id="contractStep2" class="wizard-step" style="padding: 2rem;">
-                <div class="modal-header">
-                    <div class="modal-title">Employment Contract</div>
-                    <button class="close-btn" onclick="closeContractModal()">×</button>
-                </div>
-                
-                <div id="contractDocumentData" class="contract-viewer">Loading contract...</div>
-                
-                <div class="modal-actions row" id="contractActions">
-                    <button class="btn-outline" id="btnDownloadPDF" onclick="downloadContractPDF()">📄 Download PDF</button>
-                    <button class="btn-outline" onclick="toggleQuestionBlock('contract')">❓ Ask FTL a Question</button>
-                    <button class="btn-success" onclick="goToContractStep(3)">✅ Accept Contract</button>
-                </div>
-
-                <div id="contractQuestionBlock" style="display: none; margin-top: 1.5rem; background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border);">
-                    <label style="display:block; color:var(--text-light); margin-bottom:0.5rem; font-weight:600;">Ask your Reporting Manager a question:</label>
-                    <textarea id="contractQuestionText" class="question-box" rows="4" placeholder="Type your question regarding the contract here..."></textarea>
-                    <div style="display:flex; gap:10px;">
-                        <button class="btn-outline" style="flex:1; padding:0.8rem;" onclick="toggleQuestionBlock('contract')">Cancel</button>
-                        <button class="btn-primary" style="flex:2; padding:0.8rem; background: linear-gradient(135deg, var(--warning) 0%, #d97706 100%);" onclick="submitQuestion('contract')">Submit Question</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="contractStep3" class="wizard-step" style="padding: 2rem;">
-                <div class="modal-header">
-                    <div class="modal-title">Sign & Accept</div>
-                    <button class="close-btn" onclick="closeContractModal()">×</button>
-                </div>
-                
-                <div class="checklist-item">
-                    <input type="checkbox" id="chkReview">
-                    <label for="chkReview">I confirm I have reviewed the contract in full.</label>
-                </div>
-                <div class="checklist-item">
-                    <input type="checkbox" id="chkTerms">
-                    <label for="chkTerms">I formally accept the terms of employment with Next Generation Utilities.</label>
-                </div>
-
-                <div class="signature-box">
-                    <label style="color:var(--accent); font-weight:600;">Full Name</label>
-                    <input type="text" id="sigName" placeholder="Print your full name">
-                    
-                    <label style="color:var(--accent); font-weight:600; margin-top:10px;">Date</label>
-                    <input type="date" id="sigDate" readonly>
-
-                    <label style="color:var(--accent); font-weight:600; margin-top:10px;">Digital Signature (Draw below)</label>
-                    <div class="canvas-container">
-                        <canvas id="sigCanvas"></canvas>
-                        <button class="clear-btn" onclick="clearSignature()">Clear</button>
-                    </div>
-                </div>
-
-                <div class="modal-actions row">
-                    <button class="btn-danger" onclick="declineContract()">❌ Decline Offer</button>
-                    <button class="btn-success" id="btnFinalAccept" onclick="finalizeContractAcceptance()">✅ Submit Signed Contract</button>
-                </div>
-            </div>
-
-            <div id="contractStep4" class="wizard-step" style="padding: 4rem 2rem; text-align: center;">
-                <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
-                <h2 style="color: var(--success); margin-bottom: 1rem;">Contract Accepted!</h2>
-                <p style="color: var(--text-light); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
-                    Congratulations! Your signed contract has been securely saved and emailed to recruitment.
-                </p>
-                <button class="btn-primary" style="width: 200px;" onclick="transitionToOnboarding()">Continue ➔</button>
-            </div>
-
-        </div>
-    </div>
+    <main class="main-content" id="mainContent">
+        <div class="empty-state">Select an onboarding profile from the sidebar to review details.</div>
+    </main>
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-
-    // --- EMAILJS CONFIG ---
-    const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
-    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
-    const EMAILJS_Q_OFFER = 'template_vzmdy3a'; 
-    const EMAILJS_Q_CONTRACT = 'template_z4p2v26'; 
-    const EMAILJS_REC_CONFIRM = 'template_ada5v6u'; 
-    const EMAILJS_EMP_CONFIRM = 'template_qqpzv88'; 
-    emailjs.init(EMAILJS_PUBLIC_KEY);
+    import { getFirestore, collection, query, onSnapshot, where, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
@@ -329,520 +105,218 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    
+    let applicationsData = [];
+    let searchQuery = '';
+    let selectedAppId = null;
 
-    let currentApplicant = null;
-    let currentVacancy = null;
+    document.getElementById('nameSearch').addEventListener('input', (e) => {
+        searchQuery = e.target.value.trim().toLowerCase();
+        renderSidebar();
+    });
 
-    const ftlEmails = {
-        "Richard Wiecko": "richard.wiecko@next-gen.uk",
-        "Scott Carson": "scott.carson@next-gen.uk",
-        "Stuart Whyte": "stuart.whyte@next-gen.uk",
-        "Tom Green": "tom.green@next-gen.uk"
-    };
-
-    function getPostcodeArea(str) {
-        if (!str || typeof str !== 'string') return '';
-        const match = str.trim().match(/^[a-zA-Z]+/);
-        return match ? match[0].toUpperCase() : '';
-    }
-
-    function formatSalary(val) {
-        if (!val || val === 'TBC') return 'TBC';
-        const strVal = String(val).trim();
-        const cleanVal = strVal.replace(/[£,\s]/g, '');
-        const num = Number(cleanVal);
-        if (!isNaN(num) && cleanVal !== '') {
-            return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 }).format(num);
-        }
-        return strVal;
-    }
-
-    window.attemptLogin = async function() {
-        const user = document.getElementById('loginUser').value.trim();
-        const pass = document.getElementById('loginPass').value.trim();
-        const btn = document.getElementById('loginBtn');
-        const err = document.getElementById('loginError');
-
-        if (!user || !pass) return;
-
-        btn.disabled = true;
-        btn.textContent = 'Authenticating...';
-        err.style.display = 'none';
-
-        try {
-            const q = query(collection(db, "NGUO New Applicants"), where("portalUsername", "==", user), where("portalPassword", "==", pass));
-            const querySnapshot = await getDocs(q);
-
-            if (querySnapshot.empty) {
-                err.style.display = 'block';
-                btn.disabled = false;
-                btn.textContent = 'Access Portal';
-                return;
-            }
-
-            querySnapshot.forEach((doc) => { currentApplicant = { id: doc.id, ...doc.data() }; });
-
-            localStorage.setItem('ngu_applicant_user', user);
-
-            await fetchVacancyData(currentApplicant.position, currentApplicant.personalDetails?.postcode);
-
-            populatePortalData();
-            
-            if(currentApplicant.contractAccepted) {
-                document.getElementById('btnViewOffer').style.display = 'none'; 
-                transitionToOnboarding(); 
-            }
-
-            document.getElementById('loginScreen').style.display = 'none';
-            document.getElementById('portalScreen').style.display = 'block';
-
-        } catch (error) {
-            console.error("Login Error:", error);
-            alert("Connection error. Please try again.");
-            btn.disabled = false;
-            btn.textContent = 'Access Portal';
-        }
-    };
-
-    async function fetchVacancyData(jobTitle, postcode) {
-        currentVacancy = { salary: 'TBC', type: 'Full-Time', location: 'TBC' }; 
-        if (!jobTitle) return;
-        const appArea = getPostcodeArea(postcode);
-        const safeAppPos = jobTitle.trim().toLowerCase();
-
-        try {
-            // Reverted back to your literal database name with its exact spelling configuration
-            const vacQ = query(collection(db, "NGU Recuitment Approval Form"), where("workflowClosed", "==", false));
-            const vacSnap = await getDocs(vacQ);
-            
-            vacSnap.forEach(doc => {
-                const data = doc.data();
-                const vTitle = (data.requestInformation?.jobTitle || '').trim().toLowerCase();
-                const vArea = getPostcodeArea(data.requestInformation?.location);
-                
-                // Flexible match logic (Matches if job title is identical OR if one contains the other, such as 'Smart Meter Engineer' matching 'Smart Metering Engineer')
-                const isTitleMatch = (vTitle === safeAppPos) || vTitle.includes(safeAppPos) || safeAppPos.includes(vTitle);
-                const isAreaMatch = (vArea === appArea) || (vArea === '') || (appArea === '');
-
-                if (isTitleMatch && isAreaMatch) {
-                    const rawSalary = data.budgetSalary?.proposedSalary || data.requestInformation?.salary || 'TBC';
-                    currentVacancy = {
-                        salary: formatSalary(rawSalary),
-                        type: data.requestInformation?.vacancyType || 'Full-Time',
-                        location: data.requestInformation?.location || 'TBC'
-                    };
-                }
-            });
-        } catch (e) { console.error("Failed to fetch vacancy details:", e); }
-    }
-
-    function populatePortalData() {
-        const a = currentApplicant;
-        const p = a.personalDetails || {};
-        const c = a.certificates || {};
+    // Fetch ONLY applicants who have successfully accepted their contract
+    const qApp = query(collection(db, "NGUO New Applicants"), where("contractAccepted", "==", true));
+    
+    onSnapshot(qApp, (snapshot) => {
+        applicationsData = [];
+        snapshot.forEach(doc => applicationsData.push({ id: doc.id, ...doc.data() }));
         
-        const derivedFullName = `${p.forename || ''} ${p.surname || ''}`.trim() || a.fullName || 'N/A';
-        document.getElementById('welcomeName').textContent = p.forename || 'Engineer';
+        applicationsData.sort((a, b) => {
+            if (a.onboardingProcessed && !b.onboardingProcessed) return 1;
+            if (!a.onboardingProcessed && b.onboardingProcessed) return -1;
+            if (a.onboardingCompleted && !b.onboardingCompleted) return -1;
+            if (!a.onboardingCompleted && b.onboardingCompleted) return 1;
+            return 0;
+        });
 
-        document.getElementById('pTitle').textContent = p.title || 'N/A';
-        document.getElementById('pName').textContent = derivedFullName;
-        document.getElementById('pEmail').textContent = p.email || 'N/A';
-        document.getElementById('pPhone').textContent = p.phone || 'N/A';
-        document.getElementById('pAddress').textContent = p.address || 'N/A';
-        document.getElementById('pPostcode').textContent = p.postcode || 'N/A';
+        renderSidebar();
+        
+        if (selectedAppId) {
+            const updatedApp = applicationsData.find(a => a.id === selectedAppId);
+            if (updatedApp) renderDetails(updatedApp);
+        }
+    });
 
-        document.getElementById('pDvlaDetail').innerHTML = c.drivinglicence?.confirmed 
-            ? `Confirmed<br><span style="font-size:0.85rem; color:var(--text-muted)">Expires: ${c.drivinglicence.expiry || 'N/A'}</span>` 
-            : '<span style="color:var(--text-muted)">Not provided</span>';
-            
-        document.getElementById('pEusrDetail').innerHTML = c.eusr?.has 
-            ? `Registered<br><span style="font-size:0.85rem; color:var(--text-muted)">No: ${c.eusr.number || 'N/A'}</span>` 
-            : '<span style="color:var(--text-muted)">Not provided</span>';
-            
-        document.getElementById('pGasSafe').textContent = c.gassafe?.number || 'Not provided';
+    function renderSidebar() {
+        const listEl = document.getElementById('applicantList');
+        listEl.innerHTML = '';
 
-        document.getElementById('pRightToWork').innerHTML = a.workPermit === 'no' ? '<span style="color:var(--success)">Valid (UK Citizen/No Permit Req)</span>' : '<span style="color:var(--warning)">Requires Permit</span>';
-        document.getElementById('pConvictions').innerHTML = a.convictions === 'no' ? '<span style="color:var(--success)">Clear</span>' : '<span style="color:var(--error)">Declared</span>';
-        document.getElementById('pMedical').innerHTML = (a.reasonableAdjustments?.medical === 'yes' || a.reasonableAdjustments?.disability === 'yes') ? '<span style="color:var(--warning)">Adjustments Requested</span>' : '<span style="color:var(--success)">None Declared</span>';
+        let filteredApps = applicationsData;
+        if (searchQuery) {
+            filteredApps = filteredApps.filter(app => {
+                const name = app.fullName || `${app.personalDetails?.forename || ''} ${app.personalDetails?.surname || ''}`;
+                return name.toLowerCase().includes(searchQuery);
+            });
+        }
 
-        const empContainer = document.getElementById('employmentContainer');
-        if (a.employment && a.employment.length > 0) {
-            let empHtml = `
-                <table class="data-table">
-                    <thead>
-                        <tr><th>Company</th><th>Position</th><th>Reason for Leaving</th></tr>
-                    </thead>
-                    <tbody>
+        if (filteredApps.length === 0) {
+            listEl.innerHTML = `<div class="empty-state" style="font-size: 0.9rem;">No active onboardings found.</div>`;
+            return;
+        }
+
+        filteredApps.forEach((app) => {
+            // Check if actual complete-onboarding forms are submitted
+            const isSubmitted = !!app.onboardingData;
+
+            let statusBadge = '';
+            if (app.onboardingProcessed) {
+                statusBadge = `<span class="status-badge status-processed">✓ HR Processed</span>`;
+            } else if (isSubmitted) {
+                statusBadge = `<span class="status-badge status-submitted">🟢 Data Submitted</span>`;
+            } else {
+                statusBadge = `<span class="status-badge status-pending">🟡 Pending Forms</span>`;
+            }
+
+            const div = document.createElement('div');
+            div.className = 'applicant-item';
+            if (selectedAppId === app.id) div.classList.add('active');
+
+            const computedFullName = app.fullName || `${app.personalDetails?.forename || ''} ${app.personalDetails?.surname || ''}`.trim() || 'Unknown Applicant';
+
+            div.innerHTML = `
+                <div class="app-name">${computedFullName}</div>
+                <div class="app-pos">${app.position || 'Employee'}</div>
+                <div>${statusBadge}</div>
             `;
-            a.employment.forEach(e => {
-                empHtml += `<tr><td>${e.company || '-'}</td><td>${e.position || '-'}</td><td>${e.reason || '-'}</td></tr>`;
-            });
-            empHtml += `</tbody></table>`;
-            empContainer.innerHTML = empHtml;
-        } else {
-            empContainer.innerHTML = '<div style="color:var(--text-muted); font-style:italic;">No employment history provided.</div>';
-        }
-
-        const certContainer = document.getElementById('certContainer');
-        let certHtml = '';
-        
-        const coreCerts = [
-            { key: 'mocopa', label: 'MOCOPA Certification' },
-            { key: 'gasl3', label: 'Level 3 Gas Diploma' },
-            { key: 'cmagas', label: 'CMA1 / CMA3 Gas' }
-        ];
-
-        coreCerts.forEach(cert => {
-            if (c[cert.key] && c[cert.key].filename) {
-                certHtml += `<div class="cert-item"><span class="cert-name">📄 ${cert.label}</span><span class="cert-status">Verified on File</span></div>`;
-            }
+            
+            div.onclick = () => {
+                selectedAppId = app.id; 
+                document.querySelectorAll('.applicant-item').forEach(el => el.classList.remove('active'));
+                div.classList.add('active');
+                renderDetails(app);
+            };
+            listEl.appendChild(div);
         });
-
-        if (c.eusr && c.eusr.has) {
-            certHtml += `<div class="cert-item"><span class="cert-name">🪪 EUSR Card (No: ${c.eusr.number})</span><span class="cert-status">Verified on File</span></div>`;
-        }
-
-        if (certHtml === '') certHtml = '<div style="color:var(--text-muted); font-style:italic;">No formal certificates uploaded during application.</div>';
-        certContainer.innerHTML = certHtml;
-        
-        const rawDate = a.startDate || '';
-        const formatStart = rawDate ? new Date(rawDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'TBC';
-
-        document.getElementById('offTitle').textContent = a.position || 'Unknown';
-        document.getElementById('offSalary').textContent = currentVacancy.salary;
-        document.getElementById('offStartDate').textContent = formatStart;
-        document.getElementById('offLocation').textContent = currentVacancy.location;
-        document.getElementById('offContract').textContent = currentVacancy.type;
-        document.getElementById('offManager').textContent = a.assignedFTL || 'TBC';
     }
 
-    window.openOfferModal = function() {
-        document.getElementById('actionButtons').style.display = 'flex';
-        document.getElementById('offerQuestionBlock').style.display = 'none';
-        document.getElementById('successMessage').style.display = 'none';
-        document.getElementById('offerQuestionText').value = '';
-        document.getElementById('offerModal').classList.add('active');
-    };
+    function safeVal(val) { 
+        return val ? val : `<span class="missing-data">Awaiting form submission...</span>`; 
+    }
 
-    window.closeOfferModal = function() { document.getElementById('offerModal').classList.remove('active'); };
-
-    window.toggleQuestionBlock = function(type) {
-        let blockId = type === 'offer' ? 'offerQuestionBlock' : 'contractQuestionBlock';
-        let actionId = type === 'offer' ? 'actionButtons' : 'contractActions';
-        let txtId = type === 'offer' ? 'offerQuestionText' : 'contractQuestionText';
-
-        const block = document.getElementById(blockId);
-        const actions = document.getElementById(actionId);
+    window.markAsProcessed = async function(appId) {
+        if(!confirm("Are you sure you want to mark this onboarding file as processed? This indicates HR has extracted all required data.")) return;
         
-        if (block.style.display === 'block') {
-            block.style.display = 'none';
-            actions.style.display = 'flex';
-            document.getElementById(txtId).value = '';
-        } else {
-            block.style.display = 'block';
-            actions.style.display = 'none';
-            
-            if(type === 'contract') {
-                const lbl = block.querySelector('label');
-                lbl.textContent = `Ask your Reporting Manager (${currentApplicant.assignedFTL || 'Management'}) a question:`;
-            }
-        }
-    };
-
-    window.submitQuestion = async function(type) {
-        let txtId = type === 'offer' ? 'offerQuestionText' : 'contractQuestionText';
-        const text = document.getElementById(txtId).value.trim();
-        if (!text) return alert("Please type a question.");
-
         try {
-            if (type === 'offer') {
-                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_Q_OFFER, {
-                    applicant_name: currentApplicant.fullName || `${currentApplicant.personalDetails?.forename} ${currentApplicant.personalDetails?.surname}`,
-                    question: text,
-                    reply_to: currentApplicant.personalDetails?.email
-                });
-                document.getElementById('offerQuestionBlock').style.display = 'none';
-                const msgEl = document.getElementById('successMessage');
-                msgEl.innerHTML = "✅ Your enquiry has been sent to recruitment.<br><br>We will respond to you via email shortly.";
-                msgEl.style.display = 'block';
-
-            } else if (type === 'contract') {
-                const ftlEmail = ftlEmails[currentApplicant.assignedFTL] || 'recruitment@next-gen.uk';
-                
-                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_Q_CONTRACT, {
-                    ftl_email: ftlEmail,
-                    ftl_name: currentApplicant.assignedFTL || 'Reporting Manager',
-                    applicant_name: currentApplicant.fullName || `${currentApplicant.personalDetails?.forename} ${currentApplicant.personalDetails?.surname}`,
-                    question: text,
-                    reply_to: currentApplicant.personalDetails?.email
-                });
-                
-                document.getElementById('contractQuestionBlock').style.display = 'none';
-                document.getElementById('contractActions').style.display = 'flex';
-                alert("✅ Your question has been emailed directly to your Reporting Manager.");
-            }
-
-        } catch (e) {
-            console.error(e);
-            alert("Failed to send question. Please check your connection.");
+            await updateDoc(doc(db, "NGUO New Applicants", appId), {
+                onboardingProcessed: true,
+                onboardingProcessedAt: new Date().toISOString(),
+                onboardingProcessedBy: localStorage.getItem('ngu_portal_username') || 'Admin'
+            });
+            alert("Onboarding file marked as processed.");
+        } catch (error) {
+            console.error(error);
+            alert("Failed to update status. Check permissions.");
         }
     };
 
-    let canvas, ctx, drawing = false;
-
-    function resizeCanvas() {
-        if(!canvas) return;
-        const rect = canvas.parentElement.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = 200; 
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.lineWidth = 3;
-        ctx.lineCap = 'round';
-        ctx.strokeStyle = '#000';
-    }
-
-    function startDrawing(e) {
-        drawing = true;
-        draw(e);
-    }
-
-    function stopDrawing() {
-        drawing = false;
-        ctx.beginPath();
-    }
-
-    function draw(e) {
-        if (!drawing) return;
-        e.preventDefault();
+    function renderDetails(app) {
+        const mainEl = document.getElementById('mainContent');
+        const p = app.personalDetails || {};
+        const c = app.certificates || {};
+        const ob = app.onboardingData || {}; 
         
-        const rect = canvas.getBoundingClientRect();
-        let x = e.clientX || (e.touches && e.touches[0].clientX);
-        let y = e.clientY || (e.touches && e.touches[0].clientY);
-        
-        x = x - rect.left;
-        y = y - rect.top;
+        const computedFullName = app.fullName || `${p.forename || ''} ${p.surname || ''}`.trim() || 'Applicant';
+        const formatStart = app.startDate ? new Date(app.startDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'TBC';
+        const contractDate = app.contractAcceptedAt ? new Date(app.contractAcceptedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short'}) : 'Unknown';
 
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-    }
+        const isSubmitted = !!app.onboardingData;
 
-    window.clearSignature = function() {
-        if(!ctx) return;
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-    };
+        let warningBanner = '';
+        if (!isSubmitted) {
+            warningBanner = `<div class="banner-warning">⚠️ The applicant has accepted their contract but has NOT submitted their final onboarding data form yet. Pending fields will populate once they complete the next step.</div>`;
+        }
 
-    window.startContractFlow = function() {
-        closeOfferModal();
-        document.getElementById('contractModal').classList.add('active');
-        goToContractStep(1);
-    };
+        let actionHtml = '';
+        if (isSubmitted && !app.onboardingProcessed) {
+            actionHtml = `<div style="text-align: right; margin-top: 1rem;"><button class="btn-action" onclick="markAsProcessed('${app.id}')">Mark File as HR Processed</button></div>`;
+        } else if (app.onboardingProcessed) {
+            actionHtml = `<div style="text-align: right; margin-top: 1rem; color: var(--accent); font-weight: 600;">✓ Processed by ${app.onboardingProcessedBy || 'Admin'}</div>`;
+        }
 
-    window.closeContractModal = function() {
-        document.getElementById('contractModal').classList.remove('active');
-    };
-
-    window.goToContractStep = async function(stepNum) {
-        document.querySelectorAll('.wizard-step').forEach(el => el.classList.remove('active'));
-        document.getElementById(`contractStep${stepNum}`).classList.add('active');
-
-        if (stepNum === 2) {
-            const docEl = document.getElementById('contractDocumentData');
-            docEl.innerHTML = "<em>Fetching your personalized contract...</em>";
+        mainEl.innerHTML = `
+            ${warningBanner}
             
-            try {
-                const q = query(collection(db, "NGU Contacts & Policies"), where("type", "==", "contract"));
-                const snap = await getDocs(q);
-                
-                let contractText = '';
-                const safeAppPos = currentApplicant.position.trim().toLowerCase();
-
-                snap.forEach(d => {
-                    const dbJobTitle = (d.data().jobTitle || '').trim().toLowerCase();
-                    if (dbJobTitle === safeAppPos || safeAppPos.includes(dbJobTitle) || dbJobTitle.includes(safeAppPos)) {
-                        contractText = d.data().content;
-                    }
-                });
-
-                if (!contractText) {
-                    docEl.innerHTML = "<span style='color:var(--error); font-weight:bold;'>Contract Document Missing.</span><br><br>Your contract is still being drafted by the recruitment team. Please use the 'Ask a Question' button to notify them.";
-                } else {
-                    const p = currentApplicant.personalDetails || {};
-                    const todayStr = new Date().toLocaleDateString('en-GB');
-                    const rawStart = currentApplicant.startDate || '';
-                    const formattedStart = rawStart ? new Date(rawStart).toLocaleDateString('en-GB') : 'TBC';
-                    const signedCandidateDate = currentApplicant.declaration?.date ? new Date(currentApplicant.declaration.date).toLocaleDateString('en-GB') : 'Pending';
-                    const computedFullName = `${p.forename || ''} ${p.surname || ''}`.trim() || currentApplicant.fullName || '';
-
-                    // Safe Token Replacement Routine
-                    contractText = contractText
-                        .replace(/{{personalDetails\.title}}/g, p.title || 'Mr/Ms')
-                        .replace(/{{personalDetails\.forename}}/g, p.forename || '')
-                        .replace(/{{personalDetails\.surname}}/g, p.surname || '')
-                        .replace(/{{personalDetails\.address}}/g, p.address || '')
-                        .replace(/{{personalDetails\.postcode}}/g, p.postcode || '')
-                        .replace(/{{fullName}}/g, computedFullName) 
-                        .replace(/{{position}}/g, currentApplicant.position || 'Smart Metering Engineer')
-                        .replace(/{{startDate}}/g, formattedStart)
-                        .replace(/{{current_date}}/g, todayStr)
-                        .replace(/{{declaration\.date}}/g, signedCandidateDate);
-
-                    if (currentApplicant.declaration?.signature) {
-                        contractText = contractText.replace(/{{declaration\.signature}}/g, `<img src="${currentApplicant.declaration.signature}" style="max-height:80px; background:white; padding:4px;" />`);
-                    } else {
-                        contractText = contractText.replace(/{{declaration\.signature}}/g, '___________________');
-                    }
-                    
-                    // Cleanup routines to handle mismatched legacy brackets
-                    const legacyAddr = `${p.address || ''}, ${p.postcode || ''}`;
-                    contractText = contractText.replace(/\[Employee Name\]/gi, computedFullName);
-                    contractText = contractText.replace(/\[Employee Address\]/gi, legacyAddr);
-                    
-                    contractText = contractText.replace(/\n/g, '<br>');
-                    docEl.innerHTML = contractText;
-                }
-            } catch (e) {
-                docEl.innerHTML = "Error fetching contract data.";
-                console.error(e);
-            }
-        }
-
-        if (stepNum === 3) {
-            document.getElementById('sigDate').value = new Date().toISOString().split('T')[0];
-            
-            if(!canvas) {
-                canvas = document.getElementById('sigCanvas');
-                ctx = canvas.getContext('2d');
-                
-                canvas.addEventListener('mousedown', startDrawing);
-                canvas.addEventListener('mouseup', stopDrawing);
-                canvas.addEventListener('mousemove', draw);
-                canvas.addEventListener('mouseout', stopDrawing);
-                canvas.addEventListener('touchstart', startDrawing, {passive: false});
-                canvas.addEventListener('touchend', stopDrawing, {passive: false});
-                canvas.addEventListener('touchmove', draw, {passive: false});
-            }
-            setTimeout(resizeCanvas, 100);
-        }
-    };
-
-    window.downloadContractPDF = function() {
-        const btn = document.getElementById('btnDownloadPDF');
-        btn.disabled = true;
-        btn.textContent = 'Generating PDF...';
-
-        const rawHTML = document.getElementById('contractDocumentData').innerHTML;
-        const derivedName = currentApplicant.fullName || `${currentApplicant.personalDetails?.forename}_${currentApplicant.personalDetails?.surname}`;
-        
-        const printContent = `
-            <div style="font-family: 'Times New Roman', serif; font-size: 14px; line-height: 1.6; color: black; background: white; padding: 20px; white-space: pre-wrap;">
-                ${rawHTML}
-            </div>
-        `;
-
-        const opt = {
-            margin:       0.5,
-            filename:     `${derivedName.replace(/\s+/g, '_')}_Contract.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true },
-            jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' },
-            pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-        };
-
-        html2pdf().set(opt).from(printContent).save().then(() => {
-            btn.disabled = false;
-            btn.textContent = '📄 Download PDF';
-        }).catch((err) => {
-            console.error("PDF generation failed:", err);
-            btn.disabled = false;
-            btn.textContent = '📄 Download PDF';
-            alert("Could not build the PDF document. Please try again.");
-        });
-    };
-
-    window.declineContract = function() {
-        if(confirm("Are you sure you want to decline this contract? This will notify recruitment that you are rejecting the offer.")) {
-            alert("Contract declined. Please contact recruitment if this was a mistake.");
-            closeContractModal();
-        }
-    };
-
-    window.finalizeContractAcceptance = async function() {
-        const chkRev = document.getElementById('chkReview').checked;
-        const chkTerm = document.getElementById('chkTerms').checked;
-        const sName = document.getElementById('sigName').value.trim();
-        const btn = document.getElementById('btnFinalAccept');
-
-        if(!chkRev || !chkTerm) return alert("You must check both boxes to confirm you have read and accept the terms.");
-        if(!sName) return alert("Please print your full name.");
-
-        const isBlank = !ctx.getImageData(0,0,canvas.width,canvas.height).data.some(channel => channel !== 255);
-        if(isBlank) return alert("Please provide your digital signature in the box.");
-
-        const signatureData = canvas.toDataURL("image/png");
-
-        btn.disabled = true;
-        btn.textContent = 'Saving Document...';
-
-        try {
-            await updateDoc(doc(db, "NGUO New Applicants", currentApplicant.id), {
-                offerAccepted: true,
-                offerAcceptedAt: new Date().toISOString(),
-                contractAccepted: true,
-                contractAcceptedAt: new Date().toISOString(),
-                contractSignature: signatureData,
-                contractSignName: sName
-            });
-
-            currentApplicant.contractAccepted = true; 
-            document.getElementById('btnViewOffer').style.display = 'none';
-
-            const dynamicNameString = currentApplicant.fullName || `${currentApplicant.personalDetails?.forename} ${currentApplicant.personalDetails?.surname}`;
-
-            const pRec = emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REC_CONFIRM, {
-                applicant_name: dynamicNameString,
-                job_title: currentApplicant.position
-            });
-
-            const pEmp = emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EMP_CONFIRM, {
-                to_email: currentApplicant.personalDetails?.email,
-                applicant_name: dynamicNameString
-            });
-
-            await Promise.allSettled([pRec, pEmp]);
-            goToContractStep(4);
-
-        } catch (e) {
-            console.error(e);
-            alert("Error saving contract acceptance. Please check your connection.");
-            btn.disabled = false;
-            btn.textContent = '✅ Submit Signed Contract';
-        }
-    };
-
-    window.transitionToOnboarding = function() {
-        closeContractModal();
-        
-        const formatStart = currentApplicant.startDate 
-            ? new Date(currentApplicant.startDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) 
-            : 'TBC';
-
-        const welcomeHtml = `
-            <div class="modal-overlay active" id="onboardingWelcomeModal">
-                <div class="modal-content" style="text-align:center;">
-                    <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU" style="max-height: 50px; margin-bottom: 1rem;">
-                    <h2 style="color: var(--accent); margin-bottom: 1rem;">Welcome to Next Generation Utilities!</h2>
-                    <p style="color: var(--text-light); margin-bottom: 1rem;">Your target start date is: <strong style="color:var(--success);">${formatStart}</strong></p>
-                    <p style="color: var(--text-muted); margin-bottom: 2rem;">We are thrilled to have you. To ensure everything is ready for your first day, including your uniform and fleet setup, let's complete your onboarding file.</p>
-                    <button class="btn-primary" style="width:100%;" onclick="window.location.href='complete-onboarding.html'">Let's Complete Your Onboarding Journey</button>
+            <div class="app-header">
+                <div>
+                    <h1>${computedFullName}</h1>
+                    <div class="role-badge">${app.position || 'Role TBC'}</div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Start Date</div>
+                    <div style="font-size: 1.2rem; color: white; font-weight: 700;">${formatStart}</div>
                 </div>
             </div>
+
+            <div class="section">
+                <h3>✍️ Contract Acceptance Record</h3>
+                <div class="grid-2">
+                    <div class="data-group"><div class="data-label">Date Accepted</div><div class="data-value">${contractDate}</div></div>
+                    <div class="data-group"><div class="data-label">Print Name</div><div class="data-value">${app.contractSignName || 'N/A'}</div></div>
+                    <div class="data-group" style="grid-column: 1 / -1;">
+                        <div class="data-label">Digital Signature Mark</div>
+                        ${app.contractSignature ? `<img src="${app.contractSignature}" class="signature-img">` : '<div class="missing-data">No digital signature image found</div>'}
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>👤 Core Employee Details</h3>
+                <div class="grid-2">
+                    <div class="data-group"><div class="data-label">Email</div><div class="data-value">${p.email || 'N/A'}</div></div>
+                    <div class="data-group"><div class="data-label">Phone</div><div class="data-value">${p.phone || 'N/A'}</div></div>
+                    <div class="data-group" style="grid-column: 1 / -1;"><div class="data-label">Home Address</div><div class="data-value">${p.address || ''}, ${p.postcode || ''}</div></div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h3>⚖️ Compliance & Right to Work</h3>
+                <div class="grid-3">
+                    <div class="data-group"><div class="data-label">Right to Work in UK</div><div class="data-value">${app.workPermit === 'no' ? '<span style="color:var(--success)">Valid (UK Citizen/No Permit Req)</span>' : '<span style="color:var(--warning)">Requires Permit</span>'}</div></div>
+                    <div class="data-group"><div class="data-label">Unspent Convictions</div><div class="data-value">${app.convictions === 'no' ? '<span style="color:var(--success)">Clear</span>' : '<span style="color:var(--error)">Declared</span>'}</div></div>
+                    <div class="data-group"><div class="data-label">Adjustments Needed</div><div class="data-value">${(app.reasonableAdjustments?.medical === 'yes' || app.reasonableAdjustments?.disability === 'yes') ? '<span style="color:var(--warning)">Requested</span>' : '<span style="color:var(--success)">None Declared</span>'}</div></div>
+                </div>
+            </div>
+
+            <div class="section" style="border-color: ${isSubmitted ? 'var(--border)' : 'var(--warning)'}">
+                <h3>💳 Payroll & Bank Details</h3>
+                <div class="grid-3">
+                    <div class="data-group"><div class="data-label">Name on Account</div><div class="data-value">${safeVal(ob.accountName)}</div></div>
+                    <div class="data-group"><div class="data-label">Sort Code</div><div class="data-value mono">${safeVal(ob.sortCode)}</div></div>
+                    <div class="data-group"><div class="data-label">Account Number</div><div class="data-value mono">${safeVal(ob.accountNumber)}</div></div>
+                </div>
+            </div>
+
+            <div class="section" style="border-color: ${isSubmitted ? 'var(--border)' : 'var(--warning)'}">
+                <h3>🚨 Emergency Contact (Next of Kin)</h3>
+                <div class="grid-3">
+                    <div class="data-group"><div class="data-label">Full Name</div><div class="data-value">${safeVal(ob.emergencyName)}</div></div>
+                    <div class="data-group"><div class="data-label">Relationship</div><div class="data-value">${safeVal(ob.emergencyRelation)}</div></div>
+                    <div class="data-group"><div class="data-label">Contact Number</div><div class="data-value">${safeVal(ob.emergencyPhone)}</div></div>
+                </div>
+            </div>
+
+            <div class="section" style="border-color: ${isSubmitted ? 'var(--border)' : 'var(--warning)'}">
+                <h3>👕 Uniform & PPE Requirements</h3>
+                <div class="grid-3">
+                    <div class="data-group"><div class="data-label">Top / Shirt Size</div><div class="data-value">${safeVal(ob.shirtSize)}</div></div>
+                    <div class="data-group"><div class="data-label">Trouser Size (Waist/Leg)</div><div class="data-value">${safeVal(ob.trouserSize)}</div></div>
+                    <div class="data-group"><div class="data-label">Boot Size (UK)</div><div class="data-value">${safeVal(ob.bootSize)}</div></div>
+                </div>
+            </div>
+
+            <div class="section" style="border-color: ${isSubmitted ? 'var(--border)' : 'var(--warning)'}">
+                <h3>🚐 Fleet Information</h3>
+                <div class="grid-2">
+                    <div class="data-group"><div class="data-label">DVLA Check Code</div><div class="data-value mono" style="color: var(--accent);">${safeVal(ob.dvlaCheckCode)}</div></div>
+                    <div class="data-group"><div class="data-label">National Insurance Number</div><div class="data-value mono">${safeVal(ob.niNumber)}</div></div>
+                    <div class="data-group" style="grid-column: 1 / -1;"><div class="data-label">Overnight Parking Details</div><div class="data-value">${safeVal(ob.parkingDetails)}</div></div>
+                </div>
+            </div>
+
+            ${actionHtml}
         `;
-        document.body.insertAdjacentHTML('beforeend', welcomeHtml);
-    };
+    }
 </script>
 </body>
 </html>
