@@ -8,9 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     
-    <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <!-- HTML2PDF SDK for Contract Downloads -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <style>
@@ -117,7 +115,6 @@
 </head>
 <body>
 
-    <!-- 1. LOGIN SCREEN -->
     <div id="loginScreen">
         <div class="login-card">
             <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
@@ -136,7 +133,6 @@
         </div>
     </div>
 
-    <!-- 2. PORTAL SCREEN -->
     <div id="portalScreen">
         <div class="portal-header">
             <div>
@@ -180,19 +176,16 @@
         <div class="section">
             <h3>Employment History</h3>
             <div id="employmentContainer">
-                <!-- Dynamically Populated -->
-            </div>
+                </div>
         </div>
 
         <div class="section">
             <h3>Uploaded Certificates</h3>
             <div id="certContainer">
-                <!-- Dynamically Populated -->
-            </div>
+                </div>
         </div>
     </div>
 
-    <!-- 3. OFFER SUMMARY MODAL -->
     <div class="modal-overlay" id="offerModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -228,11 +221,9 @@
         </div>
     </div>
 
-    <!-- 4. CONTRACT WIZARD MODAL -->
     <div class="modal-overlay" id="contractModal">
         <div class="modal-content wide" style="padding: 0;">
             
-            <!-- Step 1: Warning -->
             <div id="contractStep1" class="wizard-step active" style="padding: 4rem 2rem; text-align: center;">
                 <div style="font-size: 4rem; margin-bottom: 1rem;">⚠️</div>
                 <h2 style="color: var(--warning); margin-bottom: 1rem;">Contract Review</h2>
@@ -243,14 +234,12 @@
                 <button class="btn-primary" style="width: 200px;" onclick="goToContractStep(2)">View Contract ➔</button>
             </div>
 
-            <!-- Step 2: Contract Viewer -->
             <div id="contractStep2" class="wizard-step" style="padding: 2rem;">
                 <div class="modal-header">
                     <div class="modal-title">Employment Contract</div>
                     <button class="close-btn" onclick="closeContractModal()">×</button>
                 </div>
                 
-                <!-- This Div is targeted by html2pdf -->
                 <div id="contractDocumentData" class="contract-viewer">Loading contract...</div>
                 
                 <div class="modal-actions row" id="contractActions">
@@ -269,7 +258,6 @@
                 </div>
             </div>
 
-            <!-- Step 3: Digital Signature -->
             <div id="contractStep3" class="wizard-step" style="padding: 2rem;">
                 <div class="modal-header">
                     <div class="modal-title">Sign & Accept</div>
@@ -305,7 +293,6 @@
                 </div>
             </div>
 
-            <!-- Step 4: Success state -->
             <div id="contractStep4" class="wizard-step" style="padding: 4rem 2rem; text-align: center;">
                 <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
                 <h2 style="color: var(--success); margin-bottom: 1rem;">Contract Accepted!</h2>
@@ -424,8 +411,8 @@
         const safeAppPos = jobTitle.trim().toLowerCase();
 
         try {
-            // 🛠️ FIX: Corrected internal typo spelling from "Recuitment" to "Recruitment"
-            const vacQ = query(collection(db, "NGU Recruitment Approval Form"), where("workflowClosed", "==", false));
+            // Reverted back to your literal database name with its exact spelling configuration
+            const vacQ = query(collection(db, "NGU Recuitment Approval Form"), where("workflowClosed", "==", false));
             const vacSnap = await getDocs(vacQ);
             
             vacSnap.forEach(doc => {
@@ -433,7 +420,11 @@
                 const vTitle = (data.requestInformation?.jobTitle || '').trim().toLowerCase();
                 const vArea = getPostcodeArea(data.requestInformation?.location);
                 
-                if (vTitle === safeAppPos && vArea === appArea) {
+                // Flexible match logic (Matches if job title is identical OR if one contains the other, such as 'Smart Meter Engineer' matching 'Smart Metering Engineer')
+                const isTitleMatch = (vTitle === safeAppPos) || vTitle.includes(safeAppPos) || safeAppPos.includes(vTitle);
+                const isAreaMatch = (vArea === appArea) || (vArea === '') || (appArea === '');
+
+                if (isTitleMatch && isAreaMatch) {
                     const rawSalary = data.budgetSalary?.proposedSalary || data.requestInformation?.salary || 'TBC';
                     currentVacancy = {
                         salary: formatSalary(rawSalary),
@@ -671,7 +662,7 @@
 
                 snap.forEach(d => {
                     const dbJobTitle = (d.data().jobTitle || '').trim().toLowerCase();
-                    if (dbJobTitle === safeAppPos) {
+                    if (dbJobTitle === safeAppPos || safeAppPos.includes(dbJobTitle) || dbJobTitle.includes(safeAppPos)) {
                         contractText = d.data().content;
                     }
                 });
@@ -686,7 +677,7 @@
                     const signedCandidateDate = currentApplicant.declaration?.date ? new Date(currentApplicant.declaration.date).toLocaleDateString('en-GB') : 'Pending';
                     const computedFullName = `${p.forename || ''} ${p.surname || ''}`.trim() || currentApplicant.fullName || '';
 
-                    // 🛠️ SAFE MULTI-REPLACEMENT ENGINE (Fixes both escaped dot maps and legacy fallback hooks)
+                    // Safe Token Replacement Routine
                     contractText = contractText
                         .replace(/{{personalDetails\.title}}/g, p.title || 'Mr/Ms')
                         .replace(/{{personalDetails\.forename}}/g, p.forename || '')
@@ -705,7 +696,7 @@
                         contractText = contractText.replace(/{{declaration\.signature}}/g, '___________________');
                     }
                     
-                    // Legacy Fallback Checks
+                    // Cleanup routines to handle mismatched legacy brackets
                     const legacyAddr = `${p.address || ''}, ${p.postcode || ''}`;
                     contractText = contractText.replace(/\[Employee Name\]/gi, computedFullName);
                     contractText = contractText.replace(/\[Employee Address\]/gi, legacyAddr);
