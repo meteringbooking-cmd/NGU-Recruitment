@@ -3,271 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>NGU — Onboarding Tracker</title>
+    <title>NGU — Onboarding Review Hub</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --primary: #005EB8; --accent: #00A3E0;
-            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
-            --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
-            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
-            --sidebar-width: 340px;
-        }
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: 'Work Sans', sans-serif; background: var(--bg-dark); color: var(--text-light); height: 100vh; display: flex; overflow: hidden; }
-        
-        /* SIDEBAR */
-        .sidebar { width: var(--sidebar-width); background: var(--bg-card); border-right: 1px solid var(--border); display: flex; flex-direction: column; height: 100%; }
-        .sidebar-header { padding: 1.5rem; border-bottom: 1px solid var(--border); background: #111d31; }
-        .logo { max-height: 40px; display: block; margin-bottom: 1rem; }
-        .sidebar-header h2 { font-size: 1.2rem; color: var(--accent); }
-        
-        .search-wrap { padding: 1rem; border-bottom: 1px solid var(--border); background: rgba(0, 0, 0, 0.15); }
-        .search-input-row { display: flex; align-items: center; gap: 8px; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 0 10px; transition: border-color 0.2s; }
-        .search-input-row:focus-within { border-color: var(--accent); }
-        .search-input-row input { flex: 1; background: none; border: none; outline: none; color: var(--text-light); font-family: inherit; font-size: 0.88rem; padding: 0.8rem 0; }
-        
-        .applicant-list { flex: 1; overflow-y: auto; padding: 1rem; }
-        .applicant-item { background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 0.8rem; cursor: pointer; transition: all 0.2s; position: relative; }
-        .applicant-item:hover, .applicant-item.active { border-color: var(--accent); background: rgba(0, 163, 224, 0.1); }
-        .app-name { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.2rem; }
-        .app-pos { font-size: 0.85rem; color: var(--accent); margin-bottom: 0.4rem; }
-        
-        .status-badge { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
-        .status-complete { background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4); color: #6ee7b7; }
-        .status-pending { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fcd34d; }
-
-        /* MAIN CONTENT */
-        .main-content { flex: 1; overflow-y: auto; padding: 2rem 3rem; background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%); }
-        .empty-state { display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-size: 1.2rem; }
-        
-        .app-header { margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
-        .app-header h1 { font-size: 2.2rem; margin-bottom: 0.5rem; }
-        .badge { display: inline-block; background: rgba(0,163,224,0.15); color: var(--accent); padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem; margin-right: 10px; }
-        
-        .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.8rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .section h3 { font-size: 1.2rem; color: var(--accent); margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
-        
-        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem 2rem; }
-        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
-        .data-group { margin-bottom: 1rem; }
-        .data-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; font-weight: 600; }
-        .data-value { font-size: 1rem; color: var(--text-light); word-break: break-word; }
-        
-        .text-box { background: var(--bg-input); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); font-size: 0.9rem; line-height: 1.5; }
-        
-        .signature-img { max-height: 80px; background: white; padding: 5px; border-radius: 4px; border: 1px solid var(--border); margin-top: 10px; }
-        .missing-data { color: var(--warning); font-style: italic; font-size: 0.9rem; }
-    </style>
-</head>
-<body>
-
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
-            <h2>Onboarding Tracker</h2>
-        </div>
-        
-        <div class="search-wrap">
-            <div class="search-input-row">
-                <input type="text" id="nameSearch" placeholder="Search by name…" autocomplete="off">
-            </div>
-        </div>
-
-        <div class="applicant-list" id="applicantList">
-            <div style="text-align: center; padding: 2rem; color: var(--accent);">Loading onboarding files...</div>
-        </div>
-    </aside>
-
-    <main class="main-content" id="mainContent">
-        <div class="empty-state">Select an applicant to view their onboarding file.</div>
-    </main>
-
-<script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, where, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
-        authDomain: "oesperformance-a54c0.firebaseapp.com",
-        projectId: "oesperformance-a54c0",
-        storageBucket: "oesperformance-a54c0.firebasestorage.app",
-        messagingSenderId: "484894102454",
-        appId: "1:484894102454:web:17535ee497eac2d90d6717"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    let onboardingData = [];
-    let searchQuery = '';
-    let selectedAppId = null;
-
-    // --- FETCH ONLY APPLICANTS WHO HAVE ACCEPTED THE CONTRACT ---
-    const qOnboarding = query(collection(db, "NGUO New Applicants"), where("contractAccepted", "==", true));
-    
-    onSnapshot(qOnboarding, (snapshot) => {
-        onboardingData = [];
-        snapshot.forEach(doc => onboardingData.push({ id: doc.id, ...doc.data() }));
-        
-        // Sort by contract accepted date (newest first)
-        onboardingData.sort((a, b) => {
-            const dateA = a.contractAcceptedAt ? new Date(a.contractAcceptedAt) : new Date(0);
-            const dateB = b.contractAcceptedAt ? new Date(b.contractAcceptedAt) : new Date(0);
-            return dateB - dateA;
-        });
-
-        renderSidebar();
-
-        if (selectedAppId) {
-            const updatedApp = onboardingData.find(a => a.id === selectedAppId);
-            if (updatedApp) renderDetails(updatedApp);
-        }
-    });
-
-    document.getElementById('nameSearch').addEventListener('input', (e) => {
-        searchQuery = e.target.value.trim().toLowerCase();
-        renderSidebar();
-    });
-
-    function renderSidebar() {
-        const listEl = document.getElementById('applicantList');
-        listEl.innerHTML = '';
-
-        let filteredApps = onboardingData;
-
-        if (searchQuery) {
-            filteredApps = filteredApps.filter(app => {
-                const p = app.personalDetails || {};
-                const computedName = `${p.forename || ''} ${p.surname || ''}`.trim() || app.fullName || '';
-                return computedName.toLowerCase().includes(searchQuery);
-            });
-        }
-
-        if (filteredApps.length === 0) {
-            listEl.innerHTML = `<div style="text-align: center; padding: 2rem; color: var(--text-muted);">No onboarding records found.</div>`;
-            return;
-        }
-
-        filteredApps.forEach((app) => {
-            const p = app.personalDetails || {};
-            const computedName = `${p.forename || ''} ${p.surname || ''}`.trim() || app.fullName || 'Unknown Applicant';
-            
-            // Determine if Onboarding Forms are filled (Checking typical objects)
-            const hasBank = !!app.bankDetails?.accountNumber;
-            const hasEmergency = !!app.emergencyContact?.phone;
-            const hasUniform = !!app.uniformDetails?.topSize;
-            
-            const isFullyOnboarded = hasBank && hasEmergency && hasUniform;
-            
-            const badgeClass = isFullyOnboarded ? 'status-complete' : 'status-pending';
-            const badgeText = isFullyOnboarded ? 'Forms Complete' : 'Forms Pending';
-
-            const div = document.createElement('div');
-            div.className = `applicant-item`;
-            if (selectedAppId === app.id) div.classList.add('active');
-
-            div.innerHTML = `
-                <div class="app-name">${computedName}</div>
-                <div class="app-pos">${app.position || 'Position TBC'}</div>
-                <div class="status-badge ${badgeClass}">${badgeText}</div>
-            `;
-            
-            div.onclick = () => {
-                selectedAppId = app.id;
-                document.querySelectorAll('.applicant-item').forEach(el => el.classList.remove('active'));
-                div.classList.add('active');
-                renderDetails(app);
-            };
-            
-            listEl.appendChild(div);
-        });
-    }
-
-    function safeVal(val, defaultText = '<span class="missing-data">Pending applicant input...</span>') { 
-        return val && String(val).trim() !== '' ? val : defaultText; 
-    }
-
-    function renderDetails(app) {
-        const mainEl = document.getElementById('mainContent');
-        
-        const p = app.personalDetails || {};
-        const bank = app.bankDetails || {};
-        const ec = app.emergencyContact || {};
-        const uni = app.uniformDetails || {};
-        const fleet = app.fleetDetails || {};
-        
-        const computedName = `${p.forename || ''} ${p.surname || ''}`.trim() || app.fullName || 'Unknown Applicant';
-        
-        const formatStart = app.startDate ? new Date(app.startDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'TBC';
-        const contractDate = app.contractAcceptedAt ? new Date(app.contractAcceptedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short'}) : 'Unknown';
-
-        mainEl.innerHTML = `
-            <div class="app-header">
-                <h1>${computedName}</h1>
-                <div style="margin-top:10px;">
-                    <div class="badge">${app.position || 'TBC'}</div>
-                    <div class="badge" style="background:rgba(16,185,129,0.15); color:var(--success);">Start Date: ${formatStart}</div>
-                </div>
-            </div>
-
-            <div class="section">
-                <h3>Contract Acceptance Status</h3>
-                <div class="grid-2">
-                    <div class="data-group"><div class="data-label">Contract Signed On</div><div class="data-value">${contractDate}</div></div>
-                    <div class="data-group"><div class="data-label">Signature Name</div><div class="data-value">${app.contractSignName || 'N/A'}</div></div>
-                    <div class="data-group" style="grid-column: 1 / -1;">
-                        <div class="data-label">Digital Signature Mark</div>
-                        ${app.contractSignature ? `<img src="${app.contractSignature}" class="signature-img">` : '<div class="missing-data">No digital signature image found</div>'}
-                    </div>
-                </div>
-            </div>
-
-            <div class="section">
-                <h3>Contact & Portal Details</h3>
-                <div class="grid-2">
-                    <div class="data-group"><div class="data-label">Personal Email</div><div class="data-value">${safeVal(p.email)}</div></div>
-                    <div class="data-group"><div class="data-label">Mobile Number</div><div class="data-value">${safeVal(p.phone)}</div></div>
-                    <div class="data-group"><div class="data-label">Home Address</div><div class="data-value">${safeVal(p.address)}<br>${safeVal(p.postcode)}</div></div>
-                    <div class="data-group"><div class="data-label">Portal Username</div><div class="data-value" style="font-family:'DM Mono', monospace; color:var(--accent);">${safeVal(app.portalUsername)}</div></div>
-                </div>
-            </div>
-
-            <div class="section">
-                <h3>Emergency Contact</h3>
-                <div class="grid-3">
-                    <div class="data-group"><div class="data-label">Contact Name</div><div class="data-value">${safeVal(ec.name)}</div></div>
-                    <div class="data-group"><div class="data-label">Relationship</div><div class="data-value">${safeVal(ec.relation)}</div></div>
-                    <div class="data-group"><div class="data-label">Phone Number</div><div class="data-value">${safeVal(ec.phone)}</div></div>
-                </div>
-            </div>
-
-            <div class="section">
-                <h3>Payroll & Bank Details</h3>
-                <div class="grid-3">
-                    <div class="data-group"><divHere is the complete, drop-in **`view-onboarding.html`** admin dashboard. 
-
-Since I don't have the exact code for your `complete-onboarding.html` form, I have structured this dashboard to be **smart and adaptive**. It automatically queries anyone who has accepted their contract (`contractAccepted == true`). 
-
-In the sidebar, it will automatically color-code candidates into two categories:
-*   🟡 **Pending Submission:** They signed the contract but haven't filled out their onboarding details yet.
-*   🟢 **Data Submitted:** They have finished the onboarding portal, and their Bank, Uniform, Next of Kin, and Fleet data is ready for you to process.
-
-### `view-onboarding.html`
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>NGU — Onboarding Review</title>
-    <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
-    <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
-    <link href="[https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap](https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap)" rel="stylesheet">
     
     <style>
         :root {
@@ -296,7 +35,7 @@ In the sidebar, it will automatically color-code candidates into two categories:
         .app-name { font-weight: 700; font-size: 1.05rem; margin-bottom: 0.2rem; }
         .app-pos { font-size: 0.85rem; color: var(--accent); margin-bottom: 0.4rem; }
         
-        .status-badge { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .status-badge { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 5px; }
         .status-pending { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); }
         .status-submitted { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
         .status-processed { background: rgba(0, 163, 224, 0.15); color: var(--accent); border: 1px solid rgba(0, 163, 224, 0.4); }
@@ -332,7 +71,7 @@ In the sidebar, it will automatically color-code candidates into two categories:
 
     <aside class="sidebar">
         <div class="sidebar-header">
-            <img src="[https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1](https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1)" alt="NGU Logo" class="logo">
+            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
             <h2>Onboarding Review Hub</h2>
         </div>
         
@@ -352,8 +91,8 @@ In the sidebar, it will automatically color-code candidates into two categories:
     </main>
 
 <script type="module">
-    import { initializeApp } from '[https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js](https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js)';
-    import { getFirestore, collection, query, onSnapshot, where, doc, updateDoc } from '[https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js](https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js)';
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, query, onSnapshot, where, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
@@ -376,7 +115,7 @@ In the sidebar, it will automatically color-code candidates into two categories:
         renderSidebar();
     });
 
-    // We only care about applicants who have successfully accepted their contract
+    // Fetch ONLY applicants who have successfully accepted their contract
     const qApp = query(collection(db, "NGUO New Applicants"), where("contractAccepted", "==", true));
     
     onSnapshot(qApp, (snapshot) => {
@@ -472,7 +211,7 @@ In the sidebar, it will automatically color-code candidates into two categories:
     function renderDetails(app) {
         const mainEl = document.getElementById('mainContent');
         const p = app.personalDetails || {};
-        const ob = app.onboardingData || {}; // Where the complete-onboarding.html likely saves its specific data
+        const ob = app.onboardingData || {}; 
         
         const computedFullName = app.fullName || `${p.forename || ''} ${p.surname || ''}`.trim() || 'Applicant';
         const formatStart = app.startDate ? new Date(app.startDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'TBC';
