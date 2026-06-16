@@ -241,8 +241,17 @@
     }
 
     window.generateHmrcChecklist = function(appId) {
+        // Open the tab FIRST, synchronously, before any other work —
+        // this preserves the "user gesture" trust so browsers don't block it.
+        const w = window.open('', '_blank');
+        if (!w) {
+            alert('Your browser blocked the new tab. Please check your popup settings for this site.');
+            return;
+        }
+        w.document.write('Loading checklist…');
+
         const app = applicationsData.find(a => a.id === appId);
-        if (!app) return;
+        if (!app) { w.document.body.innerHTML = 'Applicant not found.'; return; }
 
         const pNew = app.onboardingDetails || {};
         const hmrc = app.hmrcChecklist || {};
@@ -355,14 +364,9 @@
 </body>
 </html>`;
 
-        const blob = new Blob([html], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
-        const w = window.open(url, '_blank');
-        if (!w) {
-            alert('Your browser blocked the new tab. Please allow popups for this site, or try again — sometimes this is a one-off browser quirk rather than a real block.');
-        }
-        // Release the blob URL once the new tab has had time to load it
-        setTimeout(() => URL.revokeObjectURL(url), 30000);
+        w.document.open();
+        w.document.write(html);
+        w.document.close();
     };
 
     function renderDetails(app) {
@@ -429,7 +433,7 @@
             taxBlock = `<div style="background:rgba(0,0,0,0.2); padding:1rem; border-radius:6px; border:1px solid var(--border);">
                             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:0.5rem;">
                                 <div style="color:var(--accent); font-weight:bold;">${hmrc.calculatedStatementOutcome} Selected</div>
-                                <a href="#" class="btn-hmrc" onclick="generateHmrcChecklist('${app.id}'); return false;">📋 Generate HMRC Starter Checklist</a>
+                                <button type="button" class="btn-hmrc" data-hmrc-app-id="${app.id}">📋 Generate HMRC Starter Checklist</button>
                             </div>
                             <div style="font-size:0.85rem; color:var(--text-light); margin-bottom:10px;">
                                 Another Job: <strong>${hmrc.anotherJobQuestion || '-'}</strong> | 
@@ -542,6 +546,13 @@
 
             ${actionHtml}
         `;
+
+        const hmrcBtn = mainEl.querySelector('[data-hmrc-app-id]');
+        if (hmrcBtn) {
+            hmrcBtn.addEventListener('click', function() {
+                generateHmrcChecklist(this.getAttribute('data-hmrc-app-id'));
+            });
+        }
     }
 </script>
 </body>
