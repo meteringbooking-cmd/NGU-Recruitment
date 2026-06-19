@@ -651,45 +651,70 @@
         }
     };
 
-    window.markNameChecksComplete = async function(appId) {
+    // --- NAME CHECK OUTCOME ACTIONS ---
+    window.markNameChecksProceed = async function(appId) {
         const appData = applicationsData.find(a => a.id === appId);
         if (!appData) return alert("Applicant profile records could not be resolved from data cache.");
 
         const candidateName = appData.fullName || 'Applicant';
         const candidateEmail = appData.personalDetails?.email;
 
-        const adminName = prompt(`Please enter your name to confirm Name Checks are complete for ${candidateName}:`);
-        if (!adminName || adminName.trim() === "") return;
+        const adminName = prompt(`Enter your name to confirm Name Checks passed for ${candidateName} and proceed to interview:`);
+        if (!adminName || adminName.trim() === '') return;
 
         try {
-            const appRef = doc(db, "NGUO New Applicants", appId);
-            
+            const appRef = doc(db, 'NGUO New Applicants', appId);
             await updateDoc(appRef, {
-                nameChecks: "Passed",
+                nameChecks: 'Passed',
                 nameChecksCompleted: true,
-                status: "Ready for Interview", 
-                nameChecksCompletedBy: adminName.trim(), 
+                nameChecksDeclined: false,
+                status: 'Ready for Interview',
+                nameChecksCompletedBy: adminName.trim(),
                 nameChecksCompletedAt: new Date().toISOString()
             });
-
             try {
-                await emailjs.send(
-                    EMAILJS_SERVICE_ID,
-                    "template_gw0hkxr", 
-                    {
-                        to_email: candidateEmail,
-                        first_name: candidateName.split(' ')[0],
-                        portal_link: "https://ngu-recruitment-portal.vercel.app/FTL-interview-availability.html"
-                    }
-                );
-                alert("Name checks completed successfully! The candidate has been advanced to 'Ready for Interview' status. Invitation email dispatched.");
+                await emailjs.send(EMAILJS_SERVICE_ID, 'template_gw0hkxr', {
+                    to_email: candidateEmail,
+                    first_name: candidateName.split(' ')[0],
+                    portal_link: 'https://ngu-recruitment-portal.vercel.app/FTL-interview-availability.html'
+                });
+                alert("Name checks passed. Candidate advanced to 'Ready for Interview' and invitation email dispatched.");
             } catch (emailError) {
-                console.error("EmailJS error:", emailError);
-                alert("Database saved successfully, but the automated email invitation failed. Check EmailJS configuration.");
+                console.error('EmailJS error:', emailError);
+                alert('Database saved successfully, but the automated email invitation failed. Check EmailJS configuration.');
             }
-        } catch (error) { 
-            console.error("Firestore error:", error);
-            alert("Error updating status records."); 
+        } catch (error) {
+            console.error('Firestore error:', error);
+            alert('Error updating status records.');
+        }
+    };
+
+    window.markNameChecksDecline = async function(appId) {
+        const appData = applicationsData.find(a => a.id === appId);
+        if (!appData) return alert('Applicant profile records could not be resolved from data cache.');
+
+        const candidateName = appData.fullName || 'Applicant';
+
+        if (!confirm(`Are you sure you want to decline the name check for ${candidateName}? They will be archived with no further action.`)) return;
+
+        const adminName = prompt(`Enter your name to record the name check decline for ${candidateName}:`);
+        if (!adminName || adminName.trim() === '') return;
+
+        try {
+            const appRef = doc(db, 'NGUO New Applicants', appId);
+            await updateDoc(appRef, {
+                nameChecks: 'Declined',
+                nameChecksCompleted: true,
+                nameChecksDeclined: true,
+                status: 'Archived — Name Check Declined',
+                nameChecksCompletedBy: adminName.trim(),
+                nameChecksCompletedAt: new Date().toISOString()
+            });
+            selectedAppId = null;
+            document.getElementById('mainContent').innerHTML = '<div class="empty-state">Applicant archived — name check declined.</div>';
+        } catch (error) {
+            console.error('Firestore error:', error);
+            alert('Error archiving applicant.');
         }
     };
 
@@ -915,6 +940,7 @@
             app.finalRecruitmentDecision === 'Approved' ||
             app.finalRecruitmentDecision === 'Rejected' ||
             app.interviewDecision === 'Interview Rejected' ||
+            app.nameChecksDeclined === true ||
             (app.reviews && app.reviews.length >= 2 && app.reviews[0].decision === 'Do not proceed' && app.reviews[1].decision === 'Do not proceed')
         ) return true;
 
@@ -967,6 +993,7 @@
                     app.finalRecruitmentDecision === 'Approved' ||
                     app.finalRecruitmentDecision === 'Rejected' ||
                     app.interviewDecision === 'Interview Rejected' ||
+                    app.nameChecksDeclined === true ||
                     (app.reviews && app.reviews.length >= 2 && app.reviews[0].decision === 'Do not proceed' && app.reviews[1].decision === 'Do not proceed')
                 );
             });
@@ -1118,11 +1145,22 @@
 
         let nameChecksHtml = '';
         if (app.nameChecksRequested) {
-            if (app.nameChecksCompleted) {
+            if (app.nameChecksDeclined) {
                 const ncDate = new Date(app.nameChecksCompletedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
-                nameChecksHtml = `<div style="margin-top:1rem; padding:1rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.4); border-radius:8px;"><div style="color:var(--success); font-weight:700; margin-bottom:0.2rem;">✓ Name Checks Complete</div><div style="font-size:0.85rem; color:var(--text-light);">Confirmed by ${app.nameChecksCompletedBy}</div><div style="font-size:0.75rem; color:var(--text-muted);">${ncDate}</div></div>`;
+                nameChecksHtml = `<div style="margin-top:1rem; padding:1rem; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.4); border-radius:8px;"><div style="color:var(--error); font-weight:700; margin-bottom:0.2rem;">✗ Name Checks — Declined</div><div style="font-size:0.85rem; color:var(--text-light);">Recorded by ${app.nameChecksCompletedBy}</div><div style="font-size:0.75rem; color:var(--text-muted);">${ncDate}</div></div>`;
+            } else if (app.nameChecksCompleted) {
+                const ncDate = new Date(app.nameChecksCompletedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+                nameChecksHtml = `<div style="margin-top:1rem; padding:1rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.4); border-radius:8px;"><div style="color:var(--success); font-weight:700; margin-bottom:0.2rem;">✓ Name Checks Complete — Proceeding</div><div style="font-size:0.85rem; color:var(--text-light);">Confirmed by ${app.nameChecksCompletedBy}</div><div style="font-size:0.75rem; color:var(--text-muted);">${ncDate}</div></div>`;
             } else {
-                nameChecksHtml = `<div style="margin-top:1rem; padding:1rem; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); border-radius:8px;"><div style="color:var(--warning); font-weight:700; margin-bottom:0.5rem;">⏱ Name Checks Pending</div><div style="font-size:0.85rem; color:var(--text-light); margin-bottom:0.8rem;">Automated emails have been sent out. Waiting for results to return.</div><button class="btn-action" onclick="markNameChecksComplete('${app.id}')">Confirm Name Checks Complete</button></div>`;
+                nameChecksHtml = `
+                    <div style="margin-top:1rem; padding:1rem; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); border-radius:8px;">
+                        <div style="color:var(--warning); font-weight:700; margin-bottom:0.5rem;">⏱ Name Checks Pending</div>
+                        <div style="font-size:0.85rem; color:var(--text-light); margin-bottom:1rem;">Automated emails have been sent out. Waiting for results to return.</div>
+                        <div style="display:flex; gap:0.8rem;">
+                            <button class="btn-action" onclick="markNameChecksProceed('${app.id}')" style="flex:1; justify-content:center;">✓ Proceed</button>
+                            <button class="btn-danger" onclick="markNameChecksDecline('${app.id}')" style="flex:1;">✗ Decline</button>
+                        </div>
+                    </div>`;
             }
         }
 
