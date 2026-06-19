@@ -1522,6 +1522,7 @@
             if (a.finalRecruitmentDecision === 'Approved') return false;
             if (a.finalRecruitmentDecision === 'Rejected') return false;
             if (a.interviewDecision === 'Interview Rejected') return false;
+            if (a.reviews && a.reviews.length >= 2 && a.reviews[0].decision === 'Do not proceed' && a.reviews[1].decision === 'Do not proceed') return false;
             // Do Not Proceed from interview rec
             const email = (a.personalDetails?.email || '').toLowerCase();
             const interview = interviewsCache.find(i => i.applicantEmail?.toLowerCase() === email);
@@ -1714,7 +1715,8 @@
             const isArchived =
                 a.finalRecruitmentDecision === 'Approved' ||
                 a.finalRecruitmentDecision === 'Rejected' ||
-                a.interviewDecision === 'Interview Rejected';
+                a.interviewDecision === 'Interview Rejected' ||
+                (a.reviews && a.reviews.length >= 2 && a.reviews[0].decision === 'Do not proceed' && a.reviews[1].decision === 'Do not proceed');
             if (!isArchived) entry.active++;
         });
 
