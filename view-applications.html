@@ -173,12 +173,24 @@
 
             <div class="modal-form-group">
                 <label>Decision</label>
-                <select id="reviewDecision" class="modal-select">
+                <select id="reviewDecision" class="modal-select" onchange="toggleProceedFields()">
                     <option value="" disabled selected>Select a decision...</option>
                     <option value="Proceed">Proceed with applicant</option>
                     <option value="Hold">Place on hold</option>
                     <option value="Do not proceed">Do not proceed</option>
                 </select>
+            </div>
+
+            <div id="proceedExtraFields" style="display:none;">
+                <div class="modal-form-group">
+                    <label>External Name Check — Recipient Email</label>
+                    <input type="email" id="nameCheckEmail" class="modal-input" placeholder="e.g. checks@provider.com">
+                    <div style="font-size:0.78rem; color:var(--text-muted); margin-top:0.3rem;">The external name check email will be sent to this address when both reviewers proceed.</div>
+                </div>
+                <div class="modal-form-group">
+                    <label>Additional Information for Name Check</label>
+                    <textarea id="nameCheckInfo" class="modal-input" rows="3" placeholder="Any extra context, notes or requirements to include with the name check…" style="resize:vertical; line-height:1.5;"></textarea>
+                </div>
             </div>
 
             <div class="modal-actions">
@@ -539,16 +551,30 @@
     }
 
     // --- MODAL & REVIEW CONTROLS ---
+    window.toggleProceedFields = function() {
+        const decision = document.getElementById('reviewDecision').value;
+        const extra = document.getElementById('proceedExtraFields');
+        extra.style.display = decision === 'Proceed' ? 'block' : 'none';
+        if (decision !== 'Proceed') {
+            document.getElementById('nameCheckEmail').value = '';
+            document.getElementById('nameCheckInfo').value = '';
+        }
+    };
+
     window.openReviewModal = function(appId) {
         document.getElementById('reviewAppId').value = appId;
         document.getElementById('reviewerName').value = localStorage.getItem('ngu_portal_username') || '';
         document.getElementById('reviewDecision').value = '';
+        document.getElementById('nameCheckEmail').value = '';
+        document.getElementById('nameCheckInfo').value = '';
+        document.getElementById('proceedExtraFields').style.display = 'none';
         document.getElementById('reviewModal').classList.add('active');
     };
 
     window.closeReviewModal = function() {
         document.getElementById('reviewModal').classList.remove('active');
         document.getElementById('reviewDecision').value = ''; 
+        document.getElementById('proceedExtraFields').style.display = 'none';
     };
 
     window.submitReview = async function() {
@@ -558,6 +584,13 @@
         const submitBtn = document.getElementById('submitReviewBtn');
 
         if (!adminName || !decision) return alert("Please enter your name and make a decision.");
+
+        // If Proceed, require an external name check email
+        const nameCheckEmail = document.getElementById('nameCheckEmail').value.trim();
+        const nameCheckInfo  = document.getElementById('nameCheckInfo').value.trim();
+        if (decision === 'Proceed' && !nameCheckEmail) {
+            return alert("Please enter a recipient email address for the external name check.");
+        }
 
         submitBtn.disabled = true;
         submitBtn.textContent = 'Saving...';
@@ -573,7 +606,14 @@
                 if (reviews.length >= 2) { alert("This application has already been fully reviewed."); return closeReviewModal(); }
                 if (reviews.some(r => r.name.toLowerCase() === adminName.toLowerCase())) { alert("You have already reviewed this application."); return closeReviewModal(); }
 
-                reviews.push({ name: adminName, decision: decision, timestamp: new Date().toISOString() });
+                const reviewEntry = { name: adminName, decision: decision, timestamp: new Date().toISOString() };
+                // Store the name check details on the first reviewer's Proceed decision
+                if (decision === 'Proceed') {
+                    reviewEntry.nameCheckEmail = nameCheckEmail;
+                    if (nameCheckInfo) reviewEntry.nameCheckInfo = nameCheckInfo;
+                }
+                reviews.push(reviewEntry);
+
                 let updates = { reviews: reviews };
                 let triggerNameChecks = false;
 
@@ -585,10 +625,19 @@
                 await updateDoc(appRef, updates);
 
                 if (triggerNameChecks) {
-                    const emailParams = { applicant_name: data.fullName || 'Unknown', postcode: data.personalDetails?.postcode || 'No Postcode' };
+                    // Pull the external email + additional info stored by the first reviewer
+                    const firstProceed = reviews.find(r => r.decision === 'Proceed');
+                    const externalEmail  = firstProceed?.nameCheckEmail  || '';
+                    const additionalInfo = firstProceed?.nameCheckInfo   || '';
+
+                    const baseParams = {
+                        applicant_name:   data.fullName || 'Unknown',
+                        postcode:         data.personalDetails?.postcode || 'No Postcode',
+                        additional_info:  additionalInfo || 'None'
+                    };
                     Promise.allSettled([
-                        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INTERNAL_NAME_CHECK, { ...emailParams, to_email: 'barry.dixon@next-gen.uk' }),
-                        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, emailParams)
+                        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INTERNAL_NAME_CHECK, { ...baseParams, to_email: 'barry.dixon@next-gen.uk' }),
+                        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, { ...baseParams, to_email: externalEmail })
                     ]);
                 }
                 closeReviewModal();
