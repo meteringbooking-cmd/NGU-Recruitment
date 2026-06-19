@@ -1517,11 +1517,12 @@
         // Render agency leaderboard using the full clean set (all-time, not just active)
         renderAgencies(clean);
 
-        // Filter to active only — exclude archived/DNP
+        // Filter to active only — exclude archived/DNP/declined name checks
         const active = clean.filter(a => {
             if (a.finalRecruitmentDecision === 'Approved') return false;
             if (a.finalRecruitmentDecision === 'Rejected') return false;
             if (a.interviewDecision === 'Interview Rejected') return false;
+            if (a.nameChecksDeclined === true) return false;
             if (a.reviews && a.reviews.length >= 2 && a.reviews[0].decision === 'Do not proceed' && a.reviews[1].decision === 'Do not proceed') return false;
             // Do Not Proceed from interview rec
             const email = (a.personalDetails?.email || '').toLowerCase();
@@ -1716,6 +1717,7 @@
                 a.finalRecruitmentDecision === 'Approved' ||
                 a.finalRecruitmentDecision === 'Rejected' ||
                 a.interviewDecision === 'Interview Rejected' ||
+                a.nameChecksDeclined === true ||
                 (a.reviews && a.reviews.length >= 2 && a.reviews[0].decision === 'Do not proceed' && a.reviews[1].decision === 'Do not proceed');
             if (!isArchived) entry.active++;
         });
