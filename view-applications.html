@@ -865,7 +865,8 @@
         if (
             app.finalRecruitmentDecision === 'Approved' ||
             app.finalRecruitmentDecision === 'Rejected' ||
-            app.interviewDecision === 'Interview Rejected'
+            app.interviewDecision === 'Interview Rejected' ||
+            (app.reviews && app.reviews.length >= 2 && app.reviews[0].decision === 'Do not proceed' && app.reviews[1].decision === 'Do not proceed')
         ) return true;
 
         // Auto-archive on Do Not Proceed interview recommendation
@@ -916,7 +917,8 @@
                 return (
                     app.finalRecruitmentDecision === 'Approved' ||
                     app.finalRecruitmentDecision === 'Rejected' ||
-                    app.interviewDecision === 'Interview Rejected'
+                    app.interviewDecision === 'Interview Rejected' ||
+                    (app.reviews && app.reviews.length >= 2 && app.reviews[0].decision === 'Do not proceed' && app.reviews[1].decision === 'Do not proceed')
                 );
             });
         }
