@@ -811,6 +811,7 @@
             applicant_name: `${data.forename} ${data.surname}`,
             applicant_email: data.email, applicant_phone: data.phone,
             position: data.position,
+            postcode: data.postcode || 'Not provided',
             submitted_at: new Date().toLocaleString('en-GB', { dateStyle: 'full', timeStyle: 'short' })
         });
     }
@@ -1224,22 +1225,7 @@
         if (!convictions)     missing.push('Convictions question');
         if (!workPermit)      missing.push('Work permit question');
         if (!qualifications)  missing.push('Qualifications');
-        // Mandatory certificates (only when certificates section is shown)
-if (document.getElementById('certificatesSection').style.display !== 'none') {
-    if (!certUploadResults['mocopa'])  missing.push('MOCOPA certificate upload');
-    if (!certUploadResults['gasl3'])   missing.push('Level 3 Gas certificate upload');
-    if (!certUploadResults['cmagas'])  missing.push('CMA Gas certificate upload');
-
-    // Driving licence — must have answered, and if yes: expiry + summary upload
-    const dlYes = document.getElementById('yn-dl-yes').classList.contains('selected-yes');
-    const dlNo  = document.getElementById('yn-dl-no').classList.contains('selected-no');
-    if (!dlYes && !dlNo) {
-        missing.push('Driving licence confirmation');
-    } else if (dlYes) {
-        if (!document.getElementById('dl-expiry').value) missing.push('Driving licence expiry date');
-        if (!certUploadResults['drivinglicence'])        missing.push('Driving licence summary upload');
-    }
-}
+        if (!cvUploadResult)  missing.push('CV upload (please wait for upload to complete)');
         if (!declarationName) missing.push('Declaration name');
         if (!declarationDate) missing.push('Declaration date');
         if (!consentAccurate) missing.push('Information accuracy confirmation');
