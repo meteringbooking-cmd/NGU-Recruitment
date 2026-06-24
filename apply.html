@@ -1322,7 +1322,7 @@
                 }
             });
 
-            const emailData = { forename, surname, email, phone, position };
+            const emailData = { forename, surname, email, phone, position, postcode };
             await Promise.allSettled([sendApplicantEmail(emailData), sendInternalEmail(emailData)]);
 
             document.getElementById('applicationForm').style.display = 'none';
