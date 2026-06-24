@@ -634,9 +634,9 @@
                     const additionalInfo = proceedWithInfo?.nameCheckInfo || nameCheckInfo || '';
 
                     const baseParams = {
-                        applicant_name:   data.fullName || 'Unknown',
-                        postcode:         data.personalDetails?.postcode || 'No Postcode',
-                        additional_info:  additionalInfo || 'None'
+                        applicant_name:     data.fullName || 'Unknown',
+                        applicant_postcode: data.personalDetails?.postcode || 'No Postcode',
+                        additional_info:    additionalInfo || 'None'
                     };
                     
                     console.log("Triggering Name Check emails to:", "barry.dixon@next-gen.uk", "and", externalEmail);
