@@ -243,8 +243,8 @@
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
     const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_REMINDER_TEMPLATE = 'template_b6zrvyk';
-    const EMAILJS_INTERNAL_NAME_CHECK = 'template_9m20itg';
-    const EMAILJS_EXTERNAL_NAME_CHECK = 'template_cuqwtx4';
+    const EMAILJS_INTERNAL_NAME_CHECK = 'template_ya7anaj';
+    const EMAILJS_EXTERNAL_NAME_CHECK = 'template_86cs8oi';
     
     // Final Decision Templates
     const EMAILJS_REJECT = 'template_un6lrqi';
@@ -648,8 +648,9 @@
                     
                     const failedEmails = emailResults.filter(r => r.status === 'rejected');
                     if (failedEmails.length > 0) {
+                        const errorMessages = failedEmails.map(r => r.reason?.text || r.reason?.message || JSON.stringify(r.reason)).join(', ');
                         console.error("EmailJS failed to send one or more Name Check emails:", failedEmails);
-                        alert("Review saved successfully, but there was an error sending the Name Check emails. Please check the browser console for details.");
+                        alert("Review saved successfully, but EmailJS returned an error sending the Name Check emails: " + errorMessages);
                     } else {
                         console.log("Name Check emails sent successfully.");
                     }
