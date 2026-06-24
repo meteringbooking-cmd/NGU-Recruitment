@@ -625,20 +625,32 @@
                 await updateDoc(appRef, updates);
 
                 if (triggerNameChecks) {
-                    // Pull the external email + additional info stored by the first reviewer
-                    const firstProceed = reviews.find(r => r.decision === 'Proceed');
-                    const externalEmail  = firstProceed?.nameCheckEmail  || '';
-                    const additionalInfo = firstProceed?.nameCheckInfo   || '';
+                    // Pull the external email + additional info. Fallback to current input if first reviewer didn't have it.
+                    const proceedWithEmail = reviews.find(r => r.decision === 'Proceed' && r.nameCheckEmail);
+                    const externalEmail  = proceedWithEmail?.nameCheckEmail || nameCheckEmail || '';
+                    const proceedWithInfo = reviews.find(r => r.decision === 'Proceed' && r.nameCheckInfo);
+                    const additionalInfo = proceedWithInfo?.nameCheckInfo || nameCheckInfo || '';
 
                     const baseParams = {
                         applicant_name:   data.fullName || 'Unknown',
                         postcode:         data.personalDetails?.postcode || 'No Postcode',
                         additional_info:  additionalInfo || 'None'
                     };
-                    Promise.allSettled([
+                    
+                    console.log("Triggering Name Check emails to:", "barry.dixon@next-gen.uk", "and", externalEmail);
+                    
+                    const emailResults = await Promise.allSettled([
                         emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INTERNAL_NAME_CHECK, { ...baseParams, to_email: 'barry.dixon@next-gen.uk' }),
                         emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, { ...baseParams, to_email: externalEmail })
                     ]);
+                    
+                    const failedEmails = emailResults.filter(r => r.status === 'rejected');
+                    if (failedEmails.length > 0) {
+                        console.error("EmailJS failed to send one or more Name Check emails:", failedEmails);
+                        alert("Review saved successfully, but there was an error sending the Name Check emails. Please check the browser console for details.");
+                    } else {
+                        console.log("Name Check emails sent successfully.");
+                    }
                 }
                 closeReviewModal();
             }
