@@ -533,7 +533,7 @@
             if (isJunkApp(app)) continue;
 
             const reviews = app.reviews || [];
-            if (reviews.length >= 2) continue; 
+            if (reviews.length >= 1) continue; 
             let reminderCount = app.reminderCount || 0;
             if (reminderCount >= 3) continue; 
             let baseDate = app.submittedAt?.toDate ? app.submittedAt.toDate() : new Date(app.submittedAt);
@@ -606,7 +606,7 @@
                 const data = snap.data();
                 const reviews = data.reviews || [];
                 
-                if (reviews.length >= 2) { alert("This application has already been fully reviewed."); return closeReviewModal(); }
+                if (reviews.length >= 1) { alert("This application has already been fully reviewed."); return closeReviewModal(); }
                 if (reviews.some(r => r.name.toLowerCase() === adminName.toLowerCase())) { alert("You have already reviewed this application."); return closeReviewModal(); }
 
                 const reviewEntry = { name: adminName, decision: decision, timestamp: new Date().toISOString() };
@@ -620,9 +620,9 @@
                 let updates = { reviews: reviews };
                 let triggerNameChecks = false;
 
-                if (reviews.length === 2) {
-                    const bothProceed = reviews[0].decision === 'Proceed' && reviews[1].decision === 'Proceed';
-                    if (bothProceed && !data.nameChecksRequested) { triggerNameChecks = true; updates.nameChecksRequested = true; }
+                if (reviews.length === 1) {
+                    const proceed = reviews[0].decision === 'Proceed';
+                    if (proceed && !data.nameChecksRequested) { triggerNameChecks = true; updates.nameChecksRequested = true; }
                 }
 
                 await updateDoc(appRef, updates);
@@ -957,7 +957,7 @@
             app.finalRecruitmentDecision === 'Rejected' ||
             app.interviewDecision === 'Interview Rejected' ||
             app.nameChecksDeclined === true ||
-            (app.reviews && app.reviews.length >= 2 && app.reviews[0].decision === 'Do not proceed' && app.reviews[1].decision === 'Do not proceed')
+            (app.reviews && app.reviews.length >= 1 && app.reviews[0].decision === 'Do not proceed')
         ) return true;
 
         // Auto-archive on Do Not Proceed interview recommendation
@@ -1010,7 +1010,7 @@
                     app.finalRecruitmentDecision === 'Rejected' ||
                     app.interviewDecision === 'Interview Rejected' ||
                     app.nameChecksDeclined === true ||
-                    (app.reviews && app.reviews.length >= 2 && app.reviews[0].decision === 'Do not proceed' && app.reviews[1].decision === 'Do not proceed')
+                    (app.reviews && app.reviews.length >= 1 && app.reviews[0].decision === 'Do not proceed')
                 );
             });
         }
@@ -1034,7 +1034,7 @@
             let reviewStatus = `<span class="wait-time">⏱ ${waitTime}</span>`;
             let pulseClass = '';
             
-            if (app.reviews?.length >= 2) reviewStatus = `<span style="color:var(--success); font-weight:700;">✓ Reviewed</span>`;
+            if (app.reviews?.length >= 1) reviewStatus = `<span style="color:var(--success); font-weight:700;">✓ Reviewed</span>`;
 
             if (matchedInterview) {
                 if (matchedInterview.interviewCompleted) {
@@ -1155,7 +1155,7 @@
             });
         } else { reviewsHtml = `<div class="text-box">No reviews recorded yet.</div>`; }
 
-        const reviewActionHtml = reviews.length < 2
+        const reviewActionHtml = reviews.length < 1
             ? `<button class="btn-action-alt" style="margin-top:1.5rem;" onclick="openReviewModal('${app.id}')">+ Perform Review</button>`
             : `<div class="badge" style="margin-top:1.5rem; background:rgba(16,185,129,0.2); color:var(--success); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✓ Fully Reviewed (Completed)</div>`;
 
