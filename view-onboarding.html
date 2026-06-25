@@ -683,9 +683,15 @@
                     <h1>${computedFullName}</h1>
                     <div class="role-badge">${app.position || 'Role TBC'}</div>
                 </div>
-                <div style="text-align: right;">
-                    <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Start Date</div>
-                    <div style="font-size: 1.2rem; color: white; font-weight: 700;">${formatStart}</div>
+                <div style="display: flex; gap: 2rem; text-align: right; justify-content: flex-end;">
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Proposed Salary</div>
+                        <div style="font-size: 1.2rem; color: white; font-weight: 700;">${app.proposedSalary ? '£' + app.proposedSalary : 'TBC'}</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Start Date</div>
+                        <div style="font-size: 1.2rem; color: white; font-weight: 700;">${formatStart}</div>
+                    </div>
                 </div>
             </div>
 
