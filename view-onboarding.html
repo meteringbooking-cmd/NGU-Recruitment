@@ -279,6 +279,47 @@
 
     // ─── SIGNED CONTRACT VIEWER ───────────────────────────────────────────────
 
+    // Replaces all {{placeholder}} merge fields with applicant data
+    function populateContract(rawText, app) {
+        const pd  = app.personalDetails  || {};
+        const od  = app.onboardingDetails || {};
+
+        const fullName    = app.fullName || `${od.firstName || pd.forename || ''} ${od.lastName || pd.surname || ''}`.trim() || '';
+        const title       = od.title || pd.title || '';
+        const address     = od.address  || pd.address  || '';
+        const postcode    = od.postcode || pd.postcode || '';
+        const position    = app.position || '';
+        const startDate   = app.startDate
+            ? new Date(app.startDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+            : 'TBC';
+        const currentDate = app.contractAcceptedAt
+            ? new Date(app.contractAcceptedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+            : new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+        // Build the signature block HTML to replace {{declaration.signature}} / {{declaration.date}}
+        const signName = app.contractSignName || fullName;
+        const signDate = app.contractAcceptedAt
+            ? new Date(app.contractAcceptedAt).toLocaleString('en-GB', { dateStyle: 'long', timeStyle: 'short' })
+            : 'Unknown';
+        const sigImgHtml = app.contractSignature
+            ? `<img src="${app.contractSignature}" style="display:block; max-height:70px; border:1px solid #ccc; padding:5px; background:#fff; margin-top:6px; border-radius:3px;">`
+            : `<span style="font-size:12px; color:#888; font-style:italic;">No digital signature image on file.</span>`;
+
+        // Replace each placeholder — order matters (longer paths first to avoid partial matches)
+        return rawText
+            .replace(/\{\{personalDetails\.title\}\}/g,   escapeHtml(title))
+            .replace(/\{\{personalDetails\.address\}\}/g, escapeHtml(address))
+            .replace(/\{\{personalDetails\.postcode\}\}/g,escapeHtml(postcode))
+            .replace(/\{\{fullName\}\}/g,                 escapeHtml(fullName))
+            .replace(/\{\{startDate\}\}/g,                escapeHtml(startDate))
+            .replace(/\{\{current_date\}\}/g,             escapeHtml(currentDate))
+            .replace(/\{\{position\}\}/g,                 escapeHtml(position))
+            // Signature placeholders — inject actual HTML (not escaped)
+            .replace(/\{\{declaration\.signature\}\}/g,   `__SIG_IMG__`)
+            .replace(/\{\{declaration\.date\}\}/g,        escapeHtml(signDate));
+        // __SIG_IMG__ will be swapped for real HTML after escaping is done on surrounding text
+    }
+
     window.viewSignedContract = async function(appId) {
         const app = applicationsData.find(a => a.id === appId);
         if (!app) return;
@@ -307,7 +348,7 @@
             let contractContent = null;
             let contractJobTitle = null;
 
-            // Try exact match first, then case-insensitive
+            // Exact match first (case-insensitive)
             snap.forEach(d => {
                 const data = d.data();
                 if (!contractContent && data.jobTitle?.toLowerCase().trim() === position.toLowerCase()) {
@@ -332,20 +373,39 @@
             loadingOverlay.remove();
 
             const computedFullName = app.fullName || `${app.onboardingDetails?.firstName || ''} ${app.onboardingDetails?.lastName || ''}`.trim() || 'Applicant';
-            const contractDate = app.contractAcceptedAt
+            const signName = app.contractSignName || computedFullName;
+            const signDate = app.contractAcceptedAt
                 ? new Date(app.contractAcceptedAt).toLocaleString('en-GB', { dateStyle: 'long', timeStyle: 'short' })
                 : 'Unknown';
-            const signName = app.contractSignName || computedFullName;
+
+            // Signature image HTML
+            const sigImgHtml = app.contractSignature
+                ? `<img src="${app.contractSignature}" style="display:block; max-height:70px; border:1px solid #ccc; padding:5px; background:#fff; margin-top:6px; border-radius:3px;">`
+                : `<span style="font-size:12px; color:#888; font-style:italic;">No digital signature image on file.</span>`;
+
+            // Build populated contract body
+            let populatedBody = '';
+            if (contractContent) {
+                // 1. Replace all merge fields (returns text with __SIG_IMG__ sentinel)
+                let merged = populateContract(contractContent, app);
+                // 2. Convert newlines to <br> for HTML rendering
+                merged = merged.replace(/\n/g, '<br>');
+                // 3. Swap sentinel for actual signature image HTML
+                merged = merged.replace(/__SIG_IMG__/g, sigImgHtml);
+                populatedBody = `<div class="contract-body" style="font-family:Georgia,'Times New Roman',serif; font-size:13.5px; line-height:1.75; color:#111;">${merged}</div>`;
+            } else {
+                populatedBody = `<div style="color:#888; font-style:italic; font-family:Arial,sans-serif; font-size:13px; padding:20px 0;">Contract text unavailable — no template stored for this role.</div>`;
+            }
+
+            const noContractHtml = !contractContent
+                ? `<div style="background:#fff3cd; border:1px solid #ffc107; color:#856404; padding:12px 16px; border-radius:6px; margin-bottom:20px; font-size:13px; font-family:Arial,sans-serif;">
+                    ⚠️ No matching contract template found in <strong>NGU Contracts &amp; Policies</strong> for the role <strong>"${escapeHtml(position)}"</strong>.
+                    The signature record is still shown below.
+                  </div>` : '';
 
             const overlay = document.createElement('div');
             overlay.id = 'contractOverlay';
             overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; display:flex; align-items:center; justify-content:center; padding:30px;';
-
-            const noContractHtml = !contractContent
-                ? `<div style="background:#fff3cd; border:1px solid #ffc107; color:#856404; padding:12px 16px; border-radius:6px; margin-bottom:20px; font-size:13px; font-family:Arial,sans-serif;">
-                    ⚠️ No matching contract template found in <strong>NGU Contracts &amp; Policies</strong> for the role <strong>"${escapeHtml(position)}"</strong>. 
-                    The signature record is still shown below.
-                  </div>` : '';
 
             overlay.innerHTML = `
                 <div style="background:#fff; color:#111; max-width:860px; width:100%; max-height:92vh; overflow-y:auto; border-radius:8px;">
@@ -356,58 +416,22 @@
                             <button id="contractCloseBtn" style="background:#666; color:#fff; border:none; padding:8px 16px; border-radius:5px; font-size:13px; cursor:pointer; font-weight:600;">✕ Close</button>
                         </div>
                     </div>
-                    <div style="padding:40px 50px 60px;" class="contract-doc">
+                    <div style="padding:40px 50px 60px;">
                         ${noContractHtml}
+                        ${populatedBody}
 
-                        <h1>Employment Contract</h1>
-                        <div class="contract-meta">
-                            ${escapeHtml(contractJobTitle || position)} &nbsp;·&nbsp; Next Generation Utilities Ltd
-                            &nbsp;·&nbsp; Accepted: ${escapeHtml(contractDate)}
-                        </div>
-
-                        ${contractContent
-                            ? `<div class="contract-body">${escapeHtml(contractContent)}</div>`
-                            : `<div style="color:#888; font-style:italic; font-family:Arial,sans-serif; font-size:13px; padding:20px 0;">Contract text unavailable — no template stored for this role.</div>`
-                        }
-
-                        <!-- SIGNATURE SECTION -->
-                        <div class="signature-section">
-                            <div style="font-size:15px; font-weight:700; margin-bottom:4px;">Employee Declaration &amp; Signature</div>
-                            <div style="font-size:12px; color:#555; margin-bottom:16px;">By signing below, the employee confirms they have read, understood, and agreed to the terms of this contract.</div>
-
-                            <div class="sig-grid">
-                                <div>
-                                    <div class="sig-field-label">Full Name (Print)</div>
-                                    <div class="sig-field-value">${escapeHtml(signName)}</div>
-                                </div>
-                                <div>
-                                    <div class="sig-field-label">Date Accepted</div>
-                                    <div class="sig-field-value">${escapeHtml(contractDate)}</div>
-                                </div>
-                                <div>
-                                    <div class="sig-field-label">Role</div>
-                                    <div class="sig-field-value">${escapeHtml(position || 'N/A')}</div>
-                                </div>
-                                <div>
-                                    <div class="sig-field-label">Employer</div>
-                                    <div class="sig-field-value">Next Generation Utilities Ltd</div>
-                                </div>
+                        <!-- Accepted banner — shown below the contract body (after the inline sig above) -->
+                        ${contractContent ? `
+                        <div style="margin-top:32px; border-top:2px solid #000; padding-top:18px; font-family:Arial,sans-serif;">
+                            <div style="background:#e6f9f0; border:1px solid #10B981; border-radius:4px; padding:10px 16px; font-size:12px; color:#065f46; font-weight:700; display:inline-block;">
+                                ✅ Digitally accepted via NGU Onboarding Portal on ${escapeHtml(signDate)}
                             </div>
-
-                            <div class="sig-image-wrap">
-                                <div class="sig-field-label" style="margin-bottom:6px;">Digital Signature</div>
-                                ${app.contractSignature
-                                    ? `<img src="${app.contractSignature}" style="max-height:80px; border:1px solid #ccc; padding:6px; background:#fff; border-radius:4px; display:block;">`
-                                    : `<div style="font-size:12px; color:#888; font-style:italic;">No digital signature image on file.</div>`
-                                }
-                            </div>
-
-                            <div class="accepted-banner">
-                                ✅ Digitally accepted via NGU Onboarding Portal on ${escapeHtml(contractDate)}
-                            </div>
-                        </div>
+                        </div>` : ''}
                     </div>
                 </div>`;
+
+            // The old separate signature section is no longer needed — it's now inline
+            // inside the contract body at {{declaration.signature}} / {{declaration.date}}
 
             document.body.appendChild(overlay);
             overlay.querySelector('#contractPrintBtn').addEventListener('click', () => window.print());
@@ -416,7 +440,7 @@
 
         } catch (err) {
             console.error('Contract fetch error:', err);
-            loadingOverlay.remove();
+            document.getElementById('contractOverlay')?.remove();
             alert('Failed to load contract. Please check your connection and try again.');
         }
     };
