@@ -764,6 +764,9 @@
             const startDateVal = document.getElementById('offerStartDate').value;
             if (!startDateVal) return alert("Please select a Proposed Start Date.");
             formattedStartDate = new Date(startDateVal).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+            const salaryVal = document.getElementById('offerSalary').value;
+            if (!salaryVal) return alert("Please enter a Proposed Salary.");
         }
 
         if (!confirm(`Are you sure you want to confirm this action: ${decision}?`)) return;
@@ -798,10 +801,12 @@
             updates.portalLink = portalLink;
             updates.assignedFTL = ftlName;
             updates.startDate = document.getElementById('offerStartDate').value;
+            updates.proposedSalary = salaryVal;
 
             emailParams.portal_link = portalLink;
             emailParams.username = newUsername;
             emailParams.password = newPassword;
+            emailParams.proposed_salary = salaryVal;
             triggerFtlEmail = true;
 
         } else if (decision === 'Rejected') {
@@ -823,7 +828,8 @@
                     applicant_name: appData.fullName || 'Applicant',
                     applicant_phone: appData.personalDetails?.phone || 'Not provided',
                     applicant_postcode: appData.personalDetails?.postcode || 'Not provided',
-                    start_date: formattedStartDate
+                    start_date: formattedStartDate,
+                    proposed_salary: salaryVal
                 });
             }
             
@@ -857,6 +863,9 @@
             const startDateVal = document.getElementById('postHoldStartDate').value;
             if (!startDateVal) return alert("Please select a Proposed Start Date.");
             formattedStartDate = new Date(startDateVal).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+            const salaryVal = document.getElementById('postHoldSalary').value;
+            if (!salaryVal) return alert("Please enter a Proposed Salary.");
         }
 
         if (!confirm(`Are you sure you want to finalize this applicant as: ${decision}?`)) return;
@@ -889,10 +898,12 @@
             updates.portalLink = portalLink;
             updates.assignedFTL = ftlName;
             updates.startDate = document.getElementById('postHoldStartDate').value;
+            updates.proposedSalary = salaryVal;
 
             emailParams.portal_link = portalLink;
             emailParams.username = newUsername;
             emailParams.password = newPassword;
+            emailParams.proposed_salary = salaryVal;
             triggerFtlEmail = true;
         }
 
@@ -907,7 +918,8 @@
                     applicant_name: appData.fullName || 'Applicant',
                     applicant_phone: appData.personalDetails?.phone || 'Not provided',
                     applicant_postcode: appData.personalDetails?.postcode || 'Not provided',
-                    start_date: formattedStartDate
+                    start_date: formattedStartDate,
+                    proposed_salary: salaryVal
                 });
             }
 
@@ -1289,7 +1301,9 @@
                                 <option value="tom.green@next-gen.uk">Tom Green</option>
                             </select>
                             <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Proposed Start Date:</label>
-                            <input type="date" id="offerStartDate" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit;">
+                            <input type="date" id="offerStartDate" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit; margin-bottom:1rem;">
+                            <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Proposed Salary (£):</label>
+                            <input type="number" id="offerSalary" placeholder="e.g. 35000" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit;">
                         </div>
                         <button class="btn-action-alt" style="width:100%; justify-content:center; padding:0.8rem;" onclick="submitFinalDecision('${app.id}')">Submit Decision & Trigger Actions</button>
                     `;
@@ -1322,7 +1336,9 @@
                                     <option value="tom.green@next-gen.uk">Tom Green</option>
                                 </select>
                                 <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Proposed Start Date:</label>
-                                <input type="date" id="postHoldStartDate" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit;">
+                                <input type="date" id="postHoldStartDate" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit; margin-bottom:1rem;">
+                                <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Proposed Salary (£):</label>
+                                <input type="number" id="postHoldSalary" placeholder="e.g. 35000" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit;">
                             </div>
                             <div style="display:flex; gap:10px;">
                                 <button class="btn-danger" style="flex:1;" onclick="submitPostHoldDecision('${app.id}', 'Rejected')">Reject</button>
