@@ -69,11 +69,71 @@
 
         .btn-hmrc { display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 163, 224, 0.12); border: 1px solid var(--accent); color: var(--accent); padding: 0.45rem 0.9rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700; text-decoration: none; cursor: pointer; transition: all 0.2s; }
         .btn-hmrc:hover { background: rgba(0, 163, 224, 0.22); transform: translateY(-1px); }
+
+        /* ── Contract button ── */
+        .btn-contract { display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.12); border: 1px solid var(--success); color: #6ee7b7; padding: 0.45rem 0.9rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+        .btn-contract:hover { background: rgba(16, 185, 129, 0.22); transform: translateY(-1px); }
         
         .banner-warning { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 1rem; border-radius: 8px; color: #fcd34d; margin-bottom: 1.5rem; font-weight: 600; }
         .doc-item { background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
 
         .holiday-chip { display: inline-block; background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 10px; border-radius: 20px; font-size: 0.85rem; margin-right: 8px; margin-bottom: 8px; }
+
+        /* ── Contract overlay ── */
+        #contractOverlay .contract-doc {
+            font-family: Georgia, 'Times New Roman', serif;
+            color: #111;
+            font-size: 13.5px;
+            line-height: 1.7;
+        }
+        #contractOverlay h1 { font-size: 22px; margin-bottom: 6px; text-align: center; }
+        #contractOverlay .contract-meta { text-align: center; font-size: 12px; color: #555; margin-bottom: 24px; border-bottom: 2px solid #000; padding-bottom: 12px; }
+        #contractOverlay .contract-body { white-space: pre-wrap; word-break: break-word; }
+        #contractOverlay .signature-section {
+            margin-top: 40px;
+            border-top: 2px solid #000;
+            padding-top: 24px;
+        }
+        #contractOverlay .sig-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-top: 16px;
+        }
+        #contractOverlay .sig-field-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #555;
+            margin-bottom: 4px;
+        }
+        #contractOverlay .sig-field-value {
+            border-bottom: 1px solid #999;
+            padding: 4px 2px;
+            min-height: 22px;
+            font-weight: 700;
+            font-size: 13px;
+        }
+        #contractOverlay .sig-image-wrap {
+            margin-top: 12px;
+        }
+        #contractOverlay .accepted-banner {
+            background: #e6f9f0;
+            border: 1px solid #10B981;
+            border-radius: 4px;
+            padding: 8px 14px;
+            font-size: 12px;
+            color: #065f46;
+            font-weight: 700;
+            margin-top: 14px;
+            display: inline-block;
+        }
+        @media print {
+            body * { visibility: hidden; }
+            #contractOverlay, #contractOverlay * { visibility: visible; }
+            #contractOverlay { position: absolute; inset: 0; background: #fff !important; padding: 0 !important; }
+            #contractOverlay .contract-toolbar { display: none !important; }
+        }
     </style>
 </head>
 <body>
@@ -102,7 +162,7 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, onSnapshot, where, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, query, onSnapshot, where, doc, updateDoc, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
@@ -217,6 +277,150 @@
         }
     };
 
+    // ─── SIGNED CONTRACT VIEWER ───────────────────────────────────────────────
+
+    window.viewSignedContract = async function(appId) {
+        const app = applicationsData.find(a => a.id === appId);
+        if (!app) return;
+
+        // Remove any existing overlay
+        const existing = document.getElementById('contractOverlay');
+        if (existing) existing.remove();
+
+        // Show loading overlay while we fetch the contract
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'contractOverlay';
+        loadingOverlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:9999; display:flex; align-items:center; justify-content:center; padding:30px;';
+        loadingOverlay.innerHTML = `<div style="background:#fff; color:#111; border-radius:8px; padding:40px; text-align:center; font-family:Georgia,serif;">
+            <div style="font-size:1.5rem; margin-bottom:1rem;">⏳</div>
+            <div style="font-size:1rem; color:#333;">Loading contract…</div>
+        </div>`;
+        document.body.appendChild(loadingOverlay);
+
+        try {
+            // Fetch matching contract from NGU Contacts & Policies
+            const position = (app.position || '').trim();
+            const contractsRef = collection(db, "NGU Contacts & Policies");
+            const qContracts = query(contractsRef, where("type", "==", "contract"));
+            const snap = await getDocs(qContracts);
+
+            let contractContent = null;
+            let contractJobTitle = null;
+
+            // Try exact match first, then case-insensitive
+            snap.forEach(d => {
+                const data = d.data();
+                if (!contractContent && data.jobTitle?.toLowerCase().trim() === position.toLowerCase()) {
+                    contractContent = data.content;
+                    contractJobTitle = data.jobTitle;
+                }
+            });
+            // Fallback: partial match
+            if (!contractContent) {
+                snap.forEach(d => {
+                    const data = d.data();
+                    if (!contractContent && (
+                        position.toLowerCase().includes(data.jobTitle?.toLowerCase()) ||
+                        data.jobTitle?.toLowerCase().includes(position.toLowerCase())
+                    )) {
+                        contractContent = data.content;
+                        contractJobTitle = data.jobTitle;
+                    }
+                });
+            }
+
+            loadingOverlay.remove();
+
+            const computedFullName = app.fullName || `${app.onboardingDetails?.firstName || ''} ${app.onboardingDetails?.lastName || ''}`.trim() || 'Applicant';
+            const contractDate = app.contractAcceptedAt
+                ? new Date(app.contractAcceptedAt).toLocaleString('en-GB', { dateStyle: 'long', timeStyle: 'short' })
+                : 'Unknown';
+            const signName = app.contractSignName || computedFullName;
+
+            const overlay = document.createElement('div');
+            overlay.id = 'contractOverlay';
+            overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; display:flex; align-items:center; justify-content:center; padding:30px;';
+
+            const noContractHtml = !contractContent
+                ? `<div style="background:#fff3cd; border:1px solid #ffc107; color:#856404; padding:12px 16px; border-radius:6px; margin-bottom:20px; font-size:13px; font-family:Arial,sans-serif;">
+                    ⚠️ No matching contract template found in <strong>NGU Contracts &amp; Policies</strong> for the role <strong>"${escapeHtml(position)}"</strong>. 
+                    The signature record is still shown below.
+                  </div>` : '';
+
+            overlay.innerHTML = `
+                <div style="background:#fff; color:#111; max-width:860px; width:100%; max-height:92vh; overflow-y:auto; border-radius:8px;">
+                    <div class="contract-toolbar" style="position:sticky; top:0; background:#fff; padding:14px 24px; border-bottom:1px solid #ddd; display:flex; justify-content:space-between; align-items:center; gap:10px; z-index:10;">
+                        <div style="font-family:Arial,sans-serif; font-size:13px; font-weight:700; color:#333;">📄 Signed Employment Contract — ${escapeHtml(computedFullName)}</div>
+                        <div style="display:flex; gap:10px;">
+                            <button id="contractPrintBtn" style="background:#005EB8; color:#fff; border:none; padding:8px 16px; border-radius:5px; font-size:13px; cursor:pointer; font-weight:600;">🖨 Print / Save as PDF</button>
+                            <button id="contractCloseBtn" style="background:#666; color:#fff; border:none; padding:8px 16px; border-radius:5px; font-size:13px; cursor:pointer; font-weight:600;">✕ Close</button>
+                        </div>
+                    </div>
+                    <div style="padding:40px 50px 60px;" class="contract-doc">
+                        ${noContractHtml}
+
+                        <h1>Employment Contract</h1>
+                        <div class="contract-meta">
+                            ${escapeHtml(contractJobTitle || position)} &nbsp;·&nbsp; Next Generation Utilities Ltd
+                            &nbsp;·&nbsp; Accepted: ${escapeHtml(contractDate)}
+                        </div>
+
+                        ${contractContent
+                            ? `<div class="contract-body">${escapeHtml(contractContent)}</div>`
+                            : `<div style="color:#888; font-style:italic; font-family:Arial,sans-serif; font-size:13px; padding:20px 0;">Contract text unavailable — no template stored for this role.</div>`
+                        }
+
+                        <!-- SIGNATURE SECTION -->
+                        <div class="signature-section">
+                            <div style="font-size:15px; font-weight:700; margin-bottom:4px;">Employee Declaration &amp; Signature</div>
+                            <div style="font-size:12px; color:#555; margin-bottom:16px;">By signing below, the employee confirms they have read, understood, and agreed to the terms of this contract.</div>
+
+                            <div class="sig-grid">
+                                <div>
+                                    <div class="sig-field-label">Full Name (Print)</div>
+                                    <div class="sig-field-value">${escapeHtml(signName)}</div>
+                                </div>
+                                <div>
+                                    <div class="sig-field-label">Date Accepted</div>
+                                    <div class="sig-field-value">${escapeHtml(contractDate)}</div>
+                                </div>
+                                <div>
+                                    <div class="sig-field-label">Role</div>
+                                    <div class="sig-field-value">${escapeHtml(position || 'N/A')}</div>
+                                </div>
+                                <div>
+                                    <div class="sig-field-label">Employer</div>
+                                    <div class="sig-field-value">Next Generation Utilities Ltd</div>
+                                </div>
+                            </div>
+
+                            <div class="sig-image-wrap">
+                                <div class="sig-field-label" style="margin-bottom:6px;">Digital Signature</div>
+                                ${app.contractSignature
+                                    ? `<img src="${app.contractSignature}" style="max-height:80px; border:1px solid #ccc; padding:6px; background:#fff; border-radius:4px; display:block;">`
+                                    : `<div style="font-size:12px; color:#888; font-style:italic;">No digital signature image on file.</div>`
+                                }
+                            </div>
+
+                            <div class="accepted-banner">
+                                ✅ Digitally accepted via NGU Onboarding Portal on ${escapeHtml(contractDate)}
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            document.body.appendChild(overlay);
+            overlay.querySelector('#contractPrintBtn').addEventListener('click', () => window.print());
+            overlay.querySelector('#contractCloseBtn').addEventListener('click', () => overlay.remove());
+            overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+        } catch (err) {
+            console.error('Contract fetch error:', err);
+            loadingOverlay.remove();
+            alert('Failed to load contract. Please check your connection and try again.');
+        }
+    };
+
     // ---------- HMRC Starter Checklist generator ----------
     function escapeHtml(str) {
         if (str === null || str === undefined) return '';
@@ -256,7 +460,7 @@
         const postcode = pNew.postcode || '';
         const gender = pNew.gender || '';
 
-        const statement = hmrc.calculatedStatementOutcome || ''; // expected "A", "B" or "C"
+        const statement = hmrc.calculatedStatementOutcome || '';
         const stmtA = /A/i.test(statement);
         const stmtB = /B/i.test(statement);
         const stmtC = /C/i.test(statement);
@@ -349,8 +553,8 @@
         <div class="gov-link">Do not send this form to HMRC. Give the completed official version to the employer for payroll. Get the official blank HMRC Starter Checklist at: https://www.gov.uk/government/publications/paye-starter-checklist</div>
     </div>`;
 
-        const existing = document.getElementById('hmrcOverlay');
-        if (existing) existing.remove();
+        const existingHmrc = document.getElementById('hmrcOverlay');
+        if (existingHmrc) existingHmrc.remove();
 
         const overlay = document.createElement('div');
         overlay.id = 'hmrcOverlay';
@@ -373,7 +577,6 @@
     function renderDetails(app) {
         const mainEl = document.getElementById('mainContent');
         
-        // Map to exact variables populated by complete-onboarding.html
         const pOriginal = app.personalDetails || {};
         const pNew = app.onboardingDetails || {};
         const bk = app.bankDetails || {};
@@ -398,7 +601,7 @@
             actionHtml = `<div style="text-align: right; margin-top: 1rem; color: var(--accent); font-weight: 600;">✓ Processed by ${app.onboardingProcessedBy || 'Admin'}</div>`;
         }
 
-        // Generate Documents HTML
+        // Documents HTML
         let docsHtml = '';
         if (Object.keys(docs).length > 0) {
             const docLabels = {
@@ -416,7 +619,7 @@
             docsHtml = `<div class="missing-data">No documents uploaded yet.</div>`;
         }
 
-        // Generate Holidays HTML
+        // Holidays HTML
         let holidaysHtml = '';
         if (pNew.holidays && pNew.holidays.length > 0) {
             pNew.holidays.forEach(h => {
@@ -426,7 +629,7 @@
             holidaysHtml = `<span style="color:var(--text-muted); font-size:0.9rem;">None declared</span>`;
         }
 
-        // Generate HMRC Statement / Plan Text
+        // HMRC / Tax block
         let taxBlock = `<div class="missing-data">Checklist pending</div>`;
         if (app.hasP45 === true) {
             taxBlock = `<div style="color:var(--success); font-weight:bold;">Applicant provided a P45. (See Documents)</div>`;
@@ -534,7 +737,10 @@
             </div>
 
             <div class="section">
-                <h3>✍️ Contract Acceptance Record</h3>
+                <h3>
+                    ✍️ Contract Acceptance Record
+                    <button type="button" class="btn-contract" data-contract-app-id="${app.id}">📄 View Signed Contract</button>
+                </h3>
                 <div class="grid-2">
                     <div class="data-group"><div class="data-label">Date Accepted</div><div class="data-value">${contractDate}</div></div>
                     <div class="data-group"><div class="data-label">Print Name</div><div class="data-value">${app.contractSignName || 'N/A'}</div></div>
@@ -548,10 +754,19 @@
             ${actionHtml}
         `;
 
+        // Wire up HMRC button
         const hmrcBtn = mainEl.querySelector('[data-hmrc-app-id]');
         if (hmrcBtn) {
             hmrcBtn.addEventListener('click', function() {
                 generateHmrcChecklist(this.getAttribute('data-hmrc-app-id'));
+            });
+        }
+
+        // Wire up View Signed Contract button
+        const contractBtn = mainEl.querySelector('[data-contract-app-id]');
+        if (contractBtn) {
+            contractBtn.addEventListener('click', function() {
+                viewSignedContract(this.getAttribute('data-contract-app-id'));
             });
         }
     }
