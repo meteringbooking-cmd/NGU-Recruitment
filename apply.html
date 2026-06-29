@@ -523,6 +523,10 @@
                 <div class="cert-row-icon">📋</div>
                 <div class="cert-row-info">
                     <div class="cert-row-title">Level 3 Power / Smart Meter / Electric MOCOPA</div>
+                    <div style="margin-top:0.4rem; font-size:0.8rem; color:var(--text-muted);">
+                        <label style="margin-right:0.5rem;">Expiry Date (Optional):</label>
+                        <input type="date" id="expiry-mocopa" class="cert-inline-input" style="padding:0.2rem; font-size:0.8rem; max-width:130px;">
+                    </div>
                     <div id="sub-mocopa" class="cert-row-sub">No file selected</div>
                     <div id="prog-mocopa" class="cert-upload-progress">⏳ Uploading…</div>
                 </div>
@@ -536,6 +540,10 @@
                 <div class="cert-row-icon">🔥</div>
                 <div class="cert-row-info">
                     <div class="cert-row-title">Level 3 Gas / City &amp; Guilds Qualification / CMA / CCN</div>
+                    <div style="margin-top:0.4rem; font-size:0.8rem; color:var(--text-muted);">
+                        <label style="margin-right:0.5rem;">Expiry Date (Optional):</label>
+                        <input type="date" id="expiry-gasl3" class="cert-inline-input" style="padding:0.2rem; font-size:0.8rem; max-width:130px;">
+                    </div>
                     <div id="sub-gasl3" class="cert-row-sub">No file selected</div>
                     <div id="prog-gasl3" class="cert-upload-progress">⏳ Uploading…</div>
                 </div>
@@ -549,6 +557,10 @@
                 <div class="cert-row-icon">🏅</div>
                 <div class="cert-row-info">
                     <div class="cert-row-title">CMA Gas Certificate</div>
+                    <div style="margin-top:0.4rem; font-size:0.8rem; color:var(--text-muted);">
+                        <label style="margin-right:0.5rem;">Expiry Date (Optional):</label>
+                        <input type="date" id="expiry-cmagas" class="cert-inline-input" style="padding:0.2rem; font-size:0.8rem; max-width:130px;">
+                    </div>
                     <div id="sub-cmagas" class="cert-row-sub">No file selected</div>
                     <div id="prog-cmagas" class="cert-upload-progress">⏳ Uploading…</div>
                 </div>
@@ -646,6 +658,10 @@
                 <div class="cert-row-icon">⭐</div>
                 <div class="cert-row-info">
                     <div class="cert-row-title">Higher Skills Set Certificates (e.g. 3 Phase, Medium Pressure)</div>
+                    <div style="margin-top:0.4rem; font-size:0.8rem; color:var(--text-muted);">
+                        <label style="margin-right:0.5rem;">Expiry Date (Optional):</label>
+                        <input type="date" id="expiry-higherskills" class="cert-inline-input" style="padding:0.2rem; font-size:0.8rem; max-width:130px;">
+                    </div>
                     <div id="sub-higherskills" class="cert-row-sub">No file selected</div>
                     <div id="prog-higherskills" class="cert-upload-progress">⏳ Uploading…</div>
                 </div>
@@ -1045,8 +1061,12 @@
                 <input type="text" class="cert-inline-input" id="addcert-name-${id}"
                     placeholder="Certificate name / description"
                     style="max-width:100%;margin-bottom:0.4rem;">
+                <div style="margin-top:0.4rem; margin-bottom:0.4rem; font-size:0.8rem; color:var(--text-muted);">
+                    <label style="margin-right:0.5rem;">Expiry Date (Optional):</label>
+                    <input type="date" id="addcert-expiry-${id}" class="cert-inline-input" style="padding:0.2rem; font-size:0.8rem; max-width:130px;">
+                </div>
                 <div id="sub-addcert-${id}" class="cert-row-sub">No file selected</div>
-                <div id="prog-addcert-${id}" class="cert-upload-progress">⏳ Uploading…</div>
+                <div id="prog-addcert-${id}" class="cert-upload-progress">⏳ Uploading...</div>
             </div>
             <div class="cert-row-actions">
                 <span class="cert-badge none" id="badge-addcert-${id}">Not uploaded</span>
@@ -1270,16 +1290,17 @@
                 if (nameEl?.value.trim() || uploaded) {
                     additionalCerts.push({
                         certName: nameEl?.value.trim() || uploaded?.certName || `Additional Certificate ${id}`,
+                        expiry: document.getElementById(`addcert-expiry-${id}`)?.value || '',
                         ...(uploaded ? { url: uploaded.url, filename: uploaded.filename, type: uploaded.type } : {})
                     });
                 }
             });
 
             const certificates = {
-                mocopa:       certUploadResults['mocopa']       || null,
-                gasl3:        certUploadResults['gasl3']        || null,
-                cmagas:       certUploadResults['cmagas']       || null,
-                higherskills: certUploadResults['higherskills'] || null,
+                mocopa:       certUploadResults['mocopa']       ? { ...certUploadResults['mocopa'], expiry: document.getElementById('expiry-mocopa').value } : null,
+                gasl3:        certUploadResults['gasl3']        ? { ...certUploadResults['gasl3'], expiry: document.getElementById('expiry-gasl3').value } : null,
+                cmagas:       certUploadResults['cmagas']       ? { ...certUploadResults['cmagas'], expiry: document.getElementById('expiry-cmagas').value } : null,
+                higherskills: certUploadResults['higherskills'] ? { ...certUploadResults['higherskills'], expiry: document.getElementById('expiry-higherskills').value } : null,
                 drivinglicence: {
                     confirmed: dlConfirmed,
                     expiry: document.getElementById('dl-expiry').value || '',
@@ -1322,7 +1343,7 @@
                 }
             });
 
-            const emailData = { forename, surname, email, phone, position, postcode };
+            const emailData = { forename, surname, email, phone, position };
             await Promise.allSettled([sendApplicantEmail(emailData), sendInternalEmail(emailData)]);
 
             document.getElementById('applicationForm').style.display = 'none';
