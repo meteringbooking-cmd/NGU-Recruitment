@@ -822,15 +822,16 @@
     }
 
     async function sendInternalEmail(data) {
-        return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_INTERNAL, {
-            to_email: INTERNAL_NOTIFY_EMAIL,
-            applicant_name: `${data.forename} ${data.surname}`,
-            applicant_email: data.email, applicant_phone: data.phone,
-            position: data.position,
-            postcode: data.postcode || 'Not provided',
-            submitted_at: new Date().toLocaleString('en-GB', { dateStyle: 'full', timeStyle: 'short' })
-        });
-    }
+    return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_INTERNAL, {
+        to_email: INTERNAL_NOTIFY_EMAIL,
+        applicant_name: `${data.forename} ${data.surname}`,
+        applicant_email: data.email,
+        applicant_phone: data.phone,
+        position: data.position,
+        postcode: data.postcode || 'Not provided',   // ← already there
+        submitted_at: new Date().toLocaleString('en-GB', { dateStyle: 'full', timeStyle: 'short' })
+    });
+}
 
     /* ── Conditional Section Numbers ── */
     function updateSectionNumbers() {
