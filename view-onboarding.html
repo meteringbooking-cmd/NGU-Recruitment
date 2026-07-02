@@ -703,14 +703,14 @@
             <div class="section" style="border-color: ${app.onboardingCompleted ? 'var(--border)' : 'var(--warning)'}">
                 <h3>👤 Core Employee Details</h3>
                 <div class="grid-3">
-                    <div class="data-group"><div class="data-label">Legal Name</div><div class="data-value">${safeVal(pNew.firstName)} ${safeVal(pNew.lastName)}</div></div>
+                    <div class="data-group"><div class="data-label">Legal Name</div><div class="data-value">${safeVal(pNew.firstName || pOriginal.forename)} ${safeVal(pNew.lastName || pOriginal.surname)}</div></div>
                     <div class="data-group"><div class="data-label">Preferred Name</div><div class="data-value">${safeVal(pNew.preferredName)}</div></div>
-                    <div class="data-group"><div class="data-label">Date of Birth</div><div class="data-value">${safeVal(pNew.dob)}</div></div>
-                    <div class="data-group"><div class="data-label">National Insurance</div><div class="data-value mono">${safeVal(pNew.niNumber)}</div></div>
-                    <div class="data-group"><div class="data-label">Personal Email</div><div class="data-value">${safeVal(pNew.personalEmail)}</div></div>
-                    <div class="data-group"><div class="data-label">Phone</div><div class="data-value">${safeVal(pNew.phone)}</div></div>
-                    <div class="data-group" style="grid-column: 1 / span 2;"><div class="data-label">Home Address</div><div class="data-value">${safeVal(pNew.address)}, ${safeVal(pNew.postcode)}</div></div>
-                    <div class="data-group"><div class="data-label">Time at Address</div><div class="data-value">${safeVal(pNew.timeAtAddress)}</div></div>
+                    <div class="data-group"><div class="data-label">Date of Birth</div><div class="data-value">${safeVal(pNew.dob || pOriginal.dob)}</div></div>
+                    <div class="data-group"><div class="data-label">National Insurance</div><div class="data-value mono">${safeVal(pNew.niNumber || pOriginal.niNumber)}</div></div>
+                    <div class="data-group"><div class="data-label">Personal Email</div><div class="data-value">${safeVal(pNew.personalEmail || pOriginal.email)}</div></div>
+                    <div class="data-group"><div class="data-label">Phone</div><div class="data-value">${safeVal(pNew.phone || pOriginal.phone)}</div></div>
+                    <div class="data-group" style="grid-column: 1 / span 2;"><div class="data-label">Home Address</div><div class="data-value">${safeVal(pNew.address || pOriginal.address)}, ${safeVal(pNew.postcode || pOriginal.postcode)}</div></div>
+                    <div class="data-group"><div class="data-label">Time at Address</div><div class="data-value">${safeVal(pNew.timeAtAddress || pOriginal.timeAtAddress)}</div></div>
                     <div class="data-group" style="grid-column: 1 / -1;"><div class="data-label">Previous Address History</div><div class="data-value" style="white-space:pre-wrap;">${safeVal(pNew.addressHistory)}</div></div>
                 </div>
                 
