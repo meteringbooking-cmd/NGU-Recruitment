@@ -1144,20 +1144,21 @@
             }
 
             // ─── POPULATE FIELDS ─────────────────────────────────────────────────
-            const p = currentApplicant.onboardingDetails || currentApplicant.personalDetails || {};
+            const p = currentApplicant.onboardingDetails || {};
+            const orig = currentApplicant.personalDetails || {};
             document.getElementById('pdTitle').value = p.title || '';
             const nameParts = (currentApplicant.fullName || '').split(' ');
-            document.getElementById('pdFirst').value = p.firstName || nameParts[0] || '';
-            document.getElementById('pdLast').value = p.lastName || (nameParts.length > 1 ? nameParts[nameParts.length - 1] : '');
+            document.getElementById('pdFirst').value = p.firstName || orig.forename || nameParts[0] || '';
+            document.getElementById('pdLast').value = p.lastName || orig.surname || (nameParts.length > 1 ? nameParts[nameParts.length - 1] : '');
             document.getElementById('pdPref').value = p.preferredName || '';
-            document.getElementById('pdPhone').value = p.phone || '';
-            document.getElementById('pdEmail').value = p.personalEmail || p.email || '';
-            document.getElementById('pdAddress').value = p.address || '';
-            document.getElementById('pdPostcode').value = p.postcode || '';
-            document.getElementById('pdDob').value = p.dob || '';
-            document.getElementById('pdNi').value = p.niNumber || '';
+            document.getElementById('pdPhone').value = p.phone || orig.phone || '';
+            document.getElementById('pdEmail').value = p.personalEmail || orig.email || '';
+            document.getElementById('pdAddress').value = p.address || orig.address || '';
+            document.getElementById('pdPostcode').value = p.postcode || orig.postcode || '';
+            document.getElementById('pdDob').value = p.dob || orig.dob || '';
+            document.getElementById('pdNi').value = p.niNumber || orig.niNumber || '';
             document.getElementById('pdSysEmail').value = p.systemEmail || '';
-            document.getElementById('pdTimeAtAddr').value = p.timeAtAddress || '';
+            document.getElementById('pdTimeAtAddr').value = p.timeAtAddress || orig.timeAtAddress || '';
             document.getElementById('pdAddrHist').value = p.addressHistory || '';
             // Restore holiday date ranges
             if (p.holidays && Array.isArray(p.holidays) && p.holidays.length > 0) {
