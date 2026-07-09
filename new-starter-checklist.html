@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Starter Checklist</title>
+    <title>New Starter & Transfer Checklist</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,6 +24,7 @@
             --emerald: #10b981;
             --emerald-bg: rgba(16, 185, 129, 0.1);
             --rose: #f43f5e;
+            --violet: #a78bfa;
             --gradient-header: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
             --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
             --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -86,12 +87,12 @@
 
         /* ─── CONTAINER & GRID ─── */
         .container {
-            max-width: 1400px;
+            max-width: 1500px;
             width: 100%;
             margin: 0 auto;
             padding: 40px;
             display: grid;
-            grid-template-columns: 380px 1fr;
+            grid-template-columns: 400px 1fr;
             gap: 40px;
             flex: 1;
         }
@@ -166,6 +167,40 @@
             cursor: pointer;
         }
 
+        /* ─── TOGGLE OPTION BUTTONS (New Starter / Transfer) ─── */
+        .type-toggle-group {
+            display: flex;
+            gap: 10px;
+        }
+        .type-radio-btn {
+            flex: 1;
+            padding: 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            user-select: none;
+        }
+        .type-radio-btn:hover {
+            border-color: rgba(255,255,255,0.15);
+            color: #fff;
+        }
+        .type-radio-btn.selected[data-type="New Starter"] {
+            border-color: var(--cyan);
+            background: rgba(6, 182, 212, 0.12);
+            color: var(--cyan);
+        }
+        .type-radio-btn.selected[data-type="Transfer"] {
+            border-color: var(--violet);
+            background: rgba(167, 139, 250, 0.12);
+            color: var(--violet);
+        }
+
         /* ─── BUTTONS ─── */
         .btn {
             display: inline-flex;
@@ -202,22 +237,115 @@
             color: #ffe4e6;
         }
 
-        /* ─── STARTER LIST ─── */
-        .starter-select-container {
+        /* ─── ALPHABETICAL STARTER LIST (SIDEBAR) ─── */
+        .starters-list-container {
             display: flex;
             flex-direction: column;
             gap: 16px;
         }
-        .starter-meta {
+        .search-wrap {
+            position: relative;
+        }
+        .search-input {
+            padding-left: 40px !important;
+        }
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            pointer-events: none;
+        }
+        .starters-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 420px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .starters-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .starters-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .starters-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 99px;
+        }
+        .starters-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        .starter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .starter-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+        .starter-item.active {
+            background: rgba(6, 182, 212, 0.06);
+            border-color: var(--cyan);
+        }
+        .starter-item.active.type-Transfer {
+            background: rgba(167, 139, 250, 0.06);
+            border-color: var(--violet);
+        }
+        .starter-item-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 0.8rem;
+        }
+        .starter-item-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .starter-item-sub {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
             color: var(--text-secondary);
-            background: rgba(255,255,255,0.02);
-            padding: 10px 14px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-starter {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--cyan);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+        }
+        .badge-transfer {
+            background: rgba(167, 139, 250, 0.1);
+            color: var(--violet);
+            border: 1px solid rgba(167, 139, 250, 0.2);
+        }
+        .progress-badge {
+            font-weight: 700;
+            font-size: 0.78rem;
+            color: var(--emerald);
+        }
+        .progress-badge.empty-prog {
+            color: var(--text-muted);
         }
 
         /* ─── CHECKLIST PANELS ─── */
@@ -242,16 +370,25 @@
             flex-wrap: wrap;
             gap: 16px;
         }
+        .checklist-name-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .checklist-name-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
         .checklist-name-wrap h2 {
             font-size: 1.6rem;
             font-weight: 800;
             color: #fff;
         }
         .checklist-name-wrap p {
-            color: var(--cyan);
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-top: 4px;
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            font-weight: 500;
         }
         
         /* Progress Bar */
@@ -282,7 +419,7 @@
             transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Checklist Section (Barry) */
+        /* Checklist Section */
         .checklist-section {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -309,6 +446,9 @@
             background: var(--cyan);
             border-radius: 99px;
         }
+        .checklist-section.type-Transfer .section-header::before {
+            background: var(--violet);
+        }
         .checklist-items {
             display: flex;
             flex-direction: column;
@@ -321,7 +461,7 @@
             align-items: flex-start;
             gap: 16px;
             padding: 16px 20px;
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(255, 255, 255, 0.015);
             border: 1px solid var(--border);
             border-radius: 12px;
             cursor: pointer;
@@ -329,7 +469,7 @@
             transition: var(--transition);
         }
         .checklist-item:hover {
-            background: rgba(255, 255, 255, 0.04);
+            background: rgba(255, 255, 255, 0.035);
             border-color: rgba(255, 255, 255, 0.12);
         }
         .checklist-item.checked {
@@ -403,6 +543,14 @@
         }
         .item-link-btn:hover {
             background: rgba(6, 182, 212, 0.16);
+            color: #fff;
+        }
+        .checklist-section.type-Transfer .item-link-btn {
+            color: var(--violet);
+            background: rgba(167, 139, 250, 0.08);
+        }
+        .checklist-section.type-Transfer .item-link-btn:hover {
+            background: rgba(167, 139, 250, 0.16);
             color: #fff;
         }
 
@@ -484,8 +632,8 @@
 <!-- ═══ HEADER ═══ -->
 <div class="header">
     <div class="header-left">
-        <h1>📋 New Starter Checklist</h1>
-        <p>Assign tasks, setup credentials, and track progress for onboarding staff</p>
+        <h1>📋 Staff Onboarding & Transfer Tracker</h1>
+        <p>Manage setups, update configuration lines, and verify credentials for new starters and employee transfers</p>
     </div>
     <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=wespbsvy&dl=1" alt="NGU Logo">
 </div>
@@ -496,43 +644,44 @@
         <!-- ─── SIDEBAR / CONTROLS ─── -->
         <div style="display:flex; flex-direction:column; gap:30px;">
             
-            <!-- Add Starter Card -->
+            <!-- Add Starter/Transfer Card -->
             <div class="card">
                 <div class="card-title">
-                    <span class="icon">👤</span> Add New Starter
+                    <span class="icon">👤</span> Add Profile
+                </div>
+                <div class="form-group">
+                    <label>Profile Type</label>
+                    <div class="type-toggle-group">
+                        <div class="type-radio-btn selected" id="typeNewStarter" data-type="New Starter" onclick="selectType('New Starter')">New Starter</div>
+                        <div class="type-radio-btn" id="typeTransfer" data-type="Transfer" onclick="selectType('Transfer')">Transfer</div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="starterName">Full Name</label>
                     <input type="text" id="starterName" placeholder="e.g. John Doe">
                 </div>
                 <div class="form-group">
-                    <label for="startDate">Start Date</label>
+                    <label for="startDate">Effective Date</label>
                     <input type="date" id="startDate">
                 </div>
                 <button class="btn btn-cyan" onclick="addStarter()">
                     <span id="addSpin" style="display:none" class="spin"></span>
-                    <span>➕ Add Starter</span>
+                    <span>➕ Add Profile</span>
                 </button>
             </div>
 
-            <!-- Select Starter Card -->
+            <!-- Active Starters Alphabetical Card -->
             <div class="card">
                 <div class="card-title">
-                    <span class="icon">👥</span> Select Active Starter
+                    <span class="icon">👥</span> Profiles List
                 </div>
-                <div class="starter-select-container">
-                    <div class="form-group">
-                        <select id="starterSelect" onchange="selectStarter()">
-                            <option value="">-- Choose starter --</option>
-                        </select>
+                <div class="starters-list-container">
+                    <div class="search-wrap">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" class="search-input" id="searchBar" placeholder="Search profiles..." oninput="filterStartersList()">
                     </div>
-                    <div id="selectedMeta" class="starter-meta" style="display:none">
-                        <div>
-                            <strong>Start Date:</strong> <span id="metaDate">--</span>
-                        </div>
-                        <button class="btn btn-danger-ghost" style="padding: 6px 12px; font-size: 0.75rem;" onclick="deleteStarter()">
-                            🗑 Delete
-                        </button>
+                    <div class="starters-list" id="startersListEl">
+                        <!-- Starters render here alphabetically -->
                     </div>
                 </div>
             </div>
@@ -544,8 +693,8 @@
             <!-- Default empty state -->
             <div class="empty-view" id="emptyState">
                 <div class="icon">💼</div>
-                <h3>No Starter Selected</h3>
-                <p>Choose an onboarding starter from the dropdown list or add a new starter to begin tracking checklist progress.</p>
+                <h3>No Profile Selected</h3>
+                <p>Choose an onboarding starter or transfer from the list in the sidebar, or add a new profile to begin tracking progress.</p>
             </div>
 
             <!-- Dynamic Checklist Container -->
@@ -553,11 +702,17 @@
                 
                 <!-- Progress Banner Card -->
                 <div class="checklist-header">
-                    <div class="checklist-meta-header">
+                    <div class="checklist-meta-header" style="width:100%;">
                         <div class="checklist-name-wrap">
-                            <h2 id="currentStarterName">John Doe</h2>
-                            <p>Onboarding Checklist Tracker</p>
+                            <div class="checklist-name-row">
+                                <h2 id="currentStarterName">John Doe</h2>
+                                <span id="currentStarterBadge" class="badge">Starter</span>
+                            </div>
+                            <p>Effective Date: <span id="metaDate">--</span></p>
                         </div>
+                        <button class="btn btn-danger-ghost" style="padding: 8px 16px; font-size: 0.8rem; margin-left: auto;" onclick="deleteStarter()">
+                            🗑 Delete Profile
+                        </button>
                     </div>
                     
                     <!-- Progress bar -->
@@ -572,9 +727,9 @@
                     </div>
                 </div>
 
-                <!-- Checklist Section: Barry -->
-                <div class="checklist-section">
-                    <div class="section-header">Barry</div>
+                <!-- Checklist Section -->
+                <div class="checklist-section" id="sectionWrapper">
+                    <div class="section-header" id="sectionHeader">Barry</div>
                     <div class="checklist-items" id="checklistItems">
                         <!-- Items rendered dynamically -->
                     </div>
@@ -605,7 +760,6 @@
         updateDoc, 
         deleteDoc, 
         query, 
-        orderBy, 
         serverTimestamp 
     } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -628,8 +782,9 @@
     let selectedStarterId = "";
     let startersList = [];
     let currentCompletedItems = {};
+    let currentSelectedType = "New Starter"; // Toggle state for Add Profile
 
-    // Defined static checklist items for the "Barry" section
+    // Defined static checklist items for the "New Starter" (Barry) section
     const barryChecklistItems = [
         {
             id: "add_name",
@@ -688,6 +843,35 @@
         }
     ];
 
+    // Defined static checklist items for the "Transfer" section
+    const transferChecklistItems = [
+        {
+            id: "amend_contract_pingu",
+            text: "Amend contract on pingu-solar Firestore database console",
+            link: "https://console.firebase.google.com/u/0/project/pingu-solar/firestore/databases/-default-/data/~2Femployees~2F05v1dDqKg2nIFPyqv53Q"
+        },
+        {
+            id: "amend_contract_oes",
+            text: "Amend contract via view.html config database setup",
+            link: "https://oes-performance.vercel.app/view.html"
+        },
+        {
+            id: "moving_workscreen_1169",
+            text: "If moving from Sureserve to EES: edit line 1169 of workscreen-en.html",
+            link: "https://github.com/meteringbooking-cmd/OESPerformance/edit/main/workscreen-en.html"
+        },
+        {
+            id: "moving_engineer_2145",
+            text: "If moving from Sureserve to EES: edit line 2145 of engineer.html",
+            link: "https://github.com/meteringbooking-cmd/OESPerformance/blob/main/engineer.html"
+        },
+        {
+            id: "thinventory_energise_transfer",
+            text: "Complete Energise Selection setup when Thinventory login is received",
+            link: "https://oes-performance.vercel.app/energise-selection.html"
+        }
+    ];
+
     // Show Toast Notification Helper
     function showToast(message, isSuccess = true) {
         const toast = document.getElementById("toast");
@@ -709,37 +893,106 @@
         return dateStr;
     }
 
+    // Select Profile Type (New Starter / Transfer)
+    function selectType(type) {
+        currentSelectedType = type;
+        document.getElementById("typeNewStarter").classList.toggle("selected", type === "New Starter");
+        document.getElementById("typeTransfer").classList.toggle("selected", type === "Transfer");
+    }
+
     // Load active starters list from Firebase collection "New Start Checklist"
     async function loadStarters() {
-        const selectEl = document.getElementById("starterSelect");
-        selectEl.innerHTML = '<option value="">-- Choose starter --</option>';
-
         try {
-            const q = query(collection(db, "New Start Checklist"), orderBy("createdAt", "desc"));
-            const snap = await getDocs(q);
+            const snap = await getDocs(collection(db, "New Start Checklist"));
             startersList = [];
             
             snap.forEach(d => {
                 const item = d.data();
                 startersList.push({ id: d.id, ...item });
-                
-                const opt = document.createElement("option");
-                opt.value = d.id;
-                opt.textContent = `${item.name} (Starts: ${formatDisplayDate(item.startDate)})`;
-                selectEl.appendChild(opt);
             });
-            
-            // Re-select if one was already active
-            if (selectedStarterId) {
-                selectEl.value = selectedStarterId;
-            }
+
+            // Sort alphabetically by name
+            startersList.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+
+            // Render list sidebar
+            renderStartersList();
+
         } catch (err) {
             console.error("Error loading starters: ", err);
-            showToast("Failed to load starters: " + err.message, false);
+            showToast("Failed to load profiles: " + err.message, false);
         }
     }
 
-    // Add New Starter
+    // Render Starters Alphabetical List Sidebar
+    function renderStartersList() {
+        const container = document.getElementById("startersListEl");
+        container.innerHTML = "";
+
+        const searchVal = document.getElementById("searchBar").value.toLowerCase().trim();
+
+        startersList.forEach(starter => {
+            // Filter search query if present
+            if (searchVal && !(starter.name || "").toLowerCase().includes(searchVal)) {
+                return;
+            }
+
+            const type = starter.type || "New Starter";
+            const isTransfer = type === "Transfer";
+            const itemsList = isTransfer ? transferChecklistItems : barryChecklistItems;
+            
+            // Calculate progress value for badge
+            let done = 0;
+            const completed = starter.completedItems || {};
+            itemsList.forEach(it => { if (completed[it.id]) done++; });
+            const pct = itemsList.length > 0 ? Math.round((done / itemsList.length) * 100) : 0;
+
+            const itemDiv = document.createElement("div");
+            itemDiv.className = `starter-item type-${type.replace(/\s+/g,'')}` + (selectedStarterId === starter.id ? " active" : "");
+            itemDiv.onclick = () => selectStarter(starter.id);
+
+            const topHeader = document.createElement("div");
+            topHeader.className = "starter-item-header";
+
+            const nameSpan = document.createElement("span");
+            nameSpan.className = "starter-item-name";
+            nameSpan.textContent = starter.name;
+
+            const badgeSpan = document.createElement("span");
+            badgeSpan.className = "badge " + (isTransfer ? "badge-transfer" : "badge-starter");
+            badgeSpan.textContent = isTransfer ? "Transfer" : "Starter";
+
+            topHeader.appendChild(nameSpan);
+            topHeader.appendChild(badgeSpan);
+
+            const bottomSub = document.createElement("div");
+            bottomSub.className = "starter-item-sub";
+
+            const dateSpan = document.createElement("span");
+            dateSpan.textContent = `Date: ${formatDisplayDate(starter.startDate)}`;
+
+            const progSpan = document.createElement("span");
+            progSpan.className = "progress-badge" + (done === 0 ? " empty-prog" : "");
+            progSpan.textContent = `${pct}%`;
+
+            bottomSub.appendChild(dateSpan);
+            bottomSub.appendChild(progSpan);
+
+            itemDiv.appendChild(topHeader);
+            itemDiv.appendChild(bottomSub);
+            container.appendChild(itemDiv);
+        });
+
+        if (container.children.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;padding:20px;text-align:center;">No matching profiles found</div>';
+        }
+    }
+
+    // Filter list using searchbar input
+    function filterStartersList() {
+        renderStartersList();
+    }
+
+    // Add New Starter or Transfer
     async function addStarter() {
         const nameInput = document.getElementById("starterName");
         const dateInput = document.getElementById("startDate");
@@ -749,7 +1002,7 @@
         const startDate = dateInput.value;
 
         if (!name || !startDate) {
-            showToast("Please enter name and select start date.", false);
+            showToast("Please enter name and select effective date.", false);
             return;
         }
 
@@ -759,21 +1012,22 @@
             const docRef = await addDoc(collection(db, "New Start Checklist"), {
                 name: name,
                 startDate: startDate,
+                type: currentSelectedType,
                 completedItems: {},
                 createdAt: serverTimestamp()
             });
 
-            showToast(`Starter "${name}" added successfully.`);
+            showToast(`Profile "${name}" added successfully.`);
             
             // Reset input values
             nameInput.value = "";
             dateInput.value = "";
             btnSpin.style.display = "none";
 
-            // Reload dropdown list
+            // Reload sidebar list and select new starter
             selectedStarterId = docRef.id;
             await loadStarters();
-            selectStarter();
+            selectStarter(docRef.id);
         } catch (err) {
             console.error("Error adding starter: ", err);
             showToast("Error adding starter: " + err.message, false);
@@ -781,28 +1035,39 @@
         }
     }
 
-    // Select Active Starter and Render Checklist
-    async function selectStarter() {
-        const selectEl = document.getElementById("starterSelect");
-        selectedStarterId = selectEl.value;
+    // Select Active Profile and Render Checklist
+    async function selectStarter(id) {
+        selectedStarterId = id;
+
+        // Re-render sidebar list to highlight the active starter item
+        renderStartersList();
 
         const emptyEl = document.getElementById("emptyState");
         const checklistEl = document.getElementById("checklistContainer");
-        const metaEl = document.getElementById("selectedMeta");
 
         if (!selectedStarterId) {
             emptyEl.style.display = "flex";
             checklistEl.style.display = "none";
-            metaEl.style.display = "none";
             return;
         }
 
         const starter = startersList.find(s => s.id === selectedStarterId);
         if (!starter) return;
 
+        const type = starter.type || "New Starter";
+        const isTransfer = type === "Transfer";
+
         // Populate header details
         document.getElementById("currentStarterName").textContent = starter.name;
         document.getElementById("metaDate").textContent = formatDisplayDate(starter.startDate);
+        
+        const badge = document.getElementById("currentStarterBadge");
+        badge.className = "badge " + (isTransfer ? "badge-transfer" : "badge-starter");
+        badge.textContent = isTransfer ? "Transfer" : "Starter";
+
+        const sectionWrapper = document.getElementById("sectionWrapper");
+        sectionWrapper.className = "checklist-section type-" + type.replace(/\s+/g,'');
+        document.getElementById("sectionHeader").textContent = isTransfer ? "Transfer Actions" : "Barry";
 
         // Fetch latest doc state to get completed items
         try {
@@ -820,7 +1085,6 @@
 
         emptyEl.style.display = "none";
         checklistEl.style.display = "flex";
-        metaEl.style.display = "flex";
 
         // Render checklist rows
         renderChecklistItems();
@@ -831,7 +1095,13 @@
         const container = document.getElementById("checklistItems");
         container.innerHTML = "";
 
-        barryChecklistItems.forEach(item => {
+        const starter = startersList.find(s => s.id === selectedStarterId);
+        if (!starter) return;
+
+        const type = starter.type || "New Starter";
+        const itemsList = type === "Transfer" ? transferChecklistItems : barryChecklistItems;
+
+        itemsList.forEach(item => {
             const isChecked = !!currentCompletedItems[item.id];
             
             const row = document.createElement("div");
@@ -883,6 +1153,14 @@
                 completedItems: currentCompletedItems
             });
             showToast("Checklist item updated.");
+            
+            // Re-render sidebar items to update progress percentage badge in real-time
+            const activeIndex = startersList.findIndex(s => s.id === selectedStarterId);
+            if (activeIndex > -1) {
+                startersList[activeIndex].completedItems = currentCompletedItems;
+            }
+            renderStartersList();
+
         } catch (err) {
             console.error("Error updating item: ", err);
             showToast("Failed to save checkbox update: " + err.message, false);
@@ -894,11 +1172,17 @@
 
     // Calculate Checklist Progress
     function calculateProgress() {
-        const total = barryChecklistItems.length;
+        const starter = startersList.find(s => s.id === selectedStarterId);
+        if (!starter) return;
+
+        const type = starter.type || "New Starter";
+        const itemsList = type === "Transfer" ? transferChecklistItems : barryChecklistItems;
+
+        const total = itemsList.length;
         if (total === 0) return;
 
         let checkedCount = 0;
-        barryChecklistItems.forEach(item => {
+        itemsList.forEach(item => {
             if (currentCompletedItems[item.id]) {
                 checkedCount++;
             }
@@ -927,11 +1211,11 @@
 
         try {
             await deleteDoc(doc(db, "New Start Checklist", selectedStarterId));
-            showToast(`Starter "${starterName}" deleted successfully.`);
+            showToast(`Profile "${starterName}" deleted successfully.`);
             
             selectedStarterId = "";
             await loadStarters();
-            selectStarter();
+            selectStarter("");
         } catch (err) {
             console.error("Error deleting starter: ", err);
             showToast("Error deleting starter: " + err.message, false);
@@ -944,10 +1228,12 @@
     };
 
     // Attach modular functions to window scope for HTML bindings
+    window.selectType = selectType;
     window.addStarter = addStarter;
     window.selectStarter = selectStarter;
     window.deleteStarter = deleteStarter;
     window.toggleChecklistItem = toggleChecklistItem;
+    window.filterStartersList = filterStartersList;
 </script>
 
 </body>
