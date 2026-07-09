@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Starter Checklist</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ═══ Sleek Dark Theme Design System ═══ */
+        :root {
+            --bg-deep: #090d16;
+            --bg-card: #111827;
+            --bg-input: #1f2937;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-focus: #06b6d4;
+            --text-main: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --cyan: #06b6d4;
+            --cyan-hover: #0891b2;
+            --emerald: #10b981;
+            --emerald-bg: rgba(16, 185, 129, 0.1);
+            --rose: #f43f5e;
+            --gradient-header: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            --shadow-premium: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ─── HEADER ─── */
+        .header {
+            background: linear-gradient(135deg, #111827 0%, #030712 100%);
+            padding: 24px 40px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .header-left h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: var(--gradient-header);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+        .header-left p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+        .header img {
+            height: 48px;
+            opacity: 0.95;
+        }
+
+        /* ─── CONTAINER & GRID ─── */
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px;
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 40px;
+            flex: 1;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ─── SLEEK CARDS ─── */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow-premium);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            transition: var(--transition);
+        }
+        .card:hover {
+            border-color: rgba(6, 182, 212, 0.2);
+        }
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 16px;
+        }
+        .card-title span.icon {
+            font-size: 1.4rem;
+        }
+
+        /* ─── FORM CONTROLS ─── */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .form-group label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+        }
+        input[type="text"], input[type="date"], select {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 500;
+            outline: none;
+            transition: var(--transition);
+        }
+        input[type="text"]:focus, input[type="date"]:focus, select:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15);
+        }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            cursor: pointer;
+        }
+
+        /* ─── BUTTONS ─── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+        .btn-cyan {
+            background: linear-gradient(135deg, #06b6d4, #3b82f6);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(6, 182, 212, 0.3);
+        }
+        .btn-cyan:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+        }
+        .btn-danger-ghost {
+            background: rgba(244, 63, 94, 0.08);
+            border: 1px solid rgba(244, 63, 94, 0.2);
+            color: #fda4af;
+        }
+        .btn-danger-ghost:hover {
+            background: rgba(244, 63, 94, 0.15);
+            border-color: rgba(244, 63, 94, 0.35);
+            color: #ffe4e6;
+        }
+
+        /* ─── STARTER LIST ─── */
+        .starter-select-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .starter-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: rgba(255,255,255,0.02);
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        /* ─── CHECKLIST PANELS ─── */
+        .checklist-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .checklist-header {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .checklist-meta-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .checklist-name-wrap h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #fff;
+        }
+        .checklist-name-wrap p {
+            color: var(--cyan);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+        .progress-bar-track {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 99px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #06b6d4, #10b981);
+            width: 0%;
+            border-radius: 99px;
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Checklist Section (Barry) */
+        .checklist-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: var(--shadow-premium);
+        }
+        .section-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+        }
+        .section-header::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background: var(--cyan);
+            border-radius: 99px;
+        }
+        .checklist-items {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* ─── CHECKLIST ITEM ROW ─── */
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            user-select: none;
+            transition: var(--transition);
+        }
+        .checklist-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+        .checklist-item.checked {
+            background: rgba(16, 185, 129, 0.03);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+        
+        /* Custom Checkbox Design */
+        .custom-chk {
+            width: 22px;
+            height: 22px;
+            border: 2px solid var(--text-secondary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+            transition: var(--transition);
+            background: transparent;
+        }
+        .checklist-item.checked .custom-chk {
+            background: var(--emerald);
+            border-color: var(--emerald);
+        }
+        .custom-chk::after {
+            content: '';
+            width: 6px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg) translate(-1px, -1px);
+            opacity: 0;
+            transition: var(--transition);
+        }
+        .checklist-item.checked .custom-chk::after {
+            opacity: 1;
+        }
+
+        /* Item Content */
+        .item-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .item-text {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--text-main);
+            transition: var(--transition);
+            line-height: 1.4;
+        }
+        .checklist-item.checked .item-text {
+            color: var(--text-secondary);
+            text-decoration: line-through;
+        }
+        .item-link-btn {
+            align-self: flex-start;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--cyan);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+            background: rgba(6, 182, 212, 0.08);
+            padding: 4px 10px;
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+        .item-link-btn:hover {
+            background: rgba(6, 182, 212, 0.16);
+            color: #fff;
+        }
+
+        /* ─── TOAST NOTIFICATION ─── */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #111827;
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--cyan);
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            pointer-events: none;
+        }
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .toast.success {
+            border-left-color: var(--emerald);
+        }
+        .toast-icon {
+            font-size: 1.2rem;
+        }
+        .toast-message {
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        /* ─── EMPTY STATE ─── */
+        .empty-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 80px 40px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.01);
+            border: 2px dashed var(--border);
+            border-radius: 20px;
+            color: var(--text-secondary);
+        }
+        .empty-view .icon {
+            font-size: 3rem;
+            opacity: 0.5;
+        }
+        .empty-view h3 {
+            font-size: 1.2rem;
+            color: #fff;
+        }
+
+        /* Spinner for loading */
+        .spin {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spinner 0.6s linear infinite;
+        }
+        @keyframes spinner {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<div class="header">
+    <div class="header-left">
+        <h1>📋 New Starter Checklist</h1>
+        <p>Assign tasks, setup credentials, and track progress for onboarding staff</p>
+    </div>
+    <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=wespbsvy&dl=1" alt="NGU Logo">
+</div>
+
+<div class="page">
+    <div class="container">
+        
+        <!-- ─── SIDEBAR / CONTROLS ─── -->
+        <div style="display:flex; flex-direction:column; gap:30px;">
+            
+            <!-- Add Starter Card -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">👤</span> Add New Starter
+                </div>
+                <div class="form-group">
+                    <label for="starterName">Full Name</label>
+                    <input type="text" id="starterName" placeholder="e.g. John Doe">
+                </div>
+                <div class="form-group">
+                    <label for="startDate">Start Date</label>
+                    <input type="date" id="startDate">
+                </div>
+                <button class="btn btn-cyan" onclick="addStarter()">
+                    <span id="addSpin" style="display:none" class="spin"></span>
+                    <span>➕ Add Starter</span>
+                </button>
+            </div>
+
+            <!-- Select Starter Card -->
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon">👥</span> Select Active Starter
+                </div>
+                <div class="starter-select-container">
+                    <div class="form-group">
+                        <select id="starterSelect" onchange="selectStarter()">
+                            <option value="">-- Choose starter --</option>
+                        </select>
+                    </div>
+                    <div id="selectedMeta" class="starter-meta" style="display:none">
+                        <div>
+                            <strong>Start Date:</strong> <span id="metaDate">--</span>
+                        </div>
+                        <button class="btn btn-danger-ghost" style="padding: 6px 12px; font-size: 0.75rem;" onclick="deleteStarter()">
+                            🗑 Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ─── MAIN CONTENT (CHECKLIST) ─── -->
+        <div id="checklistPanel">
+            <!-- Default empty state -->
+            <div class="empty-view" id="emptyState">
+                <div class="icon">💼</div>
+                <h3>No Starter Selected</h3>
+                <p>Choose an onboarding starter from the dropdown list or add a new starter to begin tracking checklist progress.</p>
+            </div>
+
+            <!-- Dynamic Checklist Container -->
+            <div class="checklist-container" id="checklistContainer" style="display:none">
+                
+                <!-- Progress Banner Card -->
+                <div class="checklist-header">
+                    <div class="checklist-meta-header">
+                        <div class="checklist-name-wrap">
+                            <h2 id="currentStarterName">John Doe</h2>
+                            <p>Onboarding Checklist Tracker</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress bar -->
+                    <div class="progress-container">
+                        <div class="progress-text">
+                            <span style="color:var(--text-secondary);">Completion Progress</span>
+                            <span id="progressPercent" style="color:var(--cyan);">0%</span>
+                        </div>
+                        <div class="progress-bar-track">
+                            <div class="progress-bar-fill" id="progressBarFill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Checklist Section: Barry -->
+                <div class="checklist-section">
+                    <div class="section-header">Barry</div>
+                    <div class="checklist-items" id="checklistItems">
+                        <!-- Items rendered dynamically -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Toast element -->
+<div class="toast" id="toast">
+    <span class="toast-icon">✓</span>
+    <span class="toast-message" id="toastMsg">Success message here</span>
+</div>
+
+<!-- Firebase Modular SDK -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { 
+        getFirestore, 
+        collection, 
+        doc, 
+        addDoc, 
+        getDocs, 
+        getDoc,
+        updateDoc, 
+        deleteDoc, 
+        query, 
+        orderBy, 
+        serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Firebase Config matched to the performance app
+    const firebaseConfig = { 
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g", 
+        authDomain: "oesperformance-a54c0.firebaseapp.com", 
+        projectId: "oesperformance-a54c0", 
+        storageBucket: "oesperformance-a54c0.firebasestorage.app", 
+        messagingSenderId: "484894102454", 
+        appId: "1:484894102454:web:17535ee497eac2d90d6717", 
+        measurementId: "G-R56BGZYV8N" 
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Global variables to store reference details
+    let selectedStarterId = "";
+    let startersList = [];
+    let currentCompletedItems = {};
+
+    // Defined static checklist items for the "Barry" section
+    const barryChecklistItems = [
+        {
+            id: "add_name",
+            text: "Add name to Performance App via addname.html",
+            link: "https://oes-performance.vercel.app/addname.html"
+        },
+        {
+            id: "assign_password",
+            text: "Assign contract and password for app via view.html",
+            link: "https://oes-performance.vercel.app/view.html"
+        },
+        {
+            id: "ees_contract",
+            text: "If EES contract: amend line 2145 of engineer.html on GitHub",
+            link: "https://github.com/meteringbooking-cmd/OESPerformance/blob/main/engineer.html"
+        },
+        {
+            id: "ess_contract",
+            text: "If ESS contract: amend line 1169 of workscreen-en.html on GitHub",
+            link: "https://github.com/meteringbooking-cmd/OESPerformance/edit/main/workscreen-en.html"
+        },
+        {
+            id: "add_capacity",
+            text: "Add name to Capacity tracker page",
+            link: "https://oes-performance.vercel.app/capacity.html"
+        },
+        {
+            id: "assign_team",
+            text: "Assign to team on Staff selection page",
+            link: "https://oes-performance.vercel.app/staff.html"
+        },
+        {
+            id: "cognito_wip",
+            text: "Add name to WIP cognito form setup",
+            link: "https://www.cognitoforms.com/bmsl1/newnguworkinprogressauditform/build"
+        },
+        {
+            id: "cognito_post",
+            text: "Add name to Post cognito form setup",
+            link: "https://www.cognitoforms.com/bmsl1/newngupostcompletioninstallationaudit/build"
+        },
+        {
+            id: "cognito_vehicle",
+            text: "Add name to Vehicle check cognito form build",
+            link: "https://www.cognitoforms.com/bmsl1/dailyvehiclecheck/build"
+        },
+        {
+            id: "establishment_report",
+            text: "Add to establishment report via employee database page",
+            link: "https://ngu-green.vercel.app/employeedatabase.html"
+        },
+        {
+            id: "thinventory_energise",
+            text: "Complete Energise Selection setup when Thinventory login is received",
+            link: "https://oes-performance.vercel.app/energise-selection.html"
+        }
+    ];
+
+    // Show Toast Notification Helper
+    function showToast(message, isSuccess = true) {
+        const toast = document.getElementById("toast");
+        const msgEl = document.getElementById("toastMsg");
+        msgEl.textContent = message;
+        toast.className = "toast show" + (isSuccess ? " success" : "");
+        setTimeout(() => {
+            toast.classList.remove("show");
+        }, 3500);
+    }
+
+    // Convert Date helper
+    function formatDisplayDate(dateStr) {
+        if (!dateStr) return "--";
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+    }
+
+    // Load active starters list from Firebase collection "New Start Checklist"
+    async function loadStarters() {
+        const selectEl = document.getElementById("starterSelect");
+        selectEl.innerHTML = '<option value="">-- Choose starter --</option>';
+
+        try {
+            const q = query(collection(db, "New Start Checklist"), orderBy("createdAt", "desc"));
+            const snap = await getDocs(q);
+            startersList = [];
+            
+            snap.forEach(d => {
+                const item = d.data();
+                startersList.push({ id: d.id, ...item });
+                
+                const opt = document.createElement("option");
+                opt.value = d.id;
+                opt.textContent = `${item.name} (Starts: ${formatDisplayDate(item.startDate)})`;
+                selectEl.appendChild(opt);
+            });
+            
+            // Re-select if one was already active
+            if (selectedStarterId) {
+                selectEl.value = selectedStarterId;
+            }
+        } catch (err) {
+            console.error("Error loading starters: ", err);
+            showToast("Failed to load starters: " + err.message, false);
+        }
+    }
+
+    // Add New Starter
+    async function addStarter() {
+        const nameInput = document.getElementById("starterName");
+        const dateInput = document.getElementById("startDate");
+        const btnSpin = document.getElementById("addSpin");
+
+        const name = nameInput.value.trim();
+        const startDate = dateInput.value;
+
+        if (!name || !startDate) {
+            showToast("Please enter name and select start date.", false);
+            return;
+        }
+
+        btnSpin.style.display = "inline-block";
+
+        try {
+            const docRef = await addDoc(collection(db, "New Start Checklist"), {
+                name: name,
+                startDate: startDate,
+                completedItems: {},
+                createdAt: serverTimestamp()
+            });
+
+            showToast(`Starter "${name}" added successfully.`);
+            
+            // Reset input values
+            nameInput.value = "";
+            dateInput.value = "";
+            btnSpin.style.display = "none";
+
+            // Reload dropdown list
+            selectedStarterId = docRef.id;
+            await loadStarters();
+            selectStarter();
+        } catch (err) {
+            console.error("Error adding starter: ", err);
+            showToast("Error adding starter: " + err.message, false);
+            btnSpin.style.display = "none";
+        }
+    }
+
+    // Select Active Starter and Render Checklist
+    async function selectStarter() {
+        const selectEl = document.getElementById("starterSelect");
+        selectedStarterId = selectEl.value;
+
+        const emptyEl = document.getElementById("emptyState");
+        const checklistEl = document.getElementById("checklistContainer");
+        const metaEl = document.getElementById("selectedMeta");
+
+        if (!selectedStarterId) {
+            emptyEl.style.display = "flex";
+            checklistEl.style.display = "none";
+            metaEl.style.display = "none";
+            return;
+        }
+
+        const starter = startersList.find(s => s.id === selectedStarterId);
+        if (!starter) return;
+
+        // Populate header details
+        document.getElementById("currentStarterName").textContent = starter.name;
+        document.getElementById("metaDate").textContent = formatDisplayDate(starter.startDate);
+
+        // Fetch latest doc state to get completed items
+        try {
+            const docRef = doc(db, "New Start Checklist", selectedStarterId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                currentCompletedItems = docSnap.data().completedItems || {};
+            } else {
+                currentCompletedItems = {};
+            }
+        } catch (e) {
+            console.error("Error fetching starter state: ", e);
+            currentCompletedItems = starter.completedItems || {};
+        }
+
+        emptyEl.style.display = "none";
+        checklistEl.style.display = "flex";
+        metaEl.style.display = "flex";
+
+        // Render checklist rows
+        renderChecklistItems();
+    }
+
+    // Render Checklist Rows
+    function renderChecklistItems() {
+        const container = document.getElementById("checklistItems");
+        container.innerHTML = "";
+
+        barryChecklistItems.forEach(item => {
+            const isChecked = !!currentCompletedItems[item.id];
+            
+            const row = document.createElement("div");
+            row.className = "checklist-item" + (isChecked ? " checked" : "");
+            row.onclick = () => toggleChecklistItem(item.id);
+
+            const chk = document.createElement("div");
+            chk.className = "custom-chk";
+
+            const content = document.createElement("div");
+            content.className = "item-content";
+
+            const text = document.createElement("span");
+            text.className = "item-text";
+            text.textContent = item.text;
+
+            const link = document.createElement("a");
+            link.href = item.link;
+            link.className = "item-link-btn";
+            link.target = "_blank";
+            link.textContent = "🔗 Go to website";
+            // Prevent event bubbling so clicking the link doesn't toggle check state
+            link.onclick = (e) => e.stopPropagation();
+
+            content.appendChild(text);
+            content.appendChild(link);
+
+            row.appendChild(chk);
+            row.appendChild(content);
+            container.appendChild(row);
+        });
+
+        calculateProgress();
+    }
+
+    // Toggle Checklist Item State
+    async function toggleChecklistItem(itemId) {
+        if (!selectedStarterId) return;
+
+        const isChecked = !!currentCompletedItems[itemId];
+        currentCompletedItems[itemId] = !isChecked;
+
+        // Render immediately in UI for responsive click feedback
+        renderChecklistItems();
+
+        try {
+            const docRef = doc(db, "New Start Checklist", selectedStarterId);
+            await updateDoc(docRef, {
+                completedItems: currentCompletedItems
+            });
+            showToast("Checklist item updated.");
+        } catch (err) {
+            console.error("Error updating item: ", err);
+            showToast("Failed to save checkbox update: " + err.message, false);
+            // Revert state on failure
+            currentCompletedItems[itemId] = isChecked;
+            renderChecklistItems();
+        }
+    }
+
+    // Calculate Checklist Progress
+    function calculateProgress() {
+        const total = barryChecklistItems.length;
+        if (total === 0) return;
+
+        let checkedCount = 0;
+        barryChecklistItems.forEach(item => {
+            if (currentCompletedItems[item.id]) {
+                checkedCount++;
+            }
+        });
+
+        const percent = Math.round((checkedCount / total) * 100);
+        document.getElementById("progressPercent").textContent = `${percent}%`;
+        document.getElementById("progressBarFill").style.width = `${percent}%`;
+
+        // Change bar styling if 100% complete
+        const fillBar = document.getElementById("progressBarFill");
+        if (percent === 100) {
+            fillBar.style.background = "linear-gradient(90deg, #10b981, #34d399)";
+        } else {
+            fillBar.style.background = "linear-gradient(90deg, #06b6d4, #3b82f6)";
+        }
+    }
+
+    // Delete Starter
+    async function deleteStarter() {
+        if (!selectedStarterId) return;
+
+        const starterName = document.getElementById("currentStarterName").textContent;
+        const confirmDelete = confirm(`Are you sure you want to delete checklist for "${starterName}"?`);
+        if (!confirmDelete) return;
+
+        try {
+            await deleteDoc(doc(db, "New Start Checklist", selectedStarterId));
+            showToast(`Starter "${starterName}" deleted successfully.`);
+            
+            selectedStarterId = "";
+            await loadStarters();
+            selectStarter();
+        } catch (err) {
+            console.error("Error deleting starter: ", err);
+            showToast("Error deleting starter: " + err.message, false);
+        }
+    }
+
+    // Initialize application
+    window.onload = async () => {
+        await loadStarters();
+    };
+
+    // Attach modular functions to window scope for HTML bindings
+    window.addStarter = addStarter;
+    window.selectStarter = selectStarter;
+    window.deleteStarter = deleteStarter;
+    window.toggleChecklistItem = toggleChecklistItem;
+</script>
+
+</body>
+</html>
