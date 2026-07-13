@@ -643,6 +643,49 @@
             docsHtml = `<div class="missing-data">No documents uploaded yet.</div>`;
         }
 
+        // Certificates HTML
+        let certsHtml = '';
+        const c = app.certificates || {};
+        [
+            { key: 'mocopa',       label: 'MOCOPA' },
+            { key: 'gasl3',        label: 'Level 3 Gas' },
+            { key: 'cmagas',       label: 'CMA Gas' },
+            { key: 'higherskills', label: 'Higher Skills' }
+        ].forEach(cert => {
+            if (c[cert.key] && c[cert.key].url) {
+                const expVal = c[cert.key].expiry || '';
+                const expDisplay = expVal ? `Expires: ${new Date(expVal).toLocaleDateString('en-GB')}` : 'No Expiry Set';
+                certsHtml += `
+                    <div class="doc-item">
+                        <div>
+                            <strong>${cert.label}</strong><br>
+                            <small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${c[cert.key].filename || ''}</small><br>
+                            <small style="color:var(--warning);font-weight:600;">${expDisplay}</small>
+                        </div>
+                        <a href="${c[cert.key].url}" target="_blank" class="btn-download">View / Download</a>
+                    </div>`;
+            }
+        });
+
+        if (c.additional && c.additional.length > 0) {
+            c.additional.forEach(add => {
+                if (add.url) {
+                    const expVal = add.expiry || '';
+                    const expDisplay = expVal ? `Expires: ${new Date(expVal).toLocaleDateString('en-GB')}` : 'No Expiry Set';
+                    certsHtml += `
+                        <div class="doc-item">
+                            <div>
+                                <strong>${add.certName || add.name || 'Additional Certificate'}</strong><br>
+                                <small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${add.filename || ''}</small><br>
+                                <small style="color:var(--warning);font-weight:600;">${expDisplay}</small>
+                            </div>
+                            <a href="${add.url}" target="_blank" class="btn-download">View / Download</a>
+                        </div>`;
+                }
+            });
+        }
+        if (!certsHtml) certsHtml = `<div class="missing-data">No certificates uploaded during application.</div>`;
+
         // Holidays HTML
         let holidaysHtml = '';
         if (pNew.holidays && pNew.holidays.length > 0) {
@@ -696,8 +739,13 @@
             </div>
 
             <div class="section">
-                <h3>📄 Uploaded Identification & Documents</h3>
+                <h3>📁 Uploaded Identification & Documents</h3>
                 ${docsHtml}
+            </div>
+
+            <div class="section">
+                <h3>📄 Application Certificates & Licences</h3>
+                ${certsHtml}
             </div>
 
             <div class="section" style="border-color: ${app.onboardingCompleted ? 'var(--border)' : 'var(--warning)'}">
