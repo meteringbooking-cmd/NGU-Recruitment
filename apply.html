@@ -1345,7 +1345,7 @@
             });
 
             const emailData = { forename, surname, email, phone, position };
-            await Promise.allSettled([sendApplicantEmail(emailData), sendInternalEmail(emailData)]);
+await Promise.allSettled([sendApplicantEmail(emailData), sendInternalEmail(emailData)]);
 
             document.getElementById('applicationForm').style.display = 'none';
             document.getElementById('successScreen').style.display   = 'block';
