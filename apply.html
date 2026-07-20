@@ -845,14 +845,22 @@
     }
 
     /* ── Position Dropdown Listener ── */
-    document.getElementById('position').addEventListener('change', function() {
+    function updateCertificatesSectionVisibility() {
         const certSection = document.getElementById('certificatesSection');
-        if (this.value === 'Smart Meter Engineer' || this.value === 'SMETs 2 installer') {
+        const pos = document.getElementById('position').value;
+        const recruitmentAgency = getRadioValue('recruitmentAgency');
+        if (recruitmentAgency === 'yes') {
+            certSection.style.display = 'none';
+        } else if (pos === 'Smart Meter Engineer' || pos === 'SMETs 2 installer') {
             certSection.style.display = 'block';
         } else {
             certSection.style.display = 'none';
         }
         updateSectionNumbers();
+    }
+    document.getElementById('position').addEventListener('change', updateCertificatesSectionVisibility);
+    document.querySelectorAll('input[name="recruitmentAgency"]').forEach(r => {
+        r.addEventListener('change', updateCertificatesSectionVisibility);
     });
 
     /* ── Vacancies ── */
