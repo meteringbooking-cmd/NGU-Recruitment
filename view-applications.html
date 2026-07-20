@@ -181,6 +181,13 @@
                 </select>
             </div>
 
+            <div id="doNotProceedReasonDiv" style="display:none;">
+                <div class="modal-form-group">
+                    <label>Reason / Comments for Not Proceeding</label>
+                    <textarea id="doNotProceedReason" class="modal-input" rows="3" placeholder="Enter comments or reasons for declining this application..." style="resize:vertical; line-height:1.5;"></textarea>
+                </div>
+            </div>
+
             <div id="proceedExtraFields" style="display:none;">
                 <div class="modal-form-group">
                     <label>External Name Check — Recipient Email</label>
@@ -196,6 +203,43 @@
             <div class="modal-actions">
                 <button class="btn-cancel" onclick="closeReviewModal()">Cancel</button>
                 <button class="btn-action-alt" id="submitReviewBtn" onclick="submitReview()">Save Review</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NAME CHECK PROCEED MODAL -->
+    <div class="modal-overlay" id="nameCheckProceedModal">
+        <div class="modal-content">
+            <div class="modal-title">Confirm Name Checks Passed</div>
+            <input type="hidden" id="nameCheckAppId">
+            
+            <div class="modal-form-group">
+                <label>Confirmed By (Your Name)</label>
+                <input type="text" id="nameCheckAdminName" class="modal-input" placeholder="Enter your full name">
+            </div>
+
+            <div class="modal-form-group">
+                <label>Interview Invitation Option</label>
+                <select id="nameCheckInviteOption" class="modal-select" onchange="toggleNameCheckInviteFields()">
+                    <option value="now">Send Invitation to book slot now</option>
+                    <option value="later">Book specific date and time now</option>
+                </select>
+            </div>
+
+            <div id="nameCheckDirectBookingFields" style="display:none;">
+                <div class="modal-form-group">
+                    <label>Interview Date</label>
+                    <input type="date" id="nameCheckInterviewDate" class="modal-input">
+                </div>
+                <div class="modal-form-group">
+                    <label>Interview Time</label>
+                    <input type="time" id="nameCheckInterviewTime" class="modal-input">
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeNameCheckProceedModal()">Cancel</button>
+                <button class="btn-action-alt" id="submitNameCheckBtn" onclick="submitNameCheckProceed()">Confirm & Proceed</button>
             </div>
         </div>
     </div>
@@ -238,7 +282,7 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, orderBy, onSnapshot, where, doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, query, orderBy, onSnapshot, where, doc, getDoc, updateDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     // --- INITIALIZE EMAILJS ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
@@ -593,10 +637,17 @@
     window.toggleProceedFields = function() {
         const decision = document.getElementById('reviewDecision').value;
         const extra = document.getElementById('proceedExtraFields');
+        const dnpDiv = document.getElementById('doNotProceedReasonDiv');
+        
         extra.style.display = decision === 'Proceed' ? 'block' : 'none';
+        dnpDiv.style.display = decision === 'Do not proceed' ? 'block' : 'none';
+        
         if (decision !== 'Proceed') {
             document.getElementById('nameCheckEmail').value = '';
             document.getElementById('nameCheckInfo').value = '';
+        }
+        if (decision !== 'Do not proceed') {
+            document.getElementById('doNotProceedReason').value = '';
         }
     };
 
@@ -606,6 +657,8 @@
         document.getElementById('reviewDecision').value = '';
         document.getElementById('nameCheckEmail').value = '';
         document.getElementById('nameCheckInfo').value = '';
+        document.getElementById('doNotProceedReason').value = '';
+        document.getElementById('doNotProceedReasonDiv').style.display = 'none';
         document.getElementById('proceedExtraFields').style.display = 'none';
         document.getElementById('reviewModal').classList.add('active');
     };
@@ -613,6 +666,8 @@
     window.closeReviewModal = function() {
         document.getElementById('reviewModal').classList.remove('active');
         document.getElementById('reviewDecision').value = ''; 
+        document.getElementById('doNotProceedReason').value = '';
+        document.getElementById('doNotProceedReasonDiv').style.display = 'none';
         document.getElementById('proceedExtraFields').style.display = 'none';
     };
 
@@ -629,6 +684,12 @@
         const nameCheckInfo  = document.getElementById('nameCheckInfo').value.trim();
         if (decision === 'Proceed' && !nameCheckEmail) {
             return alert("Please enter a recipient email address for the external name check.");
+        }
+
+        // If Do not proceed, require comments/reason
+        const doNotProceedReason = document.getElementById('doNotProceedReason').value.trim();
+        if (decision === 'Do not proceed' && !doNotProceedReason) {
+            return alert("Please enter a reason or comments for not proceeding.");
         }
 
         submitBtn.disabled = true;
@@ -650,6 +711,8 @@
                 if (decision === 'Proceed') {
                     reviewEntry.nameCheckEmail = nameCheckEmail;
                     if (nameCheckInfo) reviewEntry.nameCheckInfo = nameCheckInfo;
+                } else if (decision === 'Do not proceed') {
+                    reviewEntry.doNotProceedReason = doNotProceedReason;
                 }
                 reviews.push(reviewEntry);
 
@@ -704,40 +767,117 @@
     };
 
     // --- NAME CHECK OUTCOME ACTIONS ---
-    window.markNameChecksProceed = async function(appId) {
+    // --- NAME CHECK OUTCOME ACTIONS ---
+    window.markNameChecksProceed = function(appId) {
+        const appData = applicationsData.find(a => a.id === appId);
+        if (!appData) return alert("Applicant profile records could not be resolved from data cache.");
+
+        document.getElementById('nameCheckAppId').value = appId;
+        document.getElementById('nameCheckAdminName').value = localStorage.getItem('ngu_portal_username') || '';
+        document.getElementById('nameCheckInviteOption').value = 'now';
+        document.getElementById('nameCheckInterviewDate').value = '';
+        document.getElementById('nameCheckInterviewTime').value = '';
+        document.getElementById('nameCheckDirectBookingFields').style.display = 'none';
+        document.getElementById('nameCheckProceedModal').classList.add('active');
+    };
+
+    window.closeNameCheckProceedModal = function() {
+        document.getElementById('nameCheckProceedModal').classList.remove('active');
+    };
+
+    window.toggleNameCheckInviteFields = function() {
+        const opt = document.getElementById('nameCheckInviteOption').value;
+        document.getElementById('nameCheckDirectBookingFields').style.display = opt === 'later' ? 'block' : 'none';
+    };
+
+    window.submitNameCheckProceed = async function() {
+        const appId = document.getElementById('nameCheckAppId').value;
+        const adminName = document.getElementById('nameCheckAdminName').value.trim();
+        const inviteOption = document.getElementById('nameCheckInviteOption').value;
+        const dateVal = document.getElementById('nameCheckInterviewDate').value;
+        const timeVal = document.getElementById('nameCheckInterviewTime').value;
+
+        if (!adminName) return alert("Please enter your name.");
+
+        if (inviteOption === 'later') {
+            if (!dateVal || !timeVal) return alert("Please specify both a date and a time for the interview.");
+        }
+
         const appData = applicationsData.find(a => a.id === appId);
         if (!appData) return alert("Applicant profile records could not be resolved from data cache.");
 
         const candidateName = appData.fullName || 'Applicant';
         const candidateEmail = appData.personalDetails?.email;
+        const candidatePostcode = appData.personalDetails?.postcode || '';
 
-        const adminName = prompt(`Enter your name to confirm Name Checks passed for ${candidateName} and proceed to interview:`);
-        if (!adminName || adminName.trim() === '') return;
+        const submitBtn = document.getElementById('submitNameCheckBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Saving...';
 
         try {
             const appRef = doc(db, 'NGUO New Applicants', appId);
-            await updateDoc(appRef, {
+            const updates = {
                 nameChecks: 'Passed',
                 nameChecksCompleted: true,
                 nameChecksDeclined: false,
-                status: 'Ready for Interview',
-                nameChecksCompletedBy: adminName.trim(),
+                nameChecksCompletedBy: adminName,
                 nameChecksCompletedAt: new Date().toISOString()
-            });
-            try {
-                await emailjs.send(EMAILJS_SERVICE_ID, 'template_gw0hkxr', {
-                    to_email: candidateEmail,
-                    first_name: candidateName.split(' ')[0],
-                    portal_link: 'https://ngu-recruitment-portal.vercel.app/FTL-interview-availability.html'
+            };
+
+            if (inviteOption === 'later') {
+                updates.status = 'Interview Scheduled';
+            } else {
+                updates.status = 'Ready for Interview';
+            }
+
+            await updateDoc(appRef, updates);
+
+            if (inviteOption === 'later') {
+                const docId = `${dateVal}_${timeVal}`;
+                const docRef = doc(db, "NGU Interview Times", docId);
+                await setDoc(docRef, {
+                    date: dateVal,
+                    time: timeVal,
+                    applicantName: candidateName,
+                    applicantEmail: candidateEmail,
+                    applicantPostcode: candidatePostcode,
+                    status: "Booked",
+                    interviewer: null,
+                    bookedAt: new Date().toISOString(),
+                    applicantReminderSent: false,
+                    unclaimedReminderLevel: 0
                 });
-                alert("Name checks passed. Candidate advanced to 'Ready for Interview' and invitation email dispatched.");
+            }
+
+            try {
+                if (inviteOption === 'later') {
+                    const formattedDate = new Date(dateVal).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                    await emailjs.send(EMAILJS_SERVICE_ID, 'template_gw0hkxr', {
+                        to_email: candidateEmail,
+                        first_name: candidateName.split(' ')[0],
+                        portal_link: `Scheduled for ${formattedDate} at ${timeVal}`,
+                        interview_date: formattedDate,
+                        interview_time: timeVal
+                    });
+                } else {
+                    await emailjs.send(EMAILJS_SERVICE_ID, 'template_gw0hkxr', {
+                        to_email: candidateEmail,
+                        first_name: candidateName.split(' ')[0],
+                        portal_link: 'https://ngu-recruitment-portal.vercel.app/FTL-interview-availability.html'
+                    });
+                }
+                alert("Name checks passed. Candidate updated and invitation email dispatched.");
             } catch (emailError) {
                 console.error('EmailJS error:', emailError);
                 alert('Database saved successfully, but the automated email invitation failed. Check EmailJS configuration.');
             }
+            closeNameCheckProceedModal();
         } catch (error) {
             console.error('Firestore error:', error);
             alert('Error updating status records.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Confirm & Proceed';
         }
     };
 
@@ -1153,6 +1293,7 @@
             if (c[cert.key] && c[cert.key].url) {
                 const expVal = c[cert.key].expiry || '';
                 const expDisplay = expVal ? `Expires: ${new Date(expVal).toLocaleDateString('en-GB')}` : 'No Expiry Set';
+                const status = c[cert.key].docStatus || '';
                 certsHtml += `
                     <div class="cert-item" style="flex-wrap:wrap; gap:10px;">
                         <div style="flex:1; min-width:200px;">
@@ -1163,6 +1304,12 @@
                         <div style="display:flex; gap:10px; align-items:center;">
                             <input type="date" id="exp-${app.id}-${cert.key}" value="${expVal}" style="background:var(--bg-input); border:1px solid var(--border); color:white; border-radius:4px; padding:0.3rem; font-size:0.75rem; max-width:115px;">
                             <button onclick="window.updateCertExpiry('${app.id}', '${cert.key}', false, 0)" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; border-radius:4px; padding:0.3rem 0.6rem; cursor:pointer; font-size:0.75rem; transition:0.2s;">Save</button>
+                            <select onchange="updateApplicationCertStatus('${app.id}', 'certificates.${cert.key}.docStatus', this.value)" style="background:var(--bg-input); color:white; border:1px solid var(--border); padding:6px; border-radius:6px; font-size:0.85rem; outline:none; cursor:pointer;">
+                                <option value="">— Status —</option>
+                                <option value="verified" ${status==='verified'?'selected':''}>✓ Verified</option>
+                                <option value="under_review" ${status==='under_review'?'selected':''}>⏳ Under Review</option>
+                                <option value="rejected" ${status==='rejected'?'selected':''}>✗ Rejected</option>
+                            </select>
                             <a href="${c[cert.key].url}" target="_blank" class="btn-download">View / Download</a>
                         </div>
                     </div>`;
@@ -1175,6 +1322,7 @@
                 if (add.url) {
                     const expVal = add.expiry || '';
                     const expDisplay = expVal ? `Expires: ${new Date(expVal).toLocaleDateString('en-GB')}` : 'No Expiry Set';
+                    const status = add.docStatus || '';
                     certsHtml += `
                         <div class="cert-item" style="flex-wrap:wrap; gap:10px;">
                             <div style="flex:1; min-width:200px;">
@@ -1185,6 +1333,12 @@
                             <div style="display:flex; gap:10px; align-items:center;">
                                 <input type="date" id="exp-${app.id}-add-${index}" value="${expVal}" style="background:var(--bg-input); border:1px solid var(--border); color:white; border-radius:4px; padding:0.3rem; font-size:0.75rem; max-width:115px;">
                                 <button onclick="window.updateCertExpiry('${app.id}', 'add', true, ${index})" style="background:rgba(255,255,255,0.05); border:1px solid var(--border); color:white; border-radius:4px; padding:0.3rem 0.6rem; cursor:pointer; font-size:0.75rem; transition:0.2s;">Save</button>
+                                <select onchange="updateAdditionalCertStatus('${app.id}', ${index}, this.value)" style="background:var(--bg-input); color:white; border:1px solid var(--border); padding:6px; border-radius:6px; font-size:0.85rem; outline:none; cursor:pointer;">
+                                    <option value="">— Status —</option>
+                                    <option value="verified" ${status==='verified'?'selected':''}>✓ Verified</option>
+                                    <option value="under_review" ${status==='under_review'?'selected':''}>⏳ Under Review</option>
+                                    <option value="rejected" ${status==='rejected'?'selected':''}>✗ Rejected</option>
+                                </select>
                                 <a href="${add.url}" target="_blank" class="btn-download">View / Download</a>
                             </div>
                         </div>`;
@@ -1213,13 +1367,29 @@
             reviews.forEach((rev, index) => {
                 const rDate = new Date(rev.timestamp).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
                 let decColor = rev.decision === 'Proceed' ? 'var(--success)' : (rev.decision === 'Do not proceed' ? 'var(--error)' : 'var(--warning)');
-                reviewsHtml += `<div class="data-group" style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;"><div class="data-label">Review ${index + 1}</div><div class="data-value" style="color: ${decColor}; font-weight: 600;">Decision: ${rev.decision}</div><div style="font-size: 0.85rem; margin-top: 0.3rem;">Reviewed by ${rev.name}</div><div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">${rDate}</div></div>`;
+                let reasonHtml = '';
+                if (rev.doNotProceedReason) {
+                    reasonHtml = `<div style="font-size: 0.85rem; margin-top: 0.5rem; background: rgba(239, 68, 68, 0.08); border-left: 3px solid var(--error); padding: 6px 10px; border-radius: 4px; color: var(--text-light); font-style: italic;">"${rev.doNotProceedReason}"</div>`;
+                }
+                reviewsHtml += `
+                    <div class="data-group" style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
+                        <div class="data-label">Review ${index + 1}</div>
+                        <div class="data-value" style="color: ${decColor}; font-weight: 600;">Decision: ${rev.decision}</div>
+                        <div style="font-size: 0.85rem; margin-top: 0.3rem;">Reviewed by ${rev.name}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">${rDate}</div>
+                        ${reasonHtml}
+                    </div>`;
             });
         } else { reviewsHtml = `<div class="text-box">No reviews recorded yet.</div>`; }
 
         const reviewActionHtml = reviews.length < 1
             ? `<button class="btn-action-alt" style="margin-top:1.5rem;" onclick="openReviewModal('${app.id}')">+ Perform Review</button>`
-            : `<div class="badge" style="margin-top:1.5rem; background:rgba(16,185,129,0.2); color:var(--success); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✓ Fully Reviewed (Completed)</div>`;
+            : (reviews[0].decision === 'Do not proceed'
+               ? `<div style="display:flex; gap:10px; align-items:center; margin-top:1.5rem;">
+                    <div class="badge" style="background:rgba(239,68,68,0.2); color:var(--error); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✗ Fully Reviewed (Do Not Proceed)</div>
+                    <button class="btn-action" onclick="reinstateApplicant('${app.id}')">🔄 Reinstate</button>
+                  </div>`
+               : `<div class="badge" style="margin-top:1.5rem; background:rgba(16,185,129,0.2); color:var(--success); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✓ Fully Reviewed (Completed)</div>`);
 
         let nameChecksHtml = '';
         if (app.nameChecksRequested) {
@@ -1359,7 +1529,6 @@
                     `;
                 } else if (app.finalRecruitmentDecision === 'Hold') {
                     const hc = app.holdChecklist || {};
-                    const isAllChecked = (hc.notes && hc.checks && hc.manager && hc.compare && hc.outcome);
                     packResultsHtml += `
                         <div style="margin-bottom:1.5rem; font-size:1rem; color:var(--text-light);">
                             <strong>Status:</strong> <span style="color:var(--warning);">On Hold</span><br>
@@ -1373,31 +1542,25 @@
                             <div class="checklist-item ${hc.compare ? 'checked' : ''}"><input type="checkbox" id="chk_compare" onchange="updateHoldChecklist('${app.id}', 'compare', this.checked)" ${hc.compare ? 'checked' : ''}><label for="chk_compare">Compare shortlisted applicants</label></div>
                             <div class="checklist-item ${hc.outcome ? 'checked' : ''}"><input type="checkbox" id="chk_outcome" onchange="updateHoldChecklist('${app.id}', 'outcome', this.checked)" ${hc.outcome ? 'checked' : ''}><label for="chk_outcome">Final outcome by due date</label></div>
                         </div>
+                        <div id="postHoldFtlDiv" style="margin-bottom: 1.5rem; border-top: 1px dashed var(--border); padding-top: 1.5rem; margin-top: 1.5rem;">
+                            <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Assign an FTL to Call the Candidate:</label>
+                            <select id="postHoldFtlSelect" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; margin-bottom:1rem;">
+                                <option value="" disabled selected>Select an FTL...</option>
+                                <option value="richard.wiecko@next-gen.uk">Richard Wiecko</option>
+                                <option value="scott.carson@next-gen.uk">Scott Carson</option>
+                                <option value="stuart.whyte@next-gen.uk">Stuart Whyte</option>
+                                <option value="tom.green@next-gen.uk">Tom Green</option>
+                            </select>
+                            <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Proposed Start Date:</label>
+                            <input type="date" id="postHoldStartDate" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit; margin-bottom:1rem;">
+                            <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Proposed Salary (£):</label>
+                            <input type="number" id="postHoldSalary" placeholder="e.g. 35000" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit;">
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn-danger" style="flex:1;" onclick="submitPostHoldDecision('${app.id}', 'Rejected')">Reject</button>
+                            <button class="btn-action" style="flex:2; font-size:1rem;" onclick="submitPostHoldDecision('${app.id}', 'Approved')">Approved to Offer</button>
+                        </div>
                     `;
-                    if (isAllChecked) {
-                        packResultsHtml += `
-                            <div id="postHoldFtlDiv" style="margin-bottom: 1.5rem;">
-                                <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Assign an FTL to Call the Candidate:</label>
-                                <select id="postHoldFtlSelect" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; margin-bottom:1rem;">
-                                    <option value="" disabled selected>Select an FTL...</option>
-                                    <option value="richard.wiecko@next-gen.uk">Richard Wiecko</option>
-                                    <option value="scott.carson@next-gen.uk">Scott Carson</option>
-                                    <option value="stuart.whyte@next-gen.uk">Stuart Whyte</option>
-                                    <option value="tom.green@next-gen.uk">Tom Green</option>
-                                </select>
-                                <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Proposed Start Date:</label>
-                                <input type="date" id="postHoldStartDate" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit; margin-bottom:1rem;">
-                                <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Proposed Salary (£):</label>
-                                <input type="number" id="postHoldSalary" placeholder="e.g. 35000" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit;">
-                            </div>
-                            <div style="display:flex; gap:10px;">
-                                <button class="btn-danger" style="flex:1;" onclick="submitPostHoldDecision('${app.id}', 'Rejected')">Reject</button>
-                                <button class="btn-action" style="flex:2; font-size:1rem;" onclick="submitPostHoldDecision('${app.id}', 'Approved')">Approved to Offer</button>
-                            </div>
-                        `;
-                    } else {
-                        packResultsHtml += `<div style="text-align:center; color:var(--text-muted); font-size:0.9rem; font-style:italic;">Complete all tasks above to unlock final decisions.</div>`;
-                    }
                 } else {
                     const finalColor = app.finalRecruitmentDecision === 'Approved' ? 'var(--success)' : 'var(--error)';
                     const finalIcon = app.finalRecruitmentDecision === 'Approved' ? '🎉' : '❌';
@@ -1508,8 +1671,59 @@
                 <div class="data-group"><div class="data-label">Information Declaration</div><div class="data-value" style="margin-bottom:0.5rem;"><strong>Name:</strong> ${safeVal(app.declaration?.name)}</div><div class="data-value" style="margin-bottom:1rem;"><strong>Date:</strong> ${safeVal(app.declaration?.date)}</div>${app.declaration?.signature ? `<img src="${app.declaration.signature}" class="signature-img">` : '<div class="text-box">No signature data</div>'}</div>
                 <div class="data-group"><div class="data-label">Data Consent</div><div class="data-value" style="margin-bottom:0.5rem;"><strong>Name:</strong> ${safeVal(app.consent?.name)}</div><div class="data-value" style="margin-bottom:1rem;"><strong>Date:</strong> ${safeVal(app.consent?.date)}</div>${app.consent?.signature ? `<img src="${app.consent.signature}" class="signature-img">` : '<div class="text-box">No signature data</div>'}</div>
             </div></div>
-        `;
     }
+
+    // ─── REINSTATE DECLINED APPLICANT ─────────────────────────────────────────
+    window.reinstateApplicant = async function(appId) {
+        if (!confirm("Are you sure you want to reinstate this applicant? This will clear the 'Do not proceed' review and return them to the Active pool.")) return;
+        try {
+            const appRef = doc(db, 'NGUO New Applicants', appId);
+            await updateDoc(appRef, {
+                reviews: [],
+                status: 'Pending Review',
+                reinstated: true,
+                reinstatedAt: new Date().toISOString()
+            });
+            alert("Applicant has been reinstated to the Active pool.");
+        } catch (error) {
+            console.error("Error reinstating applicant:", error);
+            alert("Failed to reinstate applicant.");
+        }
+    };
+
+    // ─── DOCUMENT STATUS UPDATES ─────────────────────────────────────────────
+    window.updateApplicationCertStatus = async function(appId, fieldPath, statusValue) {
+        try {
+            const appRef = doc(db, 'NGUO New Applicants', appId);
+            const updates = {};
+            updates[fieldPath] = statusValue;
+            await updateDoc(appRef, updates);
+            console.log(`Updated ${fieldPath} to ${statusValue}`);
+        } catch (error) {
+            console.error("Failed to update status:", error);
+            alert("Error updating certificate status.");
+        }
+    };
+
+    window.updateAdditionalCertStatus = async function(appId, idx, statusValue) {
+        try {
+            const appRef = doc(db, 'NGUO New Applicants', appId);
+            const appSnap = await getDoc(appRef);
+            if (appSnap.exists()) {
+                const data = appSnap.data();
+                const certs = data.certificates || {};
+                const additional = certs.additional || [];
+                if (additional[idx]) {
+                    additional[idx].docStatus = statusValue;
+                    await updateDoc(appRef, { "certificates.additional": additional });
+                    console.log(`Updated additional cert ${idx} to ${statusValue}`);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to update additional cert status:", error);
+            alert("Error updating document status.");
+        }
+    };
 </script>
 </body>
 </html>
