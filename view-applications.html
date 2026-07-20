@@ -950,6 +950,7 @@
         let assignedFTL = '';
         let ftlName = '';
         let formattedStartDate = '';
+        let salaryVal = '';
 
         if (decision === 'Hold') {
             holdReason = document.getElementById('holdReasonSelect').value;
@@ -966,7 +967,7 @@
             if (!startDateVal) return alert("Please select a Proposed Start Date.");
             formattedStartDate = new Date(startDateVal).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-            const salaryVal = document.getElementById('offerSalary').value;
+            salaryVal = document.getElementById('offerSalary').value;
             if (!salaryVal) return alert("Please enter a Proposed Salary.");
         }
 
@@ -1054,6 +1055,7 @@
         let assignedFTL = '';
         let ftlName = '';
         let formattedStartDate = '';
+        let salaryVal = '';
 
         if (decision === 'Approved') {
             const ftlSelect = document.getElementById('postHoldFtlSelect');
@@ -1065,7 +1067,7 @@
             if (!startDateVal) return alert("Please select a Proposed Start Date.");
             formattedStartDate = new Date(startDateVal).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-            const salaryVal = document.getElementById('postHoldSalary').value;
+            salaryVal = document.getElementById('postHoldSalary').value;
             if (!salaryVal) return alert("Please enter a Proposed Salary.");
         }
 
