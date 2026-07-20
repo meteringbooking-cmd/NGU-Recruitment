@@ -222,17 +222,17 @@
                 <label>Interview Invitation Option</label>
                 <select id="nameCheckInviteOption" class="modal-select" onchange="toggleNameCheckInviteFields()">
                     <option value="now">Send Invitation to book slot now</option>
-                    <option value="later">Book specific date and time now</option>
+                    <option value="later">Send invitation email at a specific date/time</option>
                 </select>
             </div>
 
             <div id="nameCheckDirectBookingFields" style="display:none;">
                 <div class="modal-form-group">
-                    <label>Interview Date</label>
+                    <label>Email Dispatch Date</label>
                     <input type="date" id="nameCheckInterviewDate" class="modal-input">
                 </div>
                 <div class="modal-form-group">
-                    <label>Interview Time</label>
+                    <label>Email Dispatch Time</label>
                     <input type="time" id="nameCheckInterviewTime" class="modal-input">
                 </div>
             </div>
@@ -594,6 +594,7 @@
         }
 
         checkAndSendReminders(applicationsData);
+        checkAndSendScheduledEmails(applicationsData);
         geocodeAllAndRender();
     });
 
@@ -629,6 +630,36 @@
                     const appRef = doc(db, "NGUO New Applicants", app.id);
                     await updateDoc(appRef, { reminderCount: reminderCount + 1, lastReminderDate: now.toISOString() });
                 } catch (e) { console.error("Failed to send automated reminder:", e); }
+            }
+        }
+    }
+
+    async function checkAndSendScheduledEmails(apps) {
+        const now = new Date();
+        for (const app of apps) {
+            // Skip junk applications — no emails for invalid phone numbers
+            if (isJunkApp(app)) continue;
+
+            if (app.scheduledInterviewEmailTime && app.scheduledInterviewEmailSent === false) {
+                const schedTime = new Date(app.scheduledInterviewEmailTime);
+                if (now >= schedTime) {
+                    const appRef = doc(db, "NGUO New Applicants", app.id);
+                    try {
+                        // Mark sent first to prevent race condition double sends
+                        await updateDoc(appRef, { scheduledInterviewEmailSent: true });
+                        console.log(`Sending scheduled interview invitation to ${app.fullName}`);
+                        await emailjs.send(EMAILJS_SERVICE_ID, 'template_gw0hkxr', {
+                            to_email: app.personalDetails?.email,
+                            first_name: (app.fullName || 'Applicant').split(' ')[0],
+                            portal_link: 'https://ngu-recruitment-portal.vercel.app/FTL-interview-availability.html'
+                        });
+                        console.log(`Scheduled interview invitation sent successfully to ${app.fullName}`);
+                    } catch (e) {
+                        console.error(`Failed to send scheduled interview invitation to ${app.fullName}:`, e);
+                        // Reset so it can retry next run
+                        await updateDoc(appRef, { scheduledInterviewEmailSent: false });
+                    }
+                }
             }
         }
     }
@@ -834,52 +865,33 @@
                 nameChecksCompleted: true,
                 nameChecksDeclined: false,
                 nameChecksCompletedBy: adminName,
-                nameChecksCompletedAt: new Date().toISOString()
+                nameChecksCompletedAt: new Date().toISOString(),
+                status: 'Ready for Interview'
             };
 
             if (inviteOption === 'later') {
-                updates.status = 'Interview Scheduled';
+                const schedDateTime = new Date(`${dateVal}T${timeVal}`).toISOString();
+                updates.scheduledInterviewEmailTime = schedDateTime;
+                updates.scheduledInterviewEmailSent = false;
             } else {
-                updates.status = 'Ready for Interview';
+                updates.scheduledInterviewEmailTime = null;
+                updates.scheduledInterviewEmailSent = true;
             }
 
             await updateDoc(appRef, updates);
 
-            if (inviteOption === 'later') {
-                const docId = `${dateVal}_${timeVal}`;
-                const docRef = doc(db, "NGU Interview Times", docId);
-                await setDoc(docRef, {
-                    date: dateVal,
-                    time: timeVal,
-                    applicantName: candidateName,
-                    applicantEmail: candidateEmail,
-                    applicantPostcode: candidatePostcode,
-                    status: "Booked",
-                    interviewer: null,
-                    bookedAt: new Date().toISOString(),
-                    applicantReminderSent: false,
-                    unclaimedReminderLevel: 0
-                });
-            }
-
             try {
-                if (inviteOption === 'later') {
-                    const formattedDate = new Date(dateVal).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                    await emailjs.send(EMAILJS_SERVICE_ID, 'template_gw0hkxr', {
-                        to_email: candidateEmail,
-                        first_name: candidateName.split(' ')[0],
-                        portal_link: `Scheduled for ${formattedDate} at ${timeVal}`,
-                        interview_date: formattedDate,
-                        interview_time: timeVal
-                    });
-                } else {
+                if (inviteOption === 'now') {
                     await emailjs.send(EMAILJS_SERVICE_ID, 'template_gw0hkxr', {
                         to_email: candidateEmail,
                         first_name: candidateName.split(' ')[0],
                         portal_link: 'https://ngu-recruitment-portal.vercel.app/FTL-interview-availability.html'
                     });
+                    alert("Name checks passed. Candidate updated and invitation email dispatched.");
+                } else {
+                    const formattedSchedDate = new Date(`${dateVal}T${timeVal}`).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+                    alert(`Name checks passed. Invitation email scheduled to be sent on ${formattedSchedDate}.`);
                 }
-                alert("Name checks passed. Candidate updated and invitation email dispatched.");
             } catch (emailError) {
                 console.error('EmailJS error:', emailError);
                 alert('Database saved successfully, but the automated email invitation failed. Check EmailJS configuration.');
@@ -1420,7 +1432,23 @@
                 nameChecksHtml = `<div style="margin-top:1rem; padding:1rem; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.4); border-radius:8px;"><div style="color:var(--error); font-weight:700; margin-bottom:0.2rem;">✗ Name Checks — Declined</div><div style="font-size:0.85rem; color:var(--text-light);">Recorded by ${app.nameChecksCompletedBy}</div><div style="font-size:0.75rem; color:var(--text-muted);">${ncDate}</div></div>`;
             } else if (app.nameChecksCompleted) {
                 const ncDate = new Date(app.nameChecksCompletedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
-                nameChecksHtml = `<div style="margin-top:1rem; padding:1rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.4); border-radius:8px;"><div style="color:var(--success); font-weight:700; margin-bottom:0.2rem;">✓ Name Checks Complete — Proceeding</div><div style="font-size:0.85rem; color:var(--text-light);">Confirmed by ${app.nameChecksCompletedBy}</div><div style="font-size:0.75rem; color:var(--text-muted);">${ncDate}</div></div>`;
+                let schedMsg = '';
+                if (app.scheduledInterviewEmailTime) {
+                    const schedDate = new Date(app.scheduledInterviewEmailTime).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
+                    if (app.scheduledInterviewEmailSent) {
+                        schedMsg = `<div style="margin-top:0.5rem; font-size:0.85rem; color:var(--success); font-weight:600;">✓ Invitation email sent on ${schedDate}</div>`;
+                    } else {
+                        schedMsg = `<div style="margin-top:0.5rem; font-size:0.85rem; color:var(--warning); font-weight:600;">⏳ Invitation email scheduled to send on ${schedDate}</div>`;
+                    }
+                } else {
+                    schedMsg = `<div style="margin-top:0.5rem; font-size:0.85rem; color:var(--success); font-weight:600;">✓ Invitation email sent immediately</div>`;
+                }
+                nameChecksHtml = `<div style="margin-top:1rem; padding:1rem; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.4); border-radius:8px;">
+                    <div style="color:var(--success); font-weight:700; margin-bottom:0.2rem;">✓ Name Checks Complete — Proceeding</div>
+                    <div style="font-size:0.85rem; color:var(--text-light);">Confirmed by ${app.nameChecksCompletedBy}</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted);">${ncDate}</div>
+                    ${schedMsg}
+                </div>`;
             } else {
                 nameChecksHtml = `
                     <div style="margin-top:1rem; padding:1rem; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); border-radius:8px;">
