@@ -1671,6 +1671,7 @@
                 <div class="data-group"><div class="data-label">Information Declaration</div><div class="data-value" style="margin-bottom:0.5rem;"><strong>Name:</strong> ${safeVal(app.declaration?.name)}</div><div class="data-value" style="margin-bottom:1rem;"><strong>Date:</strong> ${safeVal(app.declaration?.date)}</div>${app.declaration?.signature ? `<img src="${app.declaration.signature}" class="signature-img">` : '<div class="text-box">No signature data</div>'}</div>
                 <div class="data-group"><div class="data-label">Data Consent</div><div class="data-value" style="margin-bottom:0.5rem;"><strong>Name:</strong> ${safeVal(app.consent?.name)}</div><div class="data-value" style="margin-bottom:1rem;"><strong>Date:</strong> ${safeVal(app.consent?.date)}</div>${app.consent?.signature ? `<img src="${app.consent.signature}" class="signature-img">` : '<div class="text-box">No signature data</div>'}</div>
             </div></div>
+        `;
     }
 
     // ─── REINSTATE DECLINED APPLICANT ─────────────────────────────────────────
