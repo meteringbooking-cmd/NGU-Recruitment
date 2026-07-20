@@ -702,9 +702,16 @@
             if (snap.exists()) {
                 const data = snap.data();
                 const reviews = data.reviews || [];
+                const isUpdatingHold = reviews.length === 1 && reviews[0].decision === 'Hold';
                 
-                if (reviews.length >= 1) { alert("This application has already been fully reviewed."); return closeReviewModal(); }
-                if (reviews.some(r => r.name.toLowerCase() === adminName.toLowerCase())) { alert("You have already reviewed this application."); return closeReviewModal(); }
+                if (reviews.length >= 1 && !isUpdatingHold) { 
+                    alert("This application has already been fully reviewed."); 
+                    return closeReviewModal(); 
+                }
+                if (reviews.some(r => r.name.toLowerCase() === adminName.toLowerCase()) && !isUpdatingHold) { 
+                    alert("You have already reviewed this application."); 
+                    return closeReviewModal(); 
+                }
 
                 const reviewEntry = { name: adminName, decision: decision, timestamp: new Date().toISOString() };
                 // Store the name check details on the first reviewer's Proceed decision
@@ -714,11 +721,17 @@
                 } else if (decision === 'Do not proceed') {
                     reviewEntry.doNotProceedReason = doNotProceedReason;
                 }
-                reviews.push(reviewEntry);
 
-                let updates = { reviews: reviews };
+                let updates = {};
+                if (isUpdatingHold) {
+                    reviews[0] = reviewEntry;
+                    updates.reviews = reviews;
+                } else {
+                    reviews.push(reviewEntry);
+                    updates.reviews = reviews;
+                }
+
                 let triggerNameChecks = false;
-
                 if (reviews.length === 1) {
                     const proceed = reviews[0].decision === 'Proceed';
                     if (proceed && !data.nameChecksRequested) { triggerNameChecks = true; updates.nameChecksRequested = true; }
@@ -1384,12 +1397,21 @@
 
         const reviewActionHtml = reviews.length < 1
             ? `<button class="btn-action-alt" style="margin-top:1.5rem;" onclick="openReviewModal('${app.id}')">+ Perform Review</button>`
-            : (reviews[0].decision === 'Do not proceed'
-               ? `<div style="display:flex; gap:10px; align-items:center; margin-top:1.5rem;">
-                    <div class="badge" style="background:rgba(239,68,68,0.2); color:var(--error); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✗ Fully Reviewed (Do Not Proceed)</div>
-                    <button class="btn-action" onclick="reinstateApplicant('${app.id}')">🔄 Reinstate</button>
+            : (reviews[0].decision === 'Hold'
+               ? `<div style="display:flex; flex-direction:column; gap:10px; margin-top:1.5rem; background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.3); padding:1rem; border-radius:8px;">
+                    <div style="color:var(--warning); font-weight:700;">⏱ Applicant on Hold</div>
+                    <div style="font-size:0.85rem; color:var(--text-light); line-height:1.4;">This applicant was placed on hold during initial review. You can proceed or decline them below.</div>
+                    <div style="display:flex; gap:10px; margin-top:5px;">
+                        <button class="btn-action" onclick="releaseHoldAndProceed('${app.id}')" style="flex:1; justify-content:center;">✓ Proceed</button>
+                        <button class="btn-danger" onclick="releaseHoldAndDecline('${app.id}')" style="flex:1; justify-content:center;">✗ Decline</button>
+                    </div>
                   </div>`
-               : `<div class="badge" style="margin-top:1.5rem; background:rgba(16,185,129,0.2); color:var(--success); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✓ Fully Reviewed (Completed)</div>`);
+               : (reviews[0].decision === 'Do not proceed'
+                  ? `<div style="display:flex; gap:10px; align-items:center; margin-top:1.5rem;">
+                       <div class="badge" style="background:rgba(239,68,68,0.2); color:var(--error); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✗ Fully Reviewed (Do Not Proceed)</div>
+                       <button class="btn-action" onclick="reinstateApplicant('${app.id}')">🔄 Reinstate</button>
+                     </div>`
+                  : `<div class="badge" style="margin-top:1.5rem; background:rgba(16,185,129,0.2); color:var(--success); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✓ Fully Reviewed (Completed)</div>`));
 
         let nameChecksHtml = '';
         if (app.nameChecksRequested) {
@@ -1724,6 +1746,19 @@
             console.error("Failed to update additional cert status:", error);
             alert("Error updating document status.");
         }
+    };
+
+    // ─── RELEASE HOLD ACTIONS ────────────────────────────────────────────────
+    window.releaseHoldAndProceed = function(appId) {
+        openReviewModal(appId);
+        document.getElementById('reviewDecision').value = 'Proceed';
+        toggleProceedFields();
+    };
+
+    window.releaseHoldAndDecline = function(appId) {
+        openReviewModal(appId);
+        document.getElementById('reviewDecision').value = 'Do not proceed';
+        toggleProceedFields();
     };
 </script>
 </body>
