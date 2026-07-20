@@ -486,6 +486,16 @@
         const certContainer = document.getElementById('certContainer');
         let certHtml = '';
         
+        const getStatusBadge = (status) => {
+            if (status === 'verified') {
+                return `<span class="cert-status" style="background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.3);">✓ Verified</span>`;
+            } else if (status === 'rejected') {
+                return `<span class="cert-status" style="background: rgba(239, 68, 68, 0.15); color: #fca5a5; border-color: rgba(239, 68, 68, 0.3);">✗ Rejected</span>`;
+            } else {
+                return `<span class="cert-status" style="background: rgba(245, 158, 11, 0.15); color: #fcd34d; border-color: rgba(245, 158, 11, 0.3);">⏳ Under Review</span>`;
+            }
+        };
+
         const coreCerts = [
             { key: 'mocopa', label: 'MOCOPA Certification' },
             { key: 'gasl3', label: 'Level 3 Gas Diploma' },
@@ -494,12 +504,23 @@
 
         coreCerts.forEach(cert => {
             if (c[cert.key] && c[cert.key].filename) {
-                certHtml += `<div class="cert-item"><span class="cert-name">📄 ${cert.label}</span><span class="cert-status">Verified on File</span></div>`;
+                const status = c[cert.key].docStatus || 'under_review';
+                certHtml += `<div class="cert-item"><span class="cert-name">📄 ${cert.label}</span>${getStatusBadge(status)}</div>`;
             }
         });
 
         if (c.eusr && c.eusr.has) {
-            certHtml += `<div class="cert-item"><span class="cert-name">🪪 EUSR Card (No: ${c.eusr.number})</span><span class="cert-status">Verified on File</span></div>`;
+            const status = c.eusr.docStatus || 'under_review';
+            certHtml += `<div class="cert-item"><span class="cert-name">🪪 EUSR Card (No: ${c.eusr.number})</span>${getStatusBadge(status)}</div>`;
+        }
+
+        if (c.additional && c.additional.length > 0) {
+            c.additional.forEach(add => {
+                if (add.filename) {
+                    const status = add.docStatus || 'under_review';
+                    certHtml += `<div class="cert-item"><span class="cert-name">📄 ${add.certName || add.name || 'Additional Certificate'}</span>${getStatusBadge(status)}</div>`;
+                }
+            });
         }
 
         if (certHtml === '') certHtml = '<div style="color:var(--text-muted); font-style:italic;">No formal certificates uploaded during application.</div>';
