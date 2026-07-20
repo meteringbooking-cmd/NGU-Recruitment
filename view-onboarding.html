@@ -128,6 +128,14 @@
             margin-top: 14px;
             display: inline-block;
         }
+        select {
+            background: var(--bg-input) !important;
+            color: var(--text-light) !important;
+        }
+        select option {
+            background: var(--bg-card) !important;
+            color: var(--text-light) !important;
+        }
         @media print {
             body * { visibility: hidden; }
             #contractOverlay, #contractOverlay * { visibility: visible; }
@@ -163,6 +171,7 @@
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getFirestore, collection, query, onSnapshot, where, doc, updateDoc, getDocs, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
@@ -175,6 +184,7 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const storage = getStorage(app);
     
     let applicationsData = [];
     let searchQuery = '';
@@ -635,17 +645,31 @@
                 const f = docs[key];
                 const title = docLabels[key] || key.toUpperCase();
                 const status = f.docStatus || '';
-                docsHtml += `<div class="doc-item">
-                                <div><strong>${title}</strong><br><small style="color:var(--text-muted);">${f.filename}</small></div>
-                                <div style="display:flex; gap:10px; align-items:center;">
-                                    <select onchange="updateOnboardingDocStatus('${app.id}', 'onboardingDocs.${key}.docStatus', this.value)" style="background:var(--bg3); color:white; border:1px solid var(--border); padding:6px; border-radius:6px; font-size:0.85rem; outline:none; cursor:pointer;">
-                                        <option value="">— Verification Status —</option>
-                                        <option value="verified" ${status==='verified'?'selected':''}>✓ Verified</option>
-                                        <option value="under_review" ${status==='under_review'?'selected':''}>⏳ Under Review</option>
-                                        <option value="rejected" ${status==='rejected'?'selected':''}>✗ Rejected</option>
-                                    </select>
-                                    <a href="${f.url}" target="_blank" class="btn-download" style="margin-top:0;">View Document</a>
+                
+                let replaceSection = '';
+                if (status === 'rejected') {
+                    replaceSection = `
+                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); display: flex; align-items: center; gap: 10px; width: 100%;">
+                            <span style="font-size: 0.85rem; color: var(--error); font-weight: 600;">❌ Rejected. Upload replacement:</span>
+                            <input type="file" onchange="uploadAdminReplacementDoc('${app.id}', '${key}', this)" style="font-size: 0.8rem; color: var(--text-light);">
+                        </div>
+                    `;
+                }
+
+                docsHtml += `<div class="doc-item" style="display: block;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                    <div><strong>${title}</strong><br><small style="color:var(--text-muted);">${f.filename}</small></div>
+                                    <div style="display:flex; gap:10px; align-items:center;">
+                                        <select onchange="updateOnboardingDocStatus('${app.id}', 'onboardingDocs.${key}.docStatus', this.value)" style="color:white; border:1px solid var(--border); padding:6px; border-radius:6px; font-size:0.85rem; outline:none; cursor:pointer;">
+                                            <option value="">— Verification Status —</option>
+                                            <option value="verified" ${status==='verified'?'selected':''}>✓ Verified</option>
+                                            <option value="under_review" ${status==='under_review'?'selected':''}>⏳ Under Review</option>
+                                            <option value="rejected" ${status==='rejected'?'selected':''}>✗ Rejected</option>
+                                        </select>
+                                        <a href="${f.url}" target="_blank" class="btn-download" style="margin-top:0;">View Document</a>
+                                    </div>
                                 </div>
+                                ${replaceSection}
                              </div>`;
             });
         } else {
@@ -665,22 +689,36 @@
                 const expVal = c[cert.key].expiry || '';
                 const expDisplay = expVal ? `Expires: ${new Date(expVal).toLocaleDateString('en-GB')}` : 'No Expiry Set';
                 const status = c[cert.key].docStatus || '';
+
+                let replaceSection = '';
+                if (status === 'rejected') {
+                    replaceSection = `
+                        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); display: flex; align-items: center; gap: 10px; width: 100%;">
+                            <span style="font-size: 0.85rem; color: var(--error); font-weight: 600;">❌ Rejected. Upload replacement:</span>
+                            <input type="file" onchange="uploadAdminReplacementCert('${app.id}', '${cert.key}', this)" style="font-size: 0.8rem; color: var(--text-light);">
+                        </div>
+                    `;
+                }
+
                 certsHtml += `
-                    <div class="doc-item">
-                        <div>
-                            <strong>${cert.label}</strong><br>
-                            <small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${c[cert.key].filename || ''}</small><br>
-                            <small style="color:var(--warning);font-weight:600;">${expDisplay}</small>
+                    <div class="doc-item" style="display: block;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div>
+                                <strong>${cert.label}</strong><br>
+                                <small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${c[cert.key].filename || ''}</small><br>
+                                <small style="color:var(--warning);font-weight:600;">${expDisplay}</small>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <select onchange="updateOnboardingDocStatus('${app.id}', 'certificates.${cert.key}.docStatus', this.value)" style="color:white; border:1px solid var(--border); padding:6px; border-radius:6px; font-size:0.85rem; outline:none; cursor:pointer;">
+                                    <option value="">— Verification Status —</option>
+                                    <option value="verified" ${status==='verified'?'selected':''}>✓ Verified</option>
+                                    <option value="under_review" ${status==='under_review'?'selected':''}>⏳ Under Review</option>
+                                    <option value="rejected" ${status==='rejected'?'selected':''}>✗ Rejected</option>
+                                </select>
+                                <a href="${c[cert.key].url}" target="_blank" class="btn-download" style="margin-top:0;">View / Download</a>
+                            </div>
                         </div>
-                        <div style="display:flex; gap:10px; align-items:center;">
-                            <select onchange="updateOnboardingDocStatus('${app.id}', 'certificates.${cert.key}.docStatus', this.value)" style="background:var(--bg3); color:white; border:1px solid var(--border); padding:6px; border-radius:6px; font-size:0.85rem; outline:none; cursor:pointer;">
-                                <option value="">— Verification Status —</option>
-                                <option value="verified" ${status==='verified'?'selected':''}>✓ Verified</option>
-                                <option value="under_review" ${status==='under_review'?'selected':''}>⏳ Under Review</option>
-                                <option value="rejected" ${status==='rejected'?'selected':''}>✗ Rejected</option>
-                            </select>
-                            <a href="${c[cert.key].url}" target="_blank" class="btn-download" style="margin-top:0;">View / Download</a>
-                        </div>
+                        ${replaceSection}
                     </div>`;
             }
         });
@@ -691,22 +729,36 @@
                     const expVal = add.expiry || '';
                     const expDisplay = expVal ? `Expires: ${new Date(expVal).toLocaleDateString('en-GB')}` : 'No Expiry Set';
                     const status = add.docStatus || '';
+
+                    let replaceSection = '';
+                    if (status === 'rejected') {
+                        replaceSection = `
+                            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); display: flex; align-items: center; gap: 10px; width: 100%;">
+                                <span style="font-size: 0.85rem; color: var(--error); font-weight: 600;">❌ Rejected. Upload replacement:</span>
+                                <input type="file" onchange="uploadAdminReplacementAdditionalCert('${app.id}', ${idx}, this)" style="font-size: 0.8rem; color: var(--text-light);">
+                            </div>
+                        `;
+                    }
+
                     certsHtml += `
-                        <div class="doc-item">
-                            <div>
-                                <strong>${add.certName || add.name || 'Additional Certificate'}</strong><br>
-                                <small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${add.filename || ''}</small><br>
-                                <small style="color:var(--warning);font-weight:600;">${expDisplay}</small>
+                        <div class="doc-item" style="display: block;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                <div>
+                                    <strong>${add.certName || add.name || 'Additional Certificate'}</strong><br>
+                                    <small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${add.filename || ''}</small><br>
+                                    <small style="color:var(--warning);font-weight:600;">${expDisplay}</small>
+                                </div>
+                                <div style="display:flex; gap:10px; align-items:center;">
+                                    <select onchange="updateAdditionalCertStatus('${app.id}', ${idx}, this.value)" style="color:white; border:1px solid var(--border); padding:6px; border-radius:6px; font-size:0.85rem; outline:none; cursor:pointer;">
+                                        <option value="">— Verification Status —</option>
+                                        <option value="verified" ${status==='verified'?'selected':''}>✓ Verified</option>
+                                        <option value="under_review" ${status==='under_review'?'selected':''}>⏳ Under Review</option>
+                                        <option value="rejected" ${status==='rejected'?'selected':''}>✗ Rejected</option>
+                                    </select>
+                                    <a href="${add.url}" target="_blank" class="btn-download" style="margin-top:0;">View / Download</a>
+                                </div>
                             </div>
-                            <div style="display:flex; gap:10px; align-items:center;">
-                                <select onchange="updateAdditionalCertStatus('${app.id}', ${idx}, this.value)" style="background:var(--bg3); color:white; border:1px solid var(--border); padding:6px; border-radius:6px; font-size:0.85rem; outline:none; cursor:pointer;">
-                                    <option value="">— Verification Status —</option>
-                                    <option value="verified" ${status==='verified'?'selected':''}>✓ Verified</option>
-                                    <option value="under_review" ${status==='under_review'?'selected':''}>⏳ Under Review</option>
-                                    <option value="rejected" ${status==='rejected'?'selected':''}>✗ Rejected</option>
-                                </select>
-                                <a href="${add.url}" target="_blank" class="btn-download" style="margin-top:0;">View / Download</a>
-                            </div>
+                            ${replaceSection}
                         </div>`;
                 }
             });
@@ -945,6 +997,134 @@
         } catch (error) {
             console.error("Failed to update additional cert status:", error);
             alert("Error updating document status.");
+        }
+    };
+
+    // ─── ADMIN DIRECT REPLACEMENT UPLOADS ──────────────────────────────────────
+    window.uploadAdminReplacementDoc = async function(appId, docKey, inputEl) {
+        if (inputEl.files.length === 0) return;
+        const file = inputEl.files[0];
+        const statusSpan = inputEl.previousElementSibling;
+        
+        statusSpan.textContent = "⏳ Uploading...";
+        statusSpan.style.color = "var(--warning)";
+        inputEl.disabled = true;
+
+        try {
+            const storagePath = `onboarding_docs/${appId}/${docKey}_admin_replace_${Date.now()}_${file.name}`;
+            const fileRef = ref(storage, storagePath);
+            const uploadTask = uploadBytesResumable(fileRef, file);
+
+            await new Promise((resolve, reject) => {
+                uploadTask.on('state_changed', null, (error) => reject(error), () => resolve());
+            });
+
+            const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+
+            const appRef = doc(db, "NGUO New Applicants", appId);
+            const updates = {};
+            updates[`onboardingDocs.${docKey}`] = {
+                url: downloadUrl,
+                filename: file.name,
+                path: storagePath,
+                docStatus: 'under_review' // Reset status to under_review after replacement upload
+            };
+
+            await updateDoc(appRef, updates);
+            statusSpan.textContent = "✓ Replaced!";
+            statusSpan.style.color = "var(--success)";
+        } catch (e) {
+            console.error(e);
+            statusSpan.textContent = "❌ Failed!";
+            statusSpan.style.color = "var(--error)";
+            inputEl.disabled = false;
+        }
+    };
+
+    window.uploadAdminReplacementCert = async function(appId, certKey, inputEl) {
+        if (inputEl.files.length === 0) return;
+        const file = inputEl.files[0];
+        const statusSpan = inputEl.previousElementSibling;
+        
+        statusSpan.textContent = "⏳ Uploading...";
+        statusSpan.style.color = "var(--warning)";
+        inputEl.disabled = true;
+
+        try {
+            const storagePath = `certificates/${appId}/${certKey}_admin_replace_${Date.now()}_${file.name}`;
+            const fileRef = ref(storage, storagePath);
+            const uploadTask = uploadBytesResumable(fileRef, file);
+
+            await new Promise((resolve, reject) => {
+                uploadTask.on('state_changed', null, (error) => reject(error), () => resolve());
+            });
+
+            const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+
+            const appRef = doc(db, "NGUO New Applicants", appId);
+            const updates = {};
+            updates[`certificates.${certKey}`] = {
+                url: downloadUrl,
+                filename: file.name,
+                path: storagePath,
+                docStatus: 'under_review' // Reset status to under_review after replacement upload
+            };
+
+            await updateDoc(appRef, updates);
+            statusSpan.textContent = "✓ Replaced!";
+            statusSpan.style.color = "var(--success)";
+        } catch (e) {
+            console.error(e);
+            statusSpan.textContent = "❌ Failed!";
+            statusSpan.style.color = "var(--error)";
+            inputEl.disabled = false;
+        }
+    };
+
+    window.uploadAdminReplacementAdditionalCert = async function(appId, idx, inputEl) {
+        if (inputEl.files.length === 0) return;
+        const file = inputEl.files[0];
+        const statusSpan = inputEl.previousElementSibling;
+        
+        statusSpan.textContent = "⏳ Uploading...";
+        statusSpan.style.color = "var(--warning)";
+        inputEl.disabled = true;
+
+        try {
+            const storagePath = `certificates/${appId}/additional_${idx}_admin_replace_${Date.now()}_${file.name}`;
+            const fileRef = ref(storage, storagePath);
+            const uploadTask = uploadBytesResumable(fileRef, file);
+
+            await new Promise((resolve, reject) => {
+                uploadTask.on('state_changed', null, (error) => reject(error), () => resolve());
+            });
+
+            const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+
+            const appRef = doc(db, "NGUO New Applicants", appId);
+            const appSnap = await getDoc(appRef);
+            if (appSnap.exists()) {
+                const data = appSnap.data();
+                const certs = data.certificates || {};
+                const additional = certs.additional || [];
+                if (additional[idx]) {
+                    additional[idx] = {
+                        ...additional[idx],
+                        url: downloadUrl,
+                        filename: file.name,
+                        path: storagePath,
+                        docStatus: 'under_review' // Reset status to under_review after replacement upload
+                    };
+                    await updateDoc(appRef, { "certificates.additional": additional });
+                    statusSpan.textContent = "✓ Replaced!";
+                    statusSpan.style.color = "var(--success)";
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            statusSpan.textContent = "❌ Failed!";
+            statusSpan.style.color = "var(--error)";
+            inputEl.disabled = false;
         }
     };
 </script>
