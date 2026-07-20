@@ -162,7 +162,7 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, onSnapshot, where, doc, updateDoc, getDocs } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, query, onSnapshot, where, doc, updateDoc, getDocs, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
@@ -634,9 +634,18 @@
             Object.keys(docs).forEach(key => {
                 const f = docs[key];
                 const title = docLabels[key] || key.toUpperCase();
+                const status = f.docStatus || '';
                 docsHtml += `<div class="doc-item">
                                 <div><strong>${title}</strong><br><small style="color:var(--text-muted);">${f.filename}</small></div>
-                                <a href="${f.url}" target="_blank" class="btn-download">View Document</a>
+                                <div style="display:flex; gap:10px; align-items:center;">
+                                    <select onchange="updateOnboardingDocStatus('${app.id}', 'onboardingDocs.${key}.docStatus', this.value)" style="background:var(--bg3); color:white; border:1px solid var(--border); padding:6px; border-radius:6px; font-size:0.85rem; outline:none; cursor:pointer;">
+                                        <option value="">— Verification Status —</option>
+                                        <option value="verified" ${status==='verified'?'selected':''}>✓ Verified</option>
+                                        <option value="under_review" ${status==='under_review'?'selected':''}>⏳ Under Review</option>
+                                        <option value="rejected" ${status==='rejected'?'selected':''}>✗ Rejected</option>
+                                    </select>
+                                    <a href="${f.url}" target="_blank" class="btn-download" style="margin-top:0;">View Document</a>
+                                </div>
                              </div>`;
             });
         } else {
@@ -655,6 +664,7 @@
             if (c[cert.key] && c[cert.key].url) {
                 const expVal = c[cert.key].expiry || '';
                 const expDisplay = expVal ? `Expires: ${new Date(expVal).toLocaleDateString('en-GB')}` : 'No Expiry Set';
+                const status = c[cert.key].docStatus || '';
                 certsHtml += `
                     <div class="doc-item">
                         <div>
@@ -662,16 +672,25 @@
                             <small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${c[cert.key].filename || ''}</small><br>
                             <small style="color:var(--warning);font-weight:600;">${expDisplay}</small>
                         </div>
-                        <a href="${c[cert.key].url}" target="_blank" class="btn-download">View / Download</a>
+                        <div style="display:flex; gap:10px; align-items:center;">
+                            <select onchange="updateOnboardingDocStatus('${app.id}', 'certificates.${cert.key}.docStatus', this.value)" style="background:var(--bg3); color:white; border:1px solid var(--border); padding:6px; border-radius:6px; font-size:0.85rem; outline:none; cursor:pointer;">
+                                <option value="">— Verification Status —</option>
+                                <option value="verified" ${status==='verified'?'selected':''}>✓ Verified</option>
+                                <option value="under_review" ${status==='under_review'?'selected':''}>⏳ Under Review</option>
+                                <option value="rejected" ${status==='rejected'?'selected':''}>✗ Rejected</option>
+                            </select>
+                            <a href="${c[cert.key].url}" target="_blank" class="btn-download" style="margin-top:0;">View / Download</a>
+                        </div>
                     </div>`;
             }
         });
 
         if (c.additional && c.additional.length > 0) {
-            c.additional.forEach(add => {
+            c.additional.forEach((add, idx) => {
                 if (add.url) {
                     const expVal = add.expiry || '';
                     const expDisplay = expVal ? `Expires: ${new Date(expVal).toLocaleDateString('en-GB')}` : 'No Expiry Set';
+                    const status = add.docStatus || '';
                     certsHtml += `
                         <div class="doc-item">
                             <div>
@@ -679,7 +698,15 @@
                                 <small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${add.filename || ''}</small><br>
                                 <small style="color:var(--warning);font-weight:600;">${expDisplay}</small>
                             </div>
-                            <a href="${add.url}" target="_blank" class="btn-download">View / Download</a>
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <select onchange="updateAdditionalCertStatus('${app.id}', ${idx}, this.value)" style="background:var(--bg3); color:white; border:1px solid var(--border); padding:6px; border-radius:6px; font-size:0.85rem; outline:none; cursor:pointer;">
+                                    <option value="">— Verification Status —</option>
+                                    <option value="verified" ${status==='verified'?'selected':''}>✓ Verified</option>
+                                    <option value="under_review" ${status==='under_review'?'selected':''}>⏳ Under Review</option>
+                                    <option value="rejected" ${status==='rejected'?'selected':''}>✗ Rejected</option>
+                                </select>
+                                <a href="${add.url}" target="_blank" class="btn-download" style="margin-top:0;">View / Download</a>
+                            </div>
                         </div>`;
                 }
             });
@@ -716,6 +743,39 @@
                                 Plan Type: <strong style="color:var(--success);">${hmrc.selectedPlan || 'None'}</strong> | Postgrad: <strong>${hmrc.postgradLoanSelected ? 'Yes' : 'No'}</strong>
                             </div>
                         </div>`;
+        }
+
+        // Conditionally build payroll section
+        let payrollSectionHtml = '';
+        if (window.payrollUnlocked) {
+            payrollSectionHtml = `
+                <div class="section" style="border-color: ${app.onboardingCompleted ? 'var(--border)' : 'var(--warning)'}">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:16px;">
+                        <h3 style="margin:0;">💳 Payroll, Bank & HMRC</h3>
+                        <button type="button" onclick="lockPayroll('${app.id}')" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; padding:4px 10px; border-radius:6px; font-size:0.8rem; cursor:pointer;">🔒 Lock Section</button>
+                    </div>
+                    <div class="grid-3" style="margin-bottom: 1.5rem;">
+                        <div class="data-group"><div class="data-label">Name on Account</div><div class="data-value">${safeVal(bk.accountName)}</div></div>
+                        <div class="data-group"><div class="data-label">Sort Code</div><div class="data-value mono">${safeVal(bk.sortCode)}</div></div>
+                        <div class="data-group"><div class="data-label">Account Number</div><div class="data-value mono">${safeVal(bk.accountNumber)}</div></div>
+                        <div class="data-group"><div class="data-label">Bank Name</div><div class="data-value">${safeVal(bk.bankName)}</div></div>
+                    </div>
+                    
+                    <div style="border-top:1px dashed var(--border); padding-top:1.5rem;">
+                        <div class="data-label" style="color:var(--accent); margin-bottom:1rem;">HMRC Starter Profile</div>
+                        ${taxBlock}
+                    </div>
+                </div>`;
+        } else {
+            payrollSectionHtml = `
+                <div class="section" style="border-color: var(--warning)">
+                    <h3>💳 Payroll, Bank & HMRC</h3>
+                    <div style="padding: 2rem; text-align: center; background: rgba(0,0,0,0.15); border-radius: 8px;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🔒</div>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Payroll details are restricted. Please enter password to view.</p>
+                        <button type="button" class="btn-action" onclick="unlockPayroll()">Unlock Payroll Details</button>
+                    </div>
+                </div>`;
         }
 
         mainEl.innerHTML = `
@@ -768,20 +828,7 @@
                 </div>
             </div>
 
-            <div class="section" style="border-color: ${app.onboardingCompleted ? 'var(--border)' : 'var(--warning)'}">
-                <h3>💳 Payroll, Bank & HMRC</h3>
-                <div class="grid-3" style="margin-bottom: 1.5rem;">
-                    <div class="data-group"><div class="data-label">Name on Account</div><div class="data-value">${safeVal(bk.accountName)}</div></div>
-                    <div class="data-group"><div class="data-label">Sort Code</div><div class="data-value mono">${safeVal(bk.sortCode)}</div></div>
-                    <div class="data-group"><div class="data-label">Account Number</div><div class="data-value mono">${safeVal(bk.accountNumber)}</div></div>
-                    <div class="data-group"><div class="data-label">Bank Name</div><div class="data-value">${safeVal(bk.bankName)}</div></div>
-                </div>
-                
-                <div style="border-top:1px dashed var(--border); padding-top:1.5rem;">
-                    <div class="data-label" style="color:var(--accent); margin-bottom:1rem;">HMRC Starter Profile</div>
-                    ${taxBlock}
-                </div>
-            </div>
+            ${payrollSectionHtml}
 
             <div class="section" style="border-color: ${app.onboardingCompleted ? 'var(--border)' : 'var(--warning)'}">
                 <h3>🚨 Emergency Contact (Next of Kin)</h3>
@@ -848,6 +895,58 @@
             });
         }
     }
+
+    // ─── PAYROLL UNLOCK / LOCK ───────────────────────────────────────────────
+    window.payrollUnlocked = false;
+    window.unlockPayroll = function() {
+        const pw = prompt("Enter Admin Password to view payroll details:");
+        if (pw === "admin") {
+            window.payrollUnlocked = true;
+            const currentApp = applicationsData.find(a => a.id === selectedAppId);
+            if (currentApp) renderDetails(currentApp);
+        } else {
+            alert("Incorrect password.");
+        }
+    };
+    window.lockPayroll = function(appId) {
+        window.payrollUnlocked = false;
+        const currentApp = applicationsData.find(a => a.id === appId);
+        if (currentApp) renderDetails(currentApp);
+    };
+
+    // ─── DOCUMENT STATUS UPDATES ─────────────────────────────────────────────
+    window.updateOnboardingDocStatus = async function(appId, fieldPath, statusValue) {
+        try {
+            const appRef = doc(db, "NGUO New Applicants", appId);
+            const updates = {};
+            updates[fieldPath] = statusValue;
+            await updateDoc(appRef, updates);
+            console.log(`Updated ${fieldPath} to ${statusValue}`);
+        } catch (error) {
+            console.error("Failed to update status:", error);
+            alert("Error updating document status.");
+        }
+    };
+
+    window.updateAdditionalCertStatus = async function(appId, idx, statusValue) {
+        try {
+            const appRef = doc(db, "NGUO New Applicants", appId);
+            const appSnap = await getDoc(appRef);
+            if (appSnap.exists()) {
+                const data = appSnap.data();
+                const certs = data.certificates || {};
+                const additional = certs.additional || [];
+                if (additional[idx]) {
+                    additional[idx].docStatus = statusValue;
+                    await updateDoc(appRef, { "certificates.additional": additional });
+                    console.log(`Updated additional cert ${idx} to ${statusValue}`);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to update additional cert status:", error);
+            alert("Error updating document status.");
+        }
+    };
 </script>
 </body>
 </html>
