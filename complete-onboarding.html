@@ -1259,14 +1259,40 @@
             const prevDocsList = document.getElementById('prevDocsList');
             prevDocsList.innerHTML = '';
             let hasPrev = false;
+
+            const getDocChipStyle = (status) => {
+                if (status === 'verified') {
+                    return `background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #6ee7b7;`;
+                } else if (status === 'rejected') {
+                    return `background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #fca5a5;`;
+                } else {
+                    return `background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.3); color: #fcd34d;`;
+                }
+            };
+
+            const getDocChipText = (status) => {
+                if (status === 'verified') return ' (Verified)';
+                if (status === 'rejected') return ' (Rejected)';
+                return ' (Under Review)';
+            };
+
             Object.keys(c).forEach(key => {
                 if (key === 'additional' && Array.isArray(c[key])) {
                     c[key].forEach(add => {
-                        if (add.filename) { prevDocsList.innerHTML += `<span class="doc-chip"><strong style="color:white;">${add.name}:</strong> ${add.filename}</span>`; hasPrev = true; }
+                        if (add.filename) {
+                            const status = add.docStatus || 'under_review';
+                            const style = getDocChipStyle(status);
+                            const text = getDocChipText(status);
+                            prevDocsList.innerHTML += `<span class="doc-chip" style="${style}"><strong style="color:white;">${add.name || add.certName || 'Additional'}:</strong> ${add.filename}${text}</span>`;
+                            hasPrev = true;
+                        }
                     });
                 } else if (c[key]?.filename) {
                     const label = certMapping[key] || key.toUpperCase();
-                    prevDocsList.innerHTML += `<span class="doc-chip"><strong style="color:white;">${label}:</strong> ${c[key].filename}</span>`;
+                    const status = c[key].docStatus || 'under_review';
+                    const style = getDocChipStyle(status);
+                    const text = getDocChipText(status);
+                    prevDocsList.innerHTML += `<span class="doc-chip" style="${style}"><strong style="color:white;">${label}:</strong> ${c[key].filename}${text}</span>`;
                     hasPrev = true;
                 }
             });
