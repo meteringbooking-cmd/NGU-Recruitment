@@ -530,7 +530,7 @@
         const formatStart = rawDate ? new Date(rawDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'TBC';
 
         document.getElementById('offTitle').textContent = a.position || 'Unknown';
-        document.getElementById('offSalary').textContent = currentVacancy.salary;
+        document.getElementById('offSalary').textContent = formatSalary(a.proposedSalary || currentVacancy.salary);
         document.getElementById('offStartDate').textContent = formatStart;
         document.getElementById('offLocation').textContent = currentVacancy.location;
         document.getElementById('offContract').textContent = currentVacancy.type;
