@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>NGU — Certificate Upload</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #005EB8; --accent: #00A3E0;
+            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
+            --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
+            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Work Sans', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%);
+            color: var(--text-light); min-height: 100vh; padding: 2rem 1.5rem 4rem;
+        }
+        body::before {
+            content: ''; position: fixed; inset: 0;
+            background: radial-gradient(circle at 15% 20%, rgba(0,163,224,0.08) 0%, transparent 55%),
+                        radial-gradient(circle at 85% 75%, rgba(0,94,184,0.07) 0%, transparent 55%);
+            pointer-events: none; z-index: -1;
+        }
+        .container { max-width: 760px; margin: 0 auto; }
+        .logo { max-height: 70px; display: block; margin: 0 auto 2rem; }
+        .page-header { text-align: center; margin-bottom: 2.5rem; }
+        .page-header h1 {
+            font-size: 2rem; font-weight: 800;
+            background: linear-gradient(90deg, var(--accent), #60a5fa);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        .page-header p { color: var(--text-muted); font-family: 'DM Mono', monospace; font-size: 0.88rem; }
+        .section {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 2rem 2.2rem 2.4rem;
+            margin-bottom: 1.8rem; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .section-header {
+            display: flex; align-items: center; gap: 0.9rem;
+            margin-bottom: 1.8rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);
+        }
+        .section-header h2 { font-size: 1.15rem; font-weight: 700; }
+        .section-header p  { font-size: 0.82rem; color: var(--text-muted); margin-top: 0.1rem; }
+        .form-group { display: flex; flex-direction: column; gap: 0.45rem; }
+        label { font-weight: 600; font-size: 0.88rem; color: var(--text-light); }
+        label .req { color: var(--accent); margin-left: 2px; }
+        input[type="email"], input[type="text"], input[type="date"] {
+            width: 100%; padding: 0.85rem 1rem; background: var(--bg-input);
+            border: 2px solid var(--border); border-radius: 10px; color: var(--text-light);
+            font-size: 0.95rem; font-family: inherit; transition: all 0.2s;
+        }
+        input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,163,224,0.15); }
+        input::placeholder { color: var(--text-muted); }
+
+        /* ── Lookup states ── */
+        .lookup-btn {
+            margin-top: 0.7rem; padding: 0.75rem 1.8rem; background: linear-gradient(135deg, var(--primary), var(--accent));
+            border: none; border-radius: 10px; color: white; font-size: 0.95rem; font-weight: 700;
+            cursor: pointer; font-family: inherit; transition: all 0.2s; width: 100%;
+        }
+        .lookup-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,163,224,0.3); }
+        .lookup-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .lookup-msg { font-size: 0.88rem; margin-top: 0.7rem; min-height: 1.2rem; }
+        .lookup-msg.ok  { color: var(--success); }
+        .lookup-msg.err { color: var(--error); }
+        .applicant-found-banner {
+            background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.3);
+            border-radius: 12px; padding: 1rem 1.2rem; margin-top: 1rem;
+            font-size: 0.9rem; line-height: 1.6;
+        }
+        .applicant-found-banner strong { color: #6ee7b7; }
+
+        /* ── Cert section labels ── */
+        .cert-section-label {
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--text-muted); margin: 1.4rem 0 0.8rem; padding-bottom: 0.4rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .cert-section-label.mandatory { color: #f87171; border-color: rgba(248,113,113,0.3); }
+        .cert-section-label.desirable { color: #60a5fa; border-color: rgba(96,165,250,0.3); }
+        .cert-section-label.additional { color: var(--accent); border-color: rgba(0,163,224,0.3); }
+
+        /* ── Cert upload rows ── */
+        .cert-upload-row {
+            background: var(--bg-input); border: 1.5px solid var(--border);
+            border-radius: 12px; padding: 1rem 1.2rem;
+            display: flex; align-items: center; gap: 1rem;
+            margin-bottom: 0.7rem; transition: border-color 0.2s; flex-wrap: wrap;
+        }
+        .cert-upload-row.uploaded    { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.04); }
+        .cert-upload-row.uploading-row { border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.04); }
+        .cert-row-icon { font-size: 1.4rem; flex-shrink: 0; }
+        .cert-row-info { flex: 1; min-width: 0; }
+        .cert-row-title { font-weight: 600; font-size: 0.9rem; }
+        .cert-row-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.15rem; font-family: 'DM Mono', monospace; word-break: break-all; }
+        .cert-upload-progress { font-size: 0.75rem; color: var(--warning); font-family: 'DM Mono', monospace; display: none; margin-top: 0.2rem; }
+        .cert-upload-progress.visible { display: block; }
+        .cert-row-actions { display: flex; align-items: center; gap: 0.6rem; flex-shrink: 0; flex-wrap: wrap; }
+        .cert-file-label {
+            position: relative; overflow: hidden; display: inline-flex; align-items: center;
+            gap: 0.4rem; padding: 0.45rem 0.9rem; border-radius: 8px;
+            border: 1.5px solid rgba(0,163,224,0.4); background: rgba(0,163,224,0.08);
+            color: var(--accent); font-size: 0.8rem; font-weight: 600;
+            cursor: pointer; font-family: inherit; transition: all 0.18s; white-space: nowrap;
+        }
+        .cert-file-label:hover { background: rgba(0,163,224,0.15); }
+        .cert-file-label input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .cert-badge { font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 20px; white-space: nowrap; }
+        .cert-badge.done      { background: rgba(16,185,129,0.18); color: #6ee7b7; }
+        .cert-badge.ready     { background: rgba(245,158,11,0.18); color: #fcd34d; }
+        .cert-badge.none      { background: rgba(139,154,174,0.1); color: var(--text-muted); }
+        .cert-badge.uploading { background: rgba(245,158,11,0.18); color: #fcd34d; }
+
+        /* ── Y/N buttons ── */
+        .yn-group { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; }
+        .yn-btn {
+            padding: 0.35rem 1rem; border-radius: 8px; border: 1.5px solid var(--border);
+            background: var(--bg-input); color: var(--text-muted);
+            font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.18s;
+        }
+        .yn-btn.selected-yes { border-color: var(--success); background: rgba(16,185,129,0.15); color: #6ee7b7; }
+        .yn-btn.selected-no  { border-color: var(--error);   background: rgba(239,68,68,0.12);  color: #fca5a5; }
+        .cert-inline-input {
+            padding: 0.55rem 0.8rem; background: var(--bg-dark); border: 1.5px solid var(--border);
+            border-radius: 8px; color: white; font-size: 0.88rem; font-family: 'DM Mono', monospace;
+            width: 100%; max-width: 260px; transition: border-color 0.2s;
+        }
+        .cert-inline-input:focus { outline: none; border-color: var(--accent); }
+
+        /* ── Driving licence info block ── */
+        .dl-info-summary {
+            background: rgba(0,94,184,0.08); border: 1px solid rgba(0,94,184,0.35);
+            border-radius: 10px; padding: 0.95rem 1.1rem; margin-top: 0.85rem;
+            font-size: 0.85rem; line-height: 1.65; color: var(--text-light);
+        }
+        .dl-info-summary strong { color: var(--accent); }
+        .dl-info-summary ul { margin: 0.5rem 0 0 1.1rem; padding: 0; color: var(--text-muted); }
+        .dl-info-summary ul li { margin-bottom: 0.25rem; }
+
+        /* ── Add cert button ── */
+        .add-cert-btn {
+            width: 100%; padding: 0.7rem; border-radius: 10px;
+            background: rgba(0,163,224,0.08); border: 2px dashed rgba(0,163,224,0.35);
+            color: var(--accent); font-size: 0.88rem; font-weight: 600;
+            cursor: pointer; font-family: inherit; transition: all 0.18s; margin-top: 0.5rem;
+        }
+        .add-cert-btn:hover { background: rgba(0,163,224,0.14); border-color: rgba(0,163,224,0.6); }
+
+        /* ── Submit ── */
+        .submit-area { text-align: center; margin-top: 2rem; }
+        .btn-primary {
+            padding: 0.9rem 2.5rem; border: none; border-radius: 12px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            color: white; font-size: 1.05rem; font-weight: 700;
+            cursor: pointer; transition: all 0.22s; font-family: inherit; min-width: 220px;
+        }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.35); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .submit-msg { font-size: 0.95rem; margin-top: 1rem; min-height: 1.4rem; }
+        .submit-msg.ok  { color: var(--success); }
+        .submit-msg.err { color: var(--error); }
+        .spinner {
+            width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white; border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            display: inline-block; vertical-align: middle; margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Upload section (hidden until lookup succeeds) ── */
+        #uploadSection { display: none; }
+
+        /* ── Success screen ── */
+        #successScreen { display: none; text-align: center; padding: 4rem 2rem; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from{opacity:0;}to{opacity:1;} }
+        #successScreen .success-icon { font-size: 4rem; margin-bottom: 1rem; }
+        #successScreen h2 { font-size: 1.8rem; font-weight: 800; color: #6ee7b7; margin-bottom: 0.8rem; }
+        #successScreen p  { color: var(--text-muted); font-size: 1rem; max-width: 480px; margin: 0 auto; line-height: 1.6; }
+
+        /* ── Already complete banner ── */
+        .already-complete {
+            background: rgba(16,185,129,0.07); border: 1px solid rgba(16,185,129,0.3);
+            border-radius: 12px; padding: 1rem 1.2rem; margin-top: 1rem;
+            font-size: 0.88rem; color: #6ee7b7; line-height: 1.6;
+        }
+
+        @media (max-width: 640px) {
+            body { padding: 1rem 0.75rem 3rem; }
+            .page-header h1 { font-size: 1.55rem; }
+            .section { padding: 1.2rem 1rem 1.4rem; border-radius: 12px; }
+            .cert-upload-row { flex-direction: column; align-items: flex-start; gap: 0.65rem; padding: 0.9rem; }
+            .cert-row-info { width: 100%; }
+            .cert-row-actions { flex-wrap: wrap; gap: 0.5rem; width: 100%; }
+            .cert-inline-input { max-width: 100% !important; font-size: 1rem; }
+            .yn-btn { padding: 0.4rem 1.1rem; font-size: 0.85rem; }
+            input[type="email"], input[type="text"], input[type="date"] { font-size: 1rem; padding: 0.75rem 0.85rem; }
+            .btn-primary { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
+    <div class="page-header">
+        <h1>Certificate Upload</h1>
+        <p>Upload your missing certificates to complete your application</p>
+    </div>
+
+    <div id="mainContent">
+
+        <!-- STEP 1: Email lookup -->
+        <div class="section" id="lookupSection">
+            <div class="section-header">
+                <div><h2>Find Your Application</h2><p>Enter the email address you used when applying</p></div>
+            </div>
+            <div class="form-group">
+                <label>Email Address <span class="req">*</span></label>
+                <input type="email" id="lookupEmail" placeholder="you@example.com" autocomplete="email">
+                <button class="lookup-btn" id="lookupBtn" onclick="lookupApplicant()">Find My Application</button>
+                <div class="lookup-msg" id="lookupMsg"></div>
+            </div>
+        </div>
+
+        <!-- STEP 2: Uploads (shown after lookup) -->
+        <div id="uploadSection">
+            <div class="section">
+                <div class="section-header">
+                    <div><h2>Your Certificates</h2><p>Upload all mandatory items — desirable qualifications are optional</p></div>
+                </div>
+
+                <div class="cert-section-label mandatory">Mandatory Certificates</div>
+
+                <!-- MOCOPA -->
+                <div class="cert-upload-row" id="row-mocopa">
+                    <div class="cert-row-icon">📋</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">Level 3 Power / Smart Meter / Electric MOCOPA</div>
+                        <div id="sub-mocopa" class="cert-row-sub">No file selected</div>
+                        <div id="prog-mocopa" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-mocopa">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-mocopa" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('mocopa',this)"></label>
+                    </div>
+                </div>
+
+                <!-- GASL3 -->
+                <div class="cert-upload-row" id="row-gasl3">
+                    <div class="cert-row-icon">🔥</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">Level 3 Gas / City &amp; Guilds Qualification / CMA / CCN</div>
+                        <div id="sub-gasl3" class="cert-row-sub">No file selected</div>
+                        <div id="prog-gasl3" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-gasl3">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-gasl3" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('gasl3',this)"></label>
+                    </div>
+                </div>
+
+                <!-- CMA Gas -->
+                <div class="cert-upload-row" id="row-cmagas">
+                    <div class="cert-row-icon">🏅</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">CMA Gas Certificate</div>
+                        <div id="sub-cmagas" class="cert-row-sub">No file selected</div>
+                        <div id="prog-cmagas" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-cmagas">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-cmagas" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('cmagas',this)"></label>
+                    </div>
+                </div>
+
+                <!-- Driving Licence -->
+                <div class="cert-upload-row" id="row-drivinglicence">
+                    <div class="cert-row-icon">🪪</div>
+                    <div class="cert-row-info" style="flex:1;min-width:200px;">
+                        <div class="cert-row-title">I confirm I have a current and valid Driving Licence</div>
+                        <div class="yn-group">
+                            <button type="button" class="yn-btn" id="yn-dl-yes" onclick="setDrivingLicence(true)">Yes</button>
+                            <button type="button" class="yn-btn" id="yn-dl-no"  onclick="setDrivingLicence(false)">No</button>
+                        </div>
+                        <div id="dl-details-wrap" style="display:none;margin-top:0.9rem;gap:12px;flex-direction:column;">
+                            <div>
+                                <label style="font-size:0.82rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:0.3rem;">Licence Expiry Date <span style="color:var(--accent)">*</span></label>
+                                <input type="date" id="dl-expiry" class="cert-inline-input" style="max-width:220px;">
+                            </div>
+                            <div class="dl-info-summary">
+                                <strong>📋 Upload your Driving Licence Summary</strong>
+                                <p style="margin-top:0.45rem;color:var(--text-muted);font-size:0.82rem;">Your summary can be downloaded from the <a href="https://www.gov.uk/view-driving-licence" target="_blank" style="color:var(--accent);text-decoration:underline;">GOV.UK View or Share Driving Licence</a> service. It should include:</p>
+                                <ul>
+                                    <li>Driver's name and address</li>
+                                    <li>Licence number, type and vehicle categories</li>
+                                    <li>Licence and category expiry dates</li>
+                                    <li>Penalty points and any endorsements or convictions</li>
+                                    <li>Disqualifications, bans or restrictions</li>
+                                </ul>
+                            </div>
+                            <div>
+                                <div id="sub-drivinglicence" class="cert-row-sub">No file selected</div>
+                                <div id="prog-drivinglicence" class="cert-upload-progress">⏳ Uploading…</div>
+                                <label class="cert-file-label" style="margin-top:0.5rem;display:inline-flex;">
+                                    Upload Summary
+                                    <input type="file" id="file-drivinglicence" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('drivinglicence',this)">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-drivinglicence">Not answered</span>
+                    </div>
+                </div>
+
+                <div class="cert-section-label desirable" style="margin-top:1.8rem;">Desirable Qualifications</div>
+
+                <!-- EUSR -->
+                <div class="cert-upload-row" id="row-eusr">
+                    <div class="cert-row-icon">🔑</div>
+                    <div class="cert-row-info" style="flex:1;min-width:200px;">
+                        <div class="cert-row-title">EUSR Card</div>
+                        <div class="yn-group">
+                            <button type="button" class="yn-btn" id="yn-eusr-yes" onclick="setEUSR(true)">Yes</button>
+                            <button type="button" class="yn-btn" id="yn-eusr-no"  onclick="setEUSR(false)">No</button>
+                        </div>
+                        <div id="eusr-number-wrap" style="display:none;margin-top:0.6rem;">
+                            <label style="font-size:0.82rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:0.3rem;">EUSR Number</label>
+                            <input type="text" id="eusr-number" class="cert-inline-input" placeholder="Enter your EUSR number">
+                        </div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-eusr">Not answered</span>
+                    </div>
+                </div>
+
+                <!-- Gas Safe -->
+                <div class="cert-upload-row" id="row-gassafe">
+                    <div class="cert-row-icon">🔧</div>
+                    <div class="cert-row-info" style="flex:1;min-width:200px;">
+                        <div class="cert-row-title">Current Gas Safe Number</div>
+                        <div style="margin-top:0.5rem;">
+                            <input type="text" id="gassafe-number" class="cert-inline-input" placeholder="Enter Gas Safe registration number">
+                        </div>
+                        <div style="font-size:0.76rem;color:var(--text-muted);margin-top:0.3rem;">Leave blank if not applicable</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-gassafe">Not entered</span>
+                    </div>
+                </div>
+
+                <!-- Higher Skills -->
+                <div class="cert-upload-row" id="row-higherskills">
+                    <div class="cert-row-icon">⭐</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">Higher Skills Set Certificates (e.g. 3 Phase, Medium Pressure)</div>
+                        <div id="sub-higherskills" class="cert-row-sub">No file selected</div>
+                        <div id="prog-higherskills" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-higherskills">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-higherskills" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('higherskills',this)"></label>
+                    </div>
+                </div>
+
+                <div class="cert-section-label additional" style="margin-top:1.8rem;">Additional Certificates</div>
+                <div id="additionalCertsContainer"></div>
+                <button type="button" class="add-cert-btn" id="addCertBtn">+ Add Another Certificate</button>
+            </div>
+
+            <div class="submit-area">
+                <button class="btn-primary" id="submitBtn" onclick="submitCertificates()">Submit Certificates</button>
+                <div class="submit-msg" id="submitMsg"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="successScreen">
+        <div class="success-icon">✅</div>
+        <h2>Certificates Submitted!</h2>
+        <p>Thank you — your certificates have been added to your application. We'll be in touch shortly.</p>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, query, where, getDocs, updateDoc }
+        from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getStorage, ref, uploadBytes, getDownloadURL }
+        from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717"
+    };
+
+    const app     = initializeApp(firebaseConfig);
+    const db      = getFirestore(app);
+    const storage = getStorage(app);
+
+    let foundDocRef  = null; // Firestore doc reference for the matched applicant
+    let foundDocData = null; // snapshot data
+
+    /* ── Storage helpers ── */
+    async function uploadFileToStorage(file, path) {
+        const storageRef = ref(storage, path);
+        const snapshot   = await uploadBytes(storageRef, file);
+        return { url: await getDownloadURL(snapshot.ref), filename: file.name, type: file.type, size: file.size };
+    }
+    function uploadPath(category, filename) {
+        const safe = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+        return `applications/cert-uploads/${Date.now()}/${category}/${safe}`;
+    }
+
+    /* ═══════════════════════════════════════════════════
+       LOOKUP
+    ═══════════════════════════════════════════════════ */
+    window.lookupApplicant = async function() {
+        const emailInput = document.getElementById('lookupEmail');
+        const msgEl      = document.getElementById('lookupMsg');
+        const btn        = document.getElementById('lookupBtn');
+        const email      = emailInput.value.trim().toLowerCase();
+
+        if (!email) { msgEl.className = 'lookup-msg err'; msgEl.textContent = 'Please enter your email address.'; return; }
+
+        btn.disabled = true;
+        btn.textContent = 'Searching…';
+        msgEl.className = 'lookup-msg';
+        msgEl.textContent = '';
+
+        try {
+            const q = query(
+                collection(db, 'NGUO New Applicants'),
+                where('personalDetails.email', '==', email)
+            );
+            const snap = await getDocs(q);
+
+            if (snap.empty) {
+                msgEl.className = 'lookup-msg err';
+                msgEl.textContent = 'No application found for that email address. Please check and try again.';
+                btn.disabled = false; btn.textContent = 'Find My Application';
+                return;
+            }
+
+            // Use the most recent application if multiple exist
+            let latestDoc = null;
+            snap.forEach(d => {
+                if (!latestDoc) { latestDoc = d; return; }
+                const a = d.data().submittedAt?.toMillis() || 0;
+                const b = latestDoc.data().submittedAt?.toMillis() || 0;
+                if (a > b) latestDoc = d;
+            });
+
+            foundDocRef  = latestDoc.ref;
+            foundDocData = latestDoc.data();
+
+            const name     = foundDocData.fullName || email;
+            const position = foundDocData.position || 'your role';
+
+            // Show applicant banner
+            msgEl.className = 'lookup-msg ok';
+            msgEl.innerHTML = '';
+            const banner = document.createElement('div');
+            banner.className = 'applicant-found-banner';
+            banner.innerHTML = `✅ Found your application<br><strong>${name}</strong> — ${position}`;
+            document.getElementById('lookupSection').appendChild(banner);
+
+            // Pre-fill any certs already on the record
+            prefillExistingCerts(foundDocData.certificates);
+
+            // Show upload section
+            document.getElementById('uploadSection').style.display = 'block';
+            document.getElementById('uploadSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            emailInput.disabled = true;
+            btn.textContent = 'Found ✓';
+
+        } catch (err) {
+            msgEl.className = 'lookup-msg err';
+            msgEl.textContent = 'Lookup failed: ' + err.message;
+            btn.disabled = false; btn.textContent = 'Find My Application';
+        }
+    };
+
+    /* Pre-fill badges for certs already uploaded */
+    function prefillExistingCerts(certs) {
+        if (!certs) return;
+        const simpleKeys = ['mocopa', 'gasl3', 'cmagas', 'higherskills'];
+        simpleKeys.forEach(key => {
+            if (certs[key]?.url) {
+                certUploadResults[key] = certs[key];
+                const row   = document.getElementById(`row-${key}`);
+                const badge = document.getElementById(`badge-${key}`);
+                const sub   = document.getElementById(`sub-${key}`);
+                if (row)   row.classList.add('uploaded');
+                if (badge) { badge.textContent = '✓ Already uploaded'; badge.className = 'cert-badge done'; }
+                if (sub)   sub.textContent = certs[key].filename || 'Previously uploaded';
+            }
+        });
+        // Driving licence
+        const dl = certs.drivinglicence;
+        if (dl) {
+            if (dl.confirmed === false) {
+                setDrivingLicence(false);
+            } else if (dl.confirmed === true) {
+                setDrivingLicence(true);
+                if (dl.expiry) document.getElementById('dl-expiry').value = dl.expiry;
+                if (dl.summary?.url) {
+                    certUploadResults['drivinglicence'] = dl.summary;
+                    document.getElementById('sub-drivinglicence').textContent = dl.summary.filename || 'Previously uploaded';
+                    document.getElementById('badge-drivinglicence').textContent = '✓ Complete';
+                    document.getElementById('badge-drivinglicence').className = 'cert-badge done';
+                    document.getElementById('row-drivinglicence').classList.add('uploaded');
+                }
+            }
+        }
+        // EUSR
+        const eusr = certs.eusr;
+        if (eusr) {
+            if (eusr.has === false) setEUSR(false);
+            else if (eusr.has === true) {
+                setEUSR(true);
+                if (eusr.number) document.getElementById('eusr-number').value = eusr.number;
+            }
+        }
+        // Gas Safe
+        if (certs.gassafe?.number) {
+            document.getElementById('gassafe-number').value = certs.gassafe.number;
+            const badge = document.getElementById('badge-gassafe');
+            badge.textContent = `✓ ${certs.gassafe.number}`;
+            badge.className = 'cert-badge done';
+        }
+    }
+
+    /* ═══════════════════════════════════════════════════
+       CERT FILE UPLOADS
+    ═══════════════════════════════════════════════════ */
+    const certUploadResults = {};
+
+    window.handleCertFile = async function(key, input) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        if (file.size > 10 * 1024 * 1024) { alert('Max 10MB per certificate.'); input.value = ''; return; }
+
+        const row   = document.getElementById(`row-${key}`);
+        const badge = document.getElementById(`badge-${key}`);
+        const sub   = document.getElementById(`sub-${key}`);
+        const prog  = document.getElementById(`prog-${key}`);
+
+        row.classList.remove('uploaded');
+        row.classList.add('uploading-row');
+        if (sub)   sub.textContent = file.name;
+        if (badge) { badge.textContent = '⏳ Uploading'; badge.className = 'cert-badge uploading'; }
+        if (prog)  { prog.classList.add('visible'); prog.textContent = '⏳ Uploading…'; }
+        delete certUploadResults[key];
+
+        try {
+            certUploadResults[key] = await uploadFileToStorage(file, uploadPath(key, file.name));
+            row.classList.remove('uploading-row'); row.classList.add('uploaded');
+            if (badge) { badge.textContent = '✓ Uploaded'; badge.className = 'cert-badge done'; }
+            if (prog)  prog.classList.remove('visible');
+        } catch (err) {
+            row.classList.remove('uploading-row');
+            if (badge) { badge.textContent = '❌ Failed'; badge.className = 'cert-badge none'; }
+            if (prog)  { prog.textContent = '❌ Upload failed'; prog.style.color = 'var(--error)'; }
+            alert(`Upload failed for ${file.name}: ${err.message}`);
+        }
+    };
+
+    /* ── Driving licence Y/N ── */
+    window.setDrivingLicence = function(val) {
+        document.getElementById('yn-dl-yes').className = 'yn-btn' + (val ? ' selected-yes' : '');
+        document.getElementById('yn-dl-no').className  = 'yn-btn' + (!val ? ' selected-no'  : '');
+        document.getElementById('dl-details-wrap').style.display = val ? 'flex' : 'none';
+        const badge = document.getElementById('badge-drivinglicence');
+        if (val) { badge.textContent = 'Details required'; badge.className = 'cert-badge ready'; }
+        else     { badge.textContent = 'No'; badge.className = 'cert-badge done'; document.getElementById('row-drivinglicence').classList.add('uploaded'); }
+    };
+
+    document.getElementById('dl-expiry').addEventListener('change', function() {
+        const badge    = document.getElementById('badge-drivinglicence');
+        const uploaded = certUploadResults['drivinglicence'];
+        if (this.value && uploaded) { badge.textContent = '✓ Complete'; badge.className = 'cert-badge done'; document.getElementById('row-drivinglicence').classList.add('uploaded'); }
+        else if (this.value)        { badge.textContent = 'Summary needed'; badge.className = 'cert-badge ready'; }
+    });
+
+    /* ── EUSR Y/N ── */
+    window.setEUSR = function(val) {
+        document.getElementById('yn-eusr-yes').className = 'yn-btn' + (val ? ' selected-yes' : '');
+        document.getElementById('yn-eusr-no').className  = 'yn-btn' + (!val ? ' selected-no'  : '');
+        document.getElementById('eusr-number-wrap').style.display = val ? 'block' : 'none';
+        const badge = document.getElementById('badge-eusr');
+        if (val) { badge.textContent = 'Yes — add number'; badge.className = 'cert-badge ready'; }
+        else     { badge.textContent = 'N/A'; badge.className = 'cert-badge done'; document.getElementById('row-eusr').classList.add('uploaded'); }
+    };
+
+    document.getElementById('eusr-number').addEventListener('input', function() {
+        const badge = document.getElementById('badge-eusr');
+        if (this.value.trim()) { badge.textContent = `✓ ${this.value.trim()}`; badge.className = 'cert-badge done'; }
+    });
+
+    document.getElementById('gassafe-number').addEventListener('input', function() {
+        const badge = document.getElementById('badge-gassafe');
+        if (this.value.trim()) { badge.textContent = `✓ ${this.value.trim()}`; badge.className = 'cert-badge done'; }
+        else { badge.textContent = 'Not entered'; badge.className = 'cert-badge none'; }
+    });
+
+    /* ── Additional certs ── */
+    let addCertCounter = 0;
+    document.getElementById('addCertBtn').addEventListener('click', () => {
+        addCertCounter++;
+        const id  = addCertCounter;
+        const div = document.createElement('div');
+        div.className = 'cert-upload-row'; div.id = `row-addcert-${id}`;
+        div.innerHTML = `
+            <div class="cert-row-icon">📎</div>
+            <div class="cert-row-info" style="flex:1;min-width:0;">
+                <input type="text" class="cert-inline-input" id="addcert-name-${id}"
+                    placeholder="Certificate name / description" style="max-width:100%;margin-bottom:0.4rem;">
+                <div id="sub-addcert-${id}" class="cert-row-sub">No file selected</div>
+                <div id="prog-addcert-${id}" class="cert-upload-progress">⏳ Uploading…</div>
+            </div>
+            <div class="cert-row-actions">
+                <span class="cert-badge none" id="badge-addcert-${id}">Not uploaded</span>
+                <label class="cert-file-label">Choose file<input type="file" id="file-addcert-${id}" accept=".jpg,.jpeg,.png,.pdf"></label>
+                <button type="button" style="background:rgba(239,68,68,0.12);border:1.5px solid rgba(239,68,68,0.3);color:#fca5a5;border-radius:8px;padding:0.35rem 0.7rem;cursor:pointer;font-size:0.8rem;font-family:inherit;" onclick="this.closest('.cert-upload-row').remove()">✕</button>
+            </div>`;
+        document.getElementById('additionalCertsContainer').appendChild(div);
+
+        document.getElementById(`file-addcert-${id}`).addEventListener('change', async function() {
+            if (!this.files[0]) return;
+            const file = this.files[0];
+            if (file.size > 10 * 1024 * 1024) { alert('Max 10MB.'); this.value = ''; return; }
+            const key   = `addcert_${id}`;
+            const row   = document.getElementById(`row-addcert-${id}`);
+            const badge = document.getElementById(`badge-addcert-${id}`);
+            const sub   = document.getElementById(`sub-addcert-${id}`);
+            const prog  = document.getElementById(`prog-addcert-${id}`);
+            row.classList.add('uploading-row');
+            sub.textContent = file.name;
+            badge.textContent = '⏳ Uploading'; badge.className = 'cert-badge uploading';
+            prog.classList.add('visible');
+            delete certUploadResults[key];
+            try {
+                const result = await uploadFileToStorage(file, uploadPath(key, file.name));
+                certUploadResults[key] = { ...result, certName: document.getElementById(`addcert-name-${id}`).value.trim() || `Additional Certificate ${id}` };
+                row.classList.remove('uploading-row'); row.classList.add('uploaded');
+                badge.textContent = '✓ Uploaded'; badge.className = 'cert-badge done';
+                prog.classList.remove('visible');
+            } catch (err) {
+                row.classList.remove('uploading-row');
+                badge.textContent = '❌ Failed'; badge.className = 'cert-badge none';
+                prog.textContent = '❌ Upload failed'; prog.style.color = 'var(--error)';
+                alert(`Upload failed: ${err.message}`);
+            }
+        });
+    });
+
+    /* ═══════════════════════════════════════════════════
+       SUBMIT — merge certs into existing Firestore doc
+    ═══════════════════════════════════════════════════ */
+    window.submitCertificates = async function() {
+        if (!foundDocRef) { alert('Please find your application first.'); return; }
+
+        const btn   = document.getElementById('submitBtn');
+        const msgEl = document.getElementById('submitMsg');
+        msgEl.textContent = '';
+
+        // Validation
+        const missing = [];
+        if (!certUploadResults['mocopa'])  missing.push('MOCOPA certificate');
+        if (!certUploadResults['gasl3'])   missing.push('Level 3 Gas certificate');
+        if (!certUploadResults['cmagas'])  missing.push('CMA Gas certificate');
+
+        const dlYes = document.getElementById('yn-dl-yes').classList.contains('selected-yes');
+        const dlNo  = document.getElementById('yn-dl-no').classList.contains('selected-no');
+        if (!dlYes && !dlNo) {
+            missing.push('Driving licence confirmation');
+        } else if (dlYes) {
+            if (!document.getElementById('dl-expiry').value) missing.push('Driving licence expiry date');
+            if (!certUploadResults['drivinglicence'])        missing.push('Driving licence summary upload');
+        }
+
+        if (missing.length > 0) {
+            msgEl.className   = 'submit-msg err';
+            msgEl.textContent = `Please complete: ${missing.slice(0, 3).join(', ')}${missing.length > 3 ? ` and ${missing.length - 3} more…` : '.'}`;
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Submitting…';
+
+        try {
+            const dlConfirmed = dlYes ? true : false;
+            const euYes = document.getElementById('yn-eusr-yes').classList.contains('selected-yes');
+            const euNo  = document.getElementById('yn-eusr-no').classList.contains('selected-no');
+            const euHas = euYes ? true : euNo ? false : null;
+
+            // Collect additional certs
+            const additionalCerts = [];
+            document.querySelectorAll('#additionalCertsContainer .cert-upload-row').forEach(row => {
+                const id      = row.id.replace('row-addcert-', '');
+                const nameEl  = document.getElementById(`addcert-name-${id}`);
+                const uploaded = certUploadResults[`addcert_${id}`];
+                if (nameEl?.value.trim() || uploaded) {
+                    additionalCerts.push({
+                        certName: nameEl?.value.trim() || uploaded?.certName || `Additional Certificate ${id}`,
+                        ...(uploaded ? { url: uploaded.url, filename: uploaded.filename, type: uploaded.type } : {})
+                    });
+                }
+            });
+
+            const certificates = {
+                mocopa:       certUploadResults['mocopa']       || null,
+                gasl3:        certUploadResults['gasl3']        || null,
+                cmagas:       certUploadResults['cmagas']       || null,
+                higherskills: certUploadResults['higherskills'] || null,
+                drivinglicence: {
+                    confirmed: dlConfirmed,
+                    expiry:    document.getElementById('dl-expiry').value || '',
+                    summary:   certUploadResults['drivinglicence'] || null
+                },
+                eusr:    { has: euHas, number: document.getElementById('eusr-number').value.trim() },
+                gassafe: { number: document.getElementById('gassafe-number').value.trim() },
+                additional: additionalCerts
+            };
+
+            await updateDoc(foundDocRef, {
+                certificates,
+                certificatesUpdatedAt: new Date().toISOString()
+            });
+
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('successScreen').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        } catch (err) {
+            msgEl.className   = 'submit-msg err';
+            msgEl.textContent = 'Submission failed: ' + err.message;
+            btn.disabled = false; btn.innerHTML = 'Submit Certificates';
+        }
+    };
+
+    // Auto-lookup if email query parameter is present
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const emailParam = urlParams.get('email');
+        if (emailParam) {
+            const lookupEmailEl = document.getElementById('lookupEmail');
+            if (lookupEmailEl) {
+                lookupEmailEl.value = emailParam.trim();
+                setTimeout(() => {
+                    window.lookupApplicant();
+                }, 800);
+            }
+        }
+    });
+</script>
+</body>
+</html>
