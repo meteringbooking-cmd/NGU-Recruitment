@@ -11,15 +11,7 @@
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 
-    <script>
-        (function() {
-            const username = localStorage.getItem('ngu_portal_username');
-            if (!username) {
-                window.location.href = 'login.html';
-                return;
-            }
-        })();
-    </script>
+
 
     <style>
         :root {
@@ -501,9 +493,8 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const currentUser = localStorage.getItem('ngu_portal_username') || 'Unknown User';
-    
-    document.getElementById('displayName').textContent = currentUser;
+    const storedName = localStorage.getItem('ngu_ftl_name') || localStorage.getItem('ngu_portal_username') || 'Guest';
+    document.getElementById('displayName').textContent = storedName;
     const scheduleGrid = document.getElementById('scheduleGrid');
 
     // Load active interviews
@@ -615,15 +606,26 @@
     }
 
     window.claimInterview = async function(docId) {
-        if (!confirm("Are you sure you want to assign yourself as the interviewer for this timeslot?")) return;
-        const teamsLink = prompt("Please paste your Microsoft Teams meeting link for this interview:\n\n(This link will be automatically sent to the applicant in their 24-hour reminder email)");
+        const storedName = localStorage.getItem('ngu_ftl_name') || localStorage.getItem('ngu_portal_username') || '';
+        let interviewerName = prompt("Please enter your name to claim this interview:", storedName);
+        if (interviewerName === null) return;
+        interviewerName = interviewerName.trim();
+        if (!interviewerName) {
+            alert("Name is required to claim the interview.");
+            return;
+        }
+        localStorage.setItem('ngu_ftl_name', interviewerName);
+
+        const defaultTeamsLink = 'https://teams.microsoft.com/meet/365545655330492?p=3Cj4TVBNUPw3MujiDR';
+        const teamsLink = prompt("Please paste your Microsoft Teams meeting link for this interview:\n\n(This link will be automatically sent to the applicant in their 24-hour reminder email)", defaultTeamsLink);
         if (teamsLink === null) return; 
 
         try {
             await updateDoc(doc(db, "NGU Interview Times", docId), { 
-                interviewer: currentUser,
+                interviewer: interviewerName,
                 meetingLink: teamsLink.trim() || 'A link will be provided shortly'
             });
+            document.getElementById('displayName').textContent = interviewerName;
             alert("Interview successfully assigned to you!");
         } catch (error) {
             console.error("Error claiming:", error);
