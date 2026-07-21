@@ -244,6 +244,29 @@
         </div>
     </div>
 
+    <!-- REQUEST CERTIFICATES MODAL -->
+    <div class="modal-overlay" id="requestCertificatesModal">
+        <div class="modal-content">
+            <div class="modal-title">Request Certificates & Licences</div>
+            <input type="hidden" id="reqCertAppId">
+            
+            <div class="modal-form-group">
+                <label>Applicant Email Address</label>
+                <input type="email" id="reqCertEmail" class="modal-input" placeholder="e.g. applicant@email.com">
+            </div>
+
+            <div class="modal-form-group">
+                <label>Additional Notes (will be included in the email)</label>
+                <textarea id="reqCertNotes" class="modal-input" rows="4" placeholder="Enter any extra notes or instructions for the applicant..." style="resize:vertical; line-height:1.5;"></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeRequestCertificatesModal()">Cancel</button>
+                <button class="btn-action-alt" id="submitReqCertBtn" onclick="submitRequestCertificates()">Send Request Email</button>
+            </div>
+        </div>
+    </div>
+
     <aside class="sidebar">
         <div class="sidebar-header">
             <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
@@ -827,6 +850,66 @@
 
     window.closeNameCheckProceedModal = function() {
         document.getElementById('nameCheckProceedModal').classList.remove('active');
+    };
+
+    window.openRequestCertificatesModal = function(appId, appEmail) {
+        document.getElementById('reqCertAppId').value = appId;
+        document.getElementById('reqCertEmail').value = appEmail;
+        document.getElementById('reqCertNotes').value = '';
+        document.getElementById('requestCertificatesModal').classList.add('active');
+    };
+
+    window.closeRequestCertificatesModal = function() {
+        document.getElementById('requestCertificatesModal').classList.remove('active');
+    };
+
+    window.submitRequestCertificates = async function() {
+        const appId = document.getElementById('reqCertAppId').value;
+        const email = document.getElementById('reqCertEmail').value.trim();
+        const notes = document.getElementById('reqCertNotes').value.trim();
+
+        if (!email) {
+            alert("Please enter a recipient email address.");
+            return;
+        }
+
+        const appData = applicationsData.find(a => a.id === appId);
+        if (!appData) {
+            alert("Applicant record not found.");
+            return;
+        }
+
+        const submitBtn = document.getElementById('submitReqCertBtn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Sending...';
+
+        try {
+            const origin = window.location.origin;
+            const uploadLink = origin.startsWith('file') 
+                ? `https://ngu-recruitment-portal.vercel.app/docupload.html?email=${encodeURIComponent(email)}` 
+                : `${origin}/docupload.html?email=${encodeURIComponent(email)}`;
+
+            const firstName = appData.fullName ? appData.fullName.split(' ')[0] : 'Applicant';
+
+            // Send email using EmailJS template template_wf11ht6
+            await emailjs.send(EMAILJS_SERVICE_ID, 'template_wf11ht6', {
+                to_email: email,
+                first_name: firstName,
+                applicant_name: appData.fullName || 'Applicant',
+                notes: notes,
+                additional_notes: notes,
+                upload_link: uploadLink
+            });
+
+            alert(`Request email successfully sent to ${email}!`);
+            closeRequestCertificatesModal();
+        } catch (error) {
+            console.error("Error sending certificate request:", error);
+            alert("Failed to send request email: " + (error.message || error));
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send Request Email';
+        }
     };
 
     window.toggleNameCheckInviteFields = function() {
@@ -1694,7 +1777,11 @@
                 <div class="data-group" style="margin-top:1.5rem;"><div class="data-label">Curriculum Vitae</div>${cvHtml}</div>
             </div>
 
-            <div class="section"><h3>Certificates & Licences</h3>
+            <div class="section">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+                    <h3 style="margin:0; border-bottom:none; padding-bottom:0;">Certificates & Licences</h3>
+                    <button type="button" class="btn btn-claim" style="padding: 6px 12px; font-size: 0.8rem; margin: 0;" onclick="openRequestCertificatesModal('${app.id}', '${appEmail}')">✉ Request Certificates</button>
+                </div>
                 <div class="grid-2" style="margin-bottom:1.5rem;">
                     <div class="data-group">
                         <div class="data-label">Driving Licence</div>
