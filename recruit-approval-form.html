@@ -570,7 +570,7 @@
                 workflow_link: "https://ngu-recruitment-portal.vercel.app/recruit-approval-form-display.html"
             };
 
-            promises.push(emailjs.send('service_t9mebjl', 'template_qfkx1r6', approvalParams));
+            promises.push(emailjs.send('service_dcdbhph', 'template_qfkx1r6', approvalParams));
 
             // Email 2: Internal Advert Notification (template_w04kxy8) - Conditional
             if (internalAdVal === 'Yes') {
@@ -582,7 +582,7 @@
                     experience: formData.get('experience') || 'None specified',
                     referral_link: "https://ngu-recruitment-portal.vercel.app/candidate-referral-bonus.html"
                 };
-                promises.push(emailjs.send('service_t9mebjl', 'template_w04kxy8', internalAdParams));
+                promises.push(emailjs.send('service_dcdbhph', 'template_w04kxy8', internalAdParams));
             }
 
             return Promise.all(promises);
