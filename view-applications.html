@@ -309,8 +309,7 @@
 
     // --- INITIALIZE EMAILJS ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
-    const EMAILJS_SERVICE_ID = 'service_dcdbhph'; 
-    const EMAILJS_REMINDER_TEMPLATE = 'template_b6zrvyk';
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_INTERNAL_NAME_CHECK = 'template_ya7anaj';
     const EMAILJS_EXTERNAL_NAME_CHECK = 'template_86cs8oi';
     
@@ -616,46 +615,9 @@
             if (updatedApp) renderDetails(updatedApp, isAreaMatch(updatedApp.position, updatedApp.personalDetails?.postcode), getPostcodeArea(updatedApp.personalDetails?.postcode));
         }
 
-        checkAndSendReminders(applicationsData);
         checkAndSendScheduledEmails(applicationsData);
         geocodeAllAndRender();
     });
-
-    function getNextWorkingDay8AM(dateObj) {
-        let d = new Date(dateObj);
-        d.setDate(d.getDate() + 1); 
-        if (d.getDay() === 6) d.setDate(d.getDate() + 2); 
-        if (d.getDay() === 0) d.setDate(d.getDate() + 1); 
-        d.setHours(8, 0, 0, 0); 
-        return d;
-    }
-
-    async function checkAndSendReminders(apps) {
-        const now = new Date();
-        for (const app of apps) {
-            // Skip junk applications — no emails for invalid phone numbers
-            if (isJunkApp(app)) continue;
-
-            const reviews = app.reviews || [];
-            if (reviews.length >= 1) continue; 
-            let reminderCount = app.reminderCount || 0;
-            if (reminderCount >= 3) continue; 
-            let baseDate = app.submittedAt?.toDate ? app.submittedAt.toDate() : new Date(app.submittedAt);
-            if (reminderCount > 0 && app.lastReminderDate) baseDate = new Date(app.lastReminderDate);
-            const targetReminderTime = getNextWorkingDay8AM(baseDate);
-
-            if (now >= targetReminderTime) {
-                try {
-                    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_REMINDER_TEMPLATE, {
-                        applicant_name: app.fullName || 'Unknown', position: app.position || 'Unknown',
-                        wait_time: calculateWaitTime(app.submittedAt), url_link: window.location.href 
-                    });
-                    const appRef = doc(db, "NGUO New Applicants", app.id);
-                    await updateDoc(appRef, { reminderCount: reminderCount + 1, lastReminderDate: now.toISOString() });
-                } catch (e) { console.error("Failed to send automated reminder:", e); }
-            }
-        }
-    }
 
     async function checkAndSendScheduledEmails(apps) {
         const now = new Date();
