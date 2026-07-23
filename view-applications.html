@@ -771,7 +771,12 @@
                     console.log("Triggering Name Check emails to:", "barry.dixon@next-gen.uk", "and", externalEmail);
                     
                     const emailResults = await Promise.allSettled([
-                        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INTERNAL_NAME_CHECK, { ...baseParams, to_email: 'barry.dixon@next-gen.uk' }, { publicKey: EMAILJS_PUBLIC_KEY }),
+                        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INTERNAL_NAME_CHECK, { 
+                            ...baseParams, 
+                            to_email: 'barry.dixon@next-gen.uk',
+                            cv_url: data.cv?.url || '',
+                            cv_name: data.cv?.filename || 'CV'
+                        }, { publicKey: EMAILJS_PUBLIC_KEY }),
                         emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, { ...baseParams, to_email: externalEmail }, { publicKey: EMAILJS_PUBLIC_KEY })
                     ]);
                     
