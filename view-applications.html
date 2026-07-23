@@ -309,7 +309,7 @@
 
     // --- INITIALIZE EMAILJS ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
-    const EMAILJS_SERVICE_ID = 'service_dcdbhph'; 
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_INTERNAL_NAME_CHECK = 'template_ya7anaj';
     const EMAILJS_EXTERNAL_NAME_CHECK = 'template_86cs8oi';
     
@@ -402,7 +402,7 @@
         if (app.manualEntry) return false; // manually added — always valid
         const phone = (app.personalDetails?.phone || '').trim().replace(/\s+/g, '');
         if (!phone) return true;
-        return !phone.match(/^(\+44|07|01|02)/);
+        return !phone.match(/^(\+44|07|7|01|02)/);
     }
 
     // --- SOURCE BADGE HELPER ---
