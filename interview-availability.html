@@ -281,12 +281,27 @@
             // Look up postcode from applicant record
 let applicantPostcode = '';
 try {
-    const appQuery = await getDocs(query(
+    let appQuery = await getDocs(query(
         collection(db, "NGUO New Applicants"),
         where("personalDetails.email", "==", email.toLowerCase())
     ));
-    if (!appQuery.empty) {
-        applicantPostcode = appQuery.docs[0].data().personalDetails?.postcode || '';
+    if (appQuery.empty) {
+        appQuery = await getDocs(query(
+            collection(db, "NGUO New Applicants"),
+            where("personalDetails.email", "==", email)
+        ));
+    }
+    if (appQuery.empty) {
+        const allSnap = await getDocs(collection(db, "NGUO New Applicants"));
+        allSnap.forEach(d => {
+            const data = d.data();
+            const docEmail = data.personalDetails?.email || data.email || '';
+            if (docEmail.trim().toLowerCase() === email.trim().toLowerCase()) {
+                applicantPostcode = data.personalDetails?.postcode || data.postcode || '';
+            }
+        });
+    } else {
+        applicantPostcode = appQuery.docs[0].data().personalDetails?.postcode || appQuery.docs[0].data().postcode || '';
     }
 } catch (e) {
     console.warn("Could not fetch applicant postcode:", e);
@@ -325,6 +340,8 @@ await setDoc(docRef, {
             // 2. Send Alert to FTLs
             const ftlParams = {
                 applicant_name: name,
+                applicant_postcode: applicantPostcode || 'Not provided',
+                postcode: applicantPostcode || 'Not provided',
                 interview_date: displayDate,
                 interview_time: time,
                 portal_link: window.location.origin + "/FTL-interview-availability.html"
