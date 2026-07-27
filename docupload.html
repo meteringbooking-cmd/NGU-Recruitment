@@ -362,6 +362,20 @@
                     </div>
                 </div>
 
+                <!-- Proof of NI Number -->
+                <div class="cert-upload-row" id="row-niproof">
+                    <div class="cert-row-icon">🪪</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">Proof of NI Number (Payslip, NI Card, etc.)</div>
+                        <div id="sub-niproof" class="cert-row-sub">No file selected</div>
+                        <div id="prog-niproof" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-niproof">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-niproof" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('niproof',this)"></label>
+                    </div>
+                </div>
+
                 <div class="cert-section-label desirable" style="margin-top:1.8rem;">Desirable Qualifications</div>
 
                 <!-- EUSR -->
@@ -562,7 +576,7 @@
     /* Pre-fill badges for certs already uploaded */
     function prefillExistingCerts(certs, oDocs = {}) {
         if (!certs && !oDocs) return;
-        const simpleKeys = ['mocopa', 'gasl3', 'cmagas', 'higherskills', 'passport', 'dlfront', 'dlback'];
+        const simpleKeys = ['mocopa', 'gasl3', 'cmagas', 'higherskills', 'passport', 'dlfront', 'dlback', 'niproof'];
         simpleKeys.forEach(key => {
             const data = (certs && certs[key]) || (oDocs && oDocs[key]);
             if (data?.url) {
@@ -796,6 +810,7 @@
                 passport:     certUploadResults['passport']     || null,
                 dlfront:      certUploadResults['dlfront']      || null,
                 dlback:       certUploadResults['dlback']       || null,
+                niproof:      certUploadResults['niproof']      || null,
                 drivinglicence: {
                     confirmed: dlConfirmed,
                     expiry:    document.getElementById('dl-expiry').value || '',
@@ -813,6 +828,7 @@
             if (certUploadResults['passport']) updates['onboardingDocs.passport'] = certUploadResults['passport'];
             if (certUploadResults['dlfront'])  updates['onboardingDocs.dlfront']  = certUploadResults['dlfront'];
             if (certUploadResults['dlback'])   updates['onboardingDocs.dlback']   = certUploadResults['dlback'];
+            if (certUploadResults['niproof'])  updates['onboardingDocs.niproof']  = certUploadResults['niproof'];
 
             await updateDoc(foundDocRef, updates);
 
