@@ -357,7 +357,7 @@
             } else {
                 const updateObj = {};
                 updateObj[`certificates.${certKey}.expiry`] = newDate;
-                if (['passport', 'dlfront', 'dlback'].includes(certKey)) {
+                if (['passport', 'dlfront', 'dlback', 'niproof'].includes(certKey)) {
                     updateObj[`onboardingDocs.${certKey}.expiry`] = newDate;
                 }
                 await updateDoc(appRef, updateObj);
@@ -1381,7 +1381,8 @@
             { key: 'higherskills', label: 'Higher Skills' },
             { key: 'passport',     label: 'Passport / ID' },
             { key: 'dlfront',      label: 'Driving Licence (Front)' },
-            { key: 'dlback',       label: 'Driving Licence (Back)' }
+            { key: 'dlback',       label: 'Driving Licence (Back)' },
+            { key: 'niproof',      label: 'Proof of NI Number (Payslip/Card)' }
         ].forEach(cert => {
             const certData = c[cert.key] || oDocs[cert.key];
             if (certData && certData.url) {
