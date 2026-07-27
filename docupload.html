@@ -483,11 +483,34 @@
         msgEl.textContent = '';
 
         try {
-            const q = query(
+            let snap = await getDocs(query(
                 collection(db, 'NGUO New Applicants'),
                 where('personalDetails.email', '==', email)
-            );
-            const snap = await getDocs(q);
+            ));
+
+            if (snap.empty) {
+                // Try exact case entered by user (e.g. Jasonborne743@gmail.com)
+                snap = await getDocs(query(
+                    collection(db, 'NGUO New Applicants'),
+                    where('personalDetails.email', '==', emailInput.value.trim())
+                ));
+            }
+
+            if (snap.empty) {
+                // Fallback: case-insensitive scan across all applicants for mixed-case stored emails
+                const allSnap = await getDocs(collection(db, 'NGUO New Applicants'));
+                const matchingDocs = [];
+                allSnap.forEach(d => {
+                    const data = d.data();
+                    const docEmail = data.personalDetails?.email || data.email || '';
+                    if (docEmail.trim().toLowerCase() === email) {
+                        matchingDocs.push(d);
+                    }
+                });
+                if (matchingDocs.length > 0) {
+                    snap = { empty: false, forEach: cb => matchingDocs.forEach(cb) };
+                }
+            }
 
             if (snap.empty) {
                 msgEl.className = 'lookup-msg err';
