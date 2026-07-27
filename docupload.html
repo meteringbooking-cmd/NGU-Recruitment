@@ -318,6 +318,50 @@
                     </div>
                 </div>
 
+                <div class="cert-section-label mandatory" style="margin-top:1.8rem;">ID & Right to Work Documents</div>
+
+                <!-- Passport / ID -->
+                <div class="cert-upload-row" id="row-passport">
+                    <div class="cert-row-icon">🪪</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">Passport / Right to Work ID</div>
+                        <div id="sub-passport" class="cert-row-sub">No file selected</div>
+                        <div id="prog-passport" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-passport">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-passport" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('passport',this)"></label>
+                    </div>
+                </div>
+
+                <!-- Driving Licence (Front) -->
+                <div class="cert-upload-row" id="row-dlfront">
+                    <div class="cert-row-icon">🪪</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">Driving Licence (Front Card)</div>
+                        <div id="sub-dlfront" class="cert-row-sub">No file selected</div>
+                        <div id="prog-dlfront" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-dlfront">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-dlfront" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('dlfront',this)"></label>
+                    </div>
+                </div>
+
+                <!-- Driving Licence (Back) -->
+                <div class="cert-upload-row" id="row-dlback">
+                    <div class="cert-row-icon">🪪</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">Driving Licence (Back Card)</div>
+                        <div id="sub-dlback" class="cert-row-sub">No file selected</div>
+                        <div id="prog-dlback" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-dlback">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-dlback" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('dlback',this)"></label>
+                    </div>
+                </div>
+
                 <div class="cert-section-label desirable" style="margin-top:1.8rem;">Desirable Qualifications</div>
 
                 <!-- EUSR -->
@@ -476,7 +520,7 @@
             document.getElementById('lookupSection').appendChild(banner);
 
             // Pre-fill any certs already on the record
-            prefillExistingCerts(foundDocData.certificates);
+            prefillExistingCerts(foundDocData.certificates, foundDocData.onboardingDocs);
 
             // Show upload section
             document.getElementById('uploadSection').style.display = 'block';
@@ -493,18 +537,19 @@
     };
 
     /* Pre-fill badges for certs already uploaded */
-    function prefillExistingCerts(certs) {
-        if (!certs) return;
-        const simpleKeys = ['mocopa', 'gasl3', 'cmagas', 'higherskills'];
+    function prefillExistingCerts(certs, oDocs = {}) {
+        if (!certs && !oDocs) return;
+        const simpleKeys = ['mocopa', 'gasl3', 'cmagas', 'higherskills', 'passport', 'dlfront', 'dlback'];
         simpleKeys.forEach(key => {
-            if (certs[key]?.url) {
-                certUploadResults[key] = certs[key];
+            const data = (certs && certs[key]) || (oDocs && oDocs[key]);
+            if (data?.url) {
+                certUploadResults[key] = data;
                 const row   = document.getElementById(`row-${key}`);
                 const badge = document.getElementById(`badge-${key}`);
                 const sub   = document.getElementById(`sub-${key}`);
                 if (row)   row.classList.add('uploaded');
                 if (badge) { badge.textContent = '✓ Already uploaded'; badge.className = 'cert-badge done'; }
-                if (sub)   sub.textContent = certs[key].filename || 'Previously uploaded';
+                if (sub)   sub.textContent = data.filename || 'Previously uploaded';
             }
         });
         // Driving licence
@@ -725,6 +770,9 @@
                 gasl3:        certUploadResults['gasl3']        || null,
                 cmagas:       certUploadResults['cmagas']       || null,
                 higherskills: certUploadResults['higherskills'] || null,
+                passport:     certUploadResults['passport']     || null,
+                dlfront:      certUploadResults['dlfront']      || null,
+                dlback:       certUploadResults['dlback']       || null,
                 drivinglicence: {
                     confirmed: dlConfirmed,
                     expiry:    document.getElementById('dl-expiry').value || '',
@@ -735,10 +783,15 @@
                 additional: additionalCerts
             };
 
-            await updateDoc(foundDocRef, {
+            const updates = {
                 certificates,
                 certificatesUpdatedAt: new Date().toISOString()
-            });
+            };
+            if (certUploadResults['passport']) updates['onboardingDocs.passport'] = certUploadResults['passport'];
+            if (certUploadResults['dlfront'])  updates['onboardingDocs.dlfront']  = certUploadResults['dlfront'];
+            if (certUploadResults['dlback'])   updates['onboardingDocs.dlback']   = certUploadResults['dlback'];
+
+            await updateDoc(foundDocRef, updates);
 
             document.getElementById('mainContent').style.display = 'none';
             document.getElementById('successScreen').style.display = 'block';
@@ -750,6 +803,21 @@
             btn.disabled = false; btn.innerHTML = 'Submit Certificates';
         }
     };
+
+    // Auto-lookup if email query parameter is present
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const emailParam = urlParams.get('email');
+        if (emailParam) {
+            const lookupEmailEl = document.getElementById('lookupEmail');
+            if (lookupEmailEl) {
+                lookupEmailEl.value = emailParam.trim();
+                setTimeout(() => {
+                    window.lookupApplicant();
+                }, 800);
+            }
+        }
+    });
 </script>
 </body>
 </html>
