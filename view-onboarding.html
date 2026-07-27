@@ -639,7 +639,7 @@
         let docsHtml = '';
         if (Object.keys(docs).length > 0) {
             const docLabels = {
-                passport: 'Passport / ID', idphoto: 'ID Headshot', dlfront: 'Driving Licence (Front)', dlback: 'Driving Licence (Back)', poa: 'Proof of Address', p45: 'P45 Document'
+                passport: 'Passport / ID', idphoto: 'ID Headshot', dlfront: 'Driving Licence (Front)', dlback: 'Driving Licence (Back)', poa: 'Proof of Address', p45: 'P45 Document', niproof: 'Proof of NI Number (Payslip/Card)'
             };
             Object.keys(docs).forEach(key => {
                 const f = docs[key];
@@ -683,9 +683,13 @@
             { key: 'mocopa',       label: 'MOCOPA' },
             { key: 'gasl3',        label: 'Level 3 Gas' },
             { key: 'cmagas',       label: 'CMA Gas' },
-            { key: 'higherskills', label: 'Higher Skills' }
+            { key: 'higherskills', label: 'Higher Skills' },
+            { key: 'passport',     label: 'Passport / ID' },
+            { key: 'dlfront',      label: 'Driving Licence (Front)' },
+            { key: 'dlback',       label: 'Driving Licence (Back)' },
+            { key: 'niproof',      label: 'Proof of NI Number (Payslip/Card)' }
         ].forEach(cert => {
-            if (c[cert.key] && c[cert.key].url) {
+            if (c[cert.key] && c[cert.key].url && !docs[cert.key]) {
                 const expVal = c[cert.key].expiry || '';
                 const expDisplay = expVal ? `Expires: ${new Date(expVal).toLocaleDateString('en-GB')}` : 'No Expiry Set';
                 const status = c[cert.key].docStatus || '';
