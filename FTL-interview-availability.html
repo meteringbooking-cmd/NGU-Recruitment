@@ -476,7 +476,7 @@
 
     // --- EMAILJS CONFIG ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
-    const EMAILJS_SERVICE_ID = 'service_dcdbhph'; 
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_FTL_REMINDER = 'template_v410t15';
     const EMAILJS_APP_REMINDER = 'template_n1r23pg';
     const EMAILJS_INTERVIEW_COMPLETED = 'template_5ma65oo';
@@ -576,7 +576,7 @@
 
                 if (emailSent) {
                     const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_REMINDER, { applicant_name: b.applicantName, hours_waiting: Math.floor(hoursWaiting), interview_date: displayDate, interview_time: b.time, portal_link: window.location.href });
+                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_REMINDER, { applicant_name: b.applicantName, applicant_postcode: b.applicantPostcode || 'Not provided', postcode: b.applicantPostcode || 'Not provided', hours_waiting: Math.floor(hoursWaiting), interview_date: displayDate, interview_time: b.time, portal_link: window.location.href });
                 }
             }
 
