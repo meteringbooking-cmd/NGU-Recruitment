@@ -309,7 +309,7 @@
 
     // --- INITIALIZE EMAILJS ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
-    const EMAILJS_SERVICE_ID = 'service_dcdbhph'; 
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_INTERNAL_NAME_CHECK = 'template_ya7anaj';
     const EMAILJS_EXTERNAL_NAME_CHECK = 'template_86cs8oi';
     
@@ -1469,7 +1469,9 @@
         } else { reviewsHtml = `<div class="text-box">No reviews recorded yet.</div>`; }
 
         const reviewActionHtml = reviews.length < 1
-            ? `<button class="btn-action-alt" style="margin-top:1.5rem;" onclick="openReviewModal('${app.id}')">+ Perform Review</button>`
+            ? (app.nameChecksCompleted
+               ? `<div class="badge" style="margin-top:1.5rem; background:rgba(16,185,129,0.2); color:var(--success); display:inline-block; padding:0.5rem 1rem; border-radius:8px;">✓ Initial Reviews Bypassed</div>`
+               : `<button class="btn-action-alt" style="margin-top:1.5rem;" onclick="openReviewModal('${app.id}')">+ Perform Review</button>`)
             : (reviews[0].decision === 'Hold'
                ? `<div style="display:flex; flex-direction:column; gap:10px; margin-top:1.5rem; background:rgba(245,158,11,0.05); border:1px solid rgba(245,158,11,0.3); padding:1rem; border-radius:8px;">
                     <div style="color:var(--warning); font-weight:700;">⏱ Applicant on Hold</div>
@@ -1494,7 +1496,9 @@
             } else if (app.nameChecksCompleted) {
                 const ncDate = new Date(app.nameChecksCompletedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
                 let schedMsg = '';
-                if (app.scheduledInterviewEmailTime) {
+                if (app.manualNameCheckBypass || app.manualBypassToOnboarding) {
+                    schedMsg = `<div style="margin-top:0.5rem; font-size:0.85rem; color:var(--text-light); font-weight:600;">ℹ️ Bypassed manually — no automated emails sent</div>`;
+                } else if (app.scheduledInterviewEmailTime) {
                     const schedDate = new Date(app.scheduledInterviewEmailTime).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
                     if (app.scheduledInterviewEmailSent) {
                         schedMsg = `<div style="margin-top:0.5rem; font-size:0.85rem; color:var(--success); font-weight:600;">✓ Invitation email sent on ${schedDate}</div>`;
@@ -1725,18 +1729,27 @@
 
         let manualInterventionHtml = '';
         if (!app.finalRecruitmentDecision) {
-            manualInterventionHtml = `
-                <!-- MANUAL INTERVENTION BYPASS -->
-                <div class="section" style="border: 2px dashed var(--accent); background: rgba(0, 163, 224, 0.03); padding: 1.2rem; border-radius: 10px; margin-bottom: 1.5rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
-                        <div style="flex:1; min-width:250px;">
-                            <h3 style="color:var(--accent); font-size:1.15rem; margin:0; border-bottom:none; padding-bottom:0;">🛠️ Manual Intervention</h3>
-                            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px; line-height:1.4;">If this applicant was already name checked and interviewed externally, skip normal pipeline straight to onboarding offer.</p>
+            const showNCBtn = !app.nameChecksCompleted;
+            const showIntvBtn = !matchedInterview?.interviewCompleted && !app.manualBypassToOnboarding;
+            
+            if (showNCBtn || showIntvBtn) {
+                manualInterventionHtml = `
+                    <!-- MANUAL INTERVENTION BYPASS -->
+                    <div class="section" style="border: 2px dashed var(--accent); background: rgba(0, 163, 224, 0.03); padding: 1.2rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+                            <div style="flex:1; min-width:250px;">
+                                <h3 style="color:var(--accent); font-size:1.15rem; margin:0; border-bottom:none; padding-bottom:0;">🛠️ Manual Intervention</h3>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px; line-height:1.4;">If stages were completed outside the portal, use these buttons to manually advance the candidate without triggering automated emails.</p>
+                            </div>
+                            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                                ${showNCBtn ? `<button class="btn btn-primary" style="margin:0; padding:8px 14px; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px;" onclick="manualBypassNameCheck('${app.id}')">⏩ Already Name Checked</button>` : ''}
+                                ${showIntvBtn ? `<button class="btn-action-alt" style="margin:0; padding:8px 14px; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px;" onclick="manualBypassInterview('${app.id}')">⏩ Already Interviewed</button>` : ''}
+                                ${(showNCBtn && showIntvBtn) ? `<button class="btn" style="margin:0; padding:8px 14px; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:white;" onclick="manualBypassToOnboarding('${app.id}')">⏩ Skip Both</button>` : ''}
+                            </div>
                         </div>
-                        <button class="btn btn-primary" style="margin:0; padding:10px 18px; font-size:0.88rem; display:inline-flex; align-items:center; gap:8px;" onclick="manualBypassToOnboarding('${app.id}')">⏩ Already Name Checked & Interviewed</button>
                     </div>
-                </div>
-            `;
+                `;
+            }
         }
 
         mainEl.innerHTML = `
@@ -1832,16 +1845,70 @@
         }
     };
 
-    // ─── MANUAL INTERVENTION BYPASS TO ONBOARDING ────────────────────────────
-    window.manualBypassToOnboarding = async function(appId) {
-        if (!confirm("Are you sure you want to manually bypass the Name Check and Interview stages for this candidate? This will bring them directly to the onboarding offer stage.")) return;
+    // ─── MANUAL INTERVENTION BYPASS FUNCTIONS ────────────────────────────
+    window.manualBypassNameCheck = async function(appId) {
+        if (!confirm("Are you sure you want to manually mark Name Checks as completed for this candidate? This will bring them directly to the 'Ready for Interview' stage without sending automated name check emails.")) return;
         try {
             const appRef = doc(db, 'NGUO New Applicants', appId);
             await updateDoc(appRef, {
                 nameChecksRequested: true,
+                nameChecks: 'Passed',
                 nameChecksCompleted: true,
-                nameChecksCompletedBy: localStorage.getItem('ngu_portal_username') || 'Recruiter',
+                nameChecksCompletedBy: localStorage.getItem('ngu_portal_username') || 'Recruiter (Manual Bypass)',
                 nameChecksCompletedAt: new Date().toISOString(),
+                manualNameCheckBypass: true,
+                status: 'Ready for Interview'
+            });
+            alert("Name Check marked as completed. The candidate is now ready for interview scheduling/recording.");
+            const updatedApp = applicationsData.find(a => a.id === appId);
+            if (updatedApp) {
+                updatedApp.nameChecksRequested = true;
+                updatedApp.nameChecks = 'Passed';
+                updatedApp.nameChecksCompleted = true;
+                updatedApp.nameChecksCompletedBy = localStorage.getItem('ngu_portal_username') || 'Recruiter (Manual Bypass)';
+                updatedApp.nameChecksCompletedAt = new Date().toISOString();
+                updatedApp.manualNameCheckBypass = true;
+                updatedApp.status = 'Ready for Interview';
+                renderDetails(updatedApp, false, '');
+            }
+        } catch (error) {
+            console.error("Error setting manual name check bypass:", error);
+            alert("Failed to perform manual name check bypass.");
+        }
+    };
+
+    window.manualBypassInterview = async function(appId) {
+        if (!confirm("Are you sure you want to manually mark the Interview as completed for this candidate? This will enable the final onboarding offer decision.")) return;
+        try {
+            const appRef = doc(db, 'NGUO New Applicants', appId);
+            await updateDoc(appRef, {
+                manualBypassToOnboarding: true,
+                status: 'Under Review' // Keep in Active pool
+            });
+            alert("Interview marked as completed. The candidate is now ready for the final onboarding offer decision.");
+            const updatedApp = applicationsData.find(a => a.id === appId);
+            if (updatedApp) {
+                updatedApp.manualBypassToOnboarding = true;
+                updatedApp.status = 'Under Review';
+                renderDetails(updatedApp, false, '');
+            }
+        } catch (error) {
+            console.error("Error setting manual interview bypass:", error);
+            alert("Failed to perform manual interview bypass.");
+        }
+    };
+
+    window.manualBypassToOnboarding = async function(appId) {
+        if (!confirm("Are you sure you want to manually bypass BOTH the Name Check and Interview stages for this candidate? This will bring them directly to the onboarding offer stage.")) return;
+        try {
+            const appRef = doc(db, 'NGUO New Applicants', appId);
+            await updateDoc(appRef, {
+                nameChecksRequested: true,
+                nameChecks: 'Passed',
+                nameChecksCompleted: true,
+                nameChecksCompletedBy: localStorage.getItem('ngu_portal_username') || 'Recruiter (Manual Bypass)',
+                nameChecksCompletedAt: new Date().toISOString(),
+                manualNameCheckBypass: true,
                 manualBypassToOnboarding: true,
                 status: 'Under Review' // Keep in Active pool
             });
@@ -1850,9 +1917,11 @@
             const updatedApp = applicationsData.find(a => a.id === appId);
             if (updatedApp) {
                 updatedApp.nameChecksRequested = true;
+                updatedApp.nameChecks = 'Passed';
                 updatedApp.nameChecksCompleted = true;
-                updatedApp.nameChecksCompletedBy = localStorage.getItem('ngu_portal_username') || 'Recruiter';
+                updatedApp.nameChecksCompletedBy = localStorage.getItem('ngu_portal_username') || 'Recruiter (Manual Bypass)';
                 updatedApp.nameChecksCompletedAt = new Date().toISOString();
+                updatedApp.manualNameCheckBypass = true;
                 updatedApp.manualBypassToOnboarding = true;
                 updatedApp.status = 'Under Review';
                 renderDetails(updatedApp, false, '');
