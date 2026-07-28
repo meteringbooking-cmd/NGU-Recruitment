@@ -476,7 +476,7 @@
 
     // --- EMAILJS CONFIG ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
-    const EMAILJS_SERVICE_ID = 'service_dcdbhph'; 
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_FTL_REMINDER = 'template_v410t15';
     const EMAILJS_APP_REMINDER = 'template_n1r23pg';
     const EMAILJS_INTERVIEW_COMPLETED = 'template_5ma65oo';
@@ -616,8 +616,8 @@
         }
         localStorage.setItem('ngu_ftl_name', interviewerName);
 
-        const defaultTeamsLink = 'https://teams.microsoft.com/meet/365545655330492?p=3Cj4TVBNUPw3MujiDR';
-        const teamsLink = prompt("Please paste your Microsoft Teams meeting link for this interview:\n\n(This link will be automatically sent to the applicant in their 24-hour reminder email)", defaultTeamsLink);
+        const defaultTeamsLink = '';
+        const teamsLink = prompt("Please paste your unique Microsoft Teams meeting link for this interview.\n\nHOW TO GET A LINK:\n• Teams App: Go to Calendar > Meet now > Get a link to share\n• Outlook: New Event > Add Teams meeting toggle > Copy the link\n\n(This link will be sent to the applicant automatically)", defaultTeamsLink);
         if (teamsLink === null) return; 
 
         try {
