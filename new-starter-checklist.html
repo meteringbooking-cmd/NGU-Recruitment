@@ -614,6 +614,34 @@
             font-weight: 600;
         }
 
+        /* ─── LIST TABS ─── */
+        .list-tabs {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 4px;
+        }
+        .list-tab {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            padding: 4px 4px 8px 4px;
+            margin-bottom: -5px;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+        }
+        .list-tab:hover {
+            color: #fff;
+        }
+        .list-tab.active {
+            color: var(--cyan);
+            border-bottom-color: var(--cyan);
+        }
+
         /* ─── EMPTY STATE ─── */
         .empty-view {
             display: flex;
@@ -706,6 +734,10 @@
                         <span class="search-icon">🔍</span>
                         <input type="text" class="search-input" id="searchBar" placeholder="Search profiles..." oninput="filterStartersList()">
                     </div>
+                    <div class="list-tabs">
+                        <button class="list-tab active" id="tabActive" onclick="setListFilter('active')">Active</button>
+                        <button class="list-tab" id="tabArchived" onclick="setListFilter('archived')">Archived</button>
+                    </div>
                     <div class="starters-list" id="startersListEl">
                         <!-- Starters render here alphabetically -->
                     </div>
@@ -736,9 +768,14 @@
                             </div>
                             <p>Effective Date: <span id="metaDate">--</span></p>
                         </div>
-                        <button class="btn btn-danger-ghost" style="padding: 8px 16px; font-size: 0.8rem; margin-left: auto;" onclick="deleteStarter()">
-                            🗑 Delete Profile
-                        </button>
+                        <div style="display:flex; gap:10px; margin-left:auto;">
+                            <button id="archiveBtn" class="btn" style="display:none; padding: 8px 16px; font-size: 0.8rem; background: rgba(16, 185, 129, 0.1); color: var(--emerald); border: 1px solid rgba(16, 185, 129, 0.2);" onclick="archiveStarter(true)">
+                                📦 Archive Profile
+                            </button>
+                            <button class="btn btn-danger-ghost" style="padding: 8px 16px; font-size: 0.8rem;" onclick="deleteStarter()">
+                                🗑 Delete Profile
+                            </button>
+                        </div>
                     </div>
                     
                     <!-- Progress bar -->
@@ -809,6 +846,7 @@
     let startersList = [];
     let currentCompletedItems = {};
     let currentSelectedType = "New Starter"; // Toggle state for Add Profile
+    let currentListFilter = "active"; // active or archived
 
     // Defined static checklist items for the "New Starter" (Barry) section
     const barryChecklistItems = [
@@ -964,6 +1002,23 @@
         document.getElementById("typeLeaver").classList.toggle("selected", type === "Leaver");
     }
 
+    // Toggle Active / Archived list filter
+    function setListFilter(filter) {
+        currentListFilter = filter;
+        document.getElementById("tabActive").classList.toggle("active", filter === 'active');
+        document.getElementById("tabArchived").classList.toggle("active", filter === 'archived');
+        
+        // Deselect if current profile doesn't match filter
+        const starter = startersList.find(s => s.id === selectedStarterId);
+        if (starter) {
+            if ((filter === 'active' && starter.archived) || (filter === 'archived' && !starter.archived)) {
+                selectStarter("");
+            }
+        }
+        
+        renderStartersList();
+    }
+
     // Load active starters list from Firebase collection "New Start Checklist"
     async function loadStarters() {
         try {
@@ -995,6 +1050,10 @@
         const searchVal = document.getElementById("searchBar").value.toLowerCase().trim();
 
         startersList.forEach(starter => {
+            // Filter by active/archived
+            if (currentListFilter === 'active' && starter.archived) return;
+            if (currentListFilter === 'archived' && !starter.archived) return;
+
             // Filter search query if present
             if (searchVal && !(starter.name || "").toLowerCase().includes(searchVal)) {
                 return;
@@ -1289,6 +1348,51 @@
         } else {
             fillBar.style.background = "linear-gradient(90deg, #06b6d4, #3b82f6)";
         }
+
+        // Toggle Archive button
+        const archiveBtn = document.getElementById("archiveBtn");
+        if (starter.archived) {
+            archiveBtn.style.display = "inline-flex";
+            archiveBtn.innerHTML = "📤 Unarchive";
+            archiveBtn.onclick = () => archiveStarter(false);
+        } else if (percent === 100) {
+            archiveBtn.style.display = "inline-flex";
+            archiveBtn.innerHTML = "📦 Archive Profile";
+            archiveBtn.onclick = () => archiveStarter(true);
+        } else {
+            archiveBtn.style.display = "none";
+        }
+    }
+
+    // Archive / Unarchive Profile
+    async function archiveStarter(archiveStatus) {
+        if (!selectedStarterId) return;
+
+        const starterName = document.getElementById("currentStarterName").textContent;
+        const action = archiveStatus ? "archive" : "unarchive";
+        const confirmAction = confirm(`Are you sure you want to ${action} "${starterName}"?`);
+        if (!confirmAction) return;
+
+        try {
+            const docRef = doc(db, "New Start Checklist", selectedStarterId);
+            await updateDoc(docRef, { archived: archiveStatus });
+            showToast(`Profile "${starterName}" ${archiveStatus ? 'archived' : 'unarchived'} successfully.`);
+            
+            // Update local state without full reload
+            const starter = startersList.find(s => s.id === selectedStarterId);
+            if (starter) starter.archived = archiveStatus;
+            
+            // Re-render and clear selection if moving away from current view
+            if ((archiveStatus && currentListFilter === 'active') || (!archiveStatus && currentListFilter === 'archived')) {
+                selectStarter("");
+            } else {
+                selectStarter(selectedStarterId); // refresh
+            }
+            renderStartersList();
+        } catch (err) {
+            console.error(`Error ${action}ing starter: `, err);
+            showToast(`Error ${action}ing starter: ` + err.message, false);
+        }
     }
 
     // Delete Starter
@@ -1322,6 +1426,8 @@
     window.addStarter = addStarter;
     window.selectStarter = selectStarter;
     window.deleteStarter = deleteStarter;
+    window.archiveStarter = archiveStarter;
+    window.setListFilter = setListFilter;
     window.toggleChecklistItem = toggleChecklistItem;
     window.filterStartersList = filterStartersList;
 </script>
