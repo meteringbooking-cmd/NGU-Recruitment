@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Starter & Transfer Checklist</title>
+    <title>New Starter, Transfer & Leaver Checklist</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -200,6 +200,11 @@
             background: rgba(167, 139, 250, 0.12);
             color: var(--violet);
         }
+        .type-radio-btn.selected[data-type="Leaver"] {
+            border-color: var(--rose);
+            background: rgba(244, 63, 94, 0.12);
+            color: var(--rose);
+        }
 
         /* ─── BUTTONS ─── */
         .btn {
@@ -302,6 +307,10 @@
             background: rgba(167, 139, 250, 0.06);
             border-color: var(--violet);
         }
+        .starter-item.active.type-Leaver {
+            background: rgba(244, 63, 94, 0.06);
+            border-color: var(--rose);
+        }
         .starter-item-header {
             display: flex;
             justify-content: space-between;
@@ -338,6 +347,11 @@
             background: rgba(167, 139, 250, 0.1);
             color: var(--violet);
             border: 1px solid rgba(167, 139, 250, 0.2);
+        }
+        .badge-leaver {
+            background: rgba(244, 63, 94, 0.1);
+            color: var(--rose);
+            border: 1px solid rgba(244, 63, 94, 0.2);
         }
         .progress-badge {
             font-weight: 700;
@@ -449,6 +463,9 @@
         .checklist-section.type-Transfer .section-header::before {
             background: var(--violet);
         }
+        .checklist-section.type-Leaver .section-header::before {
+            background: var(--rose);
+        }
         .checklist-items {
             display: flex;
             flex-direction: column;
@@ -553,6 +570,14 @@
             background: rgba(167, 139, 250, 0.16);
             color: #fff;
         }
+        .checklist-section.type-Leaver .item-link-btn {
+            color: var(--rose);
+            background: rgba(244, 63, 94, 0.08);
+        }
+        .checklist-section.type-Leaver .item-link-btn:hover {
+            background: rgba(244, 63, 94, 0.16);
+            color: #fff;
+        }
 
         /* ─── TOAST NOTIFICATION ─── */
         .toast {
@@ -632,8 +657,8 @@
 <!-- ═══ HEADER ═══ -->
 <div class="header">
     <div class="header-left">
-        <h1>📋 Staff Onboarding & Transfer Tracker</h1>
-        <p>Manage setups, update configuration lines, and verify credentials for new starters and employee transfers</p>
+        <h1>📋 Staff Onboarding, Transfer & Leaver Tracker</h1>
+        <p>Manage setups, update configuration lines, and verify credentials for new starters, employee transfers, and leavers</p>
     </div>
     <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&st=wespbsvy&dl=1" alt="NGU Logo">
 </div>
@@ -654,6 +679,7 @@
                     <div class="type-toggle-group">
                         <div class="type-radio-btn selected" id="typeNewStarter" data-type="New Starter" onclick="selectType('New Starter')">New Starter</div>
                         <div class="type-radio-btn" id="typeTransfer" data-type="Transfer" onclick="selectType('Transfer')">Transfer</div>
+                        <div class="type-radio-btn" id="typeLeaver" data-type="Leaver" onclick="selectType('Leaver')">Leaver</div>
                     </div>
                 </div>
                 <div class="form-group">
@@ -694,7 +720,7 @@
             <div class="empty-view" id="emptyState">
                 <div class="icon">💼</div>
                 <h3>No Profile Selected</h3>
-                <p>Choose an onboarding starter or transfer from the list in the sidebar, or add a new profile to begin tracking progress.</p>
+                <p>Choose an onboarding starter, transfer, or leaver from the list in the sidebar, or add a new profile to begin tracking progress.</p>
             </div>
 
             <!-- Dynamic Checklist Container -->
@@ -872,6 +898,43 @@
         }
     ];
 
+    // Defined static checklist items for the "Leaver" section
+    const leaverChecklistItems = [
+        {
+            id: "remove_email",
+            text: "Remove Email access"
+        },
+        {
+            id: "remove_portal",
+            text: "Remove Portal access"
+        },
+        {
+            id: "leaving_ees_engineer",
+            text: "If leaving EES contract: amend line 2145 of engineer.html on Github",
+            link: "https://github.com/meteringbooking-cmd/OESPerformance/blob/main/engineer.html"
+        },
+        {
+            id: "leaving_ees_workscreen",
+            text: "If leaving EES contract: amend line 1169 of workscreen-en.html on Github",
+            link: "https://github.com/meteringbooking-cmd/OESPerformance/edit/main/workscreen-en.html"
+        },
+        {
+            id: "remove_capacity",
+            text: "Remove from capacity tracker page",
+            link: "https://oes-performance.vercel.app/capacity.html"
+        },
+        {
+            id: "remove_staff",
+            text: "Remove from staff selection page",
+            link: "https://oes-performance.vercel.app/staff.html"
+        },
+        {
+            id: "amend_establishment",
+            text: "Amend establishment report",
+            link: "https://ngu-green.vercel.app/employeedatabase.html"
+        }
+    ];
+
     // Show Toast Notification Helper
     function showToast(message, isSuccess = true) {
         const toast = document.getElementById("toast");
@@ -893,11 +956,12 @@
         return dateStr;
     }
 
-    // Select Profile Type (New Starter / Transfer)
+    // Select Profile Type (New Starter / Transfer / Leaver)
     function selectType(type) {
         currentSelectedType = type;
         document.getElementById("typeNewStarter").classList.toggle("selected", type === "New Starter");
         document.getElementById("typeTransfer").classList.toggle("selected", type === "Transfer");
+        document.getElementById("typeLeaver").classList.toggle("selected", type === "Leaver");
     }
 
     // Load active starters list from Firebase collection "New Start Checklist"
@@ -937,8 +1001,9 @@
             }
 
             const type = starter.type || "New Starter";
-            const isTransfer = type === "Transfer";
-            const itemsList = isTransfer ? transferChecklistItems : barryChecklistItems;
+            let itemsList = barryChecklistItems;
+            if (type === "Transfer") itemsList = transferChecklistItems;
+            else if (type === "Leaver") itemsList = leaverChecklistItems;
             
             // Calculate progress value for badge
             let done = 0;
@@ -958,8 +1023,16 @@
             nameSpan.textContent = starter.name;
 
             const badgeSpan = document.createElement("span");
-            badgeSpan.className = "badge " + (isTransfer ? "badge-transfer" : "badge-starter");
-            badgeSpan.textContent = isTransfer ? "Transfer" : "Starter";
+            if (type === "Transfer") {
+                badgeSpan.className = "badge badge-transfer";
+                badgeSpan.textContent = "Transfer";
+            } else if (type === "Leaver") {
+                badgeSpan.className = "badge badge-leaver";
+                badgeSpan.textContent = "Leaver";
+            } else {
+                badgeSpan.className = "badge badge-starter";
+                badgeSpan.textContent = "Starter";
+            }
 
             topHeader.appendChild(nameSpan);
             topHeader.appendChild(badgeSpan);
@@ -1055,19 +1128,30 @@
         if (!starter) return;
 
         const type = starter.type || "New Starter";
-        const isTransfer = type === "Transfer";
 
         // Populate header details
         document.getElementById("currentStarterName").textContent = starter.name;
         document.getElementById("metaDate").textContent = formatDisplayDate(starter.startDate);
         
         const badge = document.getElementById("currentStarterBadge");
-        badge.className = "badge " + (isTransfer ? "badge-transfer" : "badge-starter");
-        badge.textContent = isTransfer ? "Transfer" : "Starter";
+        if (type === "Transfer") {
+            badge.className = "badge badge-transfer";
+            badge.textContent = "Transfer";
+        } else if (type === "Leaver") {
+            badge.className = "badge badge-leaver";
+            badge.textContent = "Leaver";
+        } else {
+            badge.className = "badge badge-starter";
+            badge.textContent = "Starter";
+        }
 
         const sectionWrapper = document.getElementById("sectionWrapper");
         sectionWrapper.className = "checklist-section type-" + type.replace(/\s+/g,'');
-        document.getElementById("sectionHeader").textContent = isTransfer ? "Barry" : "Barry";
+        
+        let sectionHeaderText = "Barry";
+        if (type === "Transfer") sectionHeaderText = "Transfer Actions";
+        else if (type === "Leaver") sectionHeaderText = "Leaver Actions";
+        document.getElementById("sectionHeader").textContent = sectionHeaderText;
 
         // Fetch latest doc state to get completed items
         try {
@@ -1099,7 +1183,9 @@
         if (!starter) return;
 
         const type = starter.type || "New Starter";
-        const itemsList = type === "Transfer" ? transferChecklistItems : barryChecklistItems;
+        let itemsList = barryChecklistItems;
+        if (type === "Transfer") itemsList = transferChecklistItems;
+        else if (type === "Leaver") itemsList = leaverChecklistItems;
 
         itemsList.forEach(item => {
             const isChecked = !!currentCompletedItems[item.id];
@@ -1118,16 +1204,18 @@
             text.className = "item-text";
             text.textContent = item.text;
 
-            const link = document.createElement("a");
-            link.href = item.link;
-            link.className = "item-link-btn";
-            link.target = "_blank";
-            link.textContent = "🔗 Go to website";
-            // Prevent event bubbling so clicking the link doesn't toggle check state
-            link.onclick = (e) => e.stopPropagation();
-
             content.appendChild(text);
-            content.appendChild(link);
+
+            if (item.link) {
+                const link = document.createElement("a");
+                link.href = item.link;
+                link.className = "item-link-btn";
+                link.target = "_blank";
+                link.textContent = "🔗 Go to website";
+                // Prevent event bubbling so clicking the link doesn't toggle check state
+                link.onclick = (e) => e.stopPropagation();
+                content.appendChild(link);
+            }
 
             row.appendChild(chk);
             row.appendChild(content);
@@ -1176,7 +1264,9 @@
         if (!starter) return;
 
         const type = starter.type || "New Starter";
-        const itemsList = type === "Transfer" ? transferChecklistItems : barryChecklistItems;
+        let itemsList = barryChecklistItems;
+        if (type === "Transfer") itemsList = transferChecklistItems;
+        else if (type === "Leaver") itemsList = leaverChecklistItems;
 
         const total = itemsList.length;
         if (total === 0) return;
