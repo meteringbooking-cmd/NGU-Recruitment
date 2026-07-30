@@ -118,6 +118,7 @@
             
             <input type="hidden" id="selectedDate">
             <input type="hidden" id="selectedTime">
+            <input type="hidden" id="selectedDocId">
 
             <div style="text-align: left; margin-bottom: 1rem;">
                 <label>Your Full Name <span style="color:var(--accent);">*</span></label>
@@ -136,11 +137,11 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, where, getDocs, doc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, query, where, getDocs, doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     // --- EMAILJS CONFIG ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
-    const EMAILJS_SERVICE_ID = 'service_dcdbhph'; 
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_FTL_TEMPLATE = 'template_5cpb2mc';
     const EMAILJS_APPLICANT_CONFIRM = 'template_xf6p7vc'; 
     emailjs.init(EMAILJS_PUBLIC_KEY);
@@ -166,13 +167,6 @@
     const today = new Date().toISOString().split('T')[0];
     datePicker.setAttribute('min', today);
 
-    // Generate 30-min slots from 08:00 to 17:30
-    const timeSlots = [];
-    for (let h = 8; h <= 17; h++) {
-        timeSlots.push(`${String(h).padStart(2, '0')}:00`);
-        timeSlots.push(`${String(h).padStart(2, '0')}:30`);
-    }
-
     datePicker.addEventListener('change', async (e) => {
         const selectedDate = e.target.value;
         if (!selectedDate) return;
@@ -191,43 +185,51 @@
         loadingStatus.textContent = 'Checking availability...';
 
         try {
-            const q = query(collection(db, "NGU Interview Times"), where("date", "==", selectedDate));
+            const q = query(collection(db, "NGU Interview Times"), where("date", "==", selectedDate), where("status", "==", "Available"));
             const snapshot = await getDocs(q);
             
-            const bookedTimes = new Set();
-            snapshot.forEach(doc => {
-                bookedTimes.add(doc.data().time);
-            });
-
             loadingStatus.textContent = '';
 
-            // Calculate current time + 24 hours to enforce 24hr notice
             const nowPlus24Hours = new Date().getTime() + (24 * 60 * 60 * 1000);
+            
+            // Collect available slots and deduplicate by time (saving the docId of the first one we see)
+            const availableSlots = {};
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (!availableSlots[data.time]) {
+                    availableSlots[data.time] = doc.id;
+                }
+            });
 
-            timeSlots.forEach(time => {
+            // Sort times chronologically
+            const sortedTimes = Object.keys(availableSlots).sort();
+
+            if (sortedTimes.length === 0) {
+                loadingStatus.textContent = 'No slots available on this date. Please select another date.';
+                return;
+            }
+
+            let renderedCount = 0;
+            sortedTimes.forEach(time => {
+                const docId = availableSlots[time];
                 const btn = document.createElement('button');
                 btn.className = 'slot-btn';
                 btn.textContent = time;
 
-                // Check if the slot is in the past or within the 24-hour buffer
                 const slotDateTime = new Date(`${selectedDate}T${time}:00`).getTime();
                 
-                if (bookedTimes.has(time) || slotDateTime <= nowPlus24Hours) {
+                if (slotDateTime <= nowPlus24Hours) {
                     btn.disabled = true;
-                    if (slotDateTime <= nowPlus24Hours && !bookedTimes.has(time)) {
-                        btn.title = "Interviews must be booked at least 24 hours in advance";
-                    }
+                    btn.title = "Interviews must be booked at least 24 hours in advance";
                 } else {
-                    btn.onclick = () => openModal(selectedDate, time);
+                    btn.onclick = () => openModal(selectedDate, time, docId);
+                    renderedCount++;
                 }
-                
                 slotsGrid.appendChild(btn);
             });
 
-            // If all buttons are disabled, show a message
-            const allDisabled = Array.from(slotsGrid.querySelectorAll('.slot-btn')).every(btn => btn.disabled);
-            if (allDisabled) {
-                loadingStatus.textContent = 'No slots available on this date. Please select another date.';
+            if (renderedCount === 0) {
+                loadingStatus.textContent = 'All available slots on this date require 24 hours notice. Please pick a later date.';
             }
 
         } catch (error) {
@@ -237,9 +239,10 @@
     });
 
     // --- MODAL CONTROLS ---
-    window.openModal = function(date, time) {
+    window.openModal = function(date, time, docId) {
         document.getElementById('selectedDate').value = date;
         document.getElementById('selectedTime').value = time;
+        document.getElementById('selectedDocId').value = docId;
         
         const displayDate = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         document.getElementById('modalTimeDisplay').innerHTML = `<strong>${time}</strong> on <br>${displayDate}`;
@@ -267,11 +270,12 @@
         btn.textContent = 'Booking...';
 
         try {
-            const docId = `${date}_${time}`; 
+            const docId = document.getElementById('selectedDocId').value;
             const docRef = doc(db, "NGU Interview Times", docId);
 
-            const existingDoc = await getDocs(query(collection(db, "NGU Interview Times"), where("date", "==", date), where("time", "==", time)));
-            if (!existingDoc.empty) {
+            // Double check it's still available (concurrency protection)
+            const docSnap = await getDoc(docRef);
+            if (!docSnap.exists() || docSnap.data().status !== 'Available') {
                 alert("Sorry! Someone just booked this slot. Please select another time.");
                 closeModal();
                 datePicker.dispatchEvent(new Event('change'));
@@ -307,14 +311,11 @@ try {
     console.warn("Could not fetch applicant postcode:", e);
 }
 
-await setDoc(docRef, {
-    date: date,
-    time: time,
+await updateDoc(docRef, {
     applicantName: name,
     applicantEmail: email,
     applicantPostcode: applicantPostcode,
     status: "Booked",
-    interviewer: null,
     bookedAt: serverTimestamp(),
     applicantReminderSent: false,
     unclaimedReminderLevel: 0
