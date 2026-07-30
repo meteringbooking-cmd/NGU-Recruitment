@@ -309,7 +309,7 @@
 
     // --- INITIALIZE EMAILJS ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
-    const EMAILJS_SERVICE_ID = 'service_dcdbhph'; 
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_INTERNAL_NAME_CHECK = 'template_ya7anaj';
     const EMAILJS_EXTERNAL_NAME_CHECK = 'template_86cs8oi';
     
@@ -1549,8 +1549,8 @@
             };
             const displayDate = new Date(intv.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
             let statusBanner = intv.interviewCompleted
-                ? `<span style="color:var(--success); font-weight:bold;">✓ Completed by ${intv.interviewer}</span>`
-                : `<span style="color:var(--warning); font-weight:bold;">⏱ Scheduled for ${displayDate} @ ${intv.time}</span>`;
+                ? `<span style="color:var(--success); font-weight:bold;">✅ Completed by ${intv.interviewer}</span>`
+                : `<span style="color:var(--warning); font-weight:bold;">⏱ Scheduled for ${displayDate} @ ${intv.time}</span> <button class="btn" style="margin-left:10px; padding:4px 8px; font-size:0.75rem;" onclick="rescheduleInterview('${intv.id}', '${app.id}')">🔄 Edit & Resend</button>`;
 
             let packResultsHtml = '';
             
@@ -1743,24 +1743,24 @@
             const showNCBtn = !app.nameChecksCompleted;
             const showIntvBtn = !matchedInterview?.interviewCompleted && !app.manualBypassToOnboarding;
             
-            if (showNCBtn || showIntvBtn) {
-                manualInterventionHtml = `
-                    <!-- MANUAL INTERVENTION BYPASS -->
-                    <div class="section" style="border: 2px dashed var(--accent); background: rgba(0, 163, 224, 0.03); padding: 1.2rem; border-radius: 10px; margin-bottom: 1.5rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
-                            <div style="flex:1; min-width:250px;">
-                                <h3 style="color:var(--accent); font-size:1.15rem; margin:0; border-bottom:none; padding-bottom:0;">🛠️ Manual Intervention</h3>
-                                <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px; line-height:1.4;">If stages were completed outside the portal, use these buttons to manually advance the candidate without triggering automated emails.</p>
-                            </div>
-                            <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                                ${showNCBtn ? `<button class="btn btn-primary" style="margin:0; padding:8px 14px; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px;" onclick="manualBypassNameCheck('${app.id}')">⏩ Already Name Checked</button>` : ''}
-                                ${showIntvBtn ? `<button class="btn-action-alt" style="margin:0; padding:8px 14px; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px;" onclick="manualBypassInterview('${app.id}')">⏩ Already Interviewed</button>` : ''}
-                                ${(showNCBtn && showIntvBtn) ? `<button class="btn" style="margin:0; padding:8px 14px; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:white;" onclick="manualBypassToOnboarding('${app.id}')">⏩ Skip Both</button>` : ''}
-                            </div>
+            manualInterventionHtml = `
+                <!-- MANUAL INTERVENTION BYPASS -->
+                <div class="section" style="border: 2px dashed var(--accent); background: rgba(0, 163, 224, 0.03); padding: 1.2rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px;">
+                        <div style="flex:1; min-width:250px;">
+                            <h3 style="color:var(--accent); font-size:1.15rem; margin:0; border-bottom:none; padding-bottom:0;">🛠️ Manual Intervention</h3>
+                            <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px; line-height:1.4;">Use these buttons to manually advance or reset the candidate.</p>
+                        </div>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            ${showNCBtn ? `<button class="btn btn-primary" style="margin:0; padding:8px 14px; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px;" onclick="manualBypassNameCheck('${app.id}')">⏩ Already Name Checked</button>` : ''}
+                            ${!showNCBtn ? `<button class="btn" style="margin:0; padding:8px 14px; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px; background:rgba(255,165,0,0.1); border:1px solid rgba(255,165,0,0.4); color:orange;" onclick="resubmitNameCheck('${app.id}')">🔄 Resubmit Name Check</button>` : ''}
+                            ${showIntvBtn ? `<button class="btn-action-alt" style="margin:0; padding:8px 14px; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px;" onclick="manualBypassInterview('${app.id}')">⏩ Already Interviewed</button>` : ''}
+                            ${(!showIntvBtn || matchedInterview) ? `<button class="btn" style="margin:0; padding:8px 14px; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px; background:rgba(255,165,0,0.1); border:1px solid rgba(255,165,0,0.4); color:orange;" onclick="triggerReinterview('${app.id}')">🔄 Reinterview</button>` : ''}
+                            ${(showNCBtn && showIntvBtn) ? `<button class="btn" style="margin:0; padding:8px 14px; font-size:0.85rem; display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:white;" onclick="manualBypassToOnboarding('${app.id}')">⏩ Skip Both</button>` : ''}
                         </div>
                     </div>
-                `;
-            }
+                </div>
+            `;
         }
 
         mainEl.innerHTML = `
@@ -1940,6 +1940,109 @@
         } catch (error) {
             console.error("Error setting manual bypass:", error);
             alert("Failed to perform manual bypass.");
+        }
+    };
+
+    window.resubmitNameCheck = async function(appId) {
+        if (!confirm("Are you sure you want to resubmit the name checks? This will reset the status to pending and re-send the name check emails.")) return;
+        try {
+            const appData = applicationsData.find(a => a.id === appId);
+            if (!appData) return;
+            const appRef = doc(db, 'NGUO New Applicants', appId);
+            
+            await updateDoc(appRef, {
+                nameChecksCompleted: false,
+                nameChecks: 'Pending',
+                nameChecksRequested: true,
+                onboardingActionStatus: ''
+            });
+            
+            const reviews = Object.values(appData.reviewDetails || {});
+            const proceedWithEmail = reviews.find(r => r.decision === 'Proceed' && r.nameCheckEmail);
+            const externalEmail  = proceedWithEmail?.nameCheckEmail || '';
+            const proceedWithInfo = reviews.find(r => r.decision === 'Proceed' && r.nameCheckInfo);
+            const additionalInfo = proceedWithInfo?.nameCheckInfo || '';
+
+            const baseParams = {
+                applicant_name:     appData.fullName || 'Unknown',
+                applicant_postcode: appData.personalDetails?.postcode || 'No Postcode',
+                additional_info:    additionalInfo || 'None'
+            };
+            
+            if (externalEmail) {
+                await Promise.allSettled([
+                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INTERNAL_NAME_CHECK, { 
+                        ...baseParams, 
+                        to_email: 'barry.dixon@next-gen.uk',
+                        cv_url: appData.cv?.url || '',
+                        cv_name: appData.cv?.filename || 'CV'
+                    }, { publicKey: EMAILJS_PUBLIC_KEY }),
+                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, { ...baseParams, to_email: externalEmail }, { publicKey: EMAILJS_PUBLIC_KEY })
+                ]);
+            }
+            alert("Name checks reset and emails sent.");
+        } catch (e) {
+            console.error(e);
+            alert("Error resubmitting name checks.");
+        }
+    };
+
+    window.triggerReinterview = async function(appId) {
+        if (!confirm("Are you sure you want to trigger a re-interview? This will email the applicant a link to book a new interview time.")) return;
+        try {
+            const appData = applicationsData.find(a => a.id === appId);
+            if (!appData) return;
+            const appRef = doc(db, 'NGUO New Applicants', appId);
+            
+            const email = appData.personalDetails?.email;
+            if (!email) return alert("No applicant email found!");
+            
+            await updateDoc(appRef, { scheduledInterviewEmailSent: true });
+            
+            await emailjs.send(EMAILJS_SERVICE_ID, 'template_gw0hkxr', {
+                to_email: email,
+                first_name: (appData.fullName || 'Applicant').split(' ')[0],
+                portal_link: 'https://ngu-recruitment-portal.vercel.app/FTL-interview-availability.html'
+            });
+            alert("Re-interview link sent to applicant.");
+        } catch(e) {
+            console.error(e);
+            alert("Error triggering re-interview.");
+        }
+    };
+
+    window.rescheduleInterview = async function(interviewId, appId) {
+        const newDate = prompt("Enter new Date (YYYY-MM-DD):");
+        if(!newDate) return;
+        const newTime = prompt("Enter new Time (e.g. 14:00):");
+        if(!newTime) return;
+        
+        try {
+            const intRef = doc(db, 'NGU Interview Times', interviewId);
+            const intSnap = await getDoc(intRef);
+            if(!intSnap.exists()) return alert("Interview record not found");
+            
+            await updateDoc(intRef, {
+                date: newDate,
+                time: newTime
+            });
+            
+            const appData = applicationsData.find(a => a.id === appId);
+            if(appData && appData.personalDetails?.email) {
+                const displayDate = new Date(newDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                await emailjs.send('service_dcdbhph', 'template_n1r23pg', {
+                    applicant_name: appData.fullName || 'Applicant',
+                    interview_date: displayDate,
+                    interview_time: newTime,
+                    meeting_link: intSnap.data().teamsLink || ''
+                });
+                alert("Rescheduled and email sent to applicant.");
+            } else {
+                alert("Rescheduled in database, but applicant email not found.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error rescheduling interview.");
         }
     };
 
