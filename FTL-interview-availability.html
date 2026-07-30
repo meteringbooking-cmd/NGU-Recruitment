@@ -608,11 +608,6 @@
 
         processAutomatedReminders(bookings);
 
-        bookings.sort((a, b) => {
-            if (a.date === b.date) return a.time.localeCompare(b.time);
-            return a.date.localeCompare(b.date);
-        });
-
         // Filter out completed interviews so they vanish from the active board
         const activeBookings = bookings.filter(b => !b.interviewCompleted);
 
@@ -621,9 +616,24 @@
             return;
         }
 
-        activeBookings.forEach(booking => {
+        const bookedInterviews = activeBookings.filter(b => b.status !== 'Available');
+        const unbookedSlots = activeBookings.filter(b => b.status === 'Available');
+
+        // New booked interviews on top
+        bookedInterviews.sort((a, b) => {
+            const tA = a.bookedAt ? (a.bookedAt.seconds || 0) : 0;
+            const tB = b.bookedAt ? (b.bookedAt.seconds || 0) : 0;
+            return tB - tA;
+        });
+
+        // Unbooked slots chronological
+        unbookedSlots.sort((a, b) => {
+            if (a.date === b.date) return a.time.localeCompare(b.time);
+            return a.date.localeCompare(b.date);
+        });
+
+        const renderCard = (booking, container) => {
             const displayDate = new Date(booking.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-            
             let actionHtml = '';
             let cardClass = 'interview-card';
 
@@ -660,9 +670,39 @@
             ${booking.applicantPostcode && booking.status !== 'Available' ? `<span style="font-size:0.75rem; color:var(--text-light); background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:4px; font-family:'DM Mono', monospace; letter-spacing:0.05em; margin-left:8px;">${booking.applicantPostcode}</span>` : ''}
         </div>
     </div>
-    <div class="card-action">${actionHtml}</div>
-`;
-            scheduleGrid.appendChild(card);
+    <div class="card-action">${actionHtml}</div>`;
+            container.appendChild(card);
+        };
+
+        if (bookedInterviews.length > 0) {
+            bookedInterviews.forEach(b => renderCard(b, scheduleGrid));
+        } else {
+            scheduleGrid.innerHTML = '<div class="empty-state" style="margin-bottom: 1rem;">No active booked interviews.</div>';
+        }
+
+        if (unbookedSlots.length > 0) {
+            const details = document.createElement('details');
+            details.style.marginTop = '1rem';
+            details.style.background = 'var(--bg-card)';
+            details.style.padding = '15px';
+            details.style.borderRadius = '10px';
+            details.style.border = '1px solid var(--border)';
+            
+            const summary = document.createElement('summary');
+            summary.style.cursor = 'pointer';
+            summary.style.fontWeight = 'bold';
+            summary.style.color = 'var(--text-light)';
+            summary.textContent = `Show Open Availability Slots (${unbookedSlots.length})`;
+            details.appendChild(summary);
+
+            const slotsContainer = document.createElement('div');
+            slotsContainer.className = 'schedule-grid';
+            slotsContainer.style.marginTop = '15px';
+            unbookedSlots.forEach(b => renderCard(b, slotsContainer));
+            
+            details.appendChild(slotsContainer);
+            scheduleGrid.appendChild(details);
+        }
         });
     });
 
