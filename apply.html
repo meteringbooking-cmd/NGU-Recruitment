@@ -706,7 +706,7 @@
                 <div class="section-num">10</div>
                 <div><h2>Declaration</h2></div>
             </div>
-            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.6; margin-bottom:1.6rem;">
+            <p id="declarationText" style="font-size:0.9rem; color:var(--text-muted); line-height:1.6; margin-bottom:1.6rem;">
                 I confirm that the information I have provided on this form is correct and I accept that providing deliberately false information could result in my dismissal.
             </p>
             <div class="form-grid" style="margin-bottom:1.2rem;">
@@ -790,7 +790,7 @@
     const storage = getStorage(app);
     const colRef  = collection(db, "NGUO New Applicants");
 
-    const EMAILJS_SERVICE_ID         = 'service_dcdbhph';
+    const EMAILJS_SERVICE_ID         = 'service_b3nh4bo';
     const EMAILJS_TEMPLATE_APPLICANT = 'template_9yts90w';
     const EMAILJS_TEMPLATE_INTERNAL  = 'template_rdg2zp9';
     const EMAILJS_PUBLIC_KEY         = 'ziLnha91scpGjFABh';
@@ -849,6 +849,15 @@
         const certSection = document.getElementById('certificatesSection');
         const pos = document.getElementById('position').value;
         const recruitmentAgency = getRadioValue('recruitmentAgency');
+        
+        // Update Declaration text based on Recruitment Agency
+        const declText = document.getElementById('declarationText');
+        if (recruitmentAgency === 'yes') {
+            declText.textContent = "I confirm that, to the best of my knowledge, the information I have provided on this referral form is accurate and complete. I understand that any information found to be deliberately false or misleading may result in the referral being withdrawn or deemed ineligible.";
+        } else {
+            declText.textContent = "I confirm that the information I have provided on this form is correct and I accept that providing deliberately false information could result in my dismissal.";
+        }
+
         if (recruitmentAgency === 'yes') {
             certSection.style.display = 'none';
         } else if (pos === 'Smart Meter Engineer' || pos === 'SMETs 2 installer') {
@@ -1219,7 +1228,7 @@
         const title           = document.getElementById('title').value;
         const forename        = document.getElementById('forename').value.trim();
         const surname         = document.getElementById('surname').value.trim();
-        const email           = document.getElementById('email').value.trim();
+        const email           = document.getElementById('email').value.trim().toLowerCase();
         const phone           = document.getElementById('phone').value.trim();
         const address         = document.getElementById('address').value.trim();
         const postcode        = document.getElementById('postcode').value.trim();
