@@ -807,7 +807,7 @@
             payrollSectionHtml = `
                 <div class="section" style="border-color: ${app.onboardingCompleted ? 'var(--border)' : 'var(--warning)'}">
                     <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:16px;">
-                        <h3 style="margin:0;">💳 Payroll, Bank & HMRC</h3>
+                        <h3 style="margin:0;">💳 Payroll & Bank Details</h3>
                         <button type="button" onclick="lockPayroll('${app.id}')" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; padding:4px 10px; border-radius:6px; font-size:0.8rem; cursor:pointer;">🔒 Lock Section</button>
                     </div>
                     <div class="grid-3" style="margin-bottom: 1.5rem;">
@@ -815,11 +815,6 @@
                         <div class="data-group"><div class="data-label">Sort Code</div><div class="data-value mono">${safeVal(bk.sortCode)}</div></div>
                         <div class="data-group"><div class="data-label">Account Number</div><div class="data-value mono">${safeVal(bk.accountNumber)}</div></div>
                         <div class="data-group"><div class="data-label">Bank Name</div><div class="data-value">${safeVal(bk.bankName)}</div></div>
-                    </div>
-                    
-                    <div style="border-top:1px dashed var(--border); padding-top:1.5rem;">
-                        <div class="data-label" style="color:var(--accent); margin-bottom:1rem;">HMRC Starter Profile</div>
-                        ${taxBlock}
                     </div>
                 </div>`;
         } else {
@@ -857,11 +852,39 @@
             <div class="section">
                 <h3>📁 Uploaded Identification & Documents</h3>
                 ${docsHtml}
+                <div style="border-top:1px dashed var(--border); margin-top:1.5rem; padding-top:1.5rem;">
+                    <div class="data-label" style="color:var(--accent); margin-bottom:1rem;">Tax & HMRC Documents</div>
+                    ${taxBlock}
+                </div>
             </div>
 
             <div class="section">
                 <h3>📄 Application Certificates & Licences</h3>
                 ${certsHtml}
+            </div>
+
+            <div class="section">
+                <h3>💳 Licences & Registrations</h3>
+                <div class="grid-2">
+                    <div class="data-group">
+                        <div class="data-label">Driving Licence</div>
+                        <div class="data-value">
+                            ${c.drivinglicence?.confirmed ? `Confirmed<br><span style="font-size:0.85rem; color:var(--text-muted)">Expires: ${c.drivinglicence.expiry || 'N/A'}</span>` : '<span style="color:var(--text-muted)">Not provided</span>'}
+                        </div>
+                    </div>
+                    <div class="data-group">
+                        <div class="data-label">EUSR Card</div>
+                        <div class="data-value">
+                            ${c.eusr?.has ? `Registered<br><span style="font-size:0.85rem; color:var(--text-muted)">No: ${c.eusr.number || 'N/A'}</span>` : '<span style="color:var(--text-muted)">Not provided</span>'}
+                        </div>
+                    </div>
+                    <div class="data-group">
+                        <div class="data-label">Gas Safe Registration</div>
+                        <div class="data-value">
+                            ${c.gassafe?.number || 'Not provided'}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="section" style="border-color: ${app.onboardingCompleted ? 'var(--border)' : 'var(--warning)'}">
@@ -874,7 +897,7 @@
                     <div class="data-group"><div class="data-label">Personal Email</div><div class="data-value">${safeVal(pNew.personalEmail || pOriginal.email)}</div></div>
                     <div class="data-group"><div class="data-label">Phone</div><div class="data-value">${safeVal(pNew.phone || pOriginal.phone)}</div></div>
                     <div class="data-group" style="grid-column: 1 / span 2;"><div class="data-label">Home Address</div><div class="data-value">${safeVal(pNew.address || pOriginal.address)}, ${safeVal(pNew.postcode || pOriginal.postcode)}</div></div>
-                    <div class="data-group"><div class="data-label">Time at Address</div><div class="data-value">${safeVal(pNew.timeAtAddress || pOriginal.timeAtAddress)}</div></div>
+                    <div class="data-group"><div class="data-label">Time at Address (Moved In)</div><div class="data-value">${(function(d){ if(!d) return '-'; if(/^\\d{4}-\\d{2}-\\d{2}$/.test(d)) return new Date(d).toLocaleDateString('en-GB', {day:'2-digit', month:'2-digit', year:'numeric'}); return d; })(pNew.timeAtAddress || pOriginal.timeAtAddress)}</div></div>
                     <div class="data-group" style="grid-column: 1 / -1;"><div class="data-label">Previous Address History</div><div class="data-value" style="white-space:pre-wrap;">${safeVal(pNew.addressHistory)}</div></div>
                 </div>
                 
