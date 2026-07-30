@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>NGU — Book Your Interview</title>
+    <title>NGU — Interview Schedule & Packs (FTL)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
     
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
+
 
     <style>
         :root {
@@ -21,129 +23,500 @@
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
             font-family: 'Work Sans', sans-serif;
-            background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%);
-            color: var(--text-light); min-height: 100vh; padding: 2rem 1.5rem;
-            display: flex; flex-direction: column; align-items: center;
-        }
-        body::before {
-            content: ''; position: fixed; inset: 0;
-            background: radial-gradient(circle at 15% 20%, rgba(0,163,224,0.08) 0%, transparent 55%),
-                        radial-gradient(circle at 85% 75%, rgba(0,94,184,0.07) 0%, transparent 55%);
-            pointer-events: none; z-index: -1;
+            background: var(--bg-dark); color: var(--text-light);
+            min-height: 100vh; padding: 20px;
         }
         
-        .container { width: 100%; max-width: 600px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; box-shadow: 0 8px 25px rgba(0,0,0,0.3); margin-top: 2rem; }
-        .logo { max-height: 60px; display: block; margin: 0 auto 1.5rem; }
-        .page-header { text-align: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
-        .page-header h1 { font-size: 1.8rem; font-weight: 800; color: var(--accent); margin-bottom: 0.5rem; }
-        .page-header p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; }
+        .main-container { max-width: 1000px; margin: 0 auto; }
 
-        .form-group { margin-bottom: 1.5rem; }
-        label { display: block; font-weight: 600; font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        
-        input[type="date"], input[type="text"], input[type="email"] {
-            width: 100%; padding: 0.9rem 1rem; background: var(--bg-input);
-            border: 2px solid var(--border); border-radius: 10px; color: var(--text-light);
-            font-size: 1rem; font-family: inherit; transition: all 0.2s; outline: none;
+        .page-header {
+            background-color: var(--bg-card); padding: 20px 30px; border-radius: 12px;
+            border: 1px solid var(--border); margin-bottom: 30px; display: flex;
+            justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            flex-wrap: wrap; gap: 15px;
         }
-        input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,163,224,0.15); }
-        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.8); cursor: pointer; }
 
-        .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 1rem; }
-        
-        .slot-btn {
-            background: var(--bg-input); border: 2px solid var(--border);
-            color: var(--text-light); padding: 0.8rem; border-radius: 8px;
-            font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
-            font-family: 'DM Mono', monospace;
+        .header-brand { display: flex; align-items: center; gap: 15px; }
+        .logo { height: 40px; width: auto; }
+        .page-header h1 { font-size: 1.4em; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.1em; margin: 0; }
+
+        .btn-link {
+            border-radius: 4px; cursor: pointer; font-size: 0.85em; transition: all 0.2s;
+            text-decoration: none; display: inline-flex; align-items: center; font-weight: 600;
+            border: 1px solid var(--border); background-color: var(--bg-input); color: var(--text-light); padding: 8px 15px;
         }
-        .slot-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: rgba(0,163,224,0.1); }
-        .slot-btn:disabled { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.05); color: var(--text-muted); cursor: not-allowed; text-decoration: line-through; }
-        
-        .status-msg { text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem; font-style: italic; }
+        .btn-link:hover { background-color: #38444d; border-color: #4f5b66; }
 
-        /* Modal Styles */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;}
-        .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease;}
-        .modal-content { background: var(--bg-card); width: 100%; max-width: 400px; border-radius: 16px; border: 1px solid var(--border); padding: 2.5rem; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; }
-        .modal-title { font-size: 1.4rem; color: var(--accent); font-weight: 700; margin-bottom: 0.5rem; }
-        .modal-subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+        .schedule-grid { display: flex; flex-direction: column; gap: 15px; }
+
+        .interview-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-left: 5px solid var(--warning); border-radius: 10px;
+            padding: 20px; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: all 0.2s;
+            flex-wrap: wrap; gap: 15px;
+        }
+        .interview-card.claimed { border-left-color: var(--accent); }
+
+        .card-info { display: flex; flex-direction: column; gap: 5px; }
+        .card-date { font-family: 'DM Mono', monospace; font-size: 1.1rem; color: #6ee7b7; font-weight: 600; }
+        .card-name { font-size: 1.3rem; font-weight: 700; color: var(--text-light); }
+        .card-booked-at { font-size: 0.8rem; color: var(--text-muted); font-style: italic; }
+
+        .card-action { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
         
-        .btn { padding: 0.85rem 1.5rem; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; width: 100%; margin-top: 1rem; }
+        .btn { padding: 0.7rem 1.5rem; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; border: none; font-family: inherit; }
+        .btn-claim { background: rgba(0,163,224,0.1); border: 1px solid rgba(0,163,224,0.4); color: var(--accent); }
+        .btn-claim:hover { background: rgba(0,163,224,0.2); }
         .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; }
         .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.35); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--text-light); margin-top: 0.5rem; }
-        .btn-cancel:hover { background: rgba(255,255,255,0.05); }
-
-        #successScreen { display: none; text-align: center; padding: 3rem 1rem; }
-        .success-icon { font-size: 4rem; margin-bottom: 1rem; }
         
+        .claimed-badge { background: rgba(0,163,224,0.1); border: 1px solid rgba(0,163,224,0.3); color: var(--accent); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); font-size: 1.1rem; }
+
+        /* INTERVIEW MODAL STYLES */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;}
+        .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease;}
+        .modal-content { background: var(--bg-card); width: 100%; max-width: 900px; max-height: 90vh; overflow-y: auto; border-radius: 12px; border: 1px solid var(--border); padding: 2rem; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+        .modal-title { font-size: 1.5rem; color: var(--accent); font-weight: 700; }
+        .close-btn { background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
+        .close-btn:hover { color: var(--error); }
+
+        .candidate-header { background: rgba(0,163,224,0.05); border: 1px solid rgba(0,163,224,0.2); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.95rem; }
+        .candidate-header div strong { color: var(--text-muted); display: inline-block; width: 140px; }
+
+        .type-selector { margin-bottom: 2rem; background: var(--bg-input); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+        .type-selector select { padding: 0.8rem; border-radius: 8px; border: 1px solid var(--accent); background: var(--bg-dark); color: white; font-size: 1rem; width: 100%; max-width: 350px; outline: none; }
+
+        .interview-pack { display: none; }
+        .interview-pack.active { display: block; animation: fadeIn 0.3s ease; }
+
+        .pack-section { border: 1px solid var(--border); background: var(--bg-input); border-radius: 8px; margin-bottom: 1.5rem; overflow: hidden; }
+        .pack-section-header { background: rgba(0,0,0,0.2); padding: 1rem 1.5rem; font-weight: 700; color: var(--accent); border-bottom: 1px solid var(--border); font-size: 1.1rem; }
+        .pack-section-body { padding: 1.5rem; }
+        
+        .prompt-list { margin-left: 1.5rem; color: var(--text-light); margin-bottom: 1rem; font-size: 0.95rem; line-height: 1.5; }
+        .prompt-list li { margin-bottom: 0.4rem; }
+        
+        textarea, select, input[type="text"] { width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-dark); color: white; font-family: inherit; font-size: 0.95rem; outline: none; margin-bottom: 1rem; resize: vertical;}
+        textarea:focus, select:focus, input:focus { border-color: var(--accent); }
+
+        .score-grid { display: grid; grid-template-columns: 2fr 1fr 3fr; gap: 10px; align-items: center; margin-bottom: 10px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 6px; }
+        .score-grid label { font-weight: 600; font-size: 0.9rem; }
+        .score-grid input[type="number"] { width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-dark); color: white; text-align: center; font-weight: bold;}
+        .score-grid input[type="text"] { margin-bottom: 0; padding: 0.6rem; }
+        .section-total { text-align: right; font-weight: 700; color: var(--accent); font-size: 1.1rem; margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 10px;}
+        
+        .grand-total { text-align: center; font-size: 1.8rem; font-weight: 800; color: #6ee7b7; background: rgba(16,185,129,0.1); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3); margin-bottom: 1.5rem; }
+
+        /* Phases */
+        .phase { display: none; }
+        .phase.active { display: block; animation: fadeIn 0.3s ease; }
+
         @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
     </style>
 </head>
 <body>
 
-    <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
-    
-    <div class="container" id="bookingContainer">
-        <div class="page-header">
-            <h1>Interview Booking</h1>
-            <p>Select an available date and time below to schedule your interview with Next Generation Utilities.</p>
+<div class="main-container">
+    <header class="page-header">
+        <a href="homepage.html" class="btn-link">← Hub</a>
+        <div class="header-brand">
+            <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
+            <h1>Interview Schedule</h1>
         </div>
-
-        <div class="form-group">
-            <label>1. Select a Date</label>
-            <input type="date" id="datePicker">
+        <div style="font-size: 0.9rem; color: var(--text-muted);">
+            Logged in: <strong id="displayName" style="color: white;"></strong>
         </div>
+    </header>
 
-        <div class="form-group" id="slotsWrapper" style="display: none;">
-            <label>2. Select a Time Slot</label>
-            <div class="slots-grid" id="slotsGrid"></div>
-            <div id="loadingStatus" class="status-msg"></div>
-        </div>
-    </div>
-
-    <div class="container" id="successScreen">
-        <div class="success-icon">✅</div>
-        <h1 style="color:var(--success); margin-bottom:1rem;">Booking Confirmed!</h1>
-        <p style="color:var(--text-muted); font-size:1.05rem; line-height:1.6;" id="successMsg"></p>
-    </div>
-
-    <!-- BOOKING CONFIRMATION MODAL (Cleaned Up) -->
-    <div class="modal-overlay" id="bookingModal">
-        <div class="modal-content">
-            <div class="modal-title">Confirm Booking</div>
-            <div class="modal-subtitle" id="modalTimeDisplay"></div>
-            
-            <input type="hidden" id="selectedDate">
-            <input type="hidden" id="selectedTime">
-            <input type="hidden" id="selectedDocId">
-
-            <div style="text-align: left; margin-bottom: 1rem;">
-                <label>Your Full Name <span style="color:var(--accent);">*</span></label>
-                <input type="text" id="applicantName" placeholder="e.g. Jane Doe">
+    <div style="background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); padding: 1.5rem; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.2rem; color: var(--accent); margin-bottom: 1rem;">🗓 Add Interview Availability</h2>
+        <div style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; flex-direction: column;">
+            <div style="display:flex; gap: 20px; width: 100%; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 250px;">
+                    <label style="display:block; margin-bottom:0.5rem; color:var(--text-light);">Your Name</label>
+                    <input type="text" id="availName" placeholder="e.g. John Doe" style="width:100%; padding:0.8rem; background:var(--bg-dark); color:white; border:1px solid var(--border); border-radius:6px; outline:none; margin-bottom: 1rem;">
+                </div>
+                <div style="flex: 1; min-width: 250px;">
+                    <label style="display:block; margin-bottom:0.5rem; color:var(--text-light);">Week Commencing (Select any date, it will snap to Monday)</label>
+                    <input type="date" id="availDate" style="width:100%; padding:0.8rem; background:var(--bg-dark); color:white; border:1px solid var(--border); border-radius:6px; outline:none;">
+                </div>
             </div>
             
-            <div style="text-align: left; margin-bottom: 1.5rem;">
-                <label>Email Address <span style="color:var(--accent);">*</span></label>
-                <input type="email" id="applicantEmail" placeholder="To receive your confirmation">
+            <div style="width: 100%; overflow-x: auto; margin-top: 1rem;">
+                <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.95rem;">
+                    <thead>
+                        <tr style="background: rgba(0,0,0,0.2);">
+                            <th style="padding: 10px; border: 1px solid var(--border); color: var(--accent);">Time</th>
+                            <th style="padding: 10px; border: 1px solid var(--border);">Mon <br><span id="col-date-0" style="font-size:0.85em; font-weight:normal; color:var(--text-muted);">-</span></th>
+                            <th style="padding: 10px; border: 1px solid var(--border);">Tue <br><span id="col-date-1" style="font-size:0.85em; font-weight:normal; color:var(--text-muted);">-</span></th>
+                            <th style="padding: 10px; border: 1px solid var(--border);">Wed <br><span id="col-date-2" style="font-size:0.85em; font-weight:normal; color:var(--text-muted);">-</span></th>
+                            <th style="padding: 10px; border: 1px solid var(--border);">Thu <br><span id="col-date-3" style="font-size:0.85em; font-weight:normal; color:var(--text-muted);">-</span></th>
+                            <th style="padding: 10px; border: 1px solid var(--border);">Fri <br><span id="col-date-4" style="font-size:0.85em; font-weight:normal; color:var(--text-muted);">-</span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="availTimesGrid">
+                        <!-- Rows generated by JS -->
+                    </tbody>
+                </table>
             </div>
-
-            <button class="btn btn-primary" id="confirmBtn" onclick="submitBooking()">Confirm Interview</button>
-            <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+        </div>
+        <div style="text-align: right; margin-top: 1.5rem;">
+            <button onclick="submitAvailability()" style="background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem;">+ Submit Open Slots</button>
         </div>
     </div>
+
+    <div id="scheduleGrid" class="schedule-grid">
+        <div class="empty-state">⏳ Loading schedule...</div>
+    </div>
+</div>
+
+<!-- MASSIVE INTERVIEW MODAL -->
+<div class="modal-overlay" id="interviewModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">Live Interview Pack</div>
+            <button class="close-btn" onclick="closeInterviewModal()">✕</button>
+        </div>
+        
+        <input type="hidden" id="activeDocId">
+
+        <div class="candidate-header">
+            <div><strong>Candidate Name:</strong> <span id="hdrName"></span></div>
+            <div><strong>Date & Time:</strong> <span id="hdrDateTime"></span></div>
+            <div><strong>Interviewer:</strong> <span id="hdrInterviewer"></span></div>
+            <div><strong>Position:</strong> <span id="hdrPosition" style="color: var(--accent); font-weight: 700;">Select Pack Below</span></div>
+        </div>
+
+        <div class="type-selector">
+            <label style="display:block; margin-bottom:0.5rem; font-weight:bold; color:var(--text-muted);">Select Interview Pack Type:</label>
+            <select id="interviewTypeSelector" onchange="toggleInterviewType()">
+                <option value="" disabled selected>-- Select Pack --</option>
+                <option value="engineer">Smart Meter Engineer Pack</option>
+                <option value="office">Office Staff Pack</option>
+            </select>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- ENGINEER PACK -->
+        <!-- ============================================== -->
+        <div id="engineerPack" class="interview-pack">
+            
+            <!-- PHASE 1: THE INTERVIEW -->
+            <div id="engPhase1" class="phase">
+                <div style="text-align: center; margin-bottom: 1.5rem; color: var(--accent); font-weight: bold;">PHASE 1: INTERVIEW DISCUSSION</div>
+                
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 1: Background & Career History</div>
+                    <div class="pack-section-body">
+                        <ul class="prompt-list">
+                            <li>Tell us about your background and recent roles.</li>
+                            <li>What smart metering contracts or utility providers have you worked on?</li>
+                            <li>Why are you looking to move roles?</li>
+                            <li>What interests you about joining NGU?</li>
+                        </ul>
+                        <textarea id="eng_notes_1" rows="3" placeholder="Discussion notes..."></textarea>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 2: Qualifications & Technical Competence</div>
+                    <div class="pack-section-body">
+                        <ul class="prompt-list">
+                            <li>What qualifications, registrations, or accreditations do you hold?</li>
+                            <li>Are all certifications current and in date?</li>
+                            <li>Do you hold any additional training (EV, Solar, Utilities etc.)?</li>
+                            <li>What does a productive and compliant working day look like to you?</li>
+                            <li>How many exchanges/jobs would you expect to complete while maintaining quality?</li>
+                        </ul>
+                        <textarea id="eng_notes_2" rows="3" placeholder="Discussion notes..."></textarea>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 3: Safety & Problem Solving</div>
+                    <div class="pack-section-body">
+                        <ul class="prompt-list">
+                            <li>How do you balance productivity, customer service, and compliance?</li>
+                            <li>Describe a time you solved a technical issue independently.</li>
+                            <li>What would you do if you identified a safety risk at a property?</li>
+                            <li>How would you manage a job overrunning with a frustrated customer?</li>
+                        </ul>
+                        <textarea id="eng_notes_3" rows="3" placeholder="Discussion notes..."></textarea>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 4: Customer Service & Behaviour</div>
+                    <div class="pack-section-body">
+                        <ul class="prompt-list">
+                            <li>Tell us about a difficult customer situation and how you handled it.</li>
+                            <li>How do you ensure each customer receives a positive experience?</li>
+                            <li>How do you work under pressure or changing schedules?</li>
+                        </ul>
+                        <textarea id="eng_notes_4" rows="3" placeholder="Discussion notes..."></textarea>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 5: Reliability & Availability</div>
+                    <div class="pack-section-body">
+                        <ul class="prompt-list">
+                            <li>This role requires flexibility. How do you manage changing workloads?</li>
+                            <li>We operate a 1 in 6 callout rota. Any issues with this?</li>
+                            <li>Is there anything affecting attendance, travel, or scheduling?</li>
+                            <li>Do you have any pre-booked holidays in the next 6 months?</li>
+                            <li>How soon could you start?</li>
+                        </ul>
+                        <textarea id="eng_notes_5" rows="3" placeholder="Discussion notes..."></textarea>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 6: Candidate Questions</div>
+                    <div class="pack-section-body">
+                        <label style="font-weight: normal; color: var(--text-muted);">Record any questions raised by the candidate.</label>
+                        <textarea id="eng_questions" rows="3" placeholder="Candidate's questions..."></textarea>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="proceedToPhase('engPhase1', 'engPhase2')" style="width: 100%;">Proceed to Scorecard</button>
+            </div>
+
+            <!-- PHASE 2: THE SCORECARD -->
+            <div id="engPhase2" class="phase">
+                <div style="text-align: center; margin-bottom: 1rem; color: var(--success); font-weight: bold;">PHASE 2: INTERVIEW SCORECARD</div>
+                <div style="background: rgba(245,158,11,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #fcd34d; font-size: 0.9rem; border: 1px solid rgba(245,158,11,0.3); text-align: center;">
+                    <strong>Scoring Guide:</strong> 1 = Poor | 2 = Below Standard | 3 = Acceptable | 4 = Strong | 5 = Excellent
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 1: Experience & Background</div>
+                    <div class="pack-section-body">
+                        <div class="score-grid"><label>Relevant smart metering experience</label><input type="number" min="1" max="5" class="eng-score eng-s1" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Previous contracts / employers</label><input type="number" min="1" max="5" class="eng-score eng-s1" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Career stability / reasons for leaving</label><input type="number" min="1" max="5" class="eng-score eng-s1" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Industry knowledge</label><input type="number" min="1" max="5" class="eng-score eng-s1" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="section-total">Section Total: <span id="eng_tot_1">0</span> / 20</div>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 2: Qualifications & Compliance</div>
+                    <div class="pack-section-body">
+                        <div class="score-grid"><label>Core qualifications held</label><input type="number" min="1" max="5" class="eng-score eng-s2" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Additional accreditations (Solar / EV etc.)</label><input type="number" min="1" max="5" class="eng-score eng-s2" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Certifications in date</label><input type="number" min="1" max="5" class="eng-score eng-s2" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Compliance suitability</label><input type="number" min="1" max="5" class="eng-score eng-s2" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="section-total">Section Total: <span id="eng_tot_2">0</span> / 20</div>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 3: Motivation & Company Fit</div>
+                    <div class="pack-section-body">
+                        <div class="score-grid"><label>Knowledge of NGU</label><input type="number" min="1" max="5" class="eng-score eng-s3" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Reason for applying</label><input type="number" min="1" max="5" class="eng-score eng-s3" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Career motivation</label><input type="number" min="1" max="5" class="eng-score eng-s3" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Alignment with company values</label><input type="number" min="1" max="5" class="eng-score eng-s3" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="section-total">Section Total: <span id="eng_tot_3">0</span> / 20</div>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 4: Performance & Productivity</div>
+                    <div class="pack-section-body">
+                        <div class="score-grid"><label>Understanding of successful day / targets</label><input type="number" min="1" max="5" class="eng-score eng-s4" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Productivity mindset</label><input type="number" min="1" max="5" class="eng-score eng-s4" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Quality awareness</label><input type="number" min="1" max="5" class="eng-score eng-s4" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Safety focus</label><input type="number" min="1" max="5" class="eng-score eng-s4" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="section-total">Section Total: <span id="eng_tot_4">0</span> / 20</div>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 5: Customer Service & Behaviour</div>
+                    <div class="pack-section-body">
+                        <div class="score-grid"><label>Communication skills</label><input type="number" min="1" max="5" class="eng-score eng-s5" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Handling difficult customers</label><input type="number" min="1" max="5" class="eng-score eng-s5" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Professionalism</label><input type="number" min="1" max="5" class="eng-score eng-s5" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Customer-first mindset</label><input type="number" min="1" max="5" class="eng-score eng-s5" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="section-total">Section Total: <span id="eng_tot_5">0</span> / 20</div>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 6: Reliability & Flexibility</div>
+                    <div class="pack-section-body">
+                        <div class="score-grid"><label>Flexibility with working hours</label><input type="number" min="1" max="5" class="eng-score eng-s6" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Callout rota suitability</label><input type="number" min="1" max="5" class="eng-score eng-s6" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Attendance reliability</label><input type="number" min="1" max="5" class="eng-score eng-s6" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="score-grid"><label>Adaptability</label><input type="number" min="1" max="5" class="eng-score eng-s6" placeholder="1-5"><input type="text" placeholder="Comments" class="eng-cmt"></div>
+                        <div class="section-total">Section Total: <span id="eng_tot_6">0</span> / 20</div>
+                    </div>
+                </div>
+
+                <div class="grand-total">OVERALL SCORE: <span id="eng_grand_total">0</span> / 120</div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Final Assessment</div>
+                    <div class="pack-section-body">
+                        <label>Key Strengths</label><textarea id="eng_strengths" rows="3"></textarea>
+                        <label>Concerns / Risks</label><textarea id="eng_concerns" rows="3"></textarea>
+                        <label>Final Comments</label><textarea id="eng_add_comments" rows="2"></textarea>
+                        <label>Hiring Recommendation</label>
+                        <select id="eng_recommendation">
+                            <option value="" disabled selected>Select decision...</option>
+                            <option value="Strong Hire">Strong Hire</option>
+                            <option value="Hire">Proceed to Offer (Hire)</option>
+                            <option value="Hold">Hold / Second Review</option>
+                            <option value="Do Not Proceed">Do Not Proceed</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-claim" onclick="proceedToPhase('engPhase2', 'engPhase1')" style="flex: 1;">Back to Notes</button>
+                    <button class="btn btn-primary" onclick="submitInterviewData('engineer')" style="flex: 2;">Complete & Save Interview</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- OFFICE PACK -->
+        <!-- ============================================== -->
+        <div id="officePack" class="interview-pack">
+            
+            <!-- PHASE 1: THE INTERVIEW -->
+            <div id="offPhase1" class="phase">
+                <div style="text-align: center; margin-bottom: 1.5rem; color: var(--accent); font-weight: bold;">PHASE 1: INTERVIEW DISCUSSION</div>
+                
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 1: Background & Career History</div>
+                    <div class="pack-section-body">
+                        <ul class="prompt-list">
+                            <li>Tell us about your background and recent roles.</li>
+                            <li>What attracted you to this opportunity with NGU?</li>
+                            <li>Why are you looking to move roles?</li>
+                            <li>What are you looking for in your next employer?</li>
+                        </ul>
+                        <textarea id="off_notes_1" rows="3" placeholder="Discussion notes..."></textarea>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 2: Skills & Systems Competence</div>
+                    <div class="pack-section-body">
+                        <ul class="prompt-list">
+                            <li>Tell us about your experience in a busy office environment.</li>
+                            <li>What systems, software, or CRM platforms have you used?</li>
+                            <li>How do you prioritise multiple tasks and deadlines?</li>
+                            <li>Describe a time you improved a process or solved an admin problem.</li>
+                            <li>How do you ensure accuracy when handling data or paperwork?</li>
+                        </ul>
+                        <textarea id="off_notes_2" rows="3" placeholder="Discussion notes..."></textarea>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 3: Customer Service & Behaviour</div>
+                    <div class="pack-section-body">
+                        <ul class="prompt-list">
+                            <li>Tell us about a time you dealt with a difficult customer or colleague.</li>
+                            <li>How do you communicate with different departments or stakeholders?</li>
+                            <li>How do you handle pressure during busy periods?</li>
+                            <li>What does excellent customer service mean to you?</li>
+                        </ul>
+                        <textarea id="off_notes_3" rows="3" placeholder="Discussion notes..."></textarea>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 4: Teamwork & Reliability</div>
+                    <div class="pack-section-body">
+                        <ul class="prompt-list">
+                            <li>Describe your approach to working as part of a team.</li>
+                            <li>How do you stay organised and manage your workload?</li>
+                            <li>Is there anything affecting attendance, punctuality, or flexibility?</li>
+                            <li>Do you have any pre-booked holidays in the next 6 months?</li>
+                            <li>How soon could you start?</li>
+                        </ul>
+                        <textarea id="off_notes_4" rows="3" placeholder="Discussion notes..."></textarea>
+                    </div>
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Section 5: Candidate Questions</div>
+                    <div class="pack-section-body">
+                        <label style="font-weight: normal; color: var(--text-muted);">Record any questions raised by the candidate.</label>
+                        <textarea id="off_questions" rows="3" placeholder="Candidate's questions..."></textarea>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" onclick="proceedToPhase('offPhase1', 'offPhase2')" style="width: 100%;">Proceed to Scorecard</button>
+            </div>
+
+            <!-- PHASE 2: THE SCORECARD -->
+            <div id="offPhase2" class="phase">
+                <div style="text-align: center; margin-bottom: 1rem; color: var(--success); font-weight: bold;">PHASE 2: INTERVIEW SCORECARD</div>
+                <div style="background: rgba(245,158,11,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #fcd34d; font-size: 0.9rem; border: 1px solid rgba(245,158,11,0.3); text-align: center;">
+                    <strong>Scoring Guide:</strong> 1 = Poor | 2 = Below Standard | 3 = Acceptable | 4 = Strong | 5 = Excellent
+                </div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Scoring Matrix</div>
+                    <div class="pack-section-body">
+                        <div class="score-grid"><label>Relevant Experience</label><input type="number" min="1" max="5" class="off-score" placeholder="1-5"><input type="text" placeholder="Comments" class="off-cmt"></div>
+                        <div class="score-grid"><label>Systems / Technical Skills</label><input type="number" min="1" max="5" class="off-score" placeholder="1-5"><input type="text" placeholder="Comments" class="off-cmt"></div>
+                        <div class="score-grid"><label>Communication</label><input type="number" min="1" max="5" class="off-score" placeholder="1-5"><input type="text" placeholder="Comments" class="off-cmt"></div>
+                        <div class="score-grid"><label>Accuracy / Attention to Detail</label><input type="number" min="1" max="5" class="off-score" placeholder="1-5"><input type="text" placeholder="Comments" class="off-cmt"></div>
+                        <div class="score-grid"><label>Teamwork</label><input type="number" min="1" max="5" class="off-score" placeholder="1-5"><input type="text" placeholder="Comments" class="off-cmt"></div>
+                        <div class="score-grid"><label>Motivation</label><input type="number" min="1" max="5" class="off-score" placeholder="1-5"><input type="text" placeholder="Comments" class="off-cmt"></div>
+                    </div>
+                </div>
+
+                <div class="grand-total">OVERALL SCORE: <span id="off_grand_total">0</span> / 30</div>
+
+                <div class="pack-section">
+                    <div class="pack-section-header">Final Assessment</div>
+                    <div class="pack-section-body">
+                        <label>Risks / Concerns</label><textarea id="off_concerns" rows="3"></textarea>
+                        <label>Additional Comments</label><textarea id="off_add_comments" rows="2"></textarea>
+                        <label>Final Recommendation</label>
+                        <select id="off_recommendation">
+                            <option value="" disabled selected>Select decision...</option>
+                            <option value="Strong Hire">Strong Hire</option>
+                            <option value="Proceed to Offer">Proceed to Offer</option>
+                            <option value="Hold">Hold / Further Review</option>
+                            <option value="Do Not Proceed">Do Not Proceed</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-claim" onclick="proceedToPhase('offPhase2', 'offPhase1')" style="flex: 1;">Back to Notes</button>
+                    <button class="btn btn-primary" onclick="submitInterviewData('office')" style="flex: 2;">Complete & Save Interview</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, where, getDocs, doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, updateDoc, where, addDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     // --- EMAILJS CONFIG ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
     const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
-    const EMAILJS_FTL_TEMPLATE = 'template_5cpb2mc';
-    const EMAILJS_APPLICANT_CONFIRM = 'template_xf6p7vc'; 
+    const EMAILJS_FTL_REMINDER = 'template_v410t15';
+    const EMAILJS_APP_REMINDER = 'template_n1r23pg';
+    const EMAILJS_INTERVIEW_COMPLETED = 'template_5ma65oo';
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
     const firebaseConfig = {
@@ -157,213 +530,458 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const storedName = localStorage.getItem('ngu_ftl_name') || localStorage.getItem('ngu_portal_username') || 'Guest';
+    document.getElementById('displayName').textContent = storedName;
+    const scheduleGrid = document.getElementById('scheduleGrid');
 
-    const datePicker = document.getElementById('datePicker');
-    const slotsWrapper = document.getElementById('slotsWrapper');
-    const slotsGrid = document.getElementById('slotsGrid');
-    const loadingStatus = document.getElementById('loadingStatus');
+    // Init Availability Matrix Rows
+    const availGrid = document.getElementById('availTimesGrid');
+    const hours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+    
+    let gridHtml = '';
+    hours.forEach(h => {
+        const timeStr = `${String(h).padStart(2, '0')}:00`;
+        const displayStr = h === 12 ? '12pm' : (h > 12 ? `${h-12}pm` : `${h}am`);
+        
+        gridHtml += `<tr style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);">`;
+        gridHtml += `<td style="padding:10px; font-weight:bold; color:var(--text-light); border:1px solid var(--border);">${displayStr}</td>`;
+        
+        for (let day = 0; day < 5; day++) {
+            gridHtml += `<td style="padding:10px; border:1px solid var(--border); text-align:center;">
+                <input type="checkbox" class="avail-chk" data-time="${timeStr}" data-dayindex="${day}" style="transform:scale(1.4); cursor:pointer;">
+            </td>`;
+        }
+        gridHtml += `</tr>`;
+    });
+    availGrid.innerHTML = gridHtml;
 
-    // Restrict past dates
+    const availDateInput = document.getElementById('availDate');
+    availDateInput.setAttribute('min', new Date().toISOString().split('T')[0]);
+    
+    availDateInput.addEventListener('change', (e) => {
+        if (!e.target.value) return;
+        
+        let selectedDate = new Date(e.target.value);
+        let dayOfWeek = selectedDate.getDay();
+        
+        // Snap to Monday
+        let diffToMonday = dayOfWeek === 0 ? 1 : -(dayOfWeek - 1);
+        selectedDate.setDate(selectedDate.getDate() + diffToMonday);
+        
+        e.target.value = selectedDate.toISOString().split('T')[0];
+        
+        // Populate the column headers
+        for (let i = 0; i < 5; i++) {
+            let colDate = new Date(selectedDate);
+            colDate.setDate(selectedDate.getDate() + i);
+            const dateStr = colDate.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+            const isoStr = colDate.toISOString().split('T')[0];
+            
+            const colSpan = document.getElementById(`col-date-${i}`);
+            colSpan.textContent = dateStr;
+            colSpan.setAttribute('data-isodate', isoStr);
+        }
+    });
+    if (storedName && storedName !== 'Guest') {
+        document.getElementById('availName').value = storedName;
+    }
+
+    // Load active interviews
     const today = new Date().toISOString().split('T')[0];
-    datePicker.setAttribute('min', today);
+    const q = query(collection(db, "NGU Interview Times"), where("date", ">=", today));
 
-    datePicker.addEventListener('change', async (e) => {
-        const selectedDate = e.target.value;
-        if (!selectedDate) return;
+    onSnapshot(q, (snapshot) => {
+        scheduleGrid.innerHTML = '';
+        
+        const bookings = [];
+        snapshot.forEach(doc => {
+            bookings.push({ id: doc.id, ...doc.data() });
+        });
 
-        // Block Weekends
-        const day = new Date(selectedDate).getDay();
-        if (day === 0 || day === 6) {
-            alert("Please select a weekday (Monday - Friday).");
-            e.target.value = '';
-            slotsWrapper.style.display = 'none';
+        processAutomatedReminders(bookings);
+
+        bookings.sort((a, b) => {
+            if (a.date === b.date) return a.time.localeCompare(b.time);
+            return a.date.localeCompare(b.date);
+        });
+
+        // Filter out completed interviews so they vanish from the active board
+        const activeBookings = bookings.filter(b => !b.interviewCompleted);
+
+        if (activeBookings.length === 0) {
+            scheduleGrid.innerHTML = '<div class="empty-state">There are currently no active upcoming interviews.</div>';
             return;
         }
 
-        slotsWrapper.style.display = 'block';
-        slotsGrid.innerHTML = '';
-        loadingStatus.textContent = 'Checking availability...';
-
-        try {
-            const q = query(collection(db, "NGU Interview Times"), where("date", "==", selectedDate), where("status", "==", "Available"));
-            const snapshot = await getDocs(q);
+        activeBookings.forEach(booking => {
+            const displayDate = new Date(booking.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
             
-            loadingStatus.textContent = '';
+            let actionHtml = '';
+            let cardClass = 'interview-card';
 
-            const nowPlus24Hours = new Date().getTime() + (24 * 60 * 60 * 1000);
-            
-            // Collect available slots and deduplicate by time (saving the docId of the first one we see)
-            const availableSlots = {};
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (!availableSlots[data.time]) {
-                    availableSlots[data.time] = doc.id;
-                }
-            });
-
-            // Sort times chronologically
-            const sortedTimes = Object.keys(availableSlots).sort();
-
-            if (sortedTimes.length === 0) {
-                loadingStatus.textContent = 'No slots available on this date. Please select another date.';
-                return;
-            }
-
-            let renderedCount = 0;
-            sortedTimes.forEach(time => {
-                const docId = availableSlots[time];
-                const btn = document.createElement('button');
-                btn.className = 'slot-btn';
-                btn.textContent = time;
-
-                const slotDateTime = new Date(`${selectedDate}T${time}:00`).getTime();
-                
-                if (slotDateTime <= nowPlus24Hours) {
-                    btn.disabled = true;
-                    btn.title = "Interviews must be booked at least 24 hours in advance";
+            if (booking.status === 'Available') {
+                cardClass += ' available-slot';
+                actionHtml = `
+                    <div class="claimed-badge" style="background:var(--bg-input); color:var(--text-light); margin-bottom: 5px; border:1px solid var(--border);">🗓 Open Availability Slot</div>
+                    <button class="btn btn-claim" style="background:var(--error); margin-top:5px;" onclick="deleteSlot('${booking.id}')">Remove Slot</button>
+                `;
+            } else if (booking.interviewer) {
+                cardClass += ' claimed';
+                if (!booking.meetingLink || booking.meetingLink === 'A link will be provided shortly') {
+                    actionHtml = `
+                        <div class="claimed-badge" style="margin-bottom: 5px; color:var(--error); background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);">⚠ Teams Link Required</div>
+                        <button class="btn btn-primary" style="margin-top:5px;" onclick="addTeamsLink('${booking.id}', '${booking.interviewer}', '${booking.applicantName}', '${booking.date}', '${booking.time}')">Add Teams Link</button>
+                    `;
                 } else {
-                    btn.onclick = () => openModal(selectedDate, time, docId);
-                    renderedCount++;
+                    actionHtml = `
+                        <div class="claimed-badge" style="margin-bottom: 5px;">👤 Claimed by ${booking.interviewer}</div>
+                        <button class="btn btn-primary" style="margin-top:5px;" onclick="openInterviewModal('${booking.id}', '${booking.applicantName}', '${booking.date}', '${booking.time}', '${booking.interviewer}')">▶ Begin Interview</button>
+                    `;
                 }
-                slotsGrid.appendChild(btn);
-            });
-
-            if (renderedCount === 0) {
-                loadingStatus.textContent = 'All available slots on this date require 24 hours notice. Please pick a later date.';
+            } else {
+                actionHtml = `<button class="btn btn-claim" onclick="claimInterview('${booking.id}')">Assign to Me</button>`;
             }
 
-        } catch (error) {
-            console.error("Error fetching slots:", error);
-            loadingStatus.textContent = 'Error checking availability. Please try again.';
-        }
+            const card = document.createElement('div');
+            card.className = cardClass;
+            card.innerHTML = `
+    <div class="card-info">
+        <div class="card-date">🗓 ${displayDate} @ ${booking.time}</div>
+        <div class="card-name">
+            ${booking.status === 'Available' ? '<span style="color:var(--text-muted); font-style:italic;">Unbooked Slot</span>' : booking.applicantName}
+            ${booking.applicantPostcode && booking.status !== 'Available' ? `<span style="font-size:0.75rem; color:var(--text-light); background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:4px; font-family:'DM Mono', monospace; letter-spacing:0.05em; margin-left:8px;">${booking.applicantPostcode}</span>` : ''}
+        </div>
+    </div>
+    <div class="card-action">${actionHtml}</div>
+`;
+            scheduleGrid.appendChild(card);
+        });
     });
 
-    // --- MODAL CONTROLS ---
-    window.openModal = function(date, time, docId) {
-        document.getElementById('selectedDate').value = date;
-        document.getElementById('selectedTime').value = time;
-        document.getElementById('selectedDocId').value = docId;
-        
-        const displayDate = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        document.getElementById('modalTimeDisplay').innerHTML = `<strong>${time}</strong> on <br>${displayDate}`;
-        
-        document.getElementById('bookingModal').classList.add('active');
-        document.getElementById('applicantName').focus();
-    };
+    async function processAutomatedReminders(bookings) {
+        const now = new Date();
+        for (const b of bookings) {
+            if (b.interviewCompleted) continue;
 
-    window.closeModal = function() {
-        document.getElementById('bookingModal').classList.remove('active');
-        document.getElementById('applicantName').value = '';
-        document.getElementById('applicantEmail').value = '';
-    };
+            const docRef = doc(db, "NGU Interview Times", b.id);
+            const updates = {};
+            
+            if (!b.interviewer && b.bookedAt) {
+                const bookedTime = b.bookedAt.toDate ? b.bookedAt.toDate() : new Date(b.bookedAt);
+                const hoursWaiting = (now - bookedTime) / (1000 * 60 * 60);
+                const level = b.unclaimedReminderLevel || 0;
+                let emailSent = false;
 
-    window.submitBooking = async function() {
-        const name = document.getElementById('applicantName').value.trim();
-        const email = document.getElementById('applicantEmail').value.trim();
-        const date = document.getElementById('selectedDate').value;
-        const time = document.getElementById('selectedTime').value;
-        const btn = document.getElementById('confirmBtn');
+                if (hoursWaiting >= 72 && level < 3) { updates.unclaimedReminderLevel = 3; emailSent = true; } 
+                else if (hoursWaiting >= 48 && level < 2) { updates.unclaimedReminderLevel = 2; emailSent = true; } 
+                else if (hoursWaiting >= 24 && level < 1) { updates.unclaimedReminderLevel = 1; emailSent = true; }
 
-        if (!name || !email) return alert("Please complete all fields.");
+                if (emailSent) {
+                    const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_REMINDER, { applicant_name: b.applicantName, applicant_postcode: b.applicantPostcode || 'Not provided', postcode: b.applicantPostcode || 'Not provided', hours_waiting: Math.floor(hoursWaiting), interview_date: displayDate, interview_time: b.time, portal_link: window.location.href });
+                }
+            }
 
-        btn.disabled = true;
-        btn.textContent = 'Booking...';
+            if (b.applicantEmail && !b.applicantReminderSent) {
+                const interviewDateTime = new Date(`${b.date}T${b.time}`);
+                const hoursUntilInterview = (interviewDateTime - now) / (1000 * 60 * 60);
+
+                if (hoursUntilInterview > 0 && hoursUntilInterview <= 24) {
+                    updates.applicantReminderSent = true;
+                    const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                    
+                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APP_REMINDER, {
+                        to_email: b.applicantEmail, 
+                        first_name: b.applicantName ? b.applicantName.split(' ')[0] : 'Applicant',
+                        job_title: b.position || 'your selected role', 
+                        interview_date: displayDate, 
+                        interview_time: b.time, 
+                        interviewer_name: b.interviewer || 'a member of our team',
+                        location_method: 'Microsoft Teams', 
+                        meeting_link: b.meetingLink || 'A link will be provided shortly', 
+                        contact_email: 'recruitment@next-gen.uk'
+                    });
+                }
+            }
+            if (Object.keys(updates).length > 0) await updateDoc(docRef, updates);
+        }
+    }
+
+    window.claimInterview = async function(docId) {
+        const storedName = localStorage.getItem('ngu_ftl_name') || localStorage.getItem('ngu_portal_username') || '';
+        let interviewerName = prompt("Please enter your name to claim this interview:", storedName);
+        if (interviewerName === null) return;
+        interviewerName = interviewerName.trim();
+        if (!interviewerName) {
+            alert("Name is required to claim the interview.");
+            return;
+        }
+        localStorage.setItem('ngu_ftl_name', interviewerName);
+
+        const defaultTeamsLink = '';
+        const teamsLink = prompt("Please paste your unique Microsoft Teams meeting link for this interview.\n\nHOW TO GET A LINK:\n• Teams App: Go to Calendar > Meet now > Get a link to share\n• Outlook: New Event > Add Teams meeting toggle > Copy the link\n\n(This link will be sent to the applicant automatically)", defaultTeamsLink);
+        if (teamsLink === null) return; 
 
         try {
-            const docId = document.getElementById('selectedDocId').value;
-            const docRef = doc(db, "NGU Interview Times", docId);
-
-            // Double check it's still available (concurrency protection)
-            const docSnap = await getDoc(docRef);
-            if (!docSnap.exists() || docSnap.data().status !== 'Available') {
-                alert("Sorry! Someone just booked this slot. Please select another time.");
-                closeModal();
-                datePicker.dispatchEvent(new Event('change'));
-                return;
-            }
-
-            // Look up postcode from applicant record
-let applicantPostcode = '';
-try {
-    let appQuery = await getDocs(query(
-        collection(db, "NGUO New Applicants"),
-        where("personalDetails.email", "==", email.toLowerCase())
-    ));
-    if (appQuery.empty) {
-        appQuery = await getDocs(query(
-            collection(db, "NGUO New Applicants"),
-            where("personalDetails.email", "==", email)
-        ));
-    }
-    if (appQuery.empty) {
-        const allSnap = await getDocs(collection(db, "NGUO New Applicants"));
-        allSnap.forEach(d => {
-            const data = d.data();
-            const docEmail = data.personalDetails?.email || data.email || '';
-            if (docEmail.trim().toLowerCase() === email.trim().toLowerCase()) {
-                applicantPostcode = data.personalDetails?.postcode || data.postcode || '';
-            }
-        });
-    } else {
-        applicantPostcode = appQuery.docs[0].data().personalDetails?.postcode || appQuery.docs[0].data().postcode || '';
-    }
-} catch (e) {
-    console.warn("Could not fetch applicant postcode:", e);
-}
-
-await updateDoc(docRef, {
-    applicantName: name,
-    applicantEmail: email,
-    applicantPostcode: applicantPostcode,
-    status: "Booked",
-    bookedAt: serverTimestamp(),
-    applicantReminderSent: false,
-    unclaimedReminderLevel: 0
-});
-
-            const displayDate = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-            const firstName = name.split(' ')[0];
-
-            // 1. Send Confirmation to Applicant
-            const applicantParams = {
-                to_email: email,
-                first_name: firstName,
-                job_title: 'the role you applied for', // Hardcoded safely here
-                interview_date: displayDate,
-                interview_time: time,
-                location_method: 'Microsoft Teams',
-                meeting_link: 'A link will be provided by your interviewer shortly',
-                duration: '30',
-                interviewer_name: 'a member of our team',
-                contact_email: 'recruitment@next-gen.uk'
-            };
-
-            // 2. Send Alert to FTLs
-            const ftlParams = {
-                applicant_name: name,
-                applicant_postcode: applicantPostcode || 'Not provided',
-                postcode: applicantPostcode || 'Not provided',
-                interview_date: displayDate,
-                interview_time: time,
-                portal_link: window.location.origin + "/FTL-interview-availability.html"
-            };
-
-            await Promise.allSettled([
-                emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APPLICANT_CONFIRM, applicantParams),
-                emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_TEMPLATE, ftlParams)
-            ]);
-
-            closeModal();
-            document.getElementById('bookingContainer').style.display = 'none';
-            document.getElementById('successScreen').style.display = 'block';
-            
-            document.getElementById('successMsg').innerHTML = `Your interview has been booked for <strong>${time}</strong> on <strong>${displayDate}</strong>.<br><br>We look forward to speaking with you, ${firstName}!`;
-
+            await updateDoc(doc(db, "NGU Interview Times", docId), { 
+                interviewer: interviewerName,
+                meetingLink: teamsLink.trim() || 'A link will be provided shortly'
+            });
+            document.getElementById('displayName').textContent = interviewerName;
+            alert("Interview successfully assigned to you!");
         } catch (error) {
-            console.error("Booking Error:", error);
-            alert("An error occurred. Please try again.");
-            btn.disabled = false;
-            btn.textContent = 'Confirm Interview';
+            console.error("Error claiming:", error);
+            alert("Error assigning interview.");
+        }
+    };
+
+    // --- INTERVIEW MODAL LOGIC ---
+    window.openInterviewModal = function(id, name, date, time, interviewer) {
+        document.getElementById('activeDocId').value = id;
+        document.getElementById('hdrName').textContent = name;
+        document.getElementById('hdrDateTime').textContent = `${date} @ ${time}`;
+        document.getElementById('hdrInterviewer').textContent = interviewer;
+        document.getElementById('hdrPosition').textContent = 'Select Pack Below';
+        document.getElementById('hdrPosition').style.color = 'var(--error)';
+        
+        document.getElementById('interviewTypeSelector').value = "";
+        document.getElementById('engineerPack').classList.remove('active');
+        document.getElementById('officePack').classList.remove('active');
+        
+        // Reset all inputs and totals
+        document.querySelectorAll('input[type="number"], input[type="text"], textarea').forEach(el => el.value = '');
+        document.querySelectorAll('#eng_grand_total, #off_grand_total').forEach(el => el.textContent = '0');
+        for(let i=1; i<=6; i++) {
+            const totEl = document.getElementById(`eng_tot_${i}`);
+            if(totEl) totEl.textContent = '0';
+        }
+        
+        document.getElementById('engPhase1').classList.add('active');
+        document.getElementById('engPhase2').classList.remove('active');
+        document.getElementById('offPhase1').classList.add('active');
+        document.getElementById('offPhase2').classList.remove('active');
+
+        document.getElementById('interviewModal').classList.add('active');
+    };
+
+    window.closeInterviewModal = function() {
+        document.getElementById('interviewModal').classList.remove('active');
+    };
+
+    window.toggleInterviewType = function() {
+        const val = document.getElementById('interviewTypeSelector').value;
+        const posLabel = document.getElementById('hdrPosition');
+        
+        document.getElementById('engineerPack').classList.remove('active');
+        document.getElementById('officePack').classList.remove('active');
+        
+        document.getElementById('engPhase1').classList.add('active');
+        document.getElementById('engPhase2').classList.remove('active');
+        document.getElementById('offPhase1').classList.add('active');
+        document.getElementById('offPhase2').classList.remove('active');
+
+        if(val === 'engineer') {
+            document.getElementById('engineerPack').classList.add('active');
+            posLabel.textContent = 'Smart Meter Engineer';
+            posLabel.style.color = 'var(--text-light)';
+        }
+        if(val === 'office') {
+            document.getElementById('officePack').classList.add('active');
+            posLabel.textContent = 'Office Staff';
+            posLabel.style.color = 'var(--text-light)';
+        }
+    };
+
+    window.proceedToPhase = function(hideId, showId) {
+        document.getElementById(hideId).classList.remove('active');
+        document.getElementById(showId).classList.add('active');
+        document.querySelector('.modal-content').scrollTop = 0;
+    };
+
+    // --- REAL-TIME ENGINEER SCORE CALCULATORS ---
+    document.querySelectorAll('.eng-score').forEach(input => {
+        input.addEventListener('input', () => {
+            if (input.value > 5) input.value = 5;
+            if (input.value < 0) input.value = '';
+            
+            let grandTotal = 0;
+            for(let i=1; i<=6; i++) {
+                let secTotal = 0;
+                document.querySelectorAll(`.eng-s${i}`).forEach(el => { secTotal += Number(el.value) || 0; });
+                const totEl = document.getElementById(`eng_tot_${i}`);
+                if(totEl) totEl.textContent = secTotal;
+                grandTotal += secTotal;
+            }
+            document.getElementById('eng_grand_total').textContent = grandTotal;
+        });
+    });
+
+    document.querySelectorAll('.off-score').forEach(input => {
+        input.addEventListener('input', () => {
+            if (input.value > 5) input.value = 5;
+            if (input.value < 0) input.value = '';
+            let grandTotal = 0;
+            document.querySelectorAll('.off-score').forEach(el => { grandTotal += Number(el.value) || 0; });
+            document.getElementById('off_grand_total').textContent = grandTotal;
+        });
+    });
+
+    // --- SAVE TO FIREBASE & TRIGGER EMAILJS ---
+    window.submitInterviewData = async function(type) {
+        if (!confirm("Are you sure you want to submit this interview pack? This cannot be undone.")) return;
+        
+        const docId = document.getElementById('activeDocId').value;
+        const applicantName = document.getElementById('hdrName').textContent;
+        let payload = { type: type, submittedAt: new Date().toISOString() };
+
+        if (type === 'engineer') {
+            const rec = document.getElementById('eng_recommendation').value;
+            if(!rec) return alert("Please select a Final Recommendation before submitting.");
+
+            payload.recommendation = rec;
+            payload.totalScore = document.getElementById('eng_grand_total').textContent + " / 120";
+            payload.strengths = document.getElementById('eng_strengths').value;
+            payload.concerns = document.getElementById('eng_concerns').value;
+            payload.additionalComments = document.getElementById('eng_add_comments').value;
+            
+            payload.notes = {
+                section1: document.getElementById('eng_notes_1').value,
+                section2: document.getElementById('eng_notes_2').value,
+                section3: document.getElementById('eng_notes_3').value,
+                section4: document.getElementById('eng_notes_4').value,
+                section5: document.getElementById('eng_notes_5').value,
+                candidateQuestions: document.getElementById('eng_questions').value
+            };
+
+            const scores = [];
+            document.querySelectorAll('.eng-score').forEach((input, i) => {
+                const cmt = document.querySelectorAll('.eng-cmt')[i].value;
+                const criteria = input.closest('.score-grid').querySelector('label').innerText;
+                scores.push({ criteria: criteria, score: input.value, comment: cmt });
+            });
+            payload.scores = scores;
+        } 
+        else if (type === 'office') {
+            const rec = document.getElementById('off_recommendation').value;
+            if(!rec) return alert("Please select a Final Recommendation before submitting.");
+
+            payload.recommendation = rec;
+            payload.totalScore = document.getElementById('off_grand_total').textContent + " / 30";
+            payload.concerns = document.getElementById('off_concerns').value;
+            payload.additionalComments = document.getElementById('off_add_comments').value;
+            
+            payload.notes = {
+                section1: document.getElementById('off_notes_1').value,
+                section2: document.getElementById('off_notes_2').value,
+                section3: document.getElementById('off_notes_3').value,
+                section4: document.getElementById('off_notes_4').value,
+                candidateQuestions: document.getElementById('off_questions').value
+            };
+
+            const scores = [];
+            document.querySelectorAll('.off-score').forEach((input, i) => {
+                const cmt = document.querySelectorAll('.off-cmt')[i].value;
+                const criteria = input.closest('.score-grid').querySelector('label').innerText;
+                scores.push({ criteria: criteria, score: input.value, comment: cmt });
+            });
+            payload.scores = scores;
+        }
+
+        try {
+            // Update documentation status pool entries in Firestore Database
+            await updateDoc(doc(db, "NGU Interview Times", docId), {
+                interviewCompleted: true,
+                interviewData: payload,
+                status: "Completed"
+            });
+
+            // Dispatch Assessment Results summary parameters pipeline straight to EmailJS
+            try {
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INTERVIEW_COMPLETED, {
+                    interviewer_name: currentUser,
+                    applicant_name: applicantName,
+                    total_score: payload.totalScore,
+                    recommendation: payload.recommendation,
+                    strengths: payload.strengths || "None documented",
+                    concerns: payload.concerns || "None noted",
+                    additional_comments: payload.additionalComments || "None noted"
+                });
+                console.log("EmailJS completed interview pack submission alert sent successfully.");
+            } catch (emailError) {
+                console.error("EmailJS internal report routing exception caught: ", emailError);
+            }
+
+            alert("Interview successfully saved and completed!");
+            closeInterviewModal();
+        } catch (error) {
+            console.error("Error saving interview data:", error);
+            alert("Error saving data. Please check connection.");
+        }
+    };
+
+    window.submitAvailability = async function() {
+        const nameInput = document.getElementById('availName').value.trim();
+        const checks = document.querySelectorAll('.avail-chk:checked');
+        
+        if (!nameInput) return alert("Please enter your name.");
+        if (!document.getElementById('availDate').value) return alert("Please select a Week Commencing date.");
+        
+        // Ensure the date has been processed and column headers have ISO dates
+        const checkColDate = document.getElementById('col-date-0').getAttribute('data-isodate');
+        if (!checkColDate) return alert("Please select a valid Week Commencing date.");
+
+        if (checks.length === 0) return alert("Please select at least one time slot in the grid.");
+
+        localStorage.setItem('ngu_ftl_name', nameInput);
+        document.getElementById('displayName').textContent = nameInput;
+
+        try {
+            const batch = [];
+            checks.forEach(chk => {
+                const dayIndex = chk.getAttribute('data-dayindex');
+                const time = chk.getAttribute('data-time');
+                const date = document.getElementById(`col-date-${dayIndex}`).getAttribute('data-isodate');
+
+                batch.push(addDoc(collection(db, "NGU Interview Times"), {
+                    date: date,
+                    time: time,
+                    interviewer: nameInput,
+                    status: "Available",
+                    addedAt: serverTimestamp()
+                }));
+            });
+            await Promise.all(batch);
+            alert("Availability submitted successfully! Applicants will now see these slots.");
+            checks.forEach(chk => chk.checked = false);
+        } catch (e) {
+            console.error(e);
+            alert("Error submitting availability.");
+        }
+    };
+
+    window.deleteSlot = async function(docId) {
+        if (!confirm("Remove this open availability slot?")) return;
+        try {
+            await deleteDoc(doc(db, "NGU Interview Times", docId));
+        } catch (e) {
+            console.error(e);
+            alert("Error deleting slot.");
+        }
+    };
+
+    window.addTeamsLink = async function(docId, interviewerName, appName, dateStr, timeStr) {
+        const defaultTeamsLink = '';
+        const teamsLink = prompt("Please paste your unique Microsoft Teams meeting link for this interview.\n\nHOW TO GET A LINK:\n• Teams App: Go to Calendar > Meet now > Get a link to share\n• Outlook: New Event > Add Teams meeting toggle > Copy the link\n\n(This link will be sent to the applicant automatically)", defaultTeamsLink);
+        if (teamsLink === null) return; 
+
+        try {
+            await updateDoc(doc(db, "NGU Interview Times", docId), { 
+                meetingLink: teamsLink.trim() || 'A link will be provided shortly'
+            });
+            alert("Teams Link successfully attached!");
+        } catch (error) {
+            console.error(error);
+            alert("Error updating database.");
         }
     };
 </script>
