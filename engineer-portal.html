@@ -311,7 +311,7 @@
 
     // --- EMAILJS CONFIG ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
-    const EMAILJS_SERVICE_ID = 'service_dcdbhph'; 
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_Q_OFFER = 'template_vzmdy3a'; 
     const EMAILJS_Q_CONTRACT = 'template_z4p2v26'; 
     const EMAILJS_REC_CONFIRM = 'template_ada5v6u'; 
@@ -536,7 +536,19 @@
         const formatStart = rawDate ? new Date(rawDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'TBC';
 
         document.getElementById('offTitle').textContent = a.position || 'Unknown';
-        document.getElementById('offSalary').textContent = formatSalary(a.proposedSalary || currentVacancy.salary);
+        
+        let finalSalDisplay = formatSalary(a.proposedSalary || currentVacancy.salary);
+        if (a.proposedLWA) {
+            const baseSalNum = parseFloat((a.proposedSalary || currentVacancy.salary).toString().replace(/[^\d.]/g, ''));
+            if (!isNaN(baseSalNum)) {
+                const total = baseSalNum * 1.1;
+                finalSalDisplay = `${finalSalDisplay} + LWA (Total: ${formatSalary(total)})`;
+            } else {
+                finalSalDisplay = `${finalSalDisplay} + LWA`;
+            }
+        }
+        document.getElementById('offSalary').textContent = finalSalDisplay;
+
         document.getElementById('offStartDate').textContent = formatStart;
         document.getElementById('offLocation').textContent = currentVacancy.location;
         document.getElementById('offContract').textContent = currentVacancy.type;
