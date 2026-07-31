@@ -829,6 +829,17 @@
                 </div>`;
         }
 
+        let displaySalary = app.proposedSalary ? '£' + app.proposedSalary : 'TBC';
+        if (app.proposedLWA && app.proposedSalary) {
+            const baseSalNum = parseFloat(app.proposedSalary.toString().replace(/[^\d.]/g, ''));
+            if (!isNaN(baseSalNum)) {
+                const total = baseSalNum * 1.1;
+                displaySalary = `${displaySalary} + LWA (Total: £${total.toLocaleString()})`;
+            } else {
+                displaySalary = `${displaySalary} + LWA`;
+            }
+        }
+
         mainEl.innerHTML = `
             ${warningBanner}
             
@@ -840,7 +851,7 @@
                 <div style="display: flex; gap: 2rem; text-align: right; justify-content: flex-end;">
                     <div>
                         <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Proposed Salary</div>
-                        <div style="font-size: 1.2rem; color: white; font-weight: 700;">${app.proposedSalary ? '£' + app.proposedSalary : 'TBC'}</div>
+                        <div style="font-size: 1.2rem; color: white; font-weight: 700;">${displaySalary}</div>
                     </div>
                     <div>
                         <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Start Date</div>
