@@ -1066,6 +1066,8 @@
             updates.assignedFTL = ftlName;
             updates.startDate = document.getElementById('offerStartDate').value;
             updates.proposedSalary = salaryVal;
+            const lwaVal = document.getElementById('offerLWA') ? document.getElementById('offerLWA').checked : false;
+            updates.proposedLWA = lwaVal;
 
             emailParams.portal_link = portalLink;
             emailParams.username = newUsername;
@@ -1164,6 +1166,8 @@
             updates.assignedFTL = ftlName;
             updates.startDate = document.getElementById('postHoldStartDate').value;
             updates.proposedSalary = salaryVal;
+            const lwaVal = document.getElementById('postHoldLWA') ? document.getElementById('postHoldLWA').checked : false;
+            updates.proposedLWA = lwaVal;
 
             emailParams.portal_link = portalLink;
             emailParams.username = newUsername;
@@ -1658,6 +1662,9 @@
                             <input type="date" id="offerStartDate" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit; margin-bottom:1rem;">
                             <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Proposed Salary (£):</label>
                             <input type="number" id="offerSalary" placeholder="e.g. 35000" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit;">
+                            <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; color:var(--text-light); margin-top:0.5rem; margin-bottom:1rem; cursor:pointer;">
+                                <input type="checkbox" id="offerLWA" style="width:16px; height:16px; cursor:pointer;"> + LWA (London Weighting Allowance 10%)
+                            </label>
                         </div>
                         <button class="btn-action-alt" id="submitFinalDecisionBtn" style="width:100%; justify-content:center; padding:0.8rem;" onclick="submitFinalDecision('${app.id}')">Submit Decision & Trigger Actions</button>
                     `;
@@ -1689,6 +1696,9 @@
                             <input type="date" id="postHoldStartDate" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit; margin-bottom:1rem;">
                             <label style="display:block; margin-bottom:0.5rem; font-size:0.9rem; font-weight:bold; color:var(--success);">Proposed Salary (£):</label>
                             <input type="number" id="postHoldSalary" placeholder="e.g. 35000" style="width:100%; padding:0.8rem; border-radius:8px; border:1px solid var(--success); background:var(--bg-input); color:white; font-size:1rem; outline:none; font-family:inherit;">
+                            <label style="display:flex; align-items:center; gap:8px; font-size:0.9rem; color:var(--text-light); margin-top:0.5rem; margin-bottom:1rem; cursor:pointer;">
+                                <input type="checkbox" id="postHoldLWA" style="width:16px; height:16px; cursor:pointer;"> + LWA (London Weighting Allowance 10%)
+                            </label>
                         </div>
                         <div style="display:flex; gap:10px;">
                             <button class="btn-danger" style="flex:1;" onclick="submitPostHoldDecision('${app.id}', 'Rejected')">Reject</button>
