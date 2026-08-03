@@ -206,6 +206,17 @@
                         </div>
                         <div class="reject-msg" id="rej-poa"></div>
                     </div>
+
+                    <div class="form-group" id="fg-niproof">
+                        <label>Proof of NI Number (Payslip, NI Card, etc.)</label>
+                        <div class="file-upload-box" id="box-niproof">
+                            <span id="label-doc-niproof">Click or drag file here to upload</span>
+                            <input type="file" id="file-niproof" accept=".jpg,.jpeg,.png,.pdf" onchange="handleFileUpload(this, 'niproof')">
+                            <div class="upload-progress-wrap" id="prog-wrap-niproof"><div class="upload-progress-bar" id="prog-niproof"></div></div>
+                            <div class="file-status" id="status-niproof"></div>
+                        </div>
+                        <div class="reject-msg" id="rej-niproof"></div>
+                    </div>
                     
                     <!-- P45 / HMRC STARTER CHECKLIST SYSTEM -->
                     <div class="form-group" id="fg-p45" style="grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 1rem;">
