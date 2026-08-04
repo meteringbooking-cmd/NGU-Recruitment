@@ -775,12 +775,16 @@
                     
                     const emailResults = await Promise.allSettled([
                         emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INTERNAL_NAME_CHECK, { 
-                            ...baseParams, 
-                            to_email: 'barry.dixon@next-gen.uk',
-                            cv_url: data.cv?.url || '',
-                            cv_name: data.cv?.filename || 'CV'
-                        }, { publicKey: EMAILJS_PUBLIC_KEY }),
-                        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, { ...baseParams, to_email: externalEmail }, { publicKey: EMAILJS_PUBLIC_KEY })
+                              ...baseParams, 
+                              to_email: 'barry.dixon@next-gen.uk',
+                              cv_url: data.cv?.url || '',
+                              cv_name: data.cv?.filename || 'CV'
+                          }, { publicKey: EMAILJS_PUBLIC_KEY }),
+                          emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, { 
+                              ...baseParams, 
+                              to_email: externalEmail,
+                              ...(externalEmail.toLowerCase().endsWith('@calisen.co.uk') ? { cv_url: data.cv?.url || '', cv_name: data.cv?.filename || 'CV' } : {})
+                          }, { publicKey: EMAILJS_PUBLIC_KEY })
                     ]);
                     
                     const failedEmails = emailResults.filter(r => r.status === 'rejected');
@@ -1993,7 +1997,11 @@
                         cv_url: appData.cv?.url || '',
                         cv_name: appData.cv?.filename || 'CV'
                     }, { publicKey: EMAILJS_PUBLIC_KEY }),
-                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, { ...baseParams, to_email: externalEmail }, { publicKey: EMAILJS_PUBLIC_KEY })
+                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, { 
+                        ...baseParams, 
+                        to_email: externalEmail,
+                        ...(externalEmail.toLowerCase().endsWith('@calisen.co.uk') ? { cv_url: appData.cv?.url || '', cv_name: appData.cv?.filename || 'CV' } : {})
+                    }, { publicKey: EMAILJS_PUBLIC_KEY })
                 ]);
             }
             alert("Name checks reset and emails sent.");
