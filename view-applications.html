@@ -783,7 +783,7 @@
                           emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, { 
                               ...baseParams, 
                               to_email: externalEmail,
-                              ...(externalEmail.toLowerCase().endsWith('@calisen.co.uk') ? { cv_url: data.cv?.url || '', cv_name: data.cv?.filename || 'CV' } : {})
+                              ...(externalEmail.toLowerCase().includes('calisen.co.uk') ? { cv_url: data.cv?.url || '', cv_name: data.cv?.filename || 'No CV Attached' } : {})
                           }, { publicKey: EMAILJS_PUBLIC_KEY })
                     ]);
                     
@@ -2000,7 +2000,7 @@
                     emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, { 
                         ...baseParams, 
                         to_email: externalEmail,
-                        ...(externalEmail.toLowerCase().endsWith('@calisen.co.uk') ? { cv_url: appData.cv?.url || '', cv_name: appData.cv?.filename || 'CV' } : {})
+                        ...(externalEmail.toLowerCase().includes('calisen.co.uk') ? { cv_url: appData.cv?.url || '', cv_name: appData.cv?.filename || 'No CV Attached' } : {})
                     }, { publicKey: EMAILJS_PUBLIC_KEY })
                 ]);
             }
