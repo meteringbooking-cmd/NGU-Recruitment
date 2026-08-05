@@ -170,7 +170,7 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, onSnapshot, where, doc, updateDoc, getDocs, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, query, onSnapshot, where, doc, updateDoc, getDocs, getDoc, deleteField } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
     const firebaseConfig = {
@@ -1010,8 +1010,24 @@
             const appRef = doc(db, "NGUO New Applicants", appId);
             const updates = {};
             updates[fieldPath] = statusValue;
+            
+            let didDelete = false;
+            if (statusValue === 'rejected') {
+                if (confirm("Would you like to delete this file entirely so the applicant must re-upload it? (Choosing 'Cancel' keeps the file but marks it rejected)")) {
+                    const baseDocPath = fieldPath.replace('.docStatus', '');
+                    updates[baseDocPath] = deleteField();
+                    const certKey = baseDocPath.split('.').pop();
+                    if (certKey) updates[`certificates.${certKey}`] = deleteField();
+                    didDelete = true;
+                }
+            }
+            
             await updateDoc(appRef, updates);
             console.log(`Updated ${fieldPath} to ${statusValue}`);
+            if (didDelete) {
+                alert("File deleted successfully. The applicant will now be able to upload a replacement via the upload link.");
+                location.reload();
+            }
         } catch (error) {
             console.error("Failed to update status:", error);
             alert("Error updating document status.");
@@ -1027,9 +1043,19 @@
                 const certs = data.certificates || {};
                 const additional = certs.additional || [];
                 if (additional[idx]) {
-                    additional[idx].docStatus = statusValue;
+                    let didDelete = false;
+                    if (statusValue === 'rejected' && confirm("Would you like to delete this file entirely so the applicant must re-upload it? (Choosing 'Cancel' keeps the file but marks it rejected)")) {
+                        additional.splice(idx, 1);
+                        didDelete = true;
+                    } else {
+                        additional[idx].docStatus = statusValue;
+                    }
                     await updateDoc(appRef, { "certificates.additional": additional });
                     console.log(`Updated additional cert ${idx} to ${statusValue}`);
+                    if (didDelete) {
+                        alert("File deleted successfully. The applicant will now be able to upload a replacement via the upload link.");
+                        location.reload();
+                    }
                 }
             }
         } catch (error) {
