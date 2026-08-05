@@ -765,10 +765,17 @@
                     const proceedWithInfo = reviews.find(r => r.decision === 'Proceed' && r.nameCheckInfo);
                     const additionalInfo = proceedWithInfo?.nameCheckInfo || nameCheckInfo || '';
 
+                    let applicantSource = 'Direct Applicant';
+                    if (data.recruitmentAgency?.isAgency) {
+                        applicantSource = `Recruitment Agency: ${data.recruitmentAgency.agencyName || 'Unknown'}`;
+                    } else if (data.manualEntry) {
+                        applicantSource = data.source === 'referral' ? 'Internal Referral' : 'Manual Entry';
+                    }
                     const baseParams = {
                         applicant_name:     data.fullName || 'Unknown',
                         applicant_postcode: data.personalDetails?.postcode || 'No Postcode',
-                        additional_info:    additionalInfo || 'None'
+                        additional_info:    additionalInfo || 'None',
+                        applicant_source:   applicantSource
                     };
                     
                     console.log("Triggering Name Check emails to:", "barry.dixon@next-gen.uk", "and", externalEmail);
@@ -1983,10 +1990,17 @@
             const proceedWithInfo = reviews.find(r => r.decision === 'Proceed' && r.nameCheckInfo);
             const additionalInfo = proceedWithInfo?.nameCheckInfo || '';
 
+            let applicantSource = 'Direct Applicant';
+            if (appData.recruitmentAgency?.isAgency) {
+                applicantSource = `Recruitment Agency: ${appData.recruitmentAgency.agencyName || 'Unknown'}`;
+            } else if (appData.manualEntry) {
+                applicantSource = appData.source === 'referral' ? 'Internal Referral' : 'Manual Entry';
+            }
             const baseParams = {
                 applicant_name:     appData.fullName || 'Unknown',
                 applicant_postcode: appData.personalDetails?.postcode || 'No Postcode',
-                additional_info:    additionalInfo || 'None'
+                additional_info:    additionalInfo || 'None',
+                applicant_source:   applicantSource
             };
             
             if (externalEmail) {
