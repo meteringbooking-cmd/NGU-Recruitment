@@ -320,6 +320,20 @@
 
                 <div class="cert-section-label mandatory" style="margin-top:1.8rem;">ID & Right to Work Documents</div>
 
+                <!-- ID Headshot -->
+                <div class="cert-upload-row" id="row-idphoto">
+                    <div class="cert-row-icon">📸</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">ID Headshot (Clear photo of your face)</div>
+                        <div id="sub-idphoto" class="cert-row-sub">No file selected</div>
+                        <div id="prog-idphoto" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-idphoto">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-idphoto" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('idphoto',this)"></label>
+                    </div>
+                </div>
+
                 <!-- Passport / ID -->
                 <div class="cert-upload-row" id="row-passport">
                     <div class="cert-row-icon">🪪</div>
@@ -576,7 +590,7 @@
     /* Pre-fill badges for certs already uploaded */
     function prefillExistingCerts(certs, oDocs = {}) {
         if (!certs && !oDocs) return;
-        const simpleKeys = ['mocopa', 'gasl3', 'cmagas', 'higherskills', 'passport', 'dlfront', 'dlback', 'niproof'];
+        const simpleKeys = ['mocopa', 'gasl3', 'cmagas', 'higherskills', 'idphoto', 'passport', 'dlfront', 'dlback', 'niproof'];
         simpleKeys.forEach(key => {
             const data = (certs && certs[key]) || (oDocs && oDocs[key]);
             if (data?.url) {
@@ -807,6 +821,7 @@
                 gasl3:        certUploadResults['gasl3']        || null,
                 cmagas:       certUploadResults['cmagas']       || null,
                 higherskills: certUploadResults['higherskills'] || null,
+                idphoto:      certUploadResults['idphoto']      || null,
                 passport:     certUploadResults['passport']     || null,
                 dlfront:      certUploadResults['dlfront']      || null,
                 dlback:       certUploadResults['dlback']       || null,
@@ -825,6 +840,7 @@
                 certificates,
                 certificatesUpdatedAt: new Date().toISOString()
             };
+            if (certUploadResults['idphoto'])  updates['onboardingDocs.idphoto']  = certUploadResults['idphoto'];
             if (certUploadResults['passport']) updates['onboardingDocs.passport'] = certUploadResults['passport'];
             if (certUploadResults['dlfront'])  updates['onboardingDocs.dlfront']  = certUploadResults['dlfront'];
             if (certUploadResults['dlback'])   updates['onboardingDocs.dlback']   = certUploadResults['dlback'];
