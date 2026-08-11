@@ -13,7 +13,7 @@
             --primary: #005EB8; --accent: #00A3E0;
             --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
             --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
-            --success: #10B981; --error: #EF4444; --warning: #F59E0B;s
+            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
@@ -189,25 +189,31 @@
                     <input type="text" id="referrerName" placeholder="Enter your full name">
                 </div>
                 <div class="form-group">
-                    <label>Referral's Name <span class="req">*</span></label>
-                    <input type="text" id="referralName" placeholder="Enter candidate's full name">
+                    <label>Your Email Address (Referrer) <span class="req">*</span></label>
+                    <input type="email" id="referrerEmail" placeholder="your.email@example.com">
                 </div>
             </div>
 
             <div class="form-grid">
                 <div class="form-group">
+                    <label>Referral's Name <span class="req">*</span></label>
+                    <input type="text" id="referralName" placeholder="Enter candidate's full name">
+                </div>
+                <div class="form-group">
                     <label>Best Contact Number (Referral) <span class="req">*</span></label>
                     <input type="tel" id="referralPhone" placeholder="e.g. 07700 900000">
                 </div>
+            </div>
+
+            <div class="form-grid">
                 <div class="form-group">
                     <label>Best Email Address (Referral) <span class="req">*</span></label>
                     <input type="email" id="referralEmail" placeholder="candidate@example.com">
                 </div>
-            </div>
-
-            <div class="form-group full">
-                <label>Postcode of Referral <span class="req">*</span></label>
-                <input type="text" id="referralPostcode" placeholder="e.g. NE1 1AA" style="text-transform:uppercase; max-width: 300px;">
+                <div class="form-group">
+                    <label>Postcode of Referral <span class="req">*</span></label>
+                    <input type="text" id="referralPostcode" placeholder="e.g. NE1 1AA" style="text-transform:uppercase;">
+                </div>
             </div>
         </div>
 
@@ -285,12 +291,13 @@
         from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     // EmailJS Setup
-    const EMAILJS_SERVICE_ID = 'service_dcdbhph';
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo';
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
     
     // --- TEMPLATE ROUTING logic ---
     const TEMPLATE_MATCH = 'template_5f9epwr'; 
     const TEMPLATE_NO_MATCH = 'template_4ryhvfl'; 
+    const TEMPLATE_REFERRER = 'template_v7iq6vd'; 
 
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
@@ -393,6 +400,7 @@
 
         // Gather Values
         const referrerName = document.getElementById('referrerName').value.trim();
+        const referrerEmail = document.getElementById('referrerEmail').value.trim();
         const referralName = document.getElementById('referralName').value.trim();
         const referralPhone = document.getElementById('referralPhone').value.trim();
         const referralEmail = document.getElementById('referralEmail').value.trim();
@@ -405,9 +413,10 @@
         // Validation
         const missing = [];
         if (!referrerName) missing.push('Your Name');
+        if (!referrerEmail) missing.push('Your Email Address');
         if (!referralName) missing.push("Referral's Name");
         if (!referralPhone) missing.push('Contact Number');
-        if (!referralEmail) missing.push('Email Address');
+        if (!referralEmail) missing.push('Referral Email');
         if (!referralPostcode) missing.push('Postcode');
         if (!role) missing.push('Role');
         
@@ -460,6 +469,7 @@
             await addDoc(colRef, {
                 submittedAt: serverTimestamp(),
                 referrerName,
+                referrerEmail,
                 referralName,
                 referralPhone,
                 referralEmail,
@@ -477,6 +487,18 @@
                 to_email: referralEmail,        
                 to_name: referralName,          
             });
+
+            // 5. Send Confirmation Email to Referrer
+            if (referrerEmail) {
+                await emailjs.send(EMAILJS_SERVICE_ID, TEMPLATE_REFERRER, {
+                    to_email: referrerEmail,
+                    to_name: referrerName,
+                    referrer_name: referrerName,
+                    referral_name: referralName,
+                    referral_role: role,
+                    declaration_date: declarationDate
+                });
+            }
 
             document.getElementById('formWrapper').style.display = 'none';
             document.getElementById('successScreen').style.display = 'block';
