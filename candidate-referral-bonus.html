@@ -509,9 +509,7 @@
                     }, EMAILJS_PUBLIC_KEY);
                     console.log("Referrer email sent successfully:", res2);
                 } catch (referrerEmailErr) {
-                    const errMsg = referrerEmailErr?.text || referrerEmailErr?.message || JSON.stringify(referrerEmailErr);
-                    console.error("Referrer email failed via EmailJS:", referrerEmailErr);
-                    alert("EmailJS error sending referrer template (template_v7iq6vd):\n\n" + errMsg);
+                    console.warn("Referrer confirmation email failed via EmailJS:", referrerEmailErr);
                 }
             }
 
