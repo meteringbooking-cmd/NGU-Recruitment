@@ -483,21 +483,32 @@
             });
 
             // 4. Send Email Notification to Candidate
-            await emailjs.send(EMAILJS_SERVICE_ID, templateToUse, {
-                to_email: referralEmail,        
-                to_name: referralName,          
-            });
+            try {
+                await emailjs.send(EMAILJS_SERVICE_ID, templateToUse, {
+                    to_email: referralEmail,        
+                    to_name: referralName,
+                    email: referralEmail
+                });
+            } catch (candidateEmailErr) {
+                console.warn("Candidate email notification failed via EmailJS:", candidateEmailErr);
+            }
 
             // 5. Send Confirmation Email to Referrer
             if (referrerEmail) {
-                await emailjs.send(EMAILJS_SERVICE_ID, TEMPLATE_REFERRER, {
-                    to_email: referrerEmail,
-                    to_name: referrerName,
-                    referrer_name: referrerName,
-                    referral_name: referralName,
-                    referral_role: role,
-                    declaration_date: declarationDate
-                });
+                try {
+                    await emailjs.send(EMAILJS_SERVICE_ID, TEMPLATE_REFERRER, {
+                        to_email: referrerEmail,
+                        email: referrerEmail,
+                        to_name: referrerName,
+                        referrer_name: referrerName,
+                        referrer_email: referrerEmail,
+                        referral_name: referralName,
+                        referral_role: role,
+                        declaration_date: declarationDate
+                    });
+                } catch (referrerEmailErr) {
+                    console.warn("Referrer confirmation email failed via EmailJS:", referrerEmailErr);
+                }
             }
 
             document.getElementById('formWrapper').style.display = 'none';
