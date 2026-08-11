@@ -1,307 +1,355 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>NGU — Candidate Referral Bonus</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referral Submissions Board - NGU Portal</title>
+    
+    <!-- 
+      --- PROTOTYPE SECURITY SCRIPT ---
+    -->
+    <script>
+        (function() {
+            const username = localStorage.getItem('ngu_portal_username');
+            const hasAccess = localStorage.getItem('ngu_portal_access_management'); 
+
+            // Commented out for testing. Uncomment when integrating into your live portal.
+            /*
+            if (!username) {
+                window.location.href = 'login.html';
+                return;
+            }
+            if (hasAccess !== 'true') {
+                alert("Access Denied: You do not have permission to view this board.");
+                window.location.href = 'homepage.html';
+                return;
+            }
+            */
+        })();
+    </script>
+
+    <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            // Initialized with your EmailJS Public Key
+            emailjs.init({
+              publicKey: "ziLnha91scpGjFABh",
+            });
+        })();
+    </script>
+    
     <style>
         :root {
-            --primary: #005EB8; --accent: #00A3E0;
-            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
-            --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
-            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
+            /* Shared NGU Dark Theme */
+            --body-bg: #0A1628;
+            --container-bg: #1a2942;
+            --input-bg: #0d1f3a;
+            --panel-border: #2a3f5f;
+            --primary-text: #E8EDF2;
+            --secondary-text: #8B9AAE;
+            --accent-color: #00A3E0; 
+            --success-color: #10B981;
+            --danger-color: #EF4444;
+            --warning-color: #F59E0B;
         }
-        * { margin:0; padding:0; box-sizing:border-box; }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'Work Sans', sans-serif;
-            background: linear-gradient(135deg, var(--bg-dark) 0%, #0d1f3a 100%);
-            color: var(--text-light); min-height: 100vh; padding: 2rem 1.5rem 4rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--body-bg);
+            color: var(--primary-text);
+            line-height: 1.6;
+            padding: 20px;
         }
-        body::before {
-            content: ''; position: fixed; inset: 0;
-            background: radial-gradient(circle at 15% 20%, rgba(0,163,224,0.08) 0%, transparent 55%),
-                        radial-gradient(circle at 85% 75%, rgba(0,94,184,0.07) 0%, transparent 55%);
-            pointer-events: none; z-index: -1;
+
+        .main-container {
+            max-width: 1300px;
+            margin: 0 auto;
         }
-        .container { max-width: 860px; margin: 0 auto; }
-        .logo { max-height: 70px; display: block; margin: 0 auto 2rem; }
-        
-        .page-header { text-align: center; margin-bottom: 2rem; }
+
+        /* Header Styling */
+        .page-header {
+            background-color: var(--container-bg);
+            padding: 20px 30px;
+            border-radius: 12px;
+            border: 1px solid var(--panel-border);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-brand-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo { height: 40px; width: auto; }
+
         .page-header h1 {
-            font-size: 2.2rem; font-weight: 800;
-            background: linear-gradient(90deg, var(--accent), #60a5fa);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-        }
-        .page-header p { color: var(--text-muted); font-size: 1rem; max-width: 650px; margin: 0 auto; line-height: 1.5; }
-
-        .info-card {
-            background: rgba(0, 163, 224, 0.05); border: 1px solid rgba(0, 163, 224, 0.3);
-            border-radius: 16px; padding: 2rem; margin-bottom: 2rem; line-height: 1.6;
-        }
-        .info-card h3 { color: var(--accent); margin-bottom: 1rem; font-size: 1.1rem; border-bottom: 1px solid rgba(0, 163, 224, 0.2); padding-bottom: 0.5rem; }
-        .info-card ul { margin-left: 1.5rem; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
-        .info-card ul li { margin-bottom: 0.5rem; }
-        .info-card p { font-size: 0.95rem; margin-bottom: 1rem; }
-        .info-card .example-box { background: var(--bg-dark); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1.5rem; font-size: 0.9rem; }
-        
-        .section {
-            background: var(--bg-card); border: 1px solid var(--border);
-            border-radius: 16px; padding: 2rem 2.2rem 2.4rem;
-            margin-bottom: 1.8rem; box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        }
-        .section-header {
-            display: flex; align-items: center; gap: 0.9rem;
-            margin-bottom: 1.8rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);
-        }
-        .section-num {
-            width: 36px; height: 36px; border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.85rem; font-weight: 700; flex-shrink: 0; color: white;
-        }
-        .section-header h2 { font-size: 1.15rem; font-weight: 700; }
-        
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.2rem; }
-        .form-group { display: flex; flex-direction: column; gap: 0.45rem; margin-bottom: 1.2rem;}
-        .form-group.full { grid-column: 1 / -1; }
-        label { font-weight: 600; font-size: 0.88rem; color: var(--text-light); }
-        label .req { color: var(--accent); margin-left: 2px; }
-        
-        input[type="text"], input[type="email"], input[type="tel"], input[type="date"], select, textarea {
-            width: 100%; padding: 0.85rem 1rem; background: var(--bg-input);
-            border: 2px solid var(--border); border-radius: 10px; color: var(--text-light);
-            font-size: 0.95rem; font-family: inherit; transition: all 0.2s; resize: vertical;
-        }
-        input:focus, select:focus, textarea:focus {
-            outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,163,224,0.15);
-        }
-        input::placeholder, textarea::placeholder { color: var(--text-muted); }
-        select {
-            appearance: none; -webkit-appearance: none; cursor: pointer;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238B9AAE' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 1rem center; padding-right: 2.5rem;
-        }
-        select option { background: var(--bg-card); color: var(--text-light); }
-        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.6); cursor: pointer; }
-
-        .conditional-group { display: none; margin-top: 0.5rem; animation: slideDown 0.2s ease; }
-        @keyframes slideDown { from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);} }
-
-        .alert-box {
-            background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.3);
-            border-radius: 8px; padding: 0.8rem 1rem; color: #fcd34d; font-size: 0.85rem; line-height: 1.4;
-            margin-top: 0.5rem; display: none;
+            font-size: 1.4em;
+            color: var(--primary-text);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 0;
         }
 
-        .sig-wrap { position: relative; }
-        .sig-canvas {
-            width: 100%; height: 120px; border: 2px solid var(--border);
-            border-radius: 10px; background: var(--bg-input); display: block;
-            cursor: crosshair; touch-action: none;
+        .btn-link {
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            font-weight: 600;
+            border: 1px solid var(--panel-border);
+            background-color: var(--input-bg);
+            color: var(--primary-text);
+            padding: 8px 15px;
         }
-        .sig-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.35rem; }
-        .btn-clear-sig {
-            position: absolute; top: 0.5rem; right: 0.5rem;
-            background: rgba(139,154,174,0.15); border: 1px solid var(--border);
-            color: var(--text-muted); border-radius: 6px; padding: 0.25rem 0.6rem;
-            font-size: 0.75rem; cursor: pointer; font-family: inherit; transition: all 0.18s;
+        .btn-link:hover {
+            background-color: #1c2b40;
+            border-color: var(--accent-color);
         }
-        .btn-clear-sig:hover { border-color: var(--accent); color: var(--accent); }
 
-        .btn {
-            padding: 0.85rem 2rem; border: none; border-radius: 12px;
-            font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.22s; font-family: inherit;
+        #status-message {
+            text-align: center;
+            padding: 40px;
+            color: var(--secondary-text);
+            background-color: var(--container-bg);
+            border-radius: 8px;
+            border: 1px solid var(--panel-border);
+            max-width: 800px; margin: 0 auto;
         }
-        .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; width: 100%; max-width: 300px; }
-        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.35); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-        
-        .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; vertical-align: middle; margin-right: 6px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .submit-area { text-align: center; margin-top: 2rem; }
-        .submit-msg { font-size: 0.95rem; margin-top: 1rem; min-height: 1.4rem; }
-        .submit-msg.err { color: var(--error); }
-        
-        #successScreen { display: none; text-align: center; padding: 4rem 2rem; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from{opacity:0;}to{opacity:1;} }
-        #successScreen .success-icon { font-size: 4rem; margin-bottom: 1rem; }
-        #successScreen h2 { font-size: 1.8rem; font-weight: 800; color: #6ee7b7; margin-bottom: 0.8rem; }
-        #successScreen p  { color: var(--text-muted); font-size: 1rem; max-width: 500px; margin: 0 auto; line-height: 1.6; }
 
-        @media (max-width: 600px) {
-            .form-grid { grid-template-columns: 1fr; }
-            .section { padding: 1.5rem 1.2rem; }
-            .info-card { padding: 1.5rem; }
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .filter-btn {
+            background: var(--container-bg);
+            border: 1px solid var(--panel-border);
+            color: var(--secondary-text);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            background: rgba(0, 163, 224, 0.15);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        /* Grid */
+        .submission-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 25px;
+        }
+
+        /* Card */
+        .submission-card {
+            background-color: var(--container-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+        }
+        .submission-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(0, 163, 224, 0.4);
+        }
+        
+        /* 🔥 MATCH HIGHLIGHT STYLING 🔥 */
+        .submission-card.hot-match {
+            border-color: var(--warning-color);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+        }
+        .match-badge {
+            background: linear-gradient(135deg, var(--warning-color), #d97706);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+            font-weight: 800;
+            margin-left: 8px;
+            animation: pulse-gold 2s infinite;
+            vertical-align: middle;
+            display: inline-block;
+        }
+        @keyframes pulse-gold {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+
+        /* Status Ribbons */
+        .card-ribbon {
+            position: absolute;
+            top: 0; right: 0;
+            padding: 4px 12px;
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom-left-radius: 8px;
+        }
+        .status-pending { background: rgba(245, 158, 11, 0.2); color: var(--warning-color); border: 1px solid rgba(245, 158, 11, 0.3); border-top:none; border-right:none;}
+        .status-accepted { background: rgba(16, 185, 129, 0.2); color: var(--success-color); border: 1px solid rgba(16, 185, 129, 0.3); border-top:none; border-right:none;}
+        .status-denied { background: rgba(239, 68, 68, 0.2); color: var(--danger-color); border: 1px solid rgba(239, 68, 68, 0.3); border-top:none; border-right:none;}
+
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--panel-border);
+            background-color: rgba(0,0,0,0.2);
+        }
+
+        .card-title {
+            font-size: 1.1em;
+            color: var(--primary-text);
+            font-weight: 700;
+            margin-bottom: 4px;
+            padding-right: 70px; /* Space for ribbon */
+        }
+        .card-subtitle {
+            font-size: 0.85em;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .card-body {
+            padding: 20px;
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .info-block { display: flex; flex-direction: column; gap: 3px; }
+        .info-block.full-width { grid-column: 1 / -1; }
+        
+        .info-block label {
+            color: var(--secondary-text);
+            font-size: 0.75em;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .info-block .value {
+            color: var(--primary-text);
+            font-size: 0.95em;
+            font-weight: 500;
+            word-break: break-word;
+        }
+        
+        .info-block .value.highlight {
+            color: #6ee7b7;
+            font-family: 'DM Mono', monospace;
+            font-size: 0.9em;
+        }
+
+        .card-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--panel-border);
+            background-color: var(--input-bg);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Action Buttons */
+        .btn-action {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        .btn-accept {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+        .btn-accept:hover { background: rgba(16, 185, 129, 0.25); }
+        
+        .btn-deny {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+        .btn-deny:hover { background: rgba(239, 68, 68, 0.25); }
+
+        .status-text {
+            font-size: 0.9em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .page-header { flex-direction: column; text-align: center; justify-content: center;}
+            .header-brand-container { flex-direction: column; }
+            .submission-grid { grid-template-columns: 1fr; }
+            .card-body { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
+<div class="main-container">
+    <header class="page-header">
+        <div class="header-brand-container">
+            <a href="homepage.html" class="btn-link">← Hub</a>
+            <div class="header-brand">
+                <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
+                <h1>Referral Submissions</h1>
+            </div>
+        </div>
+    </header>
+
+    <div class="filters">
+        <button class="filter-btn active" data-filter="all">All Submissions</button>
+        <button class="filter-btn" data-filter="pending">Pending</button>
+        <button class="filter-btn" data-filter="accepted">Accepted</button>
+        <button class="filter-btn" data-filter="denied">Denied</button>
+    </div>
+
+    <div id="status-message">⏳ Loading submissions...</div>
     
-    <div id="formWrapper">
-        <div class="page-header">
-            <h1>Candidate Referral Bonus</h1>
-            <p>Earn £1,000</p>
-        </div>
-
-        <div class="info-card">
-            <p style="font-size: 1.05rem; color: #fff; font-weight: 600;">Do you know a fully qualified Smart Meter Engineer who would be a great addition to NGU?</p>
-            <p>Refer them to us and earn £1,000 for every successful candidate who joins the business.</p>
-            
-            <h3>How the Referral Bonus Is Paid</h3>
-            <p>The £1,000 referral bonus will be paid in two instalments of £500, provided the referred engineer remains employed by NGU.</p>
-            <div class="example-box">
-                <strong>Example:</strong> Engineer start date: 03/06/2026<br><br>
-                <span style="color:var(--accent);">·</span> 1st Payment (£500): Following the successful completion of 3 months' service (September 2026)<br>
-                <span style="color:var(--accent);">·</span> 2nd Payment (£500): Following the successful completion of 6 months' service (December 2026)
-            </div>
-
-            <h3>Important Information</h3>
-            <ul>
-                <li>Referrals will not be valid if the candidate has previously applied or has been referred by another employee within the last 6 months.</li>
-                <li>If the referred engineer submits their notice or leaves the business before a payment becomes due, any outstanding bonus payment(s) will be forfeited.</li>
-                <li>Candidates who have worked for NGU within the last 6 months are not eligible.</li>
-                <li>Referrals must be submitted before interview and before completion of Team HRS.</li>
-                <li>The referral form must be completed in full and as accurately as possible.</li>
-            </ul>
-
-            <h3 style="border:none; margin-bottom: 0.5rem;">Ready to Refer?</h3>
-            <p style="margin-bottom:0;">Complete the form below with your candidate’s details. Help us grow the team while keeping the reward within our workforce.</p>
-        </div>
-
-        <div class="section">
-            <div class="section-header">
-                <div class="section-num">1</div>
-                <div><h2>Referral Details</h2></div>
-            </div>
-
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Your Name (Referrer) <span class="req">*</span></label>
-                    <input type="text" id="referrerName" placeholder="Enter your full name">
-                </div>
-                <div class="form-group">
-                    <label>Your Email Address (Referrer) <span class="req">*</span></label>
-                    <input type="email" id="referrerEmail" placeholder="your.email@example.com">
-                </div>
-            </div>
-
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Referral's Name <span class="req">*</span></label>
-                    <input type="text" id="referralName" placeholder="Enter candidate's full name">
-                </div>
-                <div class="form-group">
-                    <label>Best Contact Number (Referral) <span class="req">*</span></label>
-                    <input type="tel" id="referralPhone" placeholder="e.g. 07700 900000">
-                </div>
-            </div>
-
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Best Email Address (Referral) <span class="req">*</span></label>
-                    <input type="email" id="referralEmail" placeholder="candidate@example.com">
-                </div>
-                <div class="form-group">
-                    <label>Postcode of Referral <span class="req">*</span></label>
-                    <input type="text" id="referralPostcode" placeholder="e.g. NE1 1AA" style="text-transform:uppercase;">
-                </div>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-header">
-                <div class="section-num">2</div>
-                <div><h2>Role Details</h2></div>
-            </div>
-
-            <div class="form-group full">
-                <label>What role is your referral looking for? <span class="req">*</span></label>
-                <select id="roleSelection">
-                    <option value="" disabled selected>Select a role...</option>
-                    <option value="Smart Meter Engineer">Smart Meter Engineer</option>
-                    <option value="Upskill (from gas to dual)">Upskill (from gas to dual)</option>
-                    <option value="Head office role">Head office role</option>
-                    <option value="Training role">Training role</option>
-                    <option value="Other">Other</option>
-                </select>
-
-                <div id="upskillNote" class="alert-box">
-                    <strong>Please note:</strong> If you are referring someone for the Upskill role they must be qualified in <strong>CCN1</strong> or <strong>CMA1</strong>. <strong>MET1</strong> would be preferred but not essential.
-                </div>
-            </div>
-
-            <div class="form-group full conditional-group" id="smartMeterCompanyGroup">
-                <label>Which company are they currently working for? <span class="req">*</span></label>
-                <input type="text" id="currentCompany" placeholder="Enter current employer">
-            </div>
-
-            <div class="form-group full conditional-group" id="otherRoleInfoGroup">
-                <label>Please provide more information on which Role they would be interested in <span class="req">*</span></label>
-                <textarea id="otherRoleDetails" placeholder="Enter role details..."></textarea>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-header">
-                <div class="section-num">3</div>
-                <div><h2>Declaration</h2></div>
-            </div>
-            
-            <div class="form-group" style="max-width: 300px;">
-                <label>Date <span class="req">*</span></label>
-                <input type="date" id="declarationDate">
-            </div>
-
-            <div class="form-group full">
-                <label>Signature (Referrer) <span class="req">*</span></label>
-                <div class="sig-wrap">
-                    <canvas class="sig-canvas" id="sigCanvas" width="800" height="120"></canvas>
-                    <button type="button" class="btn-clear-sig" onclick="clearSig()">Clear</button>
-                </div>
-                <p class="sig-hint">Sign above using your mouse or finger</p>
-            </div>
-        </div>
-
-        <div class="submit-area">
-            <button class="btn btn-primary" id="submitBtn">Submit Referral</button>
-            <div class="submit-msg" id="submitMsg"></div>
-        </div>
+    <div id="submission-grid" class="submission-grid" style="display: none;">
+        <!-- Populated via JS -->
     </div>
-
-    <div id="successScreen">
-        <div class="success-icon">🤝</div>
-        <h2>Referral Submitted!</h2>
-        <p>Thank you for helping NGU grow. We have received your referral details. If the candidate is successful and joins the business, your bonus tracking will begin.</p>
-    </div>
-
 </div>
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs }
+    import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy, where } 
         from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
-    // EmailJS Setup
-    const EMAILJS_SERVICE_ID = 'service_b3nh4bo';
-    const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
-    
-    // --- TEMPLATE ROUTING logic ---
-    const TEMPLATE_MATCH = 'template_5f9epwr'; 
-    const TEMPLATE_NO_MATCH = 'template_4ryhvfl'; 
-    const TEMPLATE_REFERRER = 'template_v7iq6vd'; 
-
-    emailjs.init(EMAILJS_PUBLIC_KEY);
-
-    // Firebase Initialization
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
         authDomain: "oesperformance-a54c0.firebaseapp.com",
@@ -311,207 +359,243 @@
         appId: "1:484894102454:web:17535ee497eac2d90d6717"
     };
 
-    const app    = initializeApp(firebaseConfig);
-    const db     = getFirestore(app);
-    const colRef = collection(db, "NGU Referral submissions");
-
-    // UI Elements
-    const roleSelection = document.getElementById('roleSelection');
-    const upskillNote = document.getElementById('upskillNote');
-    const smartMeterCompanyGroup = document.getElementById('smartMeterCompanyGroup');
-    const otherRoleInfoGroup = document.getElementById('otherRoleInfoGroup');
-    const postcode = document.getElementById('referralPostcode');
-
-    // Auto-capitalize postcode
-    postcode.addEventListener('input', function() { this.value = this.value.toUpperCase(); });
-
-    // Conditional Form Logic
-    roleSelection.addEventListener('change', function() {
-        const val = this.value;
-        
-        upskillNote.style.display = (val === 'Upskill (from gas to dual)') ? 'block' : 'none';
-        
-        if (val === 'Smart Meter Engineer') {
-            smartMeterCompanyGroup.classList.add('visible');
-            smartMeterCompanyGroup.style.display = 'flex';
-        } else {
-            smartMeterCompanyGroup.classList.remove('visible');
-            smartMeterCompanyGroup.style.display = 'none';
-            document.getElementById('currentCompany').value = '';
-        }
-
-        if (val === 'Other') {
-            otherRoleInfoGroup.classList.add('visible');
-            otherRoleInfoGroup.style.display = 'flex';
-        } else {
-            otherRoleInfoGroup.classList.remove('visible');
-            otherRoleInfoGroup.style.display = 'none';
-            document.getElementById('otherRoleDetails').value = '';
-        }
-    });
-
-    // Signature Canvas Logic
-    const canvas = document.getElementById('sigCanvas');
-    const ctx = canvas.getContext('2d');
-    let drawing = false, lastX = 0, lastY = 0;
-
-    function getPos(e) {
-        const r = canvas.getBoundingClientRect();
-        const sx = canvas.width / r.width, sy = canvas.height / r.height;
-        if (e.touches) return [(e.touches[0].clientX - r.left) * sx, (e.touches[0].clientY - r.top) * sy];
-        return [(e.clientX - r.left) * sx, (e.clientY - r.top) * sy];
-    }
-
-    ctx.strokeStyle = '#00A3E0'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
     
-    canvas.addEventListener('mousedown',  e => { drawing = true; [lastX, lastY] = getPos(e); });
-    canvas.addEventListener('mousemove',  e => { if (!drawing) return; const [x, y] = getPos(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke(); [lastX, lastY] = [x, y]; });
-    canvas.addEventListener('mouseup',   () => drawing = false);
-    canvas.addEventListener('mouseleave',() => drawing = false);
-    canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; [lastX, lastY] = getPos(e); }, { passive: false });
-    canvas.addEventListener('touchmove',  e => { e.preventDefault(); if (!drawing) return; const [x, y] = getPos(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(x, y); ctx.stroke(); [lastX, lastY] = [x, y]; }, { passive: false });
-    canvas.addEventListener('touchend', () => drawing = false);
+    const colRef = collection(db, "NGU Referral submissions");
+    const vacRef = collection(db, "NGU Recuitment Approval Form");
 
-    window.clearSig = function() { 
-        ctx.clearRect(0, 0, canvas.width, canvas.height); 
+    const gridContainer = document.getElementById('submission-grid');
+    const statusMsg = document.getElementById('status-message');
+    
+    let allSubmissions = [];
+    let currentFilter = 'all';
+    let livePostcodeAreas = new Set(); // Stores hot postcodes
+
+    // Helpers
+    const formatDate = (timestamp) => {
+        if (!timestamp) return 'Unknown Date';
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit' });
     };
 
-    function isCanvasBlank() { 
-        const b = document.createElement('canvas'); 
-        b.width = canvas.width; b.height = canvas.height; 
-        return canvas.toDataURL() === b.toDataURL(); 
-    }
+    const safeStr = (str) => str ? str : '<span style="color:var(--secondary-text); font-style:italic;">Not provided</span>';
 
-    // Default Date to Today
-    document.getElementById('declarationDate').valueAsDate = new Date();
-
-    // Helper to get Postcode Prefix
-    function getPostcodePrefix(str) {
-        if (!str) return '';
-        const match = str.trim().match(/^[A-Z]+/i);
+    // Extracts leading letters from a postcode (e.g. "NE11 0PZ" -> "NE")
+    function getPostcodeArea(str) {
+        if (!str || typeof str !== 'string') return '';
+        const match = str.trim().match(/^[a-zA-Z]+/);
         return match ? match[0].toUpperCase() : '';
     }
 
-    // Submission Logic
-    document.getElementById('submitBtn').addEventListener('click', async () => {
-        const btn = document.getElementById('submitBtn');
-        const msgEl = document.getElementById('submitMsg');
-        msgEl.textContent = '';
+    // 1. Fetch Live Vacancies to generate hot postcode matches
+    const vacQuery = query(vacRef, where("workflowClosed", "==", false));
+    onSnapshot(vacQuery, (snapshot) => {
+        livePostcodeAreas.clear();
+        snapshot.forEach(doc => {
+            const loc = doc.data().requestInformation?.location;
+            if (loc) {
+                livePostcodeAreas.add(getPostcodeArea(loc));
+            }
+        });
+        // Re-render if referrals are already loaded
+        if (allSubmissions.length > 0) renderGrid();
+    });
 
-        // Gather Values
-        const referrerName = document.getElementById('referrerName').value.trim();
-        const referrerEmail = document.getElementById('referrerEmail').value.trim();
-        const referralName = document.getElementById('referralName').value.trim();
-        const referralPhone = document.getElementById('referralPhone').value.trim();
-        const referralEmail = document.getElementById('referralEmail').value.trim();
-        const referralPostcode = document.getElementById('referralPostcode').value.trim();
-        const role = roleSelection.value;
-        const currentCompany = document.getElementById('currentCompany').value.trim();
-        const otherRoleDetails = document.getElementById('otherRoleDetails').value.trim();
-        const declarationDate = document.getElementById('declarationDate').value;
+    // 2. Fetch Referrals
+    const q = query(colRef, orderBy("submittedAt", "desc"));
+    onSnapshot(q, (snapshot) => {
+        allSubmissions = [];
+        snapshot.forEach(doc => {
+            allSubmissions.push({ id: doc.id, ...doc.data() });
+        });
+        renderGrid();
+    }, (error) => {
+        console.error("Error fetching submissions: ", error);
+        statusMsg.innerHTML = `<span style="color:var(--danger-color)">Error loading data. Check console.</span>`;
+    });
 
-        // Validation
-        const missing = [];
-        if (!referrerName) missing.push('Your Name');
-        if (!referrerEmail) missing.push('Your Email Address');
-        if (!referralName) missing.push("Referral's Name");
-        if (!referralPhone) missing.push('Contact Number');
-        if (!referralEmail) missing.push('Referral Email');
-        if (!referralPostcode) missing.push('Postcode');
-        if (!role) missing.push('Role');
+    // Update Status logic (Accept / Deny) + EmailJS Integration
+    window.updateSubmissionStatus = async function(id, newStatus, candidateEmail, candidateName) {
+        const confirmMsg = newStatus === 'Accepted' 
+            ? "Are you sure you want to ACCEPT this referral? An email will be sent to the candidate." 
+            : "Are you sure you want to DENY this referral? An email will be sent to the candidate.";
+            
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const docRef = doc(db, "NGU Referral submissions", id);
+            await updateDoc(docRef, { status: newStatus });
+            
+            // If accepted, send the email via EmailJS
+            if (newStatus === 'Accepted' && candidateEmail) {
+                try {
+                    await emailjs.send(
+                        "",   // Your Service ID
+                        "",  // Your Template ID
+                        {
+                            to_email: candidateEmail,
+                            to_name: candidateName
+                        }
+                    );
+                    console.log("Acceptance email sent successfully!");
+                } catch (emailError) {
+                    console.error("Failed to send email: ", emailError);
+                    alert("Status updated, but there was an error sending the acceptance email.");
+                }
+            }
+            // If denied, send the denial email via EmailJS
+            else if (newStatus === 'Denied' && candidateEmail) {
+                try {
+                    await emailjs.send(
+                        "service_dcdbhph",   // Your Service ID
+                        "",  // Your Deny Template ID
+                        {
+                            to_email: candidateEmail,
+                            to_name: candidateName
+                        }
+                    );
+                    console.log("Denial email sent successfully!");
+                } catch (emailError) {
+                    console.error("Failed to send denial email: ", emailError);
+                    alert("Status updated, but there was an error sending the denial email.");
+                }
+            }
+        } catch (error) {
+            console.error("Error updating document: ", error);
+            alert("Failed to update status. Please try again.");
+        }
+    };
+
+    // Render Cards based on active filter
+    function renderGrid() {
+        gridContainer.innerHTML = '';
         
-        if (role === 'Smart Meter Engineer' && !currentCompany) missing.push('Current Company');
-        if (role === 'Other' && !otherRoleDetails) missing.push('Other Role Details');
-        
-        if (!declarationDate) missing.push('Date');
-        if (isCanvasBlank()) missing.push('Signature');
+        const filteredData = allSubmissions.filter(item => {
+            const status = item.status || 'Pending'; 
+            if (currentFilter === 'all') return true;
+            return status.toLowerCase() === currentFilter;
+        });
 
-        if (missing.length > 0) {
-            msgEl.className = 'submit-msg err';
-            msgEl.textContent = `Please complete: ${missing.slice(0, 3).join(', ')}${missing.length > 3 ? ` and ${missing.length - 3} more...` : '.'}`;
-            window.scrollTo({ top: 0, behavior: 'smooth' }); 
+        if (filteredData.length === 0) {
+            statusMsg.textContent = "No submissions found for this filter.";
+            statusMsg.style.display = 'block';
+            gridContainer.style.display = 'none';
             return;
         }
 
-        btn.disabled = true; 
-        btn.innerHTML = '<span class="spinner"></span>Submitting...';
+        statusMsg.style.display = 'none';
+        gridContainer.style.display = 'grid';
 
-        try {
-            const signatureBase64 = canvas.toDataURL('image/png');
+        filteredData.forEach(data => {
+            const status = data.status || 'Pending';
+            let ribbonClass = 'status-pending';
+            if (status === 'Accepted') ribbonClass = 'status-accepted';
+            if (status === 'Denied') ribbonClass = 'status-denied';
 
-            // 1. Check for Live Vacancy Match
-            const prefix = getPostcodePrefix(referralPostcode);
-            let hasMatch = false;
+            // Check for Postcode Match
+            const refArea = getPostcodeArea(data.referralPostcode);
+            const isMatch = livePostcodeAreas.has(refArea) && status === 'Pending';
+            const matchClass = isMatch ? 'hot-match' : '';
+            const matchBadgeHTML = isMatch ? `<span class="match-badge">🔥 LIVE VACANCY MATCH</span>` : '';
 
-            const q = query(collection(db, "NGU Recuitment Approval Form"), where("workflowClosed", "==", false));
-            const snapshot = await getDocs(q);
-            
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const approvals = data.approvalSignOff || {};
-                const isLive = approvals.departmentHead?.decision === 'Approve' &&
-                               approvals.finance?.decision === 'Approve' &&
-                               approvals.finalApprover?.decision === 'Approve';
-                               
-                if (isLive) {
-                    const vacRole = data.requestInformation?.jobTitle;
-                    const vacLocation = data.requestInformation?.location;
-                    if (vacRole === role && getPostcodePrefix(vacLocation) === prefix && prefix !== '') {
-                        hasMatch = true;
-                    }
-                }
-            });
-
-            // 2. Determine which template to use
-            const templateToUse = hasMatch ? TEMPLATE_MATCH : TEMPLATE_NO_MATCH;
-
-            // 3. Save to Firestore
-            await addDoc(colRef, {
-                submittedAt: serverTimestamp(),
-                referrerName,
-                referrerEmail,
-                referralName,
-                referralPhone,
-                referralEmail,
-                referralPostcode,
-                role,
-                currentCompany: role === 'Smart Meter Engineer' ? currentCompany : null,
-                otherRoleDetails: role === 'Other' ? otherRoleDetails : null,
-                declarationDate,
-                signature: signatureBase64,
-                hasLiveVacancyMatch: hasMatch // Good to track in DB
-            });
-
-            // 4. Send Email Notification to Candidate
-            await emailjs.send(EMAILJS_SERVICE_ID, templateToUse, {
-                to_email: referralEmail,        
-                to_name: referralName,          
-            });
-
-            // 5. Send Confirmation Email to Referrer
-            if (referrerEmail) {
-                await emailjs.send(EMAILJS_SERVICE_ID, TEMPLATE_REFERRER, {
-                    to_email: referrerEmail,
-                    to_name: referrerName,
-                    referrer_name: referrerName,
-                    referral_name: referralName,
-                    referral_role: role,
-                    declaration_date: declarationDate
-                });
+            let conditionalHTML = '';
+            if (data.role === 'Smart Meter Engineer') {
+                conditionalHTML = `
+                    <div class="info-block full-width">
+                        <label>Current Company</label>
+                        <div class="value">${safeStr(data.currentCompany)}</div>
+                    </div>`;
+            } else if (data.role === 'Other') {
+                conditionalHTML = `
+                    <div class="info-block full-width">
+                        <label>Other Role Details</label>
+                        <div class="value">${safeStr(data.otherRoleDetails)}</div>
+                    </div>`;
             }
 
-            document.getElementById('formWrapper').style.display = 'none';
-            document.getElementById('successScreen').style.display = 'block';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            let actionFooterHTML = '';
+            if (status === 'Pending') {
+                const emailParam = data.referralEmail ? data.referralEmail.replace(/'/g, "\\'") : '';
+                const nameParam = data.referralName ? data.referralName.replace(/'/g, "\\'") : '';
+                
+                actionFooterHTML = `
+                    <button class="btn-action btn-deny" onclick="updateSubmissionStatus('${data.id}', 'Denied', '${emailParam}', '${nameParam}')">✕ Deny</button>
+                    <button class="btn-action btn-accept" onclick="updateSubmissionStatus('${data.id}', 'Accepted', '${emailParam}', '${nameParam}')">✓ Accept</button>
+                `;
+            } else {
+                actionFooterHTML = `
+                    <div class="status-text" style="color: var(--${status === 'Accepted' ? 'success' : 'danger'}-color)">
+                        ${status === 'Accepted' ? '✓ Accepted' : '✕ Denied'}
+                    </div>
+                `;
+            }
 
-        } catch (err) {
-            console.error("Submission error:", err);
-            msgEl.className = 'submit-msg err';
-            msgEl.textContent = 'Submission failed. Please try again.';
-            btn.disabled = false; 
-            btn.textContent = 'Submit Referral';
-        }
+            const cardHtml = `
+                <div class="submission-card ${matchClass}">
+                    <div class="card-ribbon ${ribbonClass}">${status}</div>
+                    
+                    <div class="card-header">
+                        <div class="card-title">${safeStr(data.referrerName)}</div>
+                        <div class="card-subtitle">Referred: <span style="color:#fff;">${safeStr(data.referralName)}</span></div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="info-block full-width">
+                            <label>Desired Role</label>
+                            <div class="value highlight">${safeStr(data.role)}</div>
+                        </div>
+                        
+                        <div class="info-block">
+                            <label>Candidate Phone</label>
+                            <div class="value"><a href="tel:${data.referralPhone}" style="color:inherit; text-decoration:none;">${safeStr(data.referralPhone)}</a></div>
+                        </div>
+                        
+                        <div class="info-block">
+                            <label>Candidate Email</label>
+                            <div class="value"><a href="mailto:${data.referralEmail}" style="color:inherit; text-decoration:none; word-break:break-all;">${safeStr(data.referralEmail)}</a></div>
+                        </div>
+
+                        <div class="info-block">
+                            <label>Postcode</label>
+                            <div class="value">
+                                ${safeStr(data.referralPostcode)}
+                                ${matchBadgeHTML}
+                            </div>
+                        </div>
+
+                        <div class="info-block">
+                            <label>Submitted At</label>
+                            <div class="value" style="font-size:0.85em;">${formatDate(data.submittedAt)}</div>
+                        </div>
+                        
+                        ${conditionalHTML}
+                        
+                        <div class="info-block full-width" style="flex-direction:row; align-items:center; gap:10px; margin-top:5px; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px;">
+                            <label>Declaration Signed:</label>
+                            <div class="value" style="color:var(--success-color); font-size:0.8em;">✓ Yes (${data.declarationDate || 'Date missing'})</div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        ${actionFooterHTML}
+                    </div>
+                </div>
+            `;
+            gridContainer.insertAdjacentHTML('beforeend', cardHtml);
+        });
+    }
+
+    // Filter Buttons Logic
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+            currentFilter = e.target.getAttribute('data-filter');
+            renderGrid();
+        });
     });
+
 </script>
 </body>
 </html>
