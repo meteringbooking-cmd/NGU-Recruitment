@@ -484,11 +484,12 @@
 
             // 4. Send Email Notification to Candidate
             try {
-                await emailjs.send(EMAILJS_SERVICE_ID, templateToUse, {
+                const res1 = await emailjs.send(EMAILJS_SERVICE_ID, templateToUse, {
                     to_email: referralEmail,        
                     to_name: referralName,
                     email: referralEmail
-                });
+                }, EMAILJS_PUBLIC_KEY);
+                console.log("Candidate email sent successfully:", res1);
             } catch (candidateEmailErr) {
                 console.warn("Candidate email notification failed via EmailJS:", candidateEmailErr);
             }
@@ -496,7 +497,7 @@
             // 5. Send Confirmation Email to Referrer
             if (referrerEmail) {
                 try {
-                    await emailjs.send(EMAILJS_SERVICE_ID, TEMPLATE_REFERRER, {
+                    const res2 = await emailjs.send(EMAILJS_SERVICE_ID, TEMPLATE_REFERRER, {
                         to_email: referrerEmail,
                         email: referrerEmail,
                         to_name: referrerName,
@@ -505,9 +506,12 @@
                         referral_name: referralName,
                         referral_role: role,
                         declaration_date: declarationDate
-                    });
+                    }, EMAILJS_PUBLIC_KEY);
+                    console.log("Referrer email sent successfully:", res2);
                 } catch (referrerEmailErr) {
-                    console.warn("Referrer confirmation email failed via EmailJS:", referrerEmailErr);
+                    const errMsg = referrerEmailErr?.text || referrerEmailErr?.message || JSON.stringify(referrerEmailErr);
+                    console.error("Referrer email failed via EmailJS:", referrerEmailErr);
+                    alert("EmailJS error sending referrer template (template_v7iq6vd):\n\n" + errMsg);
                 }
             }
 
