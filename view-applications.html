@@ -790,7 +790,7 @@
                           emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_EXTERNAL_NAME_CHECK, { 
                               ...baseParams, 
                               to_email: externalEmail,
-                              ...(externalEmail.toLowerCase().includes('calisen.co.uk') ? { cv_url: data.cv?.url || '', cv_name: data.cv?.filename || 'No CV Attached' } : {})
+                              ...(externalEmail.toLowerCase().includes('calisen.com') ? { cv_url: data.cv?.url || '', cv_name: data.cv?.filename || 'No CV Attached' } : {})
                           }, { publicKey: EMAILJS_PUBLIC_KEY })
                     ]);
                     
