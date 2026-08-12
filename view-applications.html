@@ -751,12 +751,33 @@
                 }
 
                 let triggerNameChecks = false;
+                let triggerHoldEmail = false;
                 if (reviews.length === 1) {
                     const proceed = reviews[0].decision === 'Proceed';
                     if (proceed && !data.nameChecksRequested) { triggerNameChecks = true; updates.nameChecksRequested = true; }
                 }
+                
+                // If this is a brand new 'Hold' review, send the email
+                if (decision === 'Hold' && !isUpdatingHold) {
+                    triggerHoldEmail = true;
+                }
 
                 await updateDoc(appRef, updates);
+
+                if (triggerHoldEmail) {
+                    const emailParams = {
+                        to_email: data.personalDetails?.email || '',
+                        first_name: data.fullName?.split(' ')[0] || 'Applicant',
+                        candidate_name: data.fullName || 'Applicant',
+                        position: data.position || 'the role'
+                    };
+                    try {
+                        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_HOLD, emailParams, { publicKey: EMAILJS_PUBLIC_KEY });
+                        console.log("Hold email sent successfully from Perform Review.");
+                    } catch(err) {
+                        console.error("Failed to send Hold email from review:", err);
+                    }
+                }
 
                 if (triggerNameChecks) {
                     // Pull the external email + additional info. Fallback to current input if first reviewer didn't have it.
