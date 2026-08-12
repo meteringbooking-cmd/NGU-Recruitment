@@ -615,7 +615,7 @@ Comments: ${getElVal('final-comments') || 'N/A'}
                 };
 
                 console.log("Triggering Final Decision EmailJS Notification...");
-                await emailjs.send('service_t9mebjl', 'template_bhou98a', emailParams);
+                await emailjs.send('service_dcdbhph', 'template_bhou98a', emailParams);
                 
                 // Flag database to prevent duplicate emails upon future saves
                 await docRef.update({ workflowEmailSent: true });
