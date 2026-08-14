@@ -705,6 +705,14 @@
         }
     });
 
+    // ------------------------------------------------------------------
+    // FIXED: each send is now awaited and wrapped in try/catch.
+    // The "reminder sent" flag is ONLY written to Firestore after a
+    // confirmed successful send. If EmailJS fails (bad template, quota,
+    // network issue, etc.) the flag stays false, so it will correctly
+    // retry the next time this function runs (i.e. next time someone
+    // has the page open and Firestore pushes a snapshot update).
+    // ------------------------------------------------------------------
     async function processAutomatedReminders(bookings) {
         const now = new Date();
         for (const b of bookings) {
@@ -717,15 +725,30 @@
                 const bookedTime = b.bookedAt.toDate ? b.bookedAt.toDate() : new Date(b.bookedAt);
                 const hoursWaiting = (now - bookedTime) / (1000 * 60 * 60);
                 const level = b.unclaimedReminderLevel || 0;
-                let emailSent = false;
+                let newLevel = null;
 
-                if (hoursWaiting >= 72 && level < 3) { updates.unclaimedReminderLevel = 3; emailSent = true; } 
-                else if (hoursWaiting >= 48 && level < 2) { updates.unclaimedReminderLevel = 2; emailSent = true; } 
-                else if (hoursWaiting >= 24 && level < 1) { updates.unclaimedReminderLevel = 1; emailSent = true; }
+                if (hoursWaiting >= 72 && level < 3) newLevel = 3;
+                else if (hoursWaiting >= 48 && level < 2) newLevel = 2;
+                else if (hoursWaiting >= 24 && level < 1) newLevel = 1;
 
-                if (emailSent) {
+                if (newLevel !== null) {
                     const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_REMINDER, { applicant_name: b.applicantName, applicant_postcode: b.applicantPostcode || 'Not provided', postcode: b.applicantPostcode || 'Not provided', hours_waiting: Math.floor(hoursWaiting), interview_date: displayDate, interview_time: b.time, portal_link: window.location.href });
+                    try {
+                        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_REMINDER, {
+                            applicant_name: b.applicantName,
+                            applicant_postcode: b.applicantPostcode || 'Not provided',
+                            postcode: b.applicantPostcode || 'Not provided',
+                            hours_waiting: Math.floor(hoursWaiting),
+                            interview_date: displayDate,
+                            interview_time: b.time,
+                            portal_link: window.location.href
+                        });
+                        updates.unclaimedReminderLevel = newLevel;
+                        console.log(`FTL unclaimed reminder (level ${newLevel}) sent for ${b.id}`);
+                    } catch (err) {
+                        console.error(`Failed to send FTL unclaimed reminder for ${b.id}:`, err);
+                        // Do NOT set unclaimedReminderLevel — leave it so it retries.
+                    }
                 }
             }
 
@@ -734,20 +757,25 @@
                 const hoursUntilInterview = (interviewDateTime - now) / (1000 * 60 * 60);
 
                 if (hoursUntilInterview > 0 && hoursUntilInterview <= 24) {
-                    updates.applicantReminderSent = true;
                     const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                    
-                    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APP_REMINDER, {
-                        to_email: b.applicantEmail, 
-                        first_name: b.applicantName ? b.applicantName.split(' ')[0] : 'Applicant',
-                        job_title: b.position || 'your selected role', 
-                        interview_date: displayDate, 
-                        interview_time: b.time, 
-                        interviewer_name: b.interviewer || 'a member of our team',
-                        location_method: 'Microsoft Teams', 
-                        meeting_link: b.meetingLink || 'A link will be provided shortly', 
-                        contact_email: 'recruitment@next-gen.uk'
-                    });
+                    try {
+                        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APP_REMINDER, {
+                            to_email: b.applicantEmail,
+                            first_name: b.applicantName ? b.applicantName.split(' ')[0] : 'Applicant',
+                            job_title: b.position || 'your selected role',
+                            interview_date: displayDate,
+                            interview_time: b.time,
+                            interviewer_name: b.interviewer || 'a member of our team',
+                            location_method: 'Microsoft Teams',
+                            meeting_link: b.meetingLink || 'A link will be provided shortly',
+                            contact_email: 'recruitment@next-gen.uk'
+                        });
+                        updates.applicantReminderSent = true;
+                        console.log(`24h applicant reminder sent for ${b.id}`);
+                    } catch (err) {
+                        console.error(`Failed to send 24h applicant reminder for ${b.id}:`, err);
+                        // Do NOT set applicantReminderSent — leave it so it retries.
+                    }
                 }
             }
             if (Object.keys(updates).length > 0) await updateDoc(docRef, updates);
@@ -945,7 +973,7 @@
             // Dispatch Assessment Results summary parameters pipeline straight to EmailJS
             try {
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INTERVIEW_COMPLETED, {
-                    interviewer_name: currentUser,
+                    interviewer_name: document.getElementById('hdrInterviewer').textContent,
                     applicant_name: applicantName,
                     total_score: payload.totalScore,
                     recommendation: payload.recommendation,
