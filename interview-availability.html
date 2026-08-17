@@ -185,7 +185,18 @@
         loadingStatus.textContent = 'Checking availability...';
 
         try {
-            const q = query(collection(db, "NGU Interview Times"), where("date", "==", selectedDate), where("status", "==", "Available"));
+            const ftlName = new URLSearchParams(window.location.search).get('ftl');
+            let q;
+            if (ftlName) {
+                q = query(collection(db, "NGU Interview Times"), 
+                          where("date", "==", selectedDate), 
+                          where("status", "==", "Available"),
+                          where("submittedBy", "==", ftlName));
+            } else {
+                q = query(collection(db, "NGU Interview Times"), 
+                          where("date", "==", selectedDate), 
+                          where("status", "==", "Available"));
+            }
             const snapshot = await getDocs(q);
             
             loadingStatus.textContent = '';
