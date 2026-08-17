@@ -141,7 +141,7 @@
 
     // --- EMAILJS CONFIG ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
-    const EMAILJS_SERVICE_ID = 'service_dcdbhph'; 
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_FTL_TEMPLATE = 'template_5cpb2mc';
     const EMAILJS_APPLICANT_CONFIRM = 'template_xf6p7vc'; 
     emailjs.init(EMAILJS_PUBLIC_KEY);
@@ -190,7 +190,14 @@
             
             loadingStatus.textContent = '';
 
-            const nowPlus24Hours = new Date().getTime() + (24 * 60 * 60 * 1000);
+            const now = new Date();
+            let noticeMs = 24 * 60 * 60 * 1000; // Default 24 hours
+            if (now.getDay() === 5) { // Friday
+                noticeMs = 3 * 24 * 60 * 60 * 1000; // 72 hours (Blocks Mon)
+            } else if (now.getDay() === 6) { // Saturday
+                noticeMs = 2 * 24 * 60 * 60 * 1000; // 48 hours
+            }
+            const minAllowedTime = now.getTime() + noticeMs;
             
             // Collect available slots and deduplicate by time (saving the docId of the first one we see)
             const availableSlots = {};
@@ -218,7 +225,7 @@
 
                 const slotDateTime = new Date(`${selectedDate}T${time}:00`).getTime();
                 
-                if (slotDateTime <= nowPlus24Hours) {
+                if (slotDateTime <= minAllowedTime) {
                     btn.disabled = true;
                     btn.title = "Interviews must be booked at least 24 hours in advance";
                 } else {
