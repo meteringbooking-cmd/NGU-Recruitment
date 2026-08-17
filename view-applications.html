@@ -219,6 +219,17 @@
             </div>
 
             <div class="modal-form-group">
+                <label>Assign to FTL Team <span style="color:var(--accent);">*</span></label>
+                <select id="nameCheckAssignedFTL" class="modal-select">
+                    <option value="" disabled selected>Select an FTL...</option>
+                    <option value="Richard Wiecko">Richard Wiecko</option>
+                    <option value="Scott Carson">Scott Carson</option>
+                    <option value="Stuart Whyte">Stuart Whyte</option>
+                    <option value="Thomas Green">Thomas Green</option>
+                </select>
+            </div>
+
+            <div class="modal-form-group">
                 <label>Interview Invitation Option</label>
                 <select id="nameCheckInviteOption" class="modal-select" onchange="toggleNameCheckInviteFields()">
                     <option value="now">Send Invitation to book slot now</option>
@@ -625,7 +636,7 @@
     async function checkAndSendScheduledEmails(apps) {
         const now = new Date();
         for (const app of apps) {
-            // Skip junk applications — no emails for invalid phone numbers
+            // Skip junk applications - no emails for invalid phone numbers
             if (isJunkApp(app)) continue;
 
             if (app.scheduledInterviewEmailTime && app.scheduledInterviewEmailSent === false) {
@@ -636,10 +647,14 @@
                         // Mark sent first to prevent race condition double sends
                         await updateDoc(appRef, { scheduledInterviewEmailSent: true });
                         console.log(`Sending scheduled interview invitation to ${app.fullName}`);
+                        
+                        const ftlParam = app.assignedFTLForInterview ? `?ftl=${encodeURIComponent(app.assignedFTLForInterview)}` : '';
+                        const portalLink = `https://ngu-recruitment-portal.vercel.app/interview-availability.html${ftlParam}`;
+
                         await emailjs.send(EMAILJS_SERVICE_ID, 'template_gw0hkxr', {
                             to_email: app.personalDetails?.email,
                             first_name: (app.fullName || 'Applicant').split(' ')[0],
-                            portal_link: 'https://ngu-recruitment-portal.vercel.app/FTL-interview-availability.html'
+                            portal_link: portalLink
                         });
                         console.log(`Scheduled interview invitation sent successfully to ${app.fullName}`);
                     } catch (e) {
@@ -922,11 +937,13 @@
     window.submitNameCheckProceed = async function() {
         const appId = document.getElementById('nameCheckAppId').value;
         const adminName = document.getElementById('nameCheckAdminName').value.trim();
+        const assignedFTL = document.getElementById('nameCheckAssignedFTL').value;
         const inviteOption = document.getElementById('nameCheckInviteOption').value;
         const dateVal = document.getElementById('nameCheckInterviewDate').value;
         const timeVal = document.getElementById('nameCheckInterviewTime').value;
 
         if (!adminName) return alert("Please enter your name.");
+        if (!assignedFTL) return alert("Please select an FTL team to assign this applicant to.");
 
         if (inviteOption === 'later') {
             if (!dateVal || !timeVal) return alert("Please specify both a date and a time for the interview.");
@@ -951,7 +968,8 @@
                 nameChecksDeclined: false,
                 nameChecksCompletedBy: adminName,
                 nameChecksCompletedAt: new Date().toISOString(),
-                status: 'Ready for Interview'
+                status: 'Ready for Interview',
+                assignedFTLForInterview: assignedFTL
             };
 
             if (inviteOption === 'later') {
@@ -967,10 +985,11 @@
 
             try {
                 if (inviteOption === 'now') {
+                    const portalLink = `https://ngu-recruitment-portal.vercel.app/interview-availability.html?ftl=${encodeURIComponent(assignedFTL)}`;
                     await emailjs.send(EMAILJS_SERVICE_ID, 'template_gw0hkxr', {
                         to_email: candidateEmail,
                         first_name: candidateName.split(' ')[0],
-                        portal_link: 'https://ngu-recruitment-portal.vercel.app/FTL-interview-availability.html'
+                        portal_link: portalLink
                     });
                     alert("Name checks passed. Candidate updated and invitation email dispatched.");
                 } else {
@@ -2058,10 +2077,13 @@
             
             await updateDoc(appRef, { scheduledInterviewEmailSent: true });
             
+            const ftlParam = appData.assignedFTLForInterview ? `?ftl=${encodeURIComponent(appData.assignedFTLForInterview)}` : '';
+            const portalLink = `https://ngu-recruitment-portal.vercel.app/interview-availability.html${ftlParam}`;
+
             await emailjs.send(EMAILJS_SERVICE_ID, 'template_gw0hkxr', {
                 to_email: email,
                 first_name: (appData.fullName || 'Applicant').split(' ')[0],
-                portal_link: 'https://ngu-recruitment-portal.vercel.app/FTL-interview-availability.html'
+                portal_link: portalLink
             });
             alert("Re-interview link sent to applicant.");
         } catch(e) {
