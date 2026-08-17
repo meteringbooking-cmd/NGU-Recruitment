@@ -183,6 +183,41 @@
     </div>
 </div>
 
+<!-- CLAIM MODAL -->
+<div class="modal-overlay" id="claimModal">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <div class="modal-title">Claim Interview</div>
+            <button class="modal-close" onclick="closeClaimModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="claimDocId">
+            
+            <div class="modal-form-group">
+                <label>Select Interviewer <span style="color:var(--accent);">*</span></label>
+                <select id="claimInterviewerName" class="modal-select">
+                    <option value="" disabled selected>Choose a name...</option>
+                    <option value="Carl Finnigan">Carl Finnigan</option>
+                    <option value="Richard Wiecko">Richard Wiecko</option>
+                    <option value="Scott Carson">Scott Carson</option>
+                    <option value="Stuart Whyte">Stuart Whyte</option>
+                </select>
+            </div>
+            
+            <div class="modal-form-group">
+                <label>Microsoft Teams Link <span style="color:var(--accent);">*</span></label>
+                <input type="text" id="claimTeamsLink" class="modal-input" placeholder="Paste your unique meeting link...">
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">This link will be sent to the applicant automatically.</p>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
+                <button class="btn btn-secondary" style="flex: 1; text-align: center; justify-content: center;" onclick="closeClaimModal()">Cancel</button>
+                <button class="btn btn-primary" style="flex: 2; text-align: center; justify-content: center;" onclick="submitClaim()">Assign to Me</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- MASSIVE INTERVIEW MODAL -->
 <div class="modal-overlay" id="interviewModal">
     <div class="modal-content">
@@ -517,11 +552,11 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, updateDoc, where, addDoc, deleteDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, updateDoc, where, addDoc, deleteDoc, serverTimestamp, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
     // --- EMAILJS CONFIG ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
-    const EMAILJS_SERVICE_ID = 'service_dcdbhph'; 
+    const EMAILJS_SERVICE_ID = 'service_b3nh4bo'; 
     const EMAILJS_FTL_REMINDER = 'template_v410t15';
     const EMAILJS_APP_REMINDER = 'template_n1r23pg';
     const EMAILJS_INTERVIEW_COMPLETED = 'template_5ma65oo';
@@ -705,104 +740,125 @@
         }
     });
 
-    // ------------------------------------------------------------------
-    // FIXED: each send is now awaited and wrapped in try/catch.
-    // The "reminder sent" flag is ONLY written to Firestore after a
-    // confirmed successful send. If EmailJS fails (bad template, quota,
-    // network issue, etc.) the flag stays false, so it will correctly
-    // retry the next time this function runs (i.e. next time someone
-    // has the page open and Firestore pushes a snapshot update).
-    // ------------------------------------------------------------------
     async function processAutomatedReminders(bookings) {
         const now = new Date();
         for (const b of bookings) {
             if (b.interviewCompleted) continue;
 
             const docRef = doc(db, "NGU Interview Times", b.id);
-            const updates = {};
             
+            // 1. FTL Unclaimed Reminder Logic
             if (!b.interviewer && b.bookedAt) {
                 const bookedTime = b.bookedAt.toDate ? b.bookedAt.toDate() : new Date(b.bookedAt);
                 const hoursWaiting = (now - bookedTime) / (1000 * 60 * 60);
-                const level = b.unclaimedReminderLevel || 0;
-                let newLevel = null;
+                const currentLevel = b.unclaimedReminderLevel || 0;
+                
+                let targetLevel = null;
+                if (hoursWaiting >= 72 && currentLevel < 3) { targetLevel = 3; } 
+                else if (hoursWaiting >= 48 && currentLevel < 2) { targetLevel = 2; } 
+                else if (hoursWaiting >= 24 && currentLevel < 1) { targetLevel = 1; }
 
-                if (hoursWaiting >= 72 && level < 3) newLevel = 3;
-                else if (hoursWaiting >= 48 && level < 2) newLevel = 2;
-                else if (hoursWaiting >= 24 && level < 1) newLevel = 1;
-
-                if (newLevel !== null) {
-                    const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                if (targetLevel) {
                     try {
-                        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_REMINDER, {
-                            applicant_name: b.applicantName,
-                            applicant_postcode: b.applicantPostcode || 'Not provided',
-                            postcode: b.applicantPostcode || 'Not provided',
-                            hours_waiting: Math.floor(hoursWaiting),
-                            interview_date: displayDate,
-                            interview_time: b.time,
-                            portal_link: window.location.href
+                        await runTransaction(db, async (transaction) => {
+                            const sfDoc = await transaction.get(docRef);
+                            if (!sfDoc.exists()) throw "Document does not exist!";
+                            
+                            const dbLevel = sfDoc.data().unclaimedReminderLevel || 0;
+                            if (dbLevel >= targetLevel) {
+                                throw "Already sent by another client"; // Abort safely
+                            }
+                            transaction.update(docRef, { unclaimedReminderLevel: targetLevel });
                         });
-                        updates.unclaimedReminderLevel = newLevel;
-                        console.log(`FTL unclaimed reminder (level ${newLevel}) sent for ${b.id}`);
-                    } catch (err) {
-                        console.error(`Failed to send FTL unclaimed reminder for ${b.id}:`, err);
-                        // Do NOT set unclaimedReminderLevel — leave it so it retries.
+                        
+                        // If transaction succeeds without throwing, we are the only client sending this email
+                        const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_REMINDER, { 
+                            applicant_name: b.applicantName, 
+                            applicant_postcode: b.applicantPostcode || 'Not provided', 
+                            postcode: b.applicantPostcode || 'Not provided', 
+                            hours_waiting: Math.floor(hoursWaiting), 
+                            interview_date: displayDate, 
+                            interview_time: b.time, 
+                            portal_link: window.location.href 
+                        });
+                    } catch (e) {
+                        if (e !== "Already sent by another client") console.error("FTL Reminder Transaction Failed:", e);
                     }
                 }
             }
 
+            // 2. Applicant 24h Reminder Logic
             if (b.applicantEmail && !b.applicantReminderSent) {
                 const interviewDateTime = new Date(`${b.date}T${b.time}`);
                 const hoursUntilInterview = (interviewDateTime - now) / (1000 * 60 * 60);
 
                 if (hoursUntilInterview > 0 && hoursUntilInterview <= 24) {
-                    const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
                     try {
+                        await runTransaction(db, async (transaction) => {
+                            const sfDoc = await transaction.get(docRef);
+                            if (!sfDoc.exists()) throw "Document does not exist!";
+                            
+                            const isSent = sfDoc.data().applicantReminderSent;
+                            if (isSent) {
+                                throw "Already sent by another client"; // Abort safely
+                            }
+                            transaction.update(docRef, { applicantReminderSent: true });
+                        });
+                        
+                        // Transaction succeeded
+                        const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
                         await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APP_REMINDER, {
-                            to_email: b.applicantEmail,
+                            to_email: b.applicantEmail, 
                             first_name: b.applicantName ? b.applicantName.split(' ')[0] : 'Applicant',
-                            job_title: b.position || 'your selected role',
-                            interview_date: displayDate,
-                            interview_time: b.time,
+                            job_title: b.position || 'your selected role', 
+                            interview_date: displayDate, 
+                            interview_time: b.time, 
                             interviewer_name: b.interviewer || 'a member of our team',
-                            location_method: 'Microsoft Teams',
-                            meeting_link: b.meetingLink || 'A link will be provided shortly',
+                            location_method: 'Microsoft Teams', 
+                            meeting_link: b.meetingLink || 'A link will be provided shortly', 
                             contact_email: 'recruitment@next-gen.uk'
                         });
-                        updates.applicantReminderSent = true;
-                        console.log(`24h applicant reminder sent for ${b.id}`);
-                    } catch (err) {
-                        console.error(`Failed to send 24h applicant reminder for ${b.id}:`, err);
-                        // Do NOT set applicantReminderSent — leave it so it retries.
+                    } catch (e) {
+                        if (e !== "Already sent by another client") console.error("App Reminder Transaction Failed:", e);
                     }
                 }
             }
-            if (Object.keys(updates).length > 0) await updateDoc(docRef, updates);
         }
     }
 
-    window.claimInterview = async function(docId) {
-        const storedName = localStorage.getItem('ngu_ftl_name') || localStorage.getItem('ngu_portal_username') || '';
-        let interviewerName = prompt("Please enter your name to claim this interview:", storedName);
-        if (interviewerName === null) return;
-        interviewerName = interviewerName.trim();
+    window.claimInterview = function(docId) {
+        document.getElementById('claimDocId').value = docId;
+        document.getElementById('claimInterviewerName').value = "";
+        document.getElementById('claimTeamsLink').value = "";
+        document.getElementById('claimModal').classList.add('active');
+    };
+
+    window.closeClaimModal = function() {
+        document.getElementById('claimModal').classList.remove('active');
+    };
+
+    window.submitClaim = async function() {
+        const docId = document.getElementById('claimDocId').value;
+        const interviewerName = document.getElementById('claimInterviewerName').value;
+        const teamsLink = document.getElementById('claimTeamsLink').value.trim();
+        
         if (!interviewerName) {
-            alert("Name is required to claim the interview.");
+            alert("Please select your name from the dropdown.");
             return;
         }
-        localStorage.setItem('ngu_ftl_name', interviewerName);
-
-        const defaultTeamsLink = '';
-        const teamsLink = prompt("Please paste your unique Microsoft Teams meeting link for this interview.\n\nHOW TO GET A LINK:\n• Teams App: Go to Calendar > Meet now > Get a link to share\n• Outlook: New Event > Add Teams meeting toggle > Copy the link\n\n(This link will be sent to the applicant automatically)", defaultTeamsLink);
-        if (teamsLink === null) return; 
+        if (!teamsLink) {
+            alert("Please provide a Microsoft Teams link.");
+            return;
+        }
 
         try {
             await updateDoc(doc(db, "NGU Interview Times", docId), { 
                 interviewer: interviewerName,
-                meetingLink: teamsLink.trim() || 'A link will be provided shortly'
+                meetingLink: teamsLink
             });
             document.getElementById('displayName').textContent = interviewerName;
+            closeClaimModal();
             alert("Interview successfully assigned to you!");
         } catch (error) {
             console.error("Error claiming:", error);
@@ -973,7 +1029,7 @@
             // Dispatch Assessment Results summary parameters pipeline straight to EmailJS
             try {
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_INTERVIEW_COMPLETED, {
-                    interviewer_name: document.getElementById('hdrInterviewer').textContent,
+                    interviewer_name: currentUser,
                     applicant_name: applicantName,
                     total_score: payload.totalScore,
                     recommendation: payload.recommendation,
