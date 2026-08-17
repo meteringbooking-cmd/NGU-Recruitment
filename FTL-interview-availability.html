@@ -1076,7 +1076,8 @@
                 batch.push(addDoc(collection(db, "NGU Interview Times"), {
                     date: date,
                     time: time,
-                    interviewer: nameInput,
+                    interviewer: null,
+                    submittedBy: nameInput,
                     status: "Available",
                     addedAt: serverTimestamp()
                 }));
