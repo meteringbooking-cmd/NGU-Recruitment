@@ -357,7 +357,9 @@ await updateDoc(docRef, {
             };
 
             // 2. Send Alert to FTLs
+            const ftlNameForEmail = new URLSearchParams(window.location.search).get('ftl') || 'Team';
             const ftlParams = {
+                ftl_name: ftlNameForEmail,
                 applicant_name: name,
                 applicant_postcode: applicantPostcode || 'Not provided',
                 postcode: applicantPostcode || 'Not provided',
