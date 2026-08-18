@@ -218,6 +218,36 @@
     </div>
 </div>
 
+<!-- ADD TEAMS LINK MODAL -->
+<div class="modal-overlay" id="addTeamsLinkModal">
+    <div class="modal-content" style="max-width: 450px;">
+        <div class="modal-header">
+            <div class="modal-title">Attach Teams Link</div>
+            <button class="modal-close" onclick="closeAddTeamsLinkModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="addTeamsLinkDocId">
+            
+            <div class="modal-form-group">
+                <label>Microsoft Teams Link <span style="color:var(--accent);">*</span></label>
+                <input type="text" id="addTeamsLinkInput" class="modal-input" placeholder="Paste your unique meeting link...">
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">This link will be sent to the applicant automatically.</p>
+                
+                <div style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; margin-top: 15px; font-size: 0.85rem; color: var(--text-muted);">
+                    <strong>HOW TO GET A LINK:</strong><br>
+                    • Teams App: Go to Calendar > Meet now > Get a link to share<br>
+                    • Outlook: New Event > Add Teams meeting toggle > Copy the link
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 1.5rem;">
+                <button class="btn btn-secondary" style="flex: 1; text-align: center; justify-content: center;" onclick="closeAddTeamsLinkModal()">Cancel</button>
+                <button class="btn btn-primary" style="flex: 2; text-align: center; justify-content: center;" onclick="submitAddTeamsLink()">Save Link</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- MASSIVE INTERVIEW MODAL -->
 <div class="modal-overlay" id="interviewModal">
     <div class="modal-content">
@@ -683,7 +713,7 @@
                 if (!booking.meetingLink || booking.meetingLink === 'A link will be provided shortly') {
                     actionHtml = `
                         <div class="claimed-badge" style="margin-bottom: 5px; color:var(--error); background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);">⚠ Teams Link Required</div>
-                        <button class="btn btn-primary" style="margin-top:5px;" onclick="addTeamsLink('${booking.id}', '${booking.interviewer}', '${booking.applicantName}', '${booking.date}', '${booking.time}')">Add Teams Link</button>
+                        <button class="btn btn-primary" style="margin-top:5px;" onclick="addTeamsLink('${booking.id}')">Add Teams Link</button>
                     `;
                 } else {
                     actionHtml = `
@@ -1101,16 +1131,31 @@
         }
     };
 
-    window.addTeamsLink = async function(docId, interviewerName, appName, dateStr, timeStr) {
-        const defaultTeamsLink = '';
-        const teamsLink = prompt("Please paste your unique Microsoft Teams meeting link for this interview.\n\nHOW TO GET A LINK:\n• Teams App: Go to Calendar > Meet now > Get a link to share\n• Outlook: New Event > Add Teams meeting toggle > Copy the link\n\n(This link will be sent to the applicant automatically)", defaultTeamsLink);
-        if (teamsLink === null) return; 
+    window.addTeamsLink = function(docId) {
+        document.getElementById('addTeamsLinkDocId').value = docId;
+        document.getElementById('addTeamsLinkInput').value = "";
+        document.getElementById('addTeamsLinkModal').classList.add('active');
+    };
+
+    window.closeAddTeamsLinkModal = function() {
+        document.getElementById('addTeamsLinkModal').classList.remove('active');
+    };
+
+    window.submitAddTeamsLink = async function() {
+        const docId = document.getElementById('addTeamsLinkDocId').value;
+        const teamsLink = document.getElementById('addTeamsLinkInput').value.trim();
+        
+        if (!teamsLink) {
+            alert("Please provide a Microsoft Teams link.");
+            return;
+        }
 
         try {
             await updateDoc(doc(db, "NGU Interview Times", docId), { 
-                meetingLink: teamsLink.trim() || 'A link will be provided shortly'
+                meetingLink: teamsLink
             });
             alert("Teams Link successfully attached!");
+            closeAddTeamsLinkModal();
         } catch (error) {
             console.error(error);
             alert("Error updating database.");
