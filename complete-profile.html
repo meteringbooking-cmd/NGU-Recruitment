@@ -100,6 +100,7 @@
                 <label class="checkbox-card"><input type="checkbox" value="passport"> <span>Passport</span></label>
                 <label class="checkbox-card"><input type="checkbox" value="driving"> <span>Driving Licence</span></label>
                 <!-- Details -->
+                <label class="checkbox-card"><input type="checkbox" value="core"> <span>Core Employee Details</span></label>
                 <label class="checkbox-card"><input type="checkbox" value="bank"> <span>Bank Details</span></label>
                 <label class="checkbox-card"><input type="checkbox" value="emergency"> <span>Emergency Contact</span></label>
                 <label class="checkbox-card"><input type="checkbox" value="ni"> <span>NI Number</span></label>
@@ -301,6 +302,14 @@
 
     // Form Configuration Mapping
     const FIELD_CONFIG = {
+        'core': { title: 'Core Employee Details', type: 'html', html: `
+            <div class="form-group"><label>Title</label><input type="text" id="inp_core_title"></div>
+            <div class="form-group"><label>Legal First Name</label><input type="text" id="inp_core_first"></div>
+            <div class="form-group"><label>Preferred Name</label><input type="text" id="inp_core_pref"></div>
+            <div class="form-group"><label>Legal Surname</label><input type="text" id="inp_core_last"></div>
+            <div class="form-group"><label>Date of Birth</label><input type="date" id="inp_core_dob"></div>
+            <div class="form-group"><label>Phone Number</label><input type="text" id="inp_core_phone"></div>
+        `},
         'uniform': { title: 'Uniform Sizes', type: 'html', html: `
             <div class="form-group"><label>T-Shirt Size</label><select id="inp_uni_tshirt"><option value="">Select...</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>XXXL</option></select></div>
             <div class="form-group"><label>Polo Shirt Size</label><select id="inp_uni_polo"><option value="">Select...</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>XXXL</option></select></div>
@@ -442,7 +451,19 @@
             const config = FIELD_CONFIG[req];
             if (!config) return;
 
-            if (req === 'uniform') {
+            if (req === 'core') {
+                const first = document.getElementById('inp_core_first')?.value;
+                const last = document.getElementById('inp_core_last')?.value;
+                if (first || last) updates['fullName'] = `${first || ''} ${last || ''}`.trim();
+                
+                setNested(updates, 'personalDetails.title', document.getElementById('inp_core_title')?.value);
+                setNested(updates, 'personalDetails.firstName', first);
+                setNested(updates, 'personalDetails.preferredName', document.getElementById('inp_core_pref')?.value);
+                setNested(updates, 'personalDetails.surname', last);
+                setNested(updates, 'personalDetails.dateOfBirth', document.getElementById('inp_core_dob')?.value);
+                setNested(updates, 'personalDetails.phoneNumber', document.getElementById('inp_core_phone')?.value);
+            }
+            else if (req === 'uniform') {
                 setNested(updates, 'onboardingDetails.uniform.tshirt', document.getElementById('inp_uni_tshirt')?.value);
                 setNested(updates, 'onboardingDetails.uniform.polo', document.getElementById('inp_uni_polo')?.value);
                 setNested(updates, 'onboardingDetails.uniform.trousers', document.getElementById('inp_uni_trousers')?.value);
