@@ -157,7 +157,7 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, getDocs, doc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
     const firebaseConfig = {
@@ -268,20 +268,18 @@
         btn.textContent = 'Verifying...';
 
         try {
-            const querySnapshot = await getDocs(collection(db, "NGUO New Applicants"));
+            const docSnap = await getDoc(doc(db, "NGUO New Applicants", currentDocId));
             let verified = false;
             let applicantData = null;
 
-            querySnapshot.forEach((docSnap) => {
-                if (docSnap.id === currentDocId) {
-                    const d = docSnap.data();
-                    const pEmail = (d.personalDetails?.email || d.onboardingDetails?.personalEmail || '').toLowerCase();
-                    if (pEmail === email) {
-                        verified = true;
-                        applicantData = d;
-                    }
+            if (docSnap.exists()) {
+                const d = docSnap.data();
+                const pEmail = (d.personalDetails?.email || d.onboardingDetails?.personalEmail || '').toLowerCase();
+                if (pEmail === email) {
+                    verified = true;
+                    applicantData = d;
                 }
-            });
+            }
 
             if (verified) {
                 document.getElementById('verifyView').classList.add('hidden');
