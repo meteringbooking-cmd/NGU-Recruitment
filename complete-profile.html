@@ -270,6 +270,7 @@
         try {
             const querySnapshot = await getDocs(collection(db, "NGUO New Applicants"));
             let verified = false;
+            let applicantData = null;
 
             querySnapshot.forEach((docSnap) => {
                 if (docSnap.id === currentDocId) {
@@ -277,13 +278,14 @@
                     const pEmail = (d.personalDetails?.email || d.onboardingDetails?.personalEmail || '').toLowerCase();
                     if (pEmail === email) {
                         verified = true;
+                        applicantData = d;
                     }
                 }
             });
 
             if (verified) {
                 document.getElementById('verifyView').classList.add('hidden');
-                buildDynamicForm();
+                buildDynamicForm(applicantData);
                 document.getElementById('applicantFormView').classList.remove('hidden');
             } else {
                 err.textContent = "Email does not match our records for this request.";
@@ -379,6 +381,66 @@
             }
             area.appendChild(block);
         });
+
+        // Pre-populate data if we have it
+        if (applicantData) {
+            // Helper to safely get nested values
+            const getNested = (obj, path) => path.split('.').reduce((o, i) => o ? o[i] : undefined, obj);
+
+            // Core
+            if (document.getElementById('inp_core_title')) document.getElementById('inp_core_title').value = getNested(applicantData, 'personalDetails.title') || '';
+            if (document.getElementById('inp_core_first')) document.getElementById('inp_core_first').value = getNested(applicantData, 'personalDetails.firstName') || '';
+            if (document.getElementById('inp_core_pref')) document.getElementById('inp_core_pref').value = getNested(applicantData, 'personalDetails.preferredName') || '';
+            if (document.getElementById('inp_core_last')) document.getElementById('inp_core_last').value = getNested(applicantData, 'personalDetails.surname') || '';
+            if (document.getElementById('inp_core_dob')) document.getElementById('inp_core_dob').value = getNested(applicantData, 'personalDetails.dateOfBirth') || '';
+            if (document.getElementById('inp_core_phone')) document.getElementById('inp_core_phone').value = getNested(applicantData, 'personalDetails.phoneNumber') || '';
+            
+            // Uniform
+            if (document.getElementById('inp_uni_tshirt')) document.getElementById('inp_uni_tshirt').value = getNested(applicantData, 'onboardingDetails.uniform.tshirt') || '';
+            if (document.getElementById('inp_uni_polo')) document.getElementById('inp_uni_polo').value = getNested(applicantData, 'onboardingDetails.uniform.polo') || '';
+            if (document.getElementById('inp_uni_trousers')) document.getElementById('inp_uni_trousers').value = getNested(applicantData, 'onboardingDetails.uniform.trousers') || '';
+            if (document.getElementById('inp_uni_jacket')) document.getElementById('inp_uni_jacket').value = getNested(applicantData, 'onboardingDetails.uniform.jacket') || '';
+            if (document.getElementById('inp_uni_boots')) document.getElementById('inp_uni_boots').value = getNested(applicantData, 'onboardingDetails.uniform.boots') || '';
+
+            // Bank
+            if (document.getElementById('inp_bank_name')) document.getElementById('inp_bank_name').value = getNested(applicantData, 'onboardingDetails.bank.accountName') || '';
+            if (document.getElementById('inp_bank_bank')) document.getElementById('inp_bank_bank').value = getNested(applicantData, 'onboardingDetails.bank.bankName') || '';
+            if (document.getElementById('inp_bank_sort')) document.getElementById('inp_bank_sort').value = getNested(applicantData, 'onboardingDetails.bank.sortCode') || '';
+            if (document.getElementById('inp_bank_acc')) document.getElementById('inp_bank_acc').value = getNested(applicantData, 'onboardingDetails.bank.accountNumber') || '';
+
+            // Emergency
+            if (document.getElementById('inp_emg_name')) document.getElementById('inp_emg_name').value = getNested(applicantData, 'onboardingDetails.emergency.name') || '';
+            if (document.getElementById('inp_emg_rel')) document.getElementById('inp_emg_rel').value = getNested(applicantData, 'onboardingDetails.emergency.relationship') || '';
+            if (document.getElementById('inp_emg_phone')) document.getElementById('inp_emg_phone').value = getNested(applicantData, 'onboardingDetails.emergency.phone') || '';
+
+            // NI & UTR
+            if (document.getElementById('inp_ni')) document.getElementById('inp_ni').value = getNested(applicantData, 'onboardingDetails.niNumber') || '';
+            if (document.getElementById('inp_utr')) document.getElementById('inp_utr').value = getNested(applicantData, 'onboardingDetails.utrNumber') || '';
+            
+            // Pre-populate uploaded files (show pill, set uploadedUrls state)
+            requiredFields.forEach(req => {
+                const config = FIELD_CONFIG[req];
+                if (config && config.type === 'file') {
+                    const existingUrl = getNested(applicantData, config.dbPath);
+                    if (existingUrl) {
+                        const listDiv = document.getElementById(`list_${req}`);
+                        const zone = document.getElementById(`zone_${req}`);
+                        
+                        if (Array.isArray(existingUrl)) {
+                            uploadedUrls[req] = [...existingUrl]; // copy array
+                            existingUrl.forEach(url => {
+                                listDiv.innerHTML += `<div class="file-pill"><span>✅ Previously Uploaded File</span></div>`;
+                            });
+                            if (existingUrl.length > 0) zone.classList.add('has-file');
+                        } else {
+                            uploadedUrls[req] = existingUrl;
+                            listDiv.innerHTML = `<div class="file-pill"><span>✅ Previously Uploaded File</span></div>`;
+                            zone.classList.add('has-file');
+                        }
+                    }
+                }
+            });
+        }
     }
 
     // --- INSTANT UPLOAD LOGIC ---
