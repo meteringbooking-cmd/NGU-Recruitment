@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGU - Complete Profile</title>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #005EB8; --accent: #00A3E0;
+            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
+            --text-light: #f8fafc; --text-muted: #8b9bb4;
+            --border: rgba(0, 163, 224, 0.2);
+            --success: #10b981; --error: #ef4444; --warning: #f59e0b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Work Sans', sans-serif; background-color: var(--bg-dark); color: var(--text-light); min-height: 100vh; padding: 2rem 1.5rem; display: flex; flex-direction: column; align-items: center; }
+        .logo { width: 140px; margin-bottom: 2rem; }
+        
+        .container { width: 100%; max-width: 800px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; box-shadow: 0 8px 25px rgba(0,0,0,0.3); margin-bottom: 2rem; }
+        h1 { color: var(--accent); margin-bottom: 0.5rem; font-weight: 800; font-size: 2rem; }
+        p.subtitle { color: var(--text-muted); margin-bottom: 2rem; font-size: 1.05rem; }
+
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; font-size: 0.95rem; font-weight: 600; margin-bottom: 0.6rem; }
+        input[type="text"], input[type="email"], input[type="date"], select { width: 100%; padding: 0.9rem 1rem; background: var(--bg-input); border: 2px solid var(--border); border-radius: 10px; color: var(--text-light); font-size: 1rem; font-family: inherit; transition: all 0.2s; outline: none; }
+        input:focus, select:focus { border-color: var(--accent); }
+
+        .btn { padding: 0.9rem 1.5rem; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; width: 100%; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.35); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: var(--text-light); border: 1px solid rgba(255,255,255,0.2); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+
+        /* Admin Mode Checkbox Grid */
+        .checkbox-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .checkbox-card { background: var(--bg-input); border: 2px solid var(--border); border-radius: 10px; padding: 1rem; display: flex; align-items: center; gap: 0.8rem; cursor: pointer; transition: all 0.2s; }
+        .checkbox-card:hover { border-color: var(--accent); background: rgba(0,163,224,0.05); }
+        .checkbox-card input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); }
+        .checkbox-card label { margin: 0; cursor: pointer; font-size: 0.9rem; font-weight: 500; }
+
+        /* Verify Card */
+        .applicant-card { background: rgba(16,185,129,0.1); border: 1px solid var(--success); border-radius: 10px; padding: 1rem 1.5rem; margin-top: -1rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .applicant-name { font-size: 1.1rem; font-weight: 700; color: #6ee7b7; }
+        .applicant-email { font-size: 0.9rem; color: var(--text-light); opacity: 0.8; }
+
+        /* File Upload */
+        .upload-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 2rem 1rem; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; background: var(--bg-input); }
+        .upload-zone:hover { border-color: var(--accent); background: rgba(0,163,224,0.05); }
+        .upload-zone input[type="file"] { position: absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+        .upload-zone-label { font-weight: 700; font-size: 0.92rem; margin-bottom: 0.2rem; color: var(--accent); }
+        
+        .uploaded-files-list { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .file-pill { background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
+        .file-remove { color: #fca5a5; cursor: pointer; font-weight: bold; background: none; border: none; font-size: 1rem; padding: 0 5px; }
+        .uploading-spinner { font-size: 0.85rem; color: var(--warning); margin-top: 8px; font-weight: 600; display: none; }
+
+        .hidden { display: none !important; }
+        .section-block { background: rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.05); border-radius: 12px; padding: 1.8rem; margin-bottom: 1.5rem; }
+        h3.section-title { color: var(--accent); margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+
+        #generatedLinkBox { background: rgba(0,0,0,0.3); border: 1px solid var(--accent); padding: 1rem; border-radius: 8px; margin-top: 1rem; word-break: break-all; color: #6ee7b7; font-family: 'DM Mono', monospace; font-size: 0.9rem; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
+
+    <!-- ADMIN VIEW -->
+    <div class="container hidden" id="adminView">
+        <h1>Profile Request Generator</h1>
+        <p class="subtitle">Select the missing information you need from the applicant and generate a unique link for them to complete it.</p>
+        
+        <div class="form-group">
+            <label>Applicant Email Address</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="email" id="adminSearchEmail" placeholder="Enter applicant email..." onkeydown="if(event.key==='Enter') searchApplicant()">
+                <button class="btn btn-secondary" style="width: auto;" onclick="searchApplicant()">Search</button>
+            </div>
+            <p id="adminSearchError" style="color: var(--error); margin-top: 8px; font-size: 0.85rem; display: none;"></p>
+        </div>
+
+        <div id="adminApplicantCard" class="applicant-card hidden">
+            <div>
+                <div class="applicant-name" id="adminAppName">John Doe</div>
+                <div class="applicant-email" id="adminAppEmail">john@example.com</div>
+            </div>
+            <div style="font-size: 0.8rem; background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 4px;" id="adminAppStatus"></div>
+        </div>
+
+        <div id="adminSelectionArea" class="hidden">
+            <label>Select Required Sections</label>
+            <div class="checkbox-grid" id="reqCheckboxes">
+                <!-- Logistics -->
+                <label class="checkbox-card"><input type="checkbox" value="uniform"> <span>Uniform Sizes</span></label>
+                <!-- Identity & Docs -->
+                <label class="checkbox-card"><input type="checkbox" value="photo"> <span>Profile Photo</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="passport"> <span>Passport</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="driving"> <span>Driving Licence</span></label>
+                <!-- Details -->
+                <label class="checkbox-card"><input type="checkbox" value="bank"> <span>Bank Details</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="emergency"> <span>Emergency Contact</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="ni"> <span>NI Number</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="utr"> <span>UTR Number</span></label>
+                <!-- Certs -->
+                <label class="checkbox-card"><input type="checkbox" value="dbs"> <span>DBS Certificate</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="cscs"> <span>CSCS Card</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="eusr"> <span>EUSR Card</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="asbestos"> <span>Asbestos Awareness</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="manualHandling"> <span>Manual Handling</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="workingHeights"> <span>Working at Heights</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="gasCore"> <span>Core Gas Safety</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="gasBoiler"> <span>Boilers & Water Heaters</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="gasCooker"> <span>Cookers</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="gasFire"> <span>Fires & Space Heaters</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="gasMeter"> <span>Meters</span></label>
+                <label class="checkbox-card"><input type="checkbox" value="gasLpg"> <span>LPG</span></label>
+            </div>
+            
+            <button class="btn btn-primary" onclick="generateLink()">Generate Link</button>
+            <div id="generatedLinkBox" class="hidden"></div>
+        </div>
+    </div>
+
+    <!-- APPLICANT VERIFY VIEW -->
+    <div class="container hidden" id="verifyView">
+        <h1>Verify Identity</h1>
+        <p class="subtitle">Please enter your email address to securely access your profile update request.</p>
+        
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="verifyEmailInput" placeholder="name@example.com" onkeydown="if(event.key==='Enter') verifyApplicant()">
+            <p id="verifyError" style="color: var(--error); margin-top: 8px; font-size: 0.85rem; display: none;"></p>
+        </div>
+        <button class="btn btn-primary" onclick="verifyApplicant()" id="verifyBtn">Access Form</button>
+    </div>
+
+    <!-- APPLICANT FORM VIEW -->
+    <div class="container hidden" id="applicantFormView">
+        <h1>Update Profile Details</h1>
+        <p class="subtitle">Please complete the requested sections below. Files will automatically upload when selected.</p>
+        
+        <div id="dynamicFormArea"></div>
+
+        <button class="btn btn-primary" style="margin-top: 2rem;" onclick="submitApplicantForm()" id="finalSubmitBtn">Submit Updates</button>
+    </div>
+
+    <!-- SUCCESS VIEW -->
+    <div class="container hidden" id="successView" style="text-align: center; padding: 4rem 2rem;">
+        <div style="font-size: 4rem; margin-bottom: 1rem;">✅</div>
+        <h2 style="color: #6ee7b7; font-size: 2rem; margin-bottom: 1rem;">Profile Updated Successfully</h2>
+        <p style="color: var(--text-muted);">Thank you. Your details and documents have been securely saved to your profile.</p>
+    </div>
+
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getFirestore, collection, getDocs, doc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+        authDomain: "oesperformance-a54c0.firebaseapp.com",
+        projectId: "oesperformance-a54c0",
+        storageBucket: "oesperformance-a54c0.firebasestorage.app",
+        messagingSenderId: "484894102454",
+        appId: "1:484894102454:web:17535ee497eac2d90d6717"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+
+    // Global State
+    let currentDocId = null;
+    let requiredFields = [];
+    let uploadedUrls = {}; // Store URLs temporarily before final submit
+
+    // Setup Routing
+    const urlParams = new URLSearchParams(window.location.search);
+    const reqParam = urlParams.get('req');
+    const idParam = urlParams.get('id');
+
+    if (reqParam && idParam) {
+        // APPLICANT MODE
+        requiredFields = reqParam.split(',');
+        currentDocId = idParam;
+        document.getElementById('verifyView').classList.remove('hidden');
+    } else {
+        // ADMIN MODE
+        document.getElementById('adminView').classList.remove('hidden');
+    }
+
+    // ==========================================
+    // ADMIN MODE LOGIC
+    // ==========================================
+    window.searchApplicant = async function() {
+        const email = document.getElementById('adminSearchEmail').value.trim().toLowerCase();
+        const err = document.getElementById('adminSearchError');
+        err.style.display = 'none';
+
+        if (!email) return;
+
+        try {
+            const querySnapshot = await getDocs(collection(db, "NGUO New Applicants"));
+            let foundDoc = null;
+            let foundData = null;
+
+            querySnapshot.forEach((docSnap) => {
+                const d = docSnap.data();
+                const pEmail = (d.personalDetails?.email || d.onboardingDetails?.personalEmail || '').toLowerCase();
+                if (pEmail === email) {
+                    foundDoc = docSnap.id;
+                    foundData = d;
+                }
+            });
+
+            if (foundDoc) {
+                currentDocId = foundDoc;
+                document.getElementById('adminAppName').textContent = foundData.fullName || 'Applicant';
+                document.getElementById('adminAppEmail').textContent = email;
+                document.getElementById('adminAppStatus').textContent = foundData.status || 'Unknown Status';
+                
+                document.getElementById('adminApplicantCard').classList.remove('hidden');
+                document.getElementById('adminSelectionArea').classList.remove('hidden');
+            } else {
+                err.textContent = "Applicant not found with this email.";
+                err.style.display = 'block';
+                document.getElementById('adminApplicantCard').classList.add('hidden');
+                document.getElementById('adminSelectionArea').classList.add('hidden');
+            }
+        } catch (e) {
+            console.error(e);
+            err.textContent = "Database error. Check console.";
+            err.style.display = 'block';
+        }
+    };
+
+    window.generateLink = function() {
+        const checkboxes = document.querySelectorAll('#reqCheckboxes input[type="checkbox"]:checked');
+        if (checkboxes.length === 0) {
+            alert("Please select at least one field to request.");
+            return;
+        }
+
+        const reqs = Array.from(checkboxes).map(cb => cb.value).join(',');
+        const link = `${window.location.origin}${window.location.pathname}?id=${currentDocId}&req=${reqs}`;
+        
+        const box = document.getElementById('generatedLinkBox');
+        box.innerHTML = `<strong>Copy this link to send to the applicant:</strong><br><br><a href="${link}" target="_blank" style="color:var(--accent);">${link}</a>`;
+        box.classList.remove('hidden');
+    };
+
+    // ==========================================
+    // APPLICANT MODE LOGIC
+    // ==========================================
+    window.verifyApplicant = async function() {
+        const email = document.getElementById('verifyEmailInput').value.trim().toLowerCase();
+        const err = document.getElementById('verifyError');
+        const btn = document.getElementById('verifyBtn');
+        err.style.display = 'none';
+
+        if (!email) return;
+
+        btn.disabled = true;
+        btn.textContent = 'Verifying...';
+
+        try {
+            const querySnapshot = await getDocs(collection(db, "NGUO New Applicants"));
+            let verified = false;
+
+            querySnapshot.forEach((docSnap) => {
+                if (docSnap.id === currentDocId) {
+                    const d = docSnap.data();
+                    const pEmail = (d.personalDetails?.email || d.onboardingDetails?.personalEmail || '').toLowerCase();
+                    if (pEmail === email) {
+                        verified = true;
+                    }
+                }
+            });
+
+            if (verified) {
+                document.getElementById('verifyView').classList.add('hidden');
+                buildDynamicForm();
+                document.getElementById('applicantFormView').classList.remove('hidden');
+            } else {
+                err.textContent = "Email does not match our records for this request.";
+                err.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = 'Access Form';
+            }
+        } catch (e) {
+            console.error(e);
+            err.textContent = "Database error. Check console.";
+            err.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'Access Form';
+        }
+    };
+
+    // Form Configuration Mapping
+    const FIELD_CONFIG = {
+        'uniform': { title: 'Uniform Sizes', type: 'html', html: `
+            <div class="form-group"><label>T-Shirt Size</label><select id="inp_uni_tshirt"><option value="">Select...</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>XXXL</option></select></div>
+            <div class="form-group"><label>Polo Shirt Size</label><select id="inp_uni_polo"><option value="">Select...</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>XXXL</option></select></div>
+            <div class="form-group"><label>Trouser Size (Waist/Leg)</label><input type="text" id="inp_uni_trousers" placeholder="e.g. 34W 32L"></div>
+            <div class="form-group"><label>Jacket Size</label><select id="inp_uni_jacket"><option value="">Select...</option><option>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>XXXL</option></select></div>
+            <div class="form-group"><label>Boot Size (UK)</label><input type="text" id="inp_uni_boots" placeholder="e.g. 9"></div>
+        `},
+        'bank': { title: 'Bank Details', type: 'html', html: `
+            <div class="form-group"><label>Account Name</label><input type="text" id="inp_bank_name"></div>
+            <div class="form-group"><label>Bank Name</label><input type="text" id="inp_bank_bank"></div>
+            <div class="form-group"><label>Sort Code</label><input type="text" id="inp_bank_sort" placeholder="XX-XX-XX"></div>
+            <div class="form-group"><label>Account Number</label><input type="text" id="inp_bank_acc" maxlength="8"></div>
+        `},
+        'emergency': { title: 'Emergency Contact', type: 'html', html: `
+            <div class="form-group"><label>Contact Name</label><input type="text" id="inp_emg_name"></div>
+            <div class="form-group"><label>Relationship</label><input type="text" id="inp_emg_rel"></div>
+            <div class="form-group"><label>Phone Number</label><input type="text" id="inp_emg_phone"></div>
+        `},
+        'ni': { title: 'National Insurance Number', type: 'html', html: '<div class="form-group"><input type="text" id="inp_ni" style="text-transform:uppercase;"></div>' },
+        'utr': { title: 'UTR Number (Self-Employed)', type: 'html', html: '<div class="form-group"><input type="text" id="inp_utr"></div>' },
+        
+        // Files
+        'photo': { title: 'Profile Photo', type: 'file', key: 'ID Photo', dbPath: 'onboardingDocuments.idPhoto' },
+        'passport': { title: 'Passport', type: 'file', key: 'Passport', dbPath: 'onboardingDocuments.passport' },
+        'driving': { title: 'Driving Licence (Front & Back)', type: 'file', key: 'Driving Licence', dbPath: 'onboardingDocuments.drivingLicence', multiple: true },
+        'dbs': { title: 'DBS Certificate', type: 'file', key: 'DBS', dbPath: 'engineerDocuments.dbs' },
+        'cscs': { title: 'CSCS Card', type: 'file', key: 'CSCS', dbPath: 'engineerDocuments.cscsCard' },
+        'eusr': { title: 'EUSR Card', type: 'file', key: 'EUSR', dbPath: 'engineerDocuments.eusrCard' },
+        'asbestos': { title: 'Asbestos Awareness Certificate', type: 'file', key: 'Asbestos', dbPath: 'engineerDocuments.asbestos' },
+        'manualHandling': { title: 'Manual Handling Certificate', type: 'file', key: 'Manual Handling', dbPath: 'engineerDocuments.manualHandling' },
+        'workingHeights': { title: 'Working at Heights Certificate', type: 'file', key: 'Working at Heights', dbPath: 'engineerDocuments.workingHeights' },
+        'gasCore': { title: 'Core Gas Safety Certificate', type: 'file', key: 'Core Gas', dbPath: 'engineerDocuments.coreGas' },
+        'gasBoiler': { title: 'Boilers & Water Heaters Cert', type: 'file', key: 'Boilers', dbPath: 'engineerDocuments.boilers' },
+        'gasCooker': { title: 'Cookers Cert', type: 'file', key: 'Cookers', dbPath: 'engineerDocuments.cookers' },
+        'gasFire': { title: 'Fires & Space Heaters Cert', type: 'file', key: 'Fires', dbPath: 'engineerDocuments.fires' },
+        'gasMeter': { title: 'Meters Cert', type: 'file', key: 'Meters', dbPath: 'engineerDocuments.meters' },
+        'gasLpg': { title: 'LPG Cert', type: 'file', key: 'LPG', dbPath: 'engineerDocuments.lpg' }
+    };
+
+    function buildDynamicForm() {
+        const area = document.getElementById('dynamicFormArea');
+        area.innerHTML = '';
+        
+        requiredFields.forEach(req => {
+            const config = FIELD_CONFIG[req];
+            if (!config) return;
+
+            const block = document.createElement('div');
+            block.className = 'section-block';
+            
+            if (config.type === 'html') {
+                block.innerHTML = `<h3 class="section-title">${config.title}</h3>${config.html}`;
+            } else if (config.type === 'file') {
+                const multiAttr = config.multiple ? 'multiple' : '';
+                uploadedUrls[req] = config.multiple ? [] : null; // Initialize state
+
+                block.innerHTML = `
+                    <h3 class="section-title">${config.title}</h3>
+                    <div class="upload-zone" id="zone_${req}">
+                        <input type="file" ${multiAttr} id="file_${req}" accept="image/*,.pdf" onchange="instantUpload(this, '${req}', ${config.multiple ? 'true' : 'false'})">
+                        <div class="upload-zone-label">Click or drag file(s) to upload</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted);">${config.multiple ? 'You can select multiple files' : ''}</div>
+                    </div>
+                    <div class="uploading-spinner" id="spin_${req}">Uploading... please wait.</div>
+                    <div class="uploaded-files-list" id="list_${req}"></div>
+                `;
+            }
+            area.appendChild(block);
+        });
+    }
+
+    // --- INSTANT UPLOAD LOGIC ---
+    window.instantUpload = async function(input, reqKey, isMultiple) {
+        if (!input.files || input.files.length === 0) return;
+        
+        const files = Array.from(input.files);
+        const spinner = document.getElementById(`spin_${reqKey}`);
+        const listDiv = document.getElementById(`list_${reqKey}`);
+        
+        spinner.style.display = 'block';
+
+        try {
+            for (const file of files) {
+                const safeName = file.name.replace(/[^a-zA-Z0-9]/g, '_');
+                const uniqueId = Math.random().toString(36).substring(2, 9);
+                const ext = file.name.split('.').pop();
+                const path = `documents/${currentDocId}/${reqKey}_${uniqueId}.${ext}`;
+                
+                const storageRef = ref(storage, path);
+                await uploadBytes(storageRef, file);
+                const url = await getDownloadURL(storageRef);
+
+                // Update UI & State
+                if (isMultiple) {
+                    uploadedUrls[reqKey].push(url);
+                } else {
+                    uploadedUrls[reqKey] = url;
+                    listDiv.innerHTML = ''; // Clear previous if single
+                }
+
+                listDiv.innerHTML += `
+                    <div class="file-pill">
+                        <span>✅ ${file.name}</span>
+                    </div>
+                `;
+            }
+            document.getElementById(`zone_${reqKey}`).classList.add('has-file');
+        } catch (error) {
+            console.error(error);
+            alert(`Failed to upload one or more files: ${error.message}`);
+        }
+
+        spinner.style.display = 'none';
+        input.value = ''; // Reset input to allow same file re-upload if needed
+    };
+
+    // --- FINAL SUBMISSION ---
+    window.submitApplicantForm = async function() {
+        const btn = document.getElementById('finalSubmitBtn');
+        btn.disabled = true;
+        btn.textContent = 'Saving Profile...';
+
+        const updates = {};
+        
+        // Helper to safely set nested object properties
+        const setNested = (obj, path, val) => {
+            if (val === undefined || val === null || val === '') return; // Don't override with empty
+            const keys = path.split('.');
+            let current = obj;
+            for(let i=0; i<keys.length-1; i++) {
+                if(!current[keys[i]]) current[keys[i]] = {};
+                current = current[keys[i]];
+            }
+            current[keys[keys.length-1]] = val;
+        };
+
+        // Collect Form Data
+        requiredFields.forEach(req => {
+            const config = FIELD_CONFIG[req];
+            if (!config) return;
+
+            if (req === 'uniform') {
+                setNested(updates, 'onboardingDetails.uniform.tshirt', document.getElementById('inp_uni_tshirt')?.value);
+                setNested(updates, 'onboardingDetails.uniform.polo', document.getElementById('inp_uni_polo')?.value);
+                setNested(updates, 'onboardingDetails.uniform.trousers', document.getElementById('inp_uni_trousers')?.value);
+                setNested(updates, 'onboardingDetails.uniform.jacket', document.getElementById('inp_uni_jacket')?.value);
+                setNested(updates, 'onboardingDetails.uniform.boots', document.getElementById('inp_uni_boots')?.value);
+            }
+            else if (req === 'bank') {
+                setNested(updates, 'onboardingDetails.bank.accountName', document.getElementById('inp_bank_name')?.value);
+                setNested(updates, 'onboardingDetails.bank.bankName', document.getElementById('inp_bank_bank')?.value);
+                setNested(updates, 'onboardingDetails.bank.sortCode', document.getElementById('inp_bank_sort')?.value);
+                setNested(updates, 'onboardingDetails.bank.accountNumber', document.getElementById('inp_bank_acc')?.value);
+            }
+            else if (req === 'emergency') {
+                setNested(updates, 'onboardingDetails.emergency.name', document.getElementById('inp_emg_name')?.value);
+                setNested(updates, 'onboardingDetails.emergency.relationship', document.getElementById('inp_emg_rel')?.value);
+                setNested(updates, 'onboardingDetails.emergency.phone', document.getElementById('inp_emg_phone')?.value);
+            }
+            else if (req === 'ni') {
+                setNested(updates, 'onboardingDetails.niNumber', document.getElementById('inp_ni')?.value?.toUpperCase());
+            }
+            else if (req === 'utr') {
+                setNested(updates, 'onboardingDetails.utrNumber', document.getElementById('inp_utr')?.value);
+            }
+            else if (config.type === 'file') {
+                // If it's a file, grab from uploadedUrls
+                const val = uploadedUrls[req];
+                if (val) {
+                    setNested(updates, config.dbPath, val);
+                }
+            }
+        });
+
+        if (Object.keys(updates).length === 0) {
+            alert("No details to update. Please fill out the form or upload requested files.");
+            btn.disabled = false;
+            btn.textContent = 'Submit Updates';
+            return;
+        }
+
+        updates['profileUpdatesCompletedAt'] = serverTimestamp();
+
+        try {
+            await updateDoc(doc(db, "NGUO New Applicants", currentDocId), updates);
+            document.getElementById('applicantFormView').classList.add('hidden');
+            document.getElementById('successView').classList.remove('hidden');
+        } catch (error) {
+            console.error(error);
+            alert("Error updating profile. Please try again.");
+            btn.disabled = false;
+            btn.textContent = 'Submit Updates';
+        }
+    };
+</script>
+</body>
+</html>
