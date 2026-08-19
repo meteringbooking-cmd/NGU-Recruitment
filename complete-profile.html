@@ -293,6 +293,8 @@
             }
         } catch (e) {
             console.error(e);
+            document.getElementById('verifyView').classList.remove('hidden');
+            document.getElementById('applicantFormView').classList.add('hidden');
             err.textContent = "Database error. Check console.";
             err.style.display = 'block';
             btn.disabled = false;
@@ -349,7 +351,7 @@
         'gasLpg': { title: 'LPG Cert', type: 'file', key: 'LPG', dbPath: 'engineerDocuments.lpg' }
     };
 
-    function buildDynamicForm() {
+    function buildDynamicForm(applicantData) {
         const area = document.getElementById('dynamicFormArea');
         area.innerHTML = '';
         
