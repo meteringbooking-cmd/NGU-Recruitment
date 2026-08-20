@@ -463,12 +463,13 @@
                 const storageRef = ref(storage, path);
                 await uploadBytes(storageRef, file);
                 const url = await getDownloadURL(storageRef);
+                const fileObj = { url: url, filename: file.name, path: path, docStatus: 'under_review' };
 
                 // Update UI & State
                 if (isMultiple) {
-                    uploadedUrls[reqKey].push(url);
+                    uploadedUrls[reqKey].push(fileObj);
                 } else {
-                    uploadedUrls[reqKey] = url;
+                    uploadedUrls[reqKey] = fileObj;
                     listDiv.innerHTML = ''; // Clear previous if single
                 }
 
@@ -496,16 +497,10 @@
 
         const updates = {};
         
-        // Helper to safely set nested object properties
+        // Helper to safely set dot-notation keys for Firestore
         const setNested = (obj, path, val) => {
             if (val === undefined || val === null || val === '') return; // Don't override with empty
-            const keys = path.split('.');
-            let current = obj;
-            for(let i=0; i<keys.length-1; i++) {
-                if(!current[keys[i]]) current[keys[i]] = {};
-                current = current[keys[i]];
-            }
-            current[keys[keys.length-1]] = val;
+            obj[path] = val; // Firestore updateDoc natively understands dot-notation keys!
         };
 
         // Collect Form Data
@@ -518,30 +513,32 @@
                 const last = document.getElementById('inp_core_last')?.value;
                 if (first || last) updates['fullName'] = `${first || ''} ${last || ''}`.trim();
                 
-                setNested(updates, 'personalDetails.title', document.getElementById('inp_core_title')?.value);
-                setNested(updates, 'personalDetails.firstName', first);
-                setNested(updates, 'personalDetails.preferredName', document.getElementById('inp_core_pref')?.value);
-                setNested(updates, 'personalDetails.surname', last);
-                setNested(updates, 'personalDetails.dateOfBirth', document.getElementById('inp_core_dob')?.value);
-                setNested(updates, 'personalDetails.phoneNumber', document.getElementById('inp_core_phone')?.value);
+                setNested(updates, 'onboardingDetails.title', document.getElementById('inp_core_title')?.value);
+                setNested(updates, 'onboardingDetails.firstName', first);
+                setNested(updates, 'personalDetails.forename', first); // Mirror for portal
+                setNested(updates, 'onboardingDetails.preferredName', document.getElementById('inp_core_pref')?.value);
+                setNested(updates, 'onboardingDetails.lastName', last);
+                setNested(updates, 'personalDetails.surname', last); // Mirror for portal
+                setNested(updates, 'onboardingDetails.dob', document.getElementById('inp_core_dob')?.value);
+                setNested(updates, 'onboardingDetails.phone', document.getElementById('inp_core_phone')?.value);
             }
             else if (req === 'uniform') {
-                setNested(updates, 'onboardingDetails.uniform.tshirt', document.getElementById('inp_uni_tshirt')?.value);
-                setNested(updates, 'onboardingDetails.uniform.polo', document.getElementById('inp_uni_polo')?.value);
-                setNested(updates, 'onboardingDetails.uniform.trousers', document.getElementById('inp_uni_trousers')?.value);
-                setNested(updates, 'onboardingDetails.uniform.jacket', document.getElementById('inp_uni_jacket')?.value);
-                setNested(updates, 'onboardingDetails.uniform.boots', document.getElementById('inp_uni_boots')?.value);
+                setNested(updates, 'uniformData.tshirt', document.getElementById('inp_uni_tshirt')?.value);
+                setNested(updates, 'uniformData.hoodie', document.getElementById('inp_uni_polo')?.value);
+                setNested(updates, 'uniformData.trouserWaist', document.getElementById('inp_uni_trousers')?.value);
+                setNested(updates, 'uniformData.frJacket', document.getElementById('inp_uni_jacket')?.value);
+                setNested(updates, 'uniformData.boots', document.getElementById('inp_uni_boots')?.value);
             }
             else if (req === 'bank') {
-                setNested(updates, 'onboardingDetails.bank.accountName', document.getElementById('inp_bank_name')?.value);
-                setNested(updates, 'onboardingDetails.bank.bankName', document.getElementById('inp_bank_bank')?.value);
-                setNested(updates, 'onboardingDetails.bank.sortCode', document.getElementById('inp_bank_sort')?.value);
-                setNested(updates, 'onboardingDetails.bank.accountNumber', document.getElementById('inp_bank_acc')?.value);
+                setNested(updates, 'bankDetails.accountName', document.getElementById('inp_bank_name')?.value);
+                setNested(updates, 'bankDetails.bankName', document.getElementById('inp_bank_bank')?.value);
+                setNested(updates, 'bankDetails.sortCode', document.getElementById('inp_bank_sort')?.value);
+                setNested(updates, 'bankDetails.accountNumber', document.getElementById('inp_bank_acc')?.value);
             }
             else if (req === 'emergency') {
-                setNested(updates, 'onboardingDetails.emergency.name', document.getElementById('inp_emg_name')?.value);
-                setNested(updates, 'onboardingDetails.emergency.relationship', document.getElementById('inp_emg_rel')?.value);
-                setNested(updates, 'onboardingDetails.emergency.phone', document.getElementById('inp_emg_phone')?.value);
+                setNested(updates, 'emergencyContact.name', document.getElementById('inp_emg_name')?.value);
+                setNested(updates, 'emergencyContact.relationship', document.getElementById('inp_emg_rel')?.value);
+                setNested(updates, 'emergencyContact.phone', document.getElementById('inp_emg_phone')?.value);
             }
             else if (req === 'ni') {
                 setNested(updates, 'onboardingDetails.niNumber', document.getElementById('inp_ni')?.value?.toUpperCase());
@@ -553,6 +550,9 @@
                 // If it's a file, grab from uploadedUrls
                 const val = uploadedUrls[req];
                 if (val) {
+                    // For files, we wrap it in an object format that complete-onboarding expects: { url: ..., filename: ... }
+                    // If it's a single file upload, val is a string URL. If multiple, it's an array of URLs.
+                    // For simplicity, we just save the URL string directly, which the portal will read.
                     setNested(updates, config.dbPath, val);
                 }
             }
