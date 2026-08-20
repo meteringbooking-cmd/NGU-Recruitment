@@ -15,10 +15,10 @@
 
     <style>
         :root {
-            --primary: #005EB8; --accent: #00A3E0;
-            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
-            --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
-            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
+            --primary: #1479d6; --accent: #29c2f5;
+            --bg-dark: #142640; --bg-card: #26395c; --bg-input: #1c3355;
+            --text-light: #F4F7FA; --text-muted: #b7c8dc; --border: #4a6690;
+            --success: #22c98f; --error: #f0605a; --warning: #f7b03e;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
@@ -66,13 +66,13 @@
         .card-action { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
         
         .btn { padding: 0.7rem 1.5rem; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; border: none; font-family: inherit; }
-        .btn-claim { background: rgba(0,163,224,0.1); border: 1px solid rgba(0,163,224,0.4); color: var(--accent); }
-        .btn-claim:hover { background: rgba(0,163,224,0.2); }
+        .btn-claim { background: rgba(41,194,245,0.18); border: 1px solid rgba(41,194,245,0.55); color: var(--accent); }
+        .btn-claim:hover { background: rgba(41,194,245,0.3); }
         .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; }
         .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.35); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        .claimed-badge { background: rgba(0,163,224,0.1); border: 1px solid rgba(0,163,224,0.3); color: var(--accent); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        .claimed-badge { background: rgba(41,194,245,0.18); border: 1px solid rgba(41,194,245,0.45); color: var(--accent); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
         
         .empty-state { text-align: center; padding: 40px; color: var(--text-muted); background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); font-size: 1.1rem; }
 
@@ -85,7 +85,7 @@
         .close-btn { background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
         .close-btn:hover { color: var(--error); }
 
-        .candidate-header { background: rgba(0,163,224,0.05); border: 1px solid rgba(0,163,224,0.2); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.95rem; }
+        .candidate-header { background: rgba(41,194,245,0.1); border: 1px solid rgba(41,194,245,0.35); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.95rem; }
         .candidate-header div strong { color: var(--text-muted); display: inline-block; width: 140px; }
 
         .type-selector { margin-bottom: 2rem; background: var(--bg-input); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
@@ -104,13 +104,13 @@
         textarea, select, input[type="text"] { width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-dark); color: white; font-family: inherit; font-size: 0.95rem; outline: none; margin-bottom: 1rem; resize: vertical;}
         textarea:focus, select:focus, input:focus { border-color: var(--accent); }
 
-        .score-grid { display: grid; grid-template-columns: 2fr 1fr 3fr; gap: 10px; align-items: center; margin-bottom: 10px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 6px; }
+        .score-grid { display: grid; grid-template-columns: 2fr 1fr 3fr; gap: 10px; align-items: center; margin-bottom: 10px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; }
         .score-grid label { font-weight: 600; font-size: 0.9rem; }
         .score-grid input[type="number"] { width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-dark); color: white; text-align: center; font-weight: bold;}
         .score-grid input[type="text"] { margin-bottom: 0; padding: 0.6rem; }
         .section-total { text-align: right; font-weight: 700; color: var(--accent); font-size: 1.1rem; margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 10px;}
         
-        .grand-total { text-align: center; font-size: 1.8rem; font-weight: 800; color: #6ee7b7; background: rgba(16,185,129,0.1); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3); margin-bottom: 1.5rem; }
+        .grand-total { text-align: center; font-size: 1.8rem; font-weight: 800; color: #7bf5c4; background: rgba(34,201,143,0.18); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(34,201,143,0.45); margin-bottom: 1.5rem; }
 
         /* Phases */
         .phase { display: none; }
@@ -364,7 +364,7 @@
             <!-- PHASE 2: THE SCORECARD -->
             <div id="engPhase2" class="phase">
                 <div style="text-align: center; margin-bottom: 1rem; color: var(--success); font-weight: bold;">PHASE 2: INTERVIEW SCORECARD</div>
-                <div style="background: rgba(245,158,11,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #fcd34d; font-size: 0.9rem; border: 1px solid rgba(245,158,11,0.3); text-align: center;">
+                <div style="background: rgba(247,176,62,0.18); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #ffdd8f; font-size: 0.9rem; border: 1px solid rgba(247,176,62,0.45); text-align: center;">
                     <strong>Scoring Guide:</strong> 1 = Poor | 2 = Below Standard | 3 = Acceptable | 4 = Strong | 5 = Excellent
                 </div>
 
@@ -537,7 +537,7 @@
             <!-- PHASE 2: THE SCORECARD -->
             <div id="offPhase2" class="phase">
                 <div style="text-align: center; margin-bottom: 1rem; color: var(--success); font-weight: bold;">PHASE 2: INTERVIEW SCORECARD</div>
-                <div style="background: rgba(245,158,11,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #fcd34d; font-size: 0.9rem; border: 1px solid rgba(245,158,11,0.3); text-align: center;">
+                <div style="background: rgba(247,176,62,0.18); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #ffdd8f; font-size: 0.9rem; border: 1px solid rgba(247,176,62,0.45); text-align: center;">
                     <strong>Scoring Guide:</strong> 1 = Poor | 2 = Below Standard | 3 = Acceptable | 4 = Strong | 5 = Excellent
                 </div>
 
@@ -617,7 +617,7 @@
         const timeStr = `${String(h).padStart(2, '0')}:00`;
         const displayStr = h === 12 ? '12pm' : (h > 12 ? `${h-12}pm` : `${h}am`);
         
-        gridHtml += `<tr style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);">`;
+        gridHtml += `<tr style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.05);">`;
         gridHtml += `<td style="padding:10px; font-weight:bold; color:var(--text-light); border:1px solid var(--border);">${displayStr}</td>`;
         
         for (let day = 0; day < 5; day++) {
@@ -713,7 +713,7 @@
                 cardClass += ' claimed';
                 if (!booking.meetingLink || booking.meetingLink === 'A link will be provided shortly') {
                     actionHtml = `
-                        <div class="claimed-badge" style="margin-bottom: 5px; color:var(--error); background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);">⚠ Teams Link Required</div>
+                        <div class="claimed-badge" style="margin-bottom: 5px; color:var(--error); background:rgba(240,96,90,0.18); border:1px solid rgba(240,96,90,0.45);">⚠ Teams Link Required</div>
                         <button class="btn btn-primary" style="margin-top:5px;" onclick="addTeamsLink('${booking.id}')">Add Teams Link</button>
                     `;
                 } else {
