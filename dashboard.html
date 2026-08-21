@@ -256,37 +256,6 @@ function render() {
     set('ca',accepted);  bar('ba',p(accepted));
     set('cr',rejected);  bar('br',p(rejected));
 
-    // Recent panel - show 10
-    const rcEl = document.getElementById('recentPanel');
-    rcEl.innerHTML = recent.slice(0,10).map(a => {
-        const rev = (a.reviews||[]);
-        const appEmail2 = (a.personalDetails?.email||'').toLowerCase().trim();
-        const ie = intByEmail[appEmail2]||{};
-        let label, col;
-
-        if (a.finalRecruitmentDecision==='Approved' && a.onboardingCompleted)    { label='Onboarded';       col='#10b981'; }
-        else if (a.finalRecruitmentDecision==='Approved')                         { label='Offer Sent';      col='#22d3ee'; }
-        else if (a.finalRecruitmentDecision==='Rejected')                         { label='Rejected';        col='#ef4444'; }
-        else if (rev[0]?.decision==='Do not proceed')                             { label='Do Not Proceed';  col='#ef4444'; }
-        else if (rev[0]?.decision==='Hold')                                       { label='On Hold';         col='#ec4899'; }
-        else if (a.nameChecksRequested && !a.nameChecksCompleted)                 { label='Name Check';      col='#8b5cf6'; }
-        else if (ie.done)                                                         { label='Intv Complete';   col='#60a5fa'; }
-        else if (ie.booked)                                                       { label='Intv Booked';     col='#f97316'; }
-        else if (a.status==='Ready for Interview')                                { label='Ready';           col='#14b8a6'; }
-        else                                                                      { label='Pending';         col='#f59e0b'; }
-
-        const when = a.submittedAt?.toDate
-            ? a.submittedAt.toDate().toLocaleDateString('en-GB',{day:'numeric',month:'short'})
-            : '';
-
-        return `<div class="rrow">
-            <div>
-                <div class="rname">${a.fullName||'Unknown'}</div>
-                ${when?`<div class="rsub">Applied ${when}</div>`:''}
-            </div>
-            <span class="rbadge" style="background:${col}22;color:${col};">${label}</span>
-        </div>`;
-    });
 
     // Split into two columns of 8
     const allRows = recent.slice(0, 16);
