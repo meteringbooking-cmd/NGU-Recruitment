@@ -7,69 +7,61 @@
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --accent: #00A3E0; --bg: #060e1e; --card: #0d1a30; --card2: #111f38;
-            --light: #f8fafc; --muted: #6b80a0; --border: rgba(0,163,224,0.15);
-            --green: #10b981; --yellow: #f59e0b; --red: #ef4444;
-            --purple: #8b5cf6; --pink: #ec4899; --teal: #14b8a6; --orange: #f97316;
+            --accent:#00A3E0; --bg:#060e1e; --card:#0d1a30; --card2:#111f38;
+            --light:#f8fafc; --muted:#6b80a0; --border:rgba(0,163,224,0.15);
+            --green:#10b981; --yellow:#f59e0b; --red:#ef4444;
+            --purple:#8b5cf6; --pink:#ec4899; --teal:#14b8a6; --orange:#f97316;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Work Sans',sans-serif; background:var(--bg); color:var(--light); min-height:100vh; }
 
-        /* TOP BAR */
         .bar { display:flex; align-items:center; justify-content:space-between; padding:1rem 2rem;
-               background:rgba(0,0,0,0.35); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:9; backdrop-filter:blur(12px); }
+               background:rgba(0,0,0,0.35); border-bottom:1px solid var(--border);
+               position:sticky; top:0; z-index:9; backdrop-filter:blur(12px); }
         .bar img { height:34px; }
         .bar-title { font-size:1rem; font-weight:700; color:var(--accent); }
-        .live { display:flex; align-items:center; gap:7px; font-size:0.8rem; color:var(--green); font-weight:600; }
+        .live { display:flex; align-items:center; gap:7px; font-size:.8rem; color:var(--green); font-weight:600; }
         .dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation:blink 1.8s ease-in-out infinite; }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-        /* LAYOUT */
         .main { padding:1.6rem 2rem; display:flex; flex-direction:column; gap:1.5rem; }
 
         /* STAT CARDS */
         .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(175px,1fr)); gap:1rem; }
-        .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.3rem 1.2rem;
-                position:relative; overflow:hidden; }
+        .card { background:var(--card); border:1px solid var(--border); border-radius:14px;
+                padding:1.3rem 1.2rem; position:relative; overflow:hidden; }
         .card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--c,var(--accent)); }
-        .clabel { font-size:0.73rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:.5rem; }
+        .clabel { font-size:.73rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:.5rem; }
         .cval { font-size:2.6rem; font-weight:900; color:var(--c,var(--light)); line-height:1; margin-bottom:.3rem; }
-        .csub { font-size:0.73rem; color:var(--muted); }
+        .csub { font-size:.73rem; color:var(--muted); }
         .cicon { position:absolute; top:1rem; right:1rem; font-size:1.4rem; opacity:.18; }
 
-        /* PANELS */
-        .row2 { display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:1.2rem; }
-        .row3 { display:grid; grid-template-columns:1fr 1fr; gap:1.2rem; }
-        .panel { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.3rem; }
-        .ptitle { font-size:0.78rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:.06em;
-                  border-bottom:1px solid var(--border); padding-bottom:.7rem; margin-bottom:1.1rem; }
+        /* MAIN 2-COL */
+        .row2 { display:grid; grid-template-columns:1fr 1.2fr; gap:1.4rem; }
+        .panel { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.4rem; }
+        .ptitle { font-size:.78rem; font-weight:700; color:var(--accent); text-transform:uppercase;
+                  letter-spacing:.06em; border-bottom:1px solid var(--border); padding-bottom:.7rem; margin-bottom:1.1rem; }
 
-        /* BARS */
-        .brow { display:flex; align-items:center; gap:.7rem; margin-bottom:.85rem; }
-        .blabel { font-size:.78rem; color:var(--muted); min-width:148px; white-space:nowrap; }
-        .bwrap { flex:1; background:rgba(255,255,255,.05); border-radius:99px; height:7px; overflow:hidden; }
+        /* PIPELINE BARS */
+        .brow { display:flex; align-items:center; gap:.7rem; margin-bottom:.9rem; }
+        .blabel { font-size:.8rem; color:var(--muted); min-width:160px; white-space:nowrap; }
+        .bwrap { flex:1; background:rgba(255,255,255,.05); border-radius:99px; height:8px; overflow:hidden; }
         .bfill { height:100%; border-radius:99px; transition:width 1.2s ease; background:var(--bc,var(--accent)); width:0%; }
-        .bcount { font-size:.82rem; font-weight:700; min-width:24px; text-align:right; }
-
-        /* FTL LIST */
-        .frow { display:flex; justify-content:space-between; align-items:center; padding:.55rem 0;
-                border-bottom:1px solid rgba(255,255,255,.04); font-size:.85rem; }
-        .frow:last-child { border-bottom:none; }
-        .fname { font-weight:600; }
-        .fbadge { padding:3px 10px; border-radius:99px; font-size:.72rem; font-weight:700; }
+        .bcount { font-size:.85rem; font-weight:700; min-width:28px; text-align:right; }
 
         /* RECENT */
-        .rrow { display:flex; justify-content:space-between; align-items:center; padding:.55rem 0;
-                border-bottom:1px solid rgba(255,255,255,.04); gap:.5rem; font-size:.82rem; }
+        .rrow { display:flex; justify-content:space-between; align-items:center; padding:.65rem 0;
+                border-bottom:1px solid rgba(255,255,255,.04); gap:.5rem; }
         .rrow:last-child { border-bottom:none; }
-        .rname { font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:155px; }
-        .rbadge { padding:3px 10px; border-radius:99px; font-size:.7rem; font-weight:700; white-space:nowrap; }
+        .rname { font-weight:600; font-size:.88rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:200px; }
+        .rsub { font-size:.72rem; color:var(--muted); margin-top:2px; }
+        .rbadge { padding:4px 11px; border-radius:99px; font-size:.72rem; font-weight:700; white-space:nowrap; }
 
-        /* STAT BOXES */
-        .sboxes { display:grid; grid-template-columns:1fr 1fr; gap:.9rem; }
-        .sbox { background:var(--card2); border-radius:10px; padding:1.1rem; border:1px solid rgba(255,255,255,.05); }
-        .slabel { font-size:.68rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.35rem; }
-        .sval { font-size:1.7rem; font-weight:900; }
+        /* BOTTOM STATS */
+        .sboxes { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; }
+        .sbox { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.2rem; }
+        .slabel { font-size:.7rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.05em; margin-bottom:.35rem; }
+        .sval { font-size:2rem; font-weight:900; }
 
         .foot { text-align:center; color:var(--muted); font-size:.75rem; padding-bottom:.8rem; }
     </style>
@@ -92,7 +84,11 @@
         </div>
         <div class="card" style="--c:var(--yellow)">
             <div class="cicon">🔍</div><div class="clabel">Pending / In Review</div>
-            <div class="cval" id="mPending">—</div><div class="csub">Not yet reviewed</div>
+            <div class="cval" id="mPending">—</div><div class="csub">Not yet fully reviewed</div>
+        </div>
+        <div class="card" style="--c:var(--pink)">
+            <div class="cicon">⏸️</div><div class="clabel">On Hold</div>
+            <div class="cval" id="mHold">—</div><div class="csub">Review paused</div>
         </div>
         <div class="card" style="--c:var(--purple)">
             <div class="cicon">🛡️</div><div class="clabel">Name Checks</div>
@@ -100,15 +96,11 @@
         </div>
         <div class="card" style="--c:var(--teal)">
             <div class="cicon">📅</div><div class="clabel">Awaiting Interview</div>
-            <div class="cval" id="mReadyIntv">—</div><div class="csub">Ready, slot not yet booked</div>
+            <div class="cval" id="mReadyIntv">—</div><div class="csub">Ready, slot not booked</div>
         </div>
         <div class="card" style="--c:var(--orange)">
             <div class="cicon">🤝</div><div class="clabel">Interview Booked</div>
-            <div class="cval" id="mBooked">—</div><div class="csub">Slot confirmed in system</div>
-        </div>
-        <div class="card" style="--c:var(--pink)">
-            <div class="cicon">⏸️</div><div class="clabel">On Hold</div>
-            <div class="cval" id="mHold">—</div><div class="csub">Initial review paused</div>
+            <div class="cval" id="mBooked">—</div><div class="csub">Slot confirmed</div>
         </div>
         <div class="card" style="--c:var(--green)">
             <div class="cicon">✅</div><div class="clabel">Accepted</div>
@@ -120,24 +112,19 @@
         </div>
     </div>
 
-    <!-- MIDDLE ROW -->
+    <!-- PIPELINE + RECENT -->
     <div class="row2">
 
         <div class="panel">
-            <div class="ptitle">Full Pipeline</div>
+            <div class="ptitle">Full Pipeline Breakdown</div>
             <div class="brow"><div class="blabel">Pending / In Review</div><div class="bwrap"><div class="bfill" id="bp" style="--bc:var(--yellow)"></div></div><div class="bcount" id="cp">—</div></div>
             <div class="brow"><div class="blabel">On Hold</div><div class="bwrap"><div class="bfill" id="bh" style="--bc:var(--pink)"></div></div><div class="bcount" id="ch">—</div></div>
             <div class="brow"><div class="blabel">Name Checks</div><div class="bwrap"><div class="bfill" id="bn" style="--bc:var(--purple)"></div></div><div class="bcount" id="cn">—</div></div>
             <div class="brow"><div class="blabel">Ready for Interview</div><div class="bwrap"><div class="bfill" id="bri" style="--bc:var(--teal)"></div></div><div class="bcount" id="cri">—</div></div>
             <div class="brow"><div class="blabel">Interview Booked</div><div class="bwrap"><div class="bfill" id="bb" style="--bc:var(--orange)"></div></div><div class="bcount" id="cb">—</div></div>
-            <div class="brow"><div class="blabel">Interview Done</div><div class="bwrap"><div class="bfill" id="bid" style="--bc:#60a5fa"></div></div><div class="bcount" id="cid">—</div></div>
+            <div class="brow"><div class="blabel">Interview Completed</div><div class="bwrap"><div class="bfill" id="bid" style="--bc:#60a5fa"></div></div><div class="bcount" id="cid">—</div></div>
             <div class="brow"><div class="blabel">Accepted</div><div class="bwrap"><div class="bfill" id="ba" style="--bc:var(--green)"></div></div><div class="bcount" id="ca">—</div></div>
             <div class="brow"><div class="blabel">Rejected / Archived</div><div class="bwrap"><div class="bfill" id="br" style="--bc:var(--red)"></div></div><div class="bcount" id="cr">—</div></div>
-        </div>
-
-        <div class="panel">
-            <div class="ptitle">FTL Assignments</div>
-            <div id="ftlPanel"><div style="color:var(--muted);font-size:.85rem;">Loading...</div></div>
         </div>
 
         <div class="panel">
@@ -147,20 +134,23 @@
 
     </div>
 
-    <!-- BOTTOM ROW -->
-    <div class="row3">
-        <div class="panel">
-            <div class="ptitle">Onboarding &amp; Conversion</div>
-            <div class="sboxes">
-                <div class="sbox"><div class="slabel">Onboarding Done</div><div class="sval" id="sDone" style="color:var(--green)">—</div></div>
-                <div class="sbox"><div class="slabel">Offer Sent, Pending</div><div class="sval" id="sPend" style="color:var(--yellow)">—</div></div>
-                <div class="sbox"><div class="slabel">DBS Submitted</div><div class="sval" id="sDbs" style="color:var(--accent)">—</div></div>
-                <div class="sbox"><div class="slabel">Conversion Rate</div><div class="sval" id="sConv" style="color:var(--purple)">—</div></div>
-            </div>
+    <!-- BOTTOM STATS ROW -->
+    <div class="sboxes">
+        <div class="sbox">
+            <div class="slabel">Onboarding Completed</div>
+            <div class="sval" id="sDone" style="color:var(--green)">—</div>
         </div>
-        <div class="panel">
-            <div class="ptitle">Upcoming Interviews (Next 7 Days)</div>
-            <div id="upcomingPanel"><div style="color:var(--muted);font-size:.85rem;">Loading...</div></div>
+        <div class="sbox">
+            <div class="slabel">Offer Sent, Pending</div>
+            <div class="sval" id="sPend" style="color:var(--yellow)">—</div>
+        </div>
+        <div class="sbox">
+            <div class="slabel">DBS Submitted</div>
+            <div class="sval" id="sDbs" style="color:var(--accent)">—</div>
+        </div>
+        <div class="sbox">
+            <div class="slabel">Conversion Rate</div>
+            <div class="sval" id="sConv" style="color:var(--purple)">—</div>
         </div>
     </div>
 
@@ -195,9 +185,22 @@ function set(id,v){ const e=document.getElementById(id); if(e) e.textContent=v; 
 function bar(id,pct){ const e=document.getElementById(id); if(e) e.style.width=Math.min(pct,100)+'%'; }
 
 function render() {
+    // Build lookup maps from the NGU Interview Times collection
+    // Key: applicant email -> their most relevant interview slot
+    // An applicant may have multiple slots submitted (Available/Booked). We want:
+    //   - If any slot is status='Booked' and not interviewCompleted -> interviewBooked
+    //   - If any slot has interviewCompleted=true -> interviewDone
+    const intByEmail = {};
+    interviews.forEach(i => {
+        const em = (i.applicantEmail||'').toLowerCase().trim();
+        if (!em) return;
+        if (!intByEmail[em]) intByEmail[em] = { booked: false, done: false };
+        if (i.interviewCompleted) intByEmail[em].done = true;
+        if (i.status === 'Booked' && !i.interviewCompleted) intByEmail[em].booked = true;
+    });
+
     let total=0, pending=0, onHold=0, nameCheck=0, readyIntv=0, booked=0, intDone=0, accepted=0, rejected=0,
         onboardDone=0, offerPending=0, dbsCount=0;
-    const ftl={};
     const recent=[];
 
     applicants.forEach(a => {
@@ -208,29 +211,24 @@ function render() {
         if (a.onboardingCompleted) onboardDone++;
         else if (a.finalRecruitmentDecision==='Approved') offerPending++;
 
-        if (a.assignedFTLForInterview) {
-            ftl[a.assignedFTLForInterview] = (ftl[a.assignedFTLForInterview]||0)+1;
-        }
-
         const reviews = a.reviews || [];
         const finalDec = a.finalRecruitmentDecision;
         const status = a.status || '';
-        const appEmail = (a.personalDetails?.email||'').toLowerCase();
-        const intv = interviews.find(i => (i.applicantEmail||'').toLowerCase()===appEmail);
+        const appEmail = (a.personalDetails?.email||'').toLowerCase().trim();
+        const intEntry = intByEmail[appEmail] || { booked:false, done:false };
 
-        // Classify in pipeline order (most final first)
+        // Classify — strictly one bucket per applicant, most final first
         if (finalDec==='Approved') {
             accepted++;
-        } else if (finalDec==='Rejected' || status.startsWith('Archived') || (reviews.length>=1 && reviews[0].decision==='Do not proceed')) {
+        } else if (finalDec==='Rejected' || status.startsWith('Archived') || (reviews[0]?.decision==='Do not proceed')) {
             rejected++;
-        } else if (reviews.length>=1 && reviews[0].decision==='Hold') {
-            // On hold = placed on hold in initial review (stored in reviews[0].decision)
+        } else if (reviews[0]?.decision==='Hold') {
             onHold++;
         } else if (a.nameChecksRequested && !a.nameChecksCompleted) {
             nameCheck++;
-        } else if (intv && intv.interviewCompleted) {
+        } else if (intEntry.done) {
             intDone++;
-        } else if (intv && intv.status==='Booked') {
+        } else if (intEntry.booked) {
             booked++;
         } else if (status==='Ready for Interview') {
             readyIntv++;
@@ -250,12 +248,12 @@ function render() {
     const conversion = total>0 ? Math.round((accepted/total)*100) : 0;
 
     // Cards
-    set('mTotal',total); set('mPending',pending); set('mNameCheck',nameCheck);
-    set('mReadyIntv',readyIntv); set('mBooked',booked); set('mHold',onHold);
+    set('mTotal',total); set('mPending',pending); set('mHold',onHold);
+    set('mNameCheck',nameCheck); set('mReadyIntv',readyIntv); set('mBooked',booked);
     set('mAccepted',accepted); set('mRejected',rejected);
     set('sDone',onboardDone); set('sPend',offerPending); set('sDbs',dbsCount); set('sConv',conversion+'%');
 
-    // Pipeline bars
+    // Bars
     const mx = Math.max(pending,onHold,nameCheck,readyIntv,booked,intDone,accepted,rejected,1);
     const p = n => Math.round((n/mx)*100);
     set('cp',pending);   bar('bp',p(pending));
@@ -267,54 +265,37 @@ function render() {
     set('ca',accepted);  bar('ba',p(accepted));
     set('cr',rejected);  bar('br',p(rejected));
 
-    // FTL panel
-    const ftlEl = document.getElementById('ftlPanel');
-    const ftlArr = Object.entries(ftl).sort((a,b)=>b[1]-a[1]);
-    const cols = ['#00A3E0','#10b981','#f59e0b','#8b5cf6','#ec4899','#f97316'];
-    ftlEl.innerHTML = ftlArr.length===0
-        ? '<div style="color:var(--muted);font-size:.85rem;">No assignments yet.</div>'
-        : ftlArr.map(([n,c],i)=>`<div class="frow"><span class="fname">${n}</span><span class="fbadge" style="background:${cols[i%cols.length]}22;color:${cols[i%cols.length]};">${c} assigned</span></div>`).join('');
-
-    // Recent panel
+    // Recent panel - show 10
     const rcEl = document.getElementById('recentPanel');
-    const scol = {
-        'Pending Review':'#f59e0b','Under Review':'#00A3E0',
-        'Ready for Interview':'#14b8a6','On Hold':'#ec4899'
-    };
-    rcEl.innerHTML = recent.slice(0,8).map(a=>{
-        const reviews = a.reviews||[];
-        let label,col;
-        if (a.finalRecruitmentDecision==='Approved') { label='Accepted'; col='#10b981'; }
-        else if (a.finalRecruitmentDecision==='Rejected') { label='Rejected'; col='#ef4444'; }
-        else if (reviews.length>=1 && reviews[0].decision==='Hold') { label='On Hold'; col='#ec4899'; }
-        else if (reviews.length>=1 && reviews[0].decision==='Do not proceed') { label='Do Not Proceed'; col='#ef4444'; }
-        else if (a.nameChecksRequested && !a.nameChecksCompleted) { label='Name Check'; col='#8b5cf6'; }
-        else { const s=a.status||'Pending'; label=s; col=scol[s]||'#6b80a0'; }
-        return `<div class="rrow"><span class="rname">${a.fullName||'Unknown'}</span><span class="rbadge" style="background:${col}22;color:${col};">${label}</span></div>`;
+    rcEl.innerHTML = recent.slice(0,10).map(a => {
+        const rev = (a.reviews||[]);
+        const appEmail2 = (a.personalDetails?.email||'').toLowerCase().trim();
+        const ie = intByEmail[appEmail2]||{};
+        let label, col;
+
+        if (a.finalRecruitmentDecision==='Approved' && a.onboardingCompleted)    { label='Onboarded';       col='#10b981'; }
+        else if (a.finalRecruitmentDecision==='Approved')                         { label='Offer Sent';      col='#22d3ee'; }
+        else if (a.finalRecruitmentDecision==='Rejected')                         { label='Rejected';        col='#ef4444'; }
+        else if (rev[0]?.decision==='Do not proceed')                             { label='Do Not Proceed';  col='#ef4444'; }
+        else if (rev[0]?.decision==='Hold')                                       { label='On Hold';         col='#ec4899'; }
+        else if (a.nameChecksRequested && !a.nameChecksCompleted)                 { label='Name Check';      col='#8b5cf6'; }
+        else if (ie.done)                                                         { label='Intv Complete';   col='#60a5fa'; }
+        else if (ie.booked)                                                       { label='Intv Booked';     col='#f97316'; }
+        else if (a.status==='Ready for Interview')                                { label='Ready';           col='#14b8a6'; }
+        else                                                                      { label='Pending';         col='#f59e0b'; }
+
+        const when = a.submittedAt?.toDate
+            ? a.submittedAt.toDate().toLocaleDateString('en-GB',{day:'numeric',month:'short'})
+            : '';
+
+        return `<div class="rrow">
+            <div>
+                <div class="rname">${a.fullName||'Unknown'}</div>
+                ${when?`<div class="rsub">Applied ${when}</div>`:''}
+            </div>
+            <span class="rbadge" style="background:${col}22;color:${col};">${label}</span>
+        </div>`;
     }).join('');
-
-    // Upcoming interviews
-    const now = new Date();
-    const in7 = new Date(now.getTime() + 7*24*60*60*1000);
-    const upcoming = interviews
-        .filter(i => i.status==='Booked' && i.date && !i.interviewCompleted)
-        .map(i => ({ ...i, dt: new Date(i.date+'T'+(i.time||'00:00')) }))
-        .filter(i => i.dt>=now && i.dt<=in7)
-        .sort((a,b)=>a.dt-b.dt);
-
-    const upEl = document.getElementById('upcomingPanel');
-    upEl.innerHTML = upcoming.length===0
-        ? '<div style="color:var(--muted);font-size:.85rem;">No interviews in the next 7 days.</div>'
-        : upcoming.map(i=>{
-            const d = i.dt.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
-            return `<div class="rrow">
-                <div>
-                    <div style="font-weight:600;font-size:.85rem;">${i.applicantName||'Unknown'}</div>
-                    <div style="font-size:.75rem;color:var(--muted);">${d} &middot; ${i.time||''}${i.interviewer?' &middot; '+i.interviewer:''}</div>
-                </div>
-                <span class="rbadge" style="background:#f97316'22;color:#f97316;">${i.interviewer?'Claimed':'Unclaimed'}</span>
-            </div>`;
-        }).join('');
 
     const t = new Date().toLocaleTimeString('en-GB');
     set('ts',t); set('syncT',t);
