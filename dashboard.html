@@ -44,7 +44,7 @@
 
         /* PIPELINE BARS */
         .brow { display:flex; align-items:center; gap:.7rem; margin-bottom:.9rem; }
-        .blabel { font-size:.8rem; color:var(--muted); min-width:160px; white-space:nowrap; }
+        .blabel { font-size:.8rem; color:var(--light); min-width:160px; white-space:nowrap; }
         .bwrap { flex:1; background:rgba(255,255,255,.05); border-radius:99px; height:8px; overflow:hidden; }
         .bfill { height:100%; border-radius:99px; transition:width 1.2s ease; background:var(--bc,var(--accent)); width:0%; }
         .bcount { font-size:.85rem; font-weight:700; min-width:28px; text-align:right; }
@@ -196,7 +196,14 @@ function render() {
         if (!em) return;
         if (!intByEmail[em]) intByEmail[em] = { booked: false, done: false };
         if (i.interviewCompleted) intByEmail[em].done = true;
-        if (i.status === 'Booked' && !i.interviewCompleted) intByEmail[em].booked = true;
+        // Only count as 'booked' if interview date is today or in the future
+        if (i.status === 'Booked' && !i.interviewCompleted) {
+            const slotDate = i.date ? new Date(i.date) : null;
+            const today = new Date(); today.setHours(0,0,0,0);
+            if (!slotDate || slotDate >= today) {
+                intByEmail[em].booked = true;
+            }
+        }
     });
 
     let total=0, pending=0, onHold=0, nameCheck=0, readyIntv=0, booked=0, intDone=0, accepted=0, rejected=0,
@@ -313,3 +320,4 @@ onSnapshot(collection(db,'NGU Interview Times'), snap => {
 </script>
 </body>
 </html>
+
