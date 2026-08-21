@@ -80,7 +80,20 @@
 <body>
     <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
 
-    <div class="container" id="bookingContainer">
+    <div class="container" id="emailGateContainer">
+        <div class="page-header">
+            <h1>Find Your Interview</h1>
+            <p>Enter the email address you applied with. We'll match it to your interviewer's availability.</p>
+        </div>
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="gateEmail" placeholder="e.g. jane@email.com">
+        </div>
+        <div id="gateStatus" class="status-msg" style="display:none;"></div>
+        <button class="btn btn-primary" id="gateSubmitBtn" onclick="lookupApplicant()">Continue</button>
+    </div>
+
+    <div class="container" id="bookingContainer" style="display:none;">
         <div class="page-header">
             <h1>Interview Booking</h1>
             <p>Select an available date and time below to schedule your interview with Next Generation Utilities.</p>
@@ -95,6 +108,9 @@
             <label>2. Select a Time Slot</label>
             <div class="slots-grid" id="slotsGrid"></div>
             <div id="loadingStatus" class="status-msg"></div>
+        </div>
+        <div style="text-align:center; margin-top: 0.5rem;">
+            <a href="#" id="changeEmailLink" onclick="resetToGate(); return false;" style="color: var(--text-muted); font-size: 0.85rem; text-decoration: underline;">Not you? Use a different email</a>
         </div>
     </div>
     <div class="container" id="successScreen">
@@ -117,8 +133,8 @@
             </div>
 
             <div style="text-align: left; margin-bottom: 1.5rem;">
-                <label>Email Address <span style="color:var(--accent);">*</span></label>
-                <input type="email" id="applicantEmail" placeholder="To receive your confirmation">
+                <label>Email Address</label>
+                <input type="email" id="applicantEmail" readonly style="opacity:0.7; cursor:not-allowed;">
             </div>
             <button class="btn btn-primary" id="confirmBtn" onclick="submitBooking()">Confirm Interview</button>
             <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
@@ -143,22 +159,120 @@
     };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const emailGateContainer = document.getElementById('emailGateContainer');
+    const bookingContainer = document.getElementById('bookingContainer');
+    const gateEmailInput = document.getElementById('gateEmail');
+    const gateStatus = document.getElementById('gateStatus');
+    const gateSubmitBtn = document.getElementById('gateSubmitBtn');
     const datePicker = document.getElementById('datePicker');
     const slotsWrapper = document.getElementById('slotsWrapper');
     const slotsGrid = document.getElementById('slotsGrid');
     const loadingStatus = document.getElementById('loadingStatus');
     // Restrict past dates
     const today = new Date().toISOString().split('T')[0];
-    const ftlName = new URLSearchParams(window.location.search).get('ftl');
-    // Load available dates on startup
+
+    // The interviewer (FTL) and applicant identity are no longer trusted from a URL
+    // parameter. Instead the applicant enters their email, we look up their live
+    // application record in Firestore, and take assignedFTLForInterview from there —
+    // so a stale/old booking link can never show or book the wrong FTL's availability.
+    let ftlName = null;
+    let gateApplicantEmail = '';
+    let gateApplicantName = '';
+    let gateApplicantPostcode = '';
+    let gateApplicantDocId = null;
+
+    async function findApplicantByEmail(rawEmail) {
+        const email = rawEmail.trim();
+        const lower = email.toLowerCase();
+        let snap = await getDocs(query(
+            collection(db, "NGUO New Applicants"),
+            where("personalDetails.email", "==", lower)
+        ));
+        if (snap.empty) {
+            snap = await getDocs(query(
+                collection(db, "NGUO New Applicants"),
+                where("personalDetails.email", "==", email)
+            ));
+        }
+        if (!snap.empty) {
+            return { id: snap.docs[0].id, data: snap.docs[0].data() };
+        }
+        // Fallback: scan every applicant (handles inconsistent casing/legacy records)
+        const allSnap = await getDocs(collection(db, "NGUO New Applicants"));
+        let found = null;
+        allSnap.forEach(d => {
+            const data = d.data();
+            const docEmail = data.personalDetails?.email || data.email || '';
+            if (docEmail.trim().toLowerCase() === lower) {
+                found = { id: d.id, data };
+            }
+        });
+        return found;
+    }
+
+    window.lookupApplicant = async function() {
+        const email = gateEmailInput.value.trim();
+        gateStatus.style.display = 'block';
+        if (!email) {
+            gateStatus.style.color = 'var(--error)';
+            gateStatus.textContent = 'Please enter your email address.';
+            return;
+        }
+        gateSubmitBtn.disabled = true;
+        gateSubmitBtn.textContent = 'Checking...';
+        gateStatus.style.color = 'var(--text-muted)';
+        gateStatus.textContent = 'Looking up your application...';
+        try {
+            const result = await findApplicantByEmail(email);
+            if (!result) {
+                gateStatus.style.color = 'var(--error)';
+                gateStatus.textContent = "We couldn't find an application with that email address. Please check for typos, or contact recruitment if you think this is a mistake.";
+                return;
+            }
+            const assignedFTL = result.data.assignedFTLForInterview || '';
+            if (!assignedFTL) {
+                gateStatus.style.color = 'var(--error)';
+                gateStatus.textContent = "Your interview hasn't been assigned to an interviewer yet. Please contact recruitment for help booking.";
+                return;
+            }
+            gateApplicantDocId = result.id;
+            gateApplicantEmail = email;
+            gateApplicantName = result.data.fullName || '';
+            gateApplicantPostcode = result.data.personalDetails?.postcode || result.data.postcode || '';
+            ftlName = assignedFTL;
+
+            gateStatus.style.display = 'none';
+            emailGateContainer.style.display = 'none';
+            bookingContainer.style.display = 'block';
+            initDatePicker();
+        } catch (error) {
+            console.error("Error looking up applicant:", error);
+            gateStatus.style.color = 'var(--error)';
+            gateStatus.textContent = 'Something went wrong looking up your application. Please try again.';
+        } finally {
+            gateSubmitBtn.disabled = false;
+            gateSubmitBtn.textContent = 'Continue';
+        }
+    };
+
+    window.resetToGate = function() {
+        bookingContainer.style.display = 'none';
+        emailGateContainer.style.display = 'block';
+        gateStatus.style.display = 'none';
+        gateEmailInput.value = '';
+        ftlName = null;
+        gateApplicantDocId = null;
+        datePicker.innerHTML = '<option value="">Loading available dates...</option>';
+        datePicker.disabled = false;
+        slotsWrapper.style.display = 'none';
+    };
+
+    // Load available dates once an applicant has been matched to an assigned FTL
     async function initDatePicker() {
-        // Every interview invite should carry a specific FTL's name in the link. If it's
-        // missing, don't fall back to showing every FTL's availability — that's exactly the
-        // gap that let applicants book times their assigned FTL never actually offered.
         if (!ftlName) {
-            datePicker.innerHTML = '<option value="">This booking link is missing interviewer information</option>';
+            // Defensive only — initDatePicker is only invoked after a successful lookup.
+            datePicker.innerHTML = '<option value="">No interviewer assigned</option>';
             datePicker.disabled = true;
-            loadingStatus.textContent = 'This link looks incomplete — please contact recruitment for a new invitation.';
             return;
         }
         try {
@@ -195,7 +309,6 @@
         }
     }
 
-    initDatePicker();
     datePicker.addEventListener('change', async (e) => {
         const selectedDate = e.target.value;
         if (!selectedDate) {
@@ -206,9 +319,9 @@
         slotsGrid.innerHTML = '';
         loadingStatus.textContent = 'Checking availability...';
         if (!ftlName) {
-            // Shouldn't be reachable since initDatePicker disables the picker in this case,
-            // but keep this as a hard stop so we never silently fall back to all FTLs' slots.
-            loadingStatus.textContent = 'This link looks incomplete — please contact recruitment for a new invitation.';
+            // Shouldn't be reachable — the picker is disabled until a lookup succeeds — but
+            // keep this as a hard stop so we never silently fall back to all FTLs' slots.
+            loadingStatus.textContent = 'Something went wrong identifying your interviewer. Please refresh and try again.';
             return;
         }
         try {
@@ -276,13 +389,17 @@
         const displayDate = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         document.getElementById('modalTimeDisplay').innerHTML = `<strong>${time}</strong> on <br>${displayDate}`;
 
+        // Email is fixed to whatever was verified at the gate; name is pre-filled from the
+        // application but left editable (and not overwritten if the applicant already edited it).
+        const nameInput = document.getElementById('applicantName');
+        if (!nameInput.value) nameInput.value = gateApplicantName || '';
+        document.getElementById('applicantEmail').value = gateApplicantEmail || '';
+
         document.getElementById('bookingModal').classList.add('active');
-        document.getElementById('applicantName').focus();
+        nameInput.focus();
     };
     window.closeModal = function() {
         document.getElementById('bookingModal').classList.remove('active');
-        document.getElementById('applicantName').value = '';
-        document.getElementById('applicantEmail').value = '';
     };
     window.submitBooking = async function() {
         const name = document.getElementById('applicantName').value.trim();
@@ -304,51 +421,34 @@
                 datePicker.dispatchEvent(new Event('change'));
                 return;
             }
-            // Look up postcode (and current FTL assignment) from applicant record
-let applicantPostcode = '';
-let applicantAssignedFTL = '';
-try {
-    let appQuery = await getDocs(query(
-        collection(db, "NGUO New Applicants"),
-        where("personalDetails.email", "==", email.toLowerCase())
-    ));
-    if (appQuery.empty) {
-        appQuery = await getDocs(query(
-            collection(db, "NGUO New Applicants"),
-            where("personalDetails.email", "==", email)
-        ));
-    }
-    if (appQuery.empty) {
-        const allSnap = await getDocs(collection(db, "NGUO New Applicants"));
-        allSnap.forEach(d => {
-            const data = d.data();
-            const docEmail = data.personalDetails?.email || data.email || '';
-            if (docEmail.trim().toLowerCase() === email.trim().toLowerCase()) {
-                applicantPostcode = data.personalDetails?.postcode || data.postcode || '';
-                applicantAssignedFTL = data.assignedFTLForInterview || '';
+            // Re-check the applicant's current FTL assignment fresh from Firestore, by doc ID
+            // (captured at the email gate) rather than trusting anything cached on the page —
+            // in case they got reassigned to a different FTL while browsing available times.
+            let applicantPostcode = gateApplicantPostcode;
+            let applicantAssignedFTL = ftlName;
+            if (gateApplicantDocId) {
+                try {
+                    const freshSnap = await getDoc(doc(db, "NGUO New Applicants", gateApplicantDocId));
+                    if (freshSnap.exists()) {
+                        const freshData = freshSnap.data();
+                        applicantPostcode = freshData.personalDetails?.postcode || freshData.postcode || applicantPostcode;
+                        applicantAssignedFTL = freshData.assignedFTLForInterview || applicantAssignedFTL;
+                    }
+                } catch (e) {
+                    console.warn("Could not re-check applicant assignment:", e);
+                }
             }
-        });
-    } else {
-        const matchedData = appQuery.docs[0].data();
-        applicantPostcode = matchedData.personalDetails?.postcode || matchedData.postcode || '';
-        applicantAssignedFTL = matchedData.assignedFTLForInterview || '';
-    }
-} catch (e) {
-    console.warn("Could not fetch applicant postcode:", e);
-}
-// Hard gate: confirm the slot actually belongs to the FTL this applicant is currently
-// assigned to. This is checked against the applicant's live Firestore record rather than
-// just the page's ?ftl= URL param, so a stale or reused booking link (e.g. sent before a
-// reassignment) can't let someone book a time their real interviewer never made available.
-const slotOwner = docSnap.data().submittedBy || '';
-if (applicantAssignedFTL && slotOwner && applicantAssignedFTL !== slotOwner) {
-    alert(`This time slot was added by ${slotOwner}, but your interview is assigned to ${applicantAssignedFTL}. Please choose a different time, or contact recruitment if you don't see any suitable slots.`);
-    closeModal();
-    btn.disabled = false;
-    btn.textContent = 'Confirm Interview';
-    datePicker.dispatchEvent(new Event('change'));
-    return;
-}
+            // Hard gate: confirm the slot actually belongs to the FTL this applicant is
+            // currently assigned to, straight from their live application record.
+            const slotOwner = docSnap.data().submittedBy || '';
+            if (applicantAssignedFTL && slotOwner && applicantAssignedFTL !== slotOwner) {
+                alert(`This time slot was added by ${slotOwner}, but your interview is now assigned to ${applicantAssignedFTL}. Please refresh and pick a different time, or contact recruitment.`);
+                closeModal();
+                btn.disabled = false;
+                btn.textContent = 'Confirm Interview';
+                resetToGate();
+                return;
+            }
 await updateDoc(docRef, {
     applicantName: name,
     applicantEmail: email,
@@ -373,8 +473,8 @@ await updateDoc(docRef, {
                 interviewer_name: 'a member of our team',
                 contact_email: 'recruitment@next-gen.uk'
             };
-            // 2. Send Alert to FTLs (use the slot's actual owner, not the URL param, now that
-            // both are guaranteed to match by the gate above)
+            // 2. Send Alert to FTLs (use the slot's actual owner — guaranteed to match the
+            // applicant's assigned FTL by the gate above)
             const ftlParams = {
                 ftl_name: slotOwner || 'Team',
                 applicant_name: name,
