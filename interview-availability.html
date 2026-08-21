@@ -7,10 +7,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
+
     <!-- EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-
     <style>
         :root {
             --primary: #005EB8; --accent: #00A3E0;
@@ -31,16 +30,15 @@
                         radial-gradient(circle at 85% 75%, rgba(0,94,184,0.07) 0%, transparent 55%);
             pointer-events: none; z-index: -1;
         }
-        
+
         .container { width: 100%; max-width: 600px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; box-shadow: 0 8px 25px rgba(0,0,0,0.3); margin-top: 2rem; }
         .logo { max-height: 60px; display: block; margin: 0 auto 1.5rem; }
         .page-header { text-align: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
         .page-header h1 { font-size: 1.8rem; font-weight: 800; color: var(--accent); margin-bottom: 0.5rem; }
         .page-header p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; }
-
         .form-group { margin-bottom: 1.5rem; }
         label { display: block; font-weight: 600; font-size: 0.9rem; color: var(--text-light); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        
+
         input[type="date"], input[type="text"], input[type="email"] {
             width: 100%; padding: 0.9rem 1rem; background: var(--bg-input);
             border: 2px solid var(--border); border-radius: 10px; color: var(--text-light);
@@ -48,9 +46,8 @@
         }
         input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,163,224,0.15); }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.8); cursor: pointer; }
-
         .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 1rem; }
-        
+
         .slot-btn {
             background: var(--bg-input); border: 2px solid var(--border);
             color: var(--text-light); padding: 0.8rem; border-radius: 8px;
@@ -59,95 +56,83 @@
         }
         .slot-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: rgba(0,163,224,0.1); }
         .slot-btn:disabled { background: rgba(0,0,0,0.2); border-color: rgba(255,255,255,0.05); color: var(--text-muted); cursor: not-allowed; text-decoration: line-through; }
-        
-        .status-msg { text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem; font-style: italic; }
 
+        .status-msg { text-align: center; color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem; font-style: italic; }
         /* Modal Styles */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px;}
         .modal-overlay.active { display: flex; animation: fadeIn 0.2s ease;}
         .modal-content { background: var(--bg-card); width: 100%; max-width: 400px; border-radius: 16px; border: 1px solid var(--border); padding: 2.5rem; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; }
         .modal-title { font-size: 1.4rem; color: var(--accent); font-weight: 700; margin-bottom: 0.5rem; }
         .modal-subtitle { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
-        
+
         .btn { padding: 0.85rem 1.5rem; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; width: 100%; margin-top: 1rem; }
         .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; }
         .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.35); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-cancel { background: transparent; border: 1px solid var(--border); color: var(--text-light); margin-top: 0.5rem; }
         .btn-cancel:hover { background: rgba(255,255,255,0.05); }
-
         #successScreen { display: none; text-align: center; padding: 3rem 1rem; }
         .success-icon { font-size: 4rem; margin-bottom: 1rem; }
-        
+
         @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
     </style>
 </head>
 <body>
-
     <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
-    
+
     <div class="container" id="bookingContainer">
         <div class="page-header">
             <h1>Interview Booking</h1>
             <p>Select an available date and time below to schedule your interview with Next Generation Utilities.</p>
         </div>
-
         <div class="form-group">
             <label>1. Select a Date</label>
             <select id="datePicker" style="width: 100%; padding: 0.9rem 1rem; background: var(--bg-input); border: 2px solid var(--border); border-radius: 10px; color: var(--text-light); font-size: 1rem; outline: none; cursor: pointer;">
                 <option value="">Loading available dates...</option>
             </select>
         </div>
-
         <div class="form-group" id="slotsWrapper" style="display: none;">
             <label>2. Select a Time Slot</label>
             <div class="slots-grid" id="slotsGrid"></div>
             <div id="loadingStatus" class="status-msg"></div>
         </div>
     </div>
-
     <div class="container" id="successScreen">
         <div class="success-icon">✅</div>
         <h1 style="color:var(--success); margin-bottom:1rem;">Booking Confirmed!</h1>
         <p style="color:var(--text-muted); font-size:1.05rem; line-height:1.6;" id="successMsg"></p>
     </div>
-
     <!-- BOOKING CONFIRMATION MODAL (Cleaned Up) -->
     <div class="modal-overlay" id="bookingModal">
         <div class="modal-content">
             <div class="modal-title">Confirm Booking</div>
             <div class="modal-subtitle" id="modalTimeDisplay"></div>
-            
+
             <input type="hidden" id="selectedDate">
             <input type="hidden" id="selectedTime">
             <input type="hidden" id="selectedDocId">
-
             <div style="text-align: left; margin-bottom: 1rem;">
                 <label>Your Full Name <span style="color:var(--accent);">*</span></label>
                 <input type="text" id="applicantName" placeholder="e.g. Jane Doe">
             </div>
-            
+
             <div style="text-align: left; margin-bottom: 1.5rem;">
                 <label>Email Address <span style="color:var(--accent);">*</span></label>
                 <input type="email" id="applicantEmail" placeholder="To receive your confirmation">
             </div>
-
             <button class="btn btn-primary" id="confirmBtn" onclick="submitBooking()">Confirm Interview</button>
             <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
         </div>
     </div>
-
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
     import { getFirestore, collection, query, where, getDocs, doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-
     // --- EMAILJS CONFIG ---
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
-    const EMAILJS_SERVICE_ID = 'service_dcdbhph'; 
+    const EMAILJS_SERVICE_ID = 'service_dcdbhph';
     const EMAILJS_FTL_TEMPLATE = 'template_5cpb2mc';
-    const EMAILJS_APPLICANT_CONFIRM = 'template_xf6p7vc'; 
+    const EMAILJS_APPLICANT_CONFIRM = 'template_xf6p7vc';
     emailjs.init(EMAILJS_PUBLIC_KEY);
-
     const firebaseConfig = {
         apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
         authDomain: "oesperformance-a54c0.firebaseapp.com",
@@ -156,48 +141,45 @@
         messagingSenderId: "484894102454",
         appId: "1:484894102454:web:17535ee497eac2d90d6717"
     };
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     const datePicker = document.getElementById('datePicker');
     const slotsWrapper = document.getElementById('slotsWrapper');
     const slotsGrid = document.getElementById('slotsGrid');
     const loadingStatus = document.getElementById('loadingStatus');
-
     // Restrict past dates
     const today = new Date().toISOString().split('T')[0];
     const ftlName = new URLSearchParams(window.location.search).get('ftl');
-
     // Load available dates on startup
     async function initDatePicker() {
+        // Every interview invite should carry a specific FTL's name in the link. If it's
+        // missing, don't fall back to showing every FTL's availability — that's exactly the
+        // gap that let applicants book times their assigned FTL never actually offered.
+        if (!ftlName) {
+            datePicker.innerHTML = '<option value="">This booking link is missing interviewer information</option>';
+            datePicker.disabled = true;
+            loadingStatus.textContent = 'This link looks incomplete — please contact recruitment for a new invitation.';
+            return;
+        }
         try {
-            let baseQ;
-            if (ftlName) {
-                baseQ = query(collection(db, "NGU Interview Times"), 
-                              where("status", "==", "Available"),
-                              where("submittedBy", "==", ftlName));
-            } else {
-                baseQ = query(collection(db, "NGU Interview Times"), 
-                              where("status", "==", "Available"));
-            }
-            
+            const baseQ = query(collection(db, "NGU Interview Times"),
+                          where("status", "==", "Available"),
+                          where("submittedBy", "==", ftlName));
+
             const snapshot = await getDocs(baseQ);
             let availableDates = new Set();
-            
+
             snapshot.forEach(docSnap => {
                 const data = docSnap.data();
                 if (data.date && data.date >= today) {
                     availableDates.add(data.date);
                 }
             });
-
             // Convert to array, filter weekends just in case, and sort
             let datesArray = Array.from(availableDates).filter(dateStr => {
                 const day = new Date(dateStr).getDay();
                 return day !== 0 && day !== 6;
             }).sort();
-
             datePicker.innerHTML = '<option value="">-- Select an available date --</option>';
             if (datesArray.length === 0) {
                 datePicker.innerHTML = '<option value="">No available dates at this time</option>';
@@ -212,36 +194,31 @@
             datePicker.innerHTML = '<option value="">Error loading dates</option>';
         }
     }
-    
-    initDatePicker();
 
+    initDatePicker();
     datePicker.addEventListener('change', async (e) => {
         const selectedDate = e.target.value;
         if (!selectedDate) {
             slotsWrapper.style.display = 'none';
             return;
         }
-
         slotsWrapper.style.display = 'block';
         slotsGrid.innerHTML = '';
         loadingStatus.textContent = 'Checking availability...';
-
+        if (!ftlName) {
+            // Shouldn't be reachable since initDatePicker disables the picker in this case,
+            // but keep this as a hard stop so we never silently fall back to all FTLs' slots.
+            loadingStatus.textContent = 'This link looks incomplete — please contact recruitment for a new invitation.';
+            return;
+        }
         try {
-            let q;
-            if (ftlName) {
-                q = query(collection(db, "NGU Interview Times"), 
-                          where("date", "==", selectedDate), 
+            const q = query(collection(db, "NGU Interview Times"),
+                          where("date", "==", selectedDate),
                           where("status", "==", "Available"),
                           where("submittedBy", "==", ftlName));
-            } else {
-                q = query(collection(db, "NGU Interview Times"), 
-                          where("date", "==", selectedDate), 
-                          where("status", "==", "Available"));
-            }
             const snapshot = await getDocs(q);
-            
-            loadingStatus.textContent = '';
 
+            loadingStatus.textContent = '';
             const now = new Date();
             let noticeMs = 24 * 60 * 60 * 1000; // Default 24 hours
             if (now.getDay() === 5) { // Friday
@@ -250,7 +227,7 @@
                 noticeMs = 2 * 24 * 60 * 60 * 1000; // 48 hours
             }
             const minAllowedTime = now.getTime() + noticeMs;
-            
+
             // Collect available slots and deduplicate by time (saving the docId of the first one we see)
             const availableSlots = {};
             snapshot.forEach(doc => {
@@ -259,24 +236,20 @@
                     availableSlots[data.time] = doc.id;
                 }
             });
-
             // Sort times chronologically
             const sortedTimes = Object.keys(availableSlots).sort();
-
             if (sortedTimes.length === 0) {
                 loadingStatus.textContent = 'No slots available on this date. Please select another date.';
                 return;
             }
-
             let renderedCount = 0;
             sortedTimes.forEach(time => {
                 const docId = availableSlots[time];
                 const btn = document.createElement('button');
                 btn.className = 'slot-btn';
                 btn.textContent = time;
-
                 const slotDateTime = new Date(`${selectedDate}T${time}:00`).getTime();
-                
+
                 if (slotDateTime <= minAllowedTime) {
                     btn.disabled = true;
                     btn.title = "Interviews must be booked at least 24 hours in advance";
@@ -286,52 +259,43 @@
                 }
                 slotsGrid.appendChild(btn);
             });
-
             if (renderedCount === 0) {
                 loadingStatus.textContent = 'All available slots on this date require 24 hours notice. Please pick a later date.';
             }
-
         } catch (error) {
             console.error("Error fetching slots:", error);
             loadingStatus.textContent = 'Error checking availability. Please try again.';
         }
     });
-
     // --- MODAL CONTROLS ---
     window.openModal = function(date, time, docId) {
         document.getElementById('selectedDate').value = date;
         document.getElementById('selectedTime').value = time;
         document.getElementById('selectedDocId').value = docId;
-        
+
         const displayDate = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         document.getElementById('modalTimeDisplay').innerHTML = `<strong>${time}</strong> on <br>${displayDate}`;
-        
+
         document.getElementById('bookingModal').classList.add('active');
         document.getElementById('applicantName').focus();
     };
-
     window.closeModal = function() {
         document.getElementById('bookingModal').classList.remove('active');
         document.getElementById('applicantName').value = '';
         document.getElementById('applicantEmail').value = '';
     };
-
     window.submitBooking = async function() {
         const name = document.getElementById('applicantName').value.trim();
         const email = document.getElementById('applicantEmail').value.trim();
         const date = document.getElementById('selectedDate').value;
         const time = document.getElementById('selectedTime').value;
         const btn = document.getElementById('confirmBtn');
-
         if (!name || !email) return alert("Please complete all fields.");
-
         btn.disabled = true;
         btn.textContent = 'Booking...';
-
         try {
             const docId = document.getElementById('selectedDocId').value;
             const docRef = doc(db, "NGU Interview Times", docId);
-
             // Double check it's still available (concurrency protection)
             const docSnap = await getDoc(docRef);
             if (!docSnap.exists() || docSnap.data().status !== 'Available') {
@@ -340,9 +304,9 @@
                 datePicker.dispatchEvent(new Event('change'));
                 return;
             }
-
-            // Look up postcode from applicant record
+            // Look up postcode (and current FTL assignment) from applicant record
 let applicantPostcode = '';
+let applicantAssignedFTL = '';
 try {
     let appQuery = await getDocs(query(
         collection(db, "NGUO New Applicants"),
@@ -361,15 +325,30 @@ try {
             const docEmail = data.personalDetails?.email || data.email || '';
             if (docEmail.trim().toLowerCase() === email.trim().toLowerCase()) {
                 applicantPostcode = data.personalDetails?.postcode || data.postcode || '';
+                applicantAssignedFTL = data.assignedFTLForInterview || '';
             }
         });
     } else {
-        applicantPostcode = appQuery.docs[0].data().personalDetails?.postcode || appQuery.docs[0].data().postcode || '';
+        const matchedData = appQuery.docs[0].data();
+        applicantPostcode = matchedData.personalDetails?.postcode || matchedData.postcode || '';
+        applicantAssignedFTL = matchedData.assignedFTLForInterview || '';
     }
 } catch (e) {
     console.warn("Could not fetch applicant postcode:", e);
 }
-
+// Hard gate: confirm the slot actually belongs to the FTL this applicant is currently
+// assigned to. This is checked against the applicant's live Firestore record rather than
+// just the page's ?ftl= URL param, so a stale or reused booking link (e.g. sent before a
+// reassignment) can't let someone book a time their real interviewer never made available.
+const slotOwner = docSnap.data().submittedBy || '';
+if (applicantAssignedFTL && slotOwner && applicantAssignedFTL !== slotOwner) {
+    alert(`This time slot was added by ${slotOwner}, but your interview is assigned to ${applicantAssignedFTL}. Please choose a different time, or contact recruitment if you don't see any suitable slots.`);
+    closeModal();
+    btn.disabled = false;
+    btn.textContent = 'Confirm Interview';
+    datePicker.dispatchEvent(new Event('change'));
+    return;
+}
 await updateDoc(docRef, {
     applicantName: name,
     applicantEmail: email,
@@ -379,10 +358,8 @@ await updateDoc(docRef, {
     applicantReminderSent: false,
     unclaimedReminderLevel: 0
 });
-
             const displayDate = new Date(date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
             const firstName = name.split(' ')[0];
-
             // 1. Send Confirmation to Applicant
             const applicantParams = {
                 to_email: email,
@@ -396,11 +373,10 @@ await updateDoc(docRef, {
                 interviewer_name: 'a member of our team',
                 contact_email: 'recruitment@next-gen.uk'
             };
-
-            // 2. Send Alert to FTLs
-            const ftlNameForEmail = new URLSearchParams(window.location.search).get('ftl') || 'Team';
+            // 2. Send Alert to FTLs (use the slot's actual owner, not the URL param, now that
+            // both are guaranteed to match by the gate above)
             const ftlParams = {
-                ftl_name: ftlNameForEmail,
+                ftl_name: slotOwner || 'Team',
                 applicant_name: name,
                 applicant_postcode: applicantPostcode || 'Not provided',
                 postcode: applicantPostcode || 'Not provided',
@@ -408,18 +384,15 @@ await updateDoc(docRef, {
                 interview_time: time,
                 portal_link: window.location.origin + "/FTL-interview-availability.html"
             };
-
             await Promise.allSettled([
                 emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APPLICANT_CONFIRM, applicantParams),
                 emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_FTL_TEMPLATE, ftlParams)
             ]);
-
             closeModal();
             document.getElementById('bookingContainer').style.display = 'none';
             document.getElementById('successScreen').style.display = 'block';
-            
-            document.getElementById('successMsg').innerHTML = `Your interview has been booked for <strong>${time}</strong> on <strong>${displayDate}</strong>.<br><br>We look forward to speaking with you, ${firstName}!`;
 
+            document.getElementById('successMsg').innerHTML = `Your interview has been booked for <strong>${time}</strong> on <strong>${displayDate}</strong>.<br><br>We look forward to speaking with you, ${firstName}!`;
         } catch (error) {
             console.error("Booking Error:", error);
             alert("An error occurred. Please try again.");
