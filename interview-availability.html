@@ -351,6 +351,7 @@
             let contract = '';
             let energySupplier = '';
             let potentialStartDate = '';
+            let onCallRequired = 'No';
             let inductionLength = '';
             let inductionLocation = '';
 
@@ -390,6 +391,7 @@
                     contract = appData.interviewDetails?.contract || appData.interviewContract || appData.contract || '';
                     energySupplier = appData.interviewDetails?.energySupplier || appData.interviewEnergySupplier || appData.energySupplier || '';
                     potentialStartDate = appData.interviewDetails?.potentialStartDate || appData.interviewPotentialStartDate || appData.potentialStartDate || appData.startDate || '';
+                    onCallRequired = appData.interviewDetails?.onCallRequired || appData.interviewOnCallRequired || appData.onCallRequired || 'No';
                     inductionLength = appData.interviewDetails?.inductionLength || appData.interviewInductionLength || appData.inductionLength || '';
                     inductionLocation = appData.interviewDetails?.inductionLocation || appData.interviewInductionLocation || appData.inductionLocation || '';
                 }
@@ -409,6 +411,7 @@
                 contract: contract,
                 energySupplier: energySupplier,
                 potentialStartDate: potentialStartDate,
+                onCallRequired: onCallRequired,
                 inductionLength: inductionLength,
                 inductionLocation: inductionLocation,
                 status: "Booked",
