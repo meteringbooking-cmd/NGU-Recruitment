@@ -311,6 +311,7 @@
             <div><strong>Contract:</strong> <span id="hdrContract" style="color: var(--accent); font-weight: 600;">-</span></div>
             <div><strong>Energy Supplier:</strong> <span id="hdrSupplier" style="color: #6ee7b7; font-weight: 600;">-</span></div>
             <div><strong>Potential Start:</strong> <span id="hdrStartDate" style="color: #fcd34d; font-weight: 600;">-</span></div>
+            <div><strong>On Call:</strong> <span id="hdrOnCall" style="color: var(--text-light); font-weight: 600;">-</span></div>
             <div><strong>Induction:</strong> <span id="hdrInduction" style="color: var(--text-light); font-weight: 600;">-</span></div>
             <div style="grid-column: 1 / -1; margin-top: 6px;" id="hdrCvContainer"></div>
         </div>
@@ -749,6 +750,7 @@
         const contract = booking.contract || details.contract || appDoc?.interviewContract || appDoc?.contract || '';
         const energySupplier = booking.energySupplier || details.energySupplier || appDoc?.interviewEnergySupplier || appDoc?.energySupplier || '';
         const potentialStartDate = booking.potentialStartDate || details.potentialStartDate || appDoc?.interviewPotentialStartDate || appDoc?.potentialStartDate || appDoc?.startDate || '';
+        const onCallRequired = booking.onCallRequired || details.onCallRequired || appDoc?.interviewOnCallRequired || appDoc?.onCallRequired || 'No';
         const inductionLength = booking.inductionLength || details.inductionLength || appDoc?.interviewInductionLength || appDoc?.inductionLength || '';
         const inductionLocation = booking.inductionLocation || details.inductionLocation || appDoc?.interviewInductionLocation || appDoc?.inductionLocation || '';
         const cvUrl = booking.cvUrl || appDoc?.cv?.url || '';
@@ -761,6 +763,7 @@
             contract,
             energySupplier,
             potentialStartDate,
+            onCallRequired,
             inductionLength,
             inductionLocation,
             cvUrl,
@@ -845,6 +848,9 @@
                 if (details.potentialStartDate) {
                     const sDateFormatted = new Date(details.potentialStartDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
                     badges.push(`<span class="tile-badge badge-start">📅 Start: ${sDateFormatted}</span>`);
+                }
+                if (details.onCallRequired === 'Yes') {
+                    badges.push(`<span class="tile-badge" style="background:rgba(239,68,68,0.15); color:#fca5a5; border:1px solid rgba(239,68,68,0.4);">🚨 On Call: Yes</span>`);
                 }
                 if (details.inductionLength) {
                     badges.push(`<span class="tile-badge badge-induction">⏱ Induction: ${details.inductionLength}</span>`);
@@ -1096,6 +1102,10 @@
                         <span style="color:#fcd34d; font-weight:700;">${info.potentialStartDate ? `🗓 ${startFormatted}` : '<span style="color:var(--text-muted)">Not set</span>'}</span>
                     </div>
                     <div class="details-item">
+                        <strong>Is On Call Required?</strong>
+                        <span style="color:${info.onCallRequired === 'Yes' ? '#fca5a5' : 'var(--text-light)'}; font-weight:700;">${info.onCallRequired === 'Yes' ? '🚨 Yes' : 'No'}</span>
+                    </div>
+                    <div class="details-item">
                         <strong>Induction Length</strong>
                         <span>${info.inductionLength || '<span style="color:var(--text-muted)">Not specified</span>'}</span>
                     </div>
@@ -1163,6 +1173,12 @@
         const hdrStartDateEl = document.getElementById('hdrStartDate');
         if (hdrStartDateEl) {
             hdrStartDateEl.textContent = info?.potentialStartDate ? new Date(info.potentialStartDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not set';
+        }
+
+        const hdrOnCallEl = document.getElementById('hdrOnCall');
+        if (hdrOnCallEl) {
+            hdrOnCallEl.textContent = info?.onCallRequired === 'Yes' ? '🚨 Yes' : (info?.onCallRequired || 'No');
+            hdrOnCallEl.style.color = info?.onCallRequired === 'Yes' ? 'var(--warning)' : 'var(--text-light)';
         }
 
         const hdrInductionEl = document.getElementById('hdrInduction');
