@@ -15,10 +15,10 @@
 
     <style>
         :root {
-            --primary: #1479d6; --accent: #29c2f5;
-            --bg-dark: #142640; --bg-card: #26395c; --bg-input: #1c3355;
-            --text-light: #F4F7FA; --text-muted: #b7c8dc; --border: #4a6690;
-            --success: #22c98f; --error: #f0605a; --warning: #f7b03e;
+            --primary: #005EB8; --accent: #00A3E0;
+            --bg-dark: #0A1628; --bg-card: #1a2942; --bg-input: #0d1f3a;
+            --text-light: #E8EDF2; --text-muted: #8B9AAE; --border: #2a3f5f;
+            --success: #10B981; --error: #EF4444; --warning: #F59E0B;
         }
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
@@ -46,7 +46,6 @@
             border: 1px solid var(--border); background-color: var(--bg-input); color: var(--text-light); padding: 8px 15px;
         }
         .btn-link:hover { background-color: #38444d; border-color: #4f5b66; }
-
         .schedule-grid { display: flex; flex-direction: column; gap: 15px; }
 
         .interview-card {
@@ -54,11 +53,35 @@
             border-left: 5px solid var(--warning); border-radius: 10px;
             padding: 20px; display: flex; justify-content: space-between; align-items: center;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: all 0.2s;
-            flex-wrap: wrap; gap: 15px;
+            flex-wrap: wrap; gap: 15px; cursor: pointer; position: relative;
+        }
+        .interview-card:hover {
+            transform: translateY(-2px); border-color: var(--accent);
+            box-shadow: 0 8px 25px rgba(0,163,224,0.25);
         }
         .interview-card.claimed { border-left-color: var(--accent); }
+        .interview-card.available-slot { cursor: default; }
+        .interview-card.available-slot:hover { transform: none; border-color: var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
 
-        .card-info { display: flex; flex-direction: column; gap: 5px; }
+        .tile-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: center; }
+        .tile-badge { font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 5px; display: inline-flex; align-items: center; gap: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
+        .badge-contract { background: rgba(0, 163, 224, 0.15); color: var(--accent); border: 1px solid rgba(0, 163, 224, 0.4); }
+        .badge-supplier { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+        .badge-start { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .badge-cv { background: rgba(139, 92, 246, 0.15); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.4); }
+        .badge-induction { background: rgba(255, 255, 255, 0.08); color: var(--text-light); border: 1px solid var(--border); }
+        
+        .card-click-hint { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; margin-top: 6px; font-weight: 500; }
+        .interview-card:hover .card-click-hint { color: var(--accent); }
+
+        /* Candidate Details Modal styles */
+        .details-section-box { background: rgba(0, 163, 224, 0.05); border: 1px solid var(--border); border-radius: 10px; padding: 1.2rem; margin-bottom: 1.2rem; }
+        .details-section-title { font-size: 0.95rem; font-weight: 700; color: var(--accent); margin-bottom: 0.8rem; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+        .details-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px 18px; font-size: 0.92rem; }
+        .details-item strong { color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; display: block; margin-bottom: 3px; letter-spacing: 0.04em; }
+        .details-item span { color: var(--text-light); font-weight: 600; }
+
+        .card-info { display: flex; flex-direction: column; gap: 5px; flex: 1; min-width: 250px; }
         .card-date { font-family: 'DM Mono', monospace; font-size: 1.1rem; color: #6ee7b7; font-weight: 600; }
         .card-name { font-size: 1.3rem; font-weight: 700; color: var(--text-light); }
         .card-booked-at { font-size: 0.8rem; color: var(--text-muted); font-style: italic; }
@@ -66,13 +89,15 @@
         .card-action { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
         
         .btn { padding: 0.7rem 1.5rem; border-radius: 8px; font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s; border: none; font-family: inherit; }
-        .btn-claim { background: rgba(41,194,245,0.18); border: 1px solid rgba(41,194,245,0.55); color: var(--accent); }
-        .btn-claim:hover { background: rgba(41,194,245,0.3); }
+        .btn-claim { background: rgba(0,163,224,0.1); border: 1px solid rgba(0,163,224,0.4); color: var(--accent); }
+        .btn-claim:hover { background: rgba(0,163,224,0.2); }
         .btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; }
         .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,163,224,0.35); }
         .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background: transparent; border: 1px solid var(--border); color: var(--text-light); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.05); }
         
-        .claimed-badge { background: rgba(41,194,245,0.18); border: 1px solid rgba(41,194,245,0.45); color: var(--accent); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        .claimed-badge { background: rgba(0,163,224,0.1); border: 1px solid rgba(0,163,224,0.3); color: var(--accent); padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
         
         .empty-state { text-align: center; padding: 40px; color: var(--text-muted); background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); font-size: 1.1rem; }
 
@@ -85,7 +110,7 @@
         .close-btn { background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
         .close-btn:hover { color: var(--error); }
 
-        .candidate-header { background: rgba(41,194,245,0.1); border: 1px solid rgba(41,194,245,0.35); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.95rem; }
+        .candidate-header { background: rgba(0,163,224,0.05); border: 1px solid rgba(0,163,224,0.2); padding: 1.5rem; border-radius: 8px; margin-bottom: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.95rem; }
         .candidate-header div strong { color: var(--text-muted); display: inline-block; width: 140px; }
 
         .type-selector { margin-bottom: 2rem; background: var(--bg-input); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
@@ -104,13 +129,13 @@
         textarea, select, input[type="text"] { width: 100%; padding: 0.8rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-dark); color: white; font-family: inherit; font-size: 0.95rem; outline: none; margin-bottom: 1rem; resize: vertical;}
         textarea:focus, select:focus, input:focus { border-color: var(--accent); }
 
-        .score-grid { display: grid; grid-template-columns: 2fr 1fr 3fr; gap: 10px; align-items: center; margin-bottom: 10px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; }
+        .score-grid { display: grid; grid-template-columns: 2fr 1fr 3fr; gap: 10px; align-items: center; margin-bottom: 10px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 6px; }
         .score-grid label { font-weight: 600; font-size: 0.9rem; }
         .score-grid input[type="number"] { width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-dark); color: white; text-align: center; font-weight: bold;}
         .score-grid input[type="text"] { margin-bottom: 0; padding: 0.6rem; }
         .section-total { text-align: right; font-weight: 700; color: var(--accent); font-size: 1.1rem; margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 10px;}
         
-        .grand-total { text-align: center; font-size: 1.8rem; font-weight: 800; color: #7bf5c4; background: rgba(34,201,143,0.18); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(34,201,143,0.45); margin-bottom: 1.5rem; }
+        .grand-total { text-align: center; font-size: 1.8rem; font-weight: 800; color: #6ee7b7; background: rgba(16,185,129,0.1); padding: 1.5rem; border-radius: 8px; border: 1px solid rgba(16,185,129,0.3); margin-bottom: 1.5rem; }
 
         /* Phases */
         .phase { display: none; }
@@ -183,12 +208,32 @@
     </div>
 </div>
 
+<!-- CANDIDATE & PLACEMENT DETAILS MODAL -->
+<div class="modal-overlay" id="candidateDetailsModal">
+    <div class="modal-content" style="max-width: 650px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal-header">
+            <div class="modal-title" style="display:flex; align-items:center; gap:8px;">
+                <span>👤 Candidate & Interview Details</span>
+            </div>
+            <button class="close-btn" onclick="closeCandidateDetailsModal()">✕</button>
+        </div>
+        
+        <div id="candidateDetailsBody">
+            <!-- Dynamically populated -->
+        </div>
+
+        <div id="candidateDetailsActions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem; border-top: 1px solid var(--border); padding-top: 1.2rem;">
+            <!-- Dynamically populated action buttons -->
+        </div>
+    </div>
+</div>
+
 <!-- CLAIM MODAL -->
 <div class="modal-overlay" id="claimModal">
     <div class="modal-content" style="max-width: 450px;">
         <div class="modal-header">
             <div class="modal-title">Claim Interview</div>
-            <button class="modal-close" onclick="closeClaimModal()">✕</button>
+            <button class="modal-close" onclick="closeClaimModal()" style="background:transparent; border:none; color:var(--text-muted); font-size:1.4rem; cursor:pointer;">✕</button>
         </div>
         <div class="modal-body">
             <input type="hidden" id="claimDocId">
@@ -201,7 +246,6 @@
                     <option value="Richard Wiecko">Richard Wiecko</option>
                     <option value="Scott Carson">Scott Carson</option>
                     <option value="Stuart Whyte">Stuart Whyte</option>
-                    <option value="Thomas Green">Thomas Green</option>
                 </select>
             </div>
             
@@ -224,7 +268,7 @@
     <div class="modal-content" style="max-width: 450px;">
         <div class="modal-header">
             <div class="modal-title">Attach Teams Link</div>
-            <button class="modal-close" onclick="closeAddTeamsLinkModal()">×</button>
+            <button class="modal-close" onclick="closeAddTeamsLinkModal()" style="background:transparent; border:none; color:var(--text-muted); font-size:1.4rem; cursor:pointer;">×</button>
         </div>
         <div class="modal-body">
             <input type="hidden" id="addTeamsLinkDocId">
@@ -259,11 +303,16 @@
         
         <input type="hidden" id="activeDocId">
 
-        <div class="candidate-header">
+        <div class="candidate-header" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
             <div><strong>Candidate Name:</strong> <span id="hdrName"></span></div>
             <div><strong>Date & Time:</strong> <span id="hdrDateTime"></span></div>
             <div><strong>Interviewer:</strong> <span id="hdrInterviewer"></span></div>
             <div><strong>Position:</strong> <span id="hdrPosition" style="color: var(--accent); font-weight: 700;">Select Pack Below</span></div>
+            <div><strong>Contract:</strong> <span id="hdrContract" style="color: var(--accent); font-weight: 600;">-</span></div>
+            <div><strong>Energy Supplier:</strong> <span id="hdrSupplier" style="color: #6ee7b7; font-weight: 600;">-</span></div>
+            <div><strong>Potential Start:</strong> <span id="hdrStartDate" style="color: #fcd34d; font-weight: 600;">-</span></div>
+            <div><strong>Induction:</strong> <span id="hdrInduction" style="color: var(--text-light); font-weight: 600;">-</span></div>
+            <div style="grid-column: 1 / -1; margin-top: 6px;" id="hdrCvContainer"></div>
         </div>
 
         <div class="type-selector">
@@ -364,7 +413,7 @@
             <!-- PHASE 2: THE SCORECARD -->
             <div id="engPhase2" class="phase">
                 <div style="text-align: center; margin-bottom: 1rem; color: var(--success); font-weight: bold;">PHASE 2: INTERVIEW SCORECARD</div>
-                <div style="background: rgba(247,176,62,0.18); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #ffdd8f; font-size: 0.9rem; border: 1px solid rgba(247,176,62,0.45); text-align: center;">
+                <div style="background: rgba(245,158,11,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #fcd34d; font-size: 0.9rem; border: 1px solid rgba(245,158,11,0.3); text-align: center;">
                     <strong>Scoring Guide:</strong> 1 = Poor | 2 = Below Standard | 3 = Acceptable | 4 = Strong | 5 = Excellent
                 </div>
 
@@ -537,7 +586,7 @@
             <!-- PHASE 2: THE SCORECARD -->
             <div id="offPhase2" class="phase">
                 <div style="text-align: center; margin-bottom: 1rem; color: var(--success); font-weight: bold;">PHASE 2: INTERVIEW SCORECARD</div>
-                <div style="background: rgba(247,176,62,0.18); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #ffdd8f; font-size: 0.9rem; border: 1px solid rgba(247,176,62,0.45); text-align: center;">
+                <div style="background: rgba(245,158,11,0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; color: #fcd34d; font-size: 0.9rem; border: 1px solid rgba(245,158,11,0.3); text-align: center;">
                     <strong>Scoring Guide:</strong> 1 = Poor | 2 = Below Standard | 3 = Acceptable | 4 = Strong | 5 = Excellent
                 </div>
 
@@ -617,7 +666,7 @@
         const timeStr = `${String(h).padStart(2, '0')}:00`;
         const displayStr = h === 12 ? '12pm' : (h > 12 ? `${h-12}pm` : `${h}am`);
         
-        gridHtml += `<tr style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.05);">`;
+        gridHtml += `<tr style="border-bottom: 1px solid var(--border); background: rgba(255,255,255,0.02);">`;
         gridHtml += `<td style="padding:10px; font-weight:bold; color:var(--text-light); border:1px solid var(--border);">${displayStr}</td>`;
         
         for (let day = 0; day < 5; day++) {
@@ -660,19 +709,86 @@
         document.getElementById('availName').value = storedName;
     }
 
+    let latestBookings = [];
+    let applicantsData = [];
+
+    // Real-time synchronization of New Applicants collection
+    const qApplicants = query(collection(db, "NGUO New Applicants"));
+    onSnapshot(qApplicants, (snapshot) => {
+        applicantsData = [];
+        snapshot.forEach(doc => {
+            applicantsData.push({ id: doc.id, ...doc.data() });
+        });
+        if (latestBookings.length > 0) {
+            renderScheduleGrid(latestBookings);
+        }
+    });
+
+    // Helper to resolve applicant record for a booking
+    function getApplicantForBooking(booking) {
+        if (!booking || booking.status === 'Available') return null;
+        const bEmail = (booking.applicantEmail || '').trim().toLowerCase();
+        let matched = null;
+        if (booking.applicantId) {
+            matched = applicantsData.find(a => a.id === booking.applicantId);
+        }
+        if (!matched && bEmail) {
+            matched = applicantsData.find(a => (a.personalDetails?.email || a.email || '').trim().toLowerCase() === bEmail);
+        }
+        if (!matched && booking.applicantName) {
+            matched = applicantsData.find(a => (a.fullName || '').trim().toLowerCase() === (booking.applicantName || '').trim().toLowerCase());
+        }
+        return matched;
+    }
+
+    // Helper to resolve complete interview details
+    function resolveInterviewDetails(booking) {
+        const appDoc = getApplicantForBooking(booking);
+        const details = appDoc?.interviewDetails || {};
+
+        const contract = booking.contract || details.contract || appDoc?.interviewContract || appDoc?.contract || '';
+        const energySupplier = booking.energySupplier || details.energySupplier || appDoc?.interviewEnergySupplier || appDoc?.energySupplier || '';
+        const potentialStartDate = booking.potentialStartDate || details.potentialStartDate || appDoc?.interviewPotentialStartDate || appDoc?.potentialStartDate || appDoc?.startDate || '';
+        const inductionLength = booking.inductionLength || details.inductionLength || appDoc?.interviewInductionLength || appDoc?.inductionLength || '';
+        const inductionLocation = booking.inductionLocation || details.inductionLocation || appDoc?.interviewInductionLocation || appDoc?.inductionLocation || '';
+        const cvUrl = booking.cvUrl || appDoc?.cv?.url || '';
+        const cvFilename = booking.cvFilename || appDoc?.cv?.filename || 'CV';
+        const phone = booking.applicantPhone || appDoc?.personalDetails?.phone || appDoc?.phone || '';
+        const position = booking.applicantPosition || appDoc?.position || 'Applicant';
+        const postcode = booking.applicantPostcode || appDoc?.personalDetails?.postcode || appDoc?.postcode || '';
+
+        return {
+            contract,
+            energySupplier,
+            potentialStartDate,
+            inductionLength,
+            inductionLocation,
+            cvUrl,
+            cvFilename,
+            phone,
+            position,
+            postcode,
+            appDoc
+        };
+    }
+
     // Load active interviews
     const today = new Date().toISOString().split('T')[0];
     const q = query(collection(db, "NGU Interview Times"), where("date", ">=", today));
 
     onSnapshot(q, (snapshot) => {
-        scheduleGrid.innerHTML = '';
-        
         const bookings = [];
         snapshot.forEach(doc => {
             bookings.push({ id: doc.id, ...doc.data() });
         });
 
+        latestBookings = bookings;
         processAutomatedReminders(bookings);
+        renderScheduleGrid(bookings);
+    });
+
+    function renderScheduleGrid(bookings) {
+        scheduleGrid.innerHTML = '';
 
         // Filter out completed interviews so they vanish from the active board
         const activeBookings = bookings.filter(b => !b.interviewCompleted);
@@ -702,41 +818,79 @@
             const displayDate = new Date(booking.date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
             let actionHtml = '';
             let cardClass = 'interview-card';
+            let tileBadgesHtml = '';
+            let cardClickAttr = '';
+            let cardHintHtml = '';
 
             if (booking.status === 'Available') {
                 cardClass += ' available-slot';
                 actionHtml = `
                     <div class="claimed-badge" style="background:var(--bg-input); color:var(--text-light); margin-bottom: 5px; border:1px solid var(--border);">🗓 Open Availability Slot</div>
-                    <button class="btn btn-claim" style="background:var(--error); margin-top:5px;" onclick="deleteSlot('${booking.id}')">Remove Slot</button>
+                    <button class="btn btn-claim" style="background:var(--error); margin-top:5px;" onclick="event.stopPropagation(); deleteSlot('${booking.id}')">Remove Slot</button>
                 `;
-            } else if (booking.interviewer) {
-                cardClass += ' claimed';
-                if (!booking.meetingLink || booking.meetingLink === 'A link will be provided shortly') {
-                    actionHtml = `
-                        <div class="claimed-badge" style="margin-bottom: 5px; color:var(--error); background:rgba(240,96,90,0.18); border:1px solid rgba(240,96,90,0.45);">⚠ Teams Link Required</div>
-                        <button class="btn btn-primary" style="margin-top:5px;" onclick="addTeamsLink('${booking.id}')">Add Teams Link</button>
-                    `;
-                } else {
-                    actionHtml = `
-                        <div class="claimed-badge" style="margin-bottom: 5px;">👤 Claimed by ${booking.interviewer}</div>
-                        <button class="btn btn-primary" style="margin-top:5px;" onclick="openInterviewModal('${booking.id}', '${booking.applicantName}', '${booking.date}', '${booking.time}', '${booking.interviewer}')">▶ Begin Interview</button>
-                    `;
-                }
             } else {
-                actionHtml = `<button class="btn btn-claim" onclick="claimInterview('${booking.id}')">Assign to Me</button>`;
+                cardClickAttr = `onclick="openCandidateDetailsModal('${booking.id}')"`;
+                cardHintHtml = `<div class="card-click-hint">👆 Click tile for Candidate CV, Contract & Induction details</div>`;
+
+                const details = resolveInterviewDetails(booking);
+
+                // Build Badges
+                let badges = [];
+                if (details.contract) {
+                    badges.push(`<span class="tile-badge badge-contract">📋 Contract: ${details.contract}</span>`);
+                }
+                if (details.energySupplier) {
+                    badges.push(`<span class="tile-badge badge-supplier">⚡ ${details.energySupplier}</span>`);
+                }
+                if (details.potentialStartDate) {
+                    const sDateFormatted = new Date(details.potentialStartDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                    badges.push(`<span class="tile-badge badge-start">📅 Start: ${sDateFormatted}</span>`);
+                }
+                if (details.inductionLength) {
+                    badges.push(`<span class="tile-badge badge-induction">⏱ Induction: ${details.inductionLength}</span>`);
+                }
+                if (details.cvUrl) {
+                    badges.push(`<span class="tile-badge badge-cv">📄 CV Attached</span>`);
+                }
+                if (badges.length > 0) {
+                    tileBadgesHtml = `<div class="tile-badges">${badges.join('')}</div>`;
+                }
+
+                if (booking.interviewer) {
+                    cardClass += ' claimed';
+                    if (!booking.meetingLink || booking.meetingLink === 'A link will be provided shortly') {
+                        actionHtml = `
+                            <div class="claimed-badge" style="margin-bottom: 5px; color:var(--error); background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);">⚠ Teams Link Required</div>
+                            <button class="btn btn-primary" style="margin-top:5px;" onclick="event.stopPropagation(); addTeamsLink('${booking.id}')">Add Teams Link</button>
+                        `;
+                    } else {
+                        actionHtml = `
+                            <div class="claimed-badge" style="margin-bottom: 5px;">👤 Claimed by ${booking.interviewer}</div>
+                            <button class="btn btn-primary" style="margin-top:5px;" onclick="event.stopPropagation(); openInterviewModal('${booking.id}', '${booking.applicantName}', '${booking.date}', '${booking.time}', '${booking.interviewer}')">▶ Begin Interview</button>
+                        `;
+                    }
+                } else {
+                    actionHtml = `<button class="btn btn-claim" onclick="event.stopPropagation(); claimInterview('${booking.id}')">Assign to Me</button>`;
+                }
             }
 
             const card = document.createElement('div');
             card.className = cardClass;
+            if (cardClickAttr) {
+                card.setAttribute('onclick', `openCandidateDetailsModal('${booking.id}')`);
+            }
+
             card.innerHTML = `
-    <div class="card-info">
-        <div class="card-date">🗓 ${displayDate} @ ${booking.time}</div>
-        <div class="card-name">
-            ${booking.status === 'Available' ? '<span style="color:var(--text-muted); font-style:italic;">Unbooked Slot</span>' : booking.applicantName}
-            ${booking.applicantPostcode && booking.status !== 'Available' ? `<span style="font-size:0.75rem; color:var(--text-light); background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:4px; font-family:'DM Mono', monospace; letter-spacing:0.05em; margin-left:8px;">${booking.applicantPostcode}</span>` : ''}
-        </div>
-    </div>
-    <div class="card-action">${actionHtml}</div>`;
+                <div class="card-info">
+                    <div class="card-date">🗓 ${displayDate} @ ${booking.time}</div>
+                    <div class="card-name">
+                        ${booking.status === 'Available' ? '<span style="color:var(--text-muted); font-style:italic;">Unbooked Slot</span>' : (booking.applicantName || 'Applicant')}
+                        ${booking.applicantPostcode && booking.status !== 'Available' ? `<span style="font-size:0.75rem; color:var(--text-light); background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:4px; font-family:'DM Mono', monospace; letter-spacing:0.05em; margin-left:8px;">${booking.applicantPostcode}</span>` : ''}
+                    </div>
+                    ${tileBadgesHtml}
+                    ${cardHintHtml}
+                </div>
+                <div class="card-action">${actionHtml}</div>`;
             container.appendChild(card);
         };
 
@@ -769,7 +923,7 @@
             details.appendChild(slotsContainer);
             scheduleGrid.appendChild(details);
         }
-    });
+    }
 
     async function processAutomatedReminders(bookings) {
         const now = new Date();
@@ -839,16 +993,16 @@
                         
                         // Transaction succeeded
                         const displayDate = new Date(b.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APP_REMINDER, {
+                        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_APP_REMINDER, { 
                             to_email: b.applicantEmail, 
-                            first_name: b.applicantName ? b.applicantName.split(' ')[0] : 'Applicant',
+                            first_name: b.applicantName ? b.applicantName.split(' ')[0] : 'Applicant', 
                             job_title: b.position || 'your selected role', 
                             interview_date: displayDate, 
                             interview_time: b.time, 
-                            interviewer_name: b.interviewer || 'a member of our team',
+                            interviewer_name: b.interviewer || 'a member of our team', 
                             location_method: 'Microsoft Teams', 
                             meeting_link: b.meetingLink || 'A link will be provided shortly', 
-                            contact_email: 'recruitment@next-gen.uk'
+                            contact_email: 'recruitment@next-gen.uk' 
                         });
                     } catch (e) {
                         if (e !== "Already sent by another client") console.error("App Reminder Transaction Failed:", e);
@@ -897,14 +1051,133 @@
         }
     };
 
-    // --- INTERVIEW MODAL LOGIC ---
+    // --- CANDIDATE & PLACEMENT DETAILS MODAL CONTROLS ---
+    window.openCandidateDetailsModal = function(docId) {
+        const booking = latestBookings.find(b => b.id === docId);
+        if (!booking || booking.status === 'Available') return;
+
+        const info = resolveInterviewDetails(booking);
+        const displayDate = new Date(booking.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const startFormatted = info.potentialStartDate 
+            ? new Date(info.potentialStartDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) 
+            : 'Not specified';
+
+        let cvButtonHtml = info.cvUrl 
+            ? `<a href="${info.cvUrl}" target="_blank" class="btn" style="background: rgba(0, 163, 224, 0.15); border: 1px solid var(--accent); color: var(--accent); display: inline-flex; align-items: center; gap: 8px; text-decoration: none; padding: 10px 18px; border-radius: 8px; font-weight: 700; transition: all 0.2s;">📄 View / Download Candidate CV (${info.cvFilename || 'CV'}) ↗</a>`
+            : `<div style="background: var(--bg-input); padding: 12px; border-radius: 8px; color: var(--text-muted); font-size: 0.9rem; border: 1px solid var(--border);">No CV document uploaded for this candidate</div>`;
+
+        const bodyHtml = `
+            <div class="details-section-box">
+                <div class="details-section-title">👤 Candidate Information</div>
+                <div class="details-grid">
+                    <div class="details-item"><strong>Full Name</strong><span>${booking.applicantName || 'Applicant'}</span></div>
+                    <div class="details-item"><strong>Position</strong><span style="color:var(--accent); font-weight:700;">${info.position}</span></div>
+                    <div class="details-item"><strong>Email Address</strong><span><a href="mailto:${booking.applicantEmail}" style="color:var(--accent); text-decoration:none;">${booking.applicantEmail || 'Not provided'}</a></span></div>
+                    <div class="details-item"><strong>Phone Number</strong><span>${info.phone ? `<a href="tel:${info.phone}" style="color:var(--text-light); text-decoration:none;">${info.phone}</a>` : 'Not provided'}</span></div>
+                    <div class="details-item"><strong>Postcode</strong><span>${info.postcode || 'Not provided'}</span></div>
+                    <div class="details-item"><strong>Interview Slot</strong><span style="color:#6ee7b7;">🗓 ${displayDate} @ ${booking.time}</span></div>
+                    <div class="details-item"><strong>Interviewer Status</strong><span>${booking.interviewer ? `👤 Claimed by ${booking.interviewer}` : '<span style="color:var(--warning);">⏱ Unclaimed Slot</span>'}</span></div>
+                </div>
+            </div>
+
+            <div class="details-section-box" style="border-color: rgba(0, 163, 224, 0.4); background: rgba(0, 163, 224, 0.04);">
+                <div class="details-section-title">📋 Placement & Induction Specifications</div>
+                <div class="details-grid">
+                    <div class="details-item">
+                        <strong>Contract Lined Up For</strong>
+                        <span style="color:var(--accent); font-size:1.05rem; font-weight:700;">${info.contract ? info.contract : '<span style="color:var(--text-muted)">Not assigned</span>'}</span>
+                    </div>
+                    <div class="details-item">
+                        <strong>Energy Supplier Represented</strong>
+                        <span style="color:#6ee7b7; font-size:1.05rem; font-weight:700;">${info.energySupplier ? info.energySupplier : '<span style="color:var(--text-muted)">Not assigned</span>'}</span>
+                    </div>
+                    <div class="details-item">
+                        <strong>Potential Start Date</strong>
+                        <span style="color:#fcd34d; font-weight:700;">${info.potentialStartDate ? `🗓 ${startFormatted}` : '<span style="color:var(--text-muted)">Not set</span>'}</span>
+                    </div>
+                    <div class="details-item">
+                        <strong>Induction Length</strong>
+                        <span>${info.inductionLength || '<span style="color:var(--text-muted)">Not specified</span>'}</span>
+                    </div>
+                    <div class="details-item" style="grid-column: 1 / -1;">
+                        <strong>Location(s) of Induction</strong>
+                        <span>${info.inductionLocation || '<span style="color:var(--text-muted)">Not specified</span>'}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-section-box">
+                <div class="details-section-title">📄 Candidate Curriculum Vitae (CV)</div>
+                <div style="margin-top: 8px;">
+                    ${cvButtonHtml}
+                </div>
+            </div>
+        `;
+
+        document.getElementById('candidateDetailsBody').innerHTML = bodyHtml;
+
+        let actionsHtml = '';
+        if (!booking.interviewer) {
+            actionsHtml = `
+                <button class="btn btn-secondary" onclick="closeCandidateDetailsModal()">Close</button>
+                <button class="btn btn-primary" onclick="closeCandidateDetailsModal(); claimInterview('${booking.id}');">Assign to Me</button>
+            `;
+        } else if (!booking.meetingLink || booking.meetingLink === 'A link will be provided shortly') {
+            actionsHtml = `
+                <button class="btn btn-secondary" onclick="closeCandidateDetailsModal()">Close</button>
+                <button class="btn btn-primary" onclick="closeCandidateDetailsModal(); addTeamsLink('${booking.id}');">Add Teams Link</button>
+            `;
+        } else {
+            actionsHtml = `
+                <button class="btn btn-secondary" onclick="closeCandidateDetailsModal()">Close</button>
+                <button class="btn btn-primary" onclick="closeCandidateDetailsModal(); openInterviewModal('${booking.id}', '${booking.applicantName}', '${booking.date}', '${booking.time}', '${booking.interviewer}');">▶ Begin Interview</button>
+            `;
+        }
+        document.getElementById('candidateDetailsActions').innerHTML = actionsHtml;
+
+        document.getElementById('candidateDetailsModal').classList.add('active');
+    };
+
+    window.closeCandidateDetailsModal = function() {
+        document.getElementById('candidateDetailsModal').classList.remove('active');
+    };
+
     window.openInterviewModal = function(id, name, date, time, interviewer) {
         document.getElementById('activeDocId').value = id;
         document.getElementById('hdrName').textContent = name;
         document.getElementById('hdrDateTime').textContent = `${date} @ ${time}`;
         document.getElementById('hdrInterviewer').textContent = interviewer;
-        document.getElementById('hdrPosition').textContent = 'Select Pack Below';
-        document.getElementById('hdrPosition').style.color = 'var(--error)';
+
+        const booking = latestBookings.find(b => b.id === id);
+        const info = booking ? resolveInterviewDetails(booking) : null;
+
+        document.getElementById('hdrPosition').textContent = info?.position || 'Select Pack Below';
+        document.getElementById('hdrPosition').style.color = 'var(--accent)';
+
+        const hdrContractEl = document.getElementById('hdrContract');
+        if (hdrContractEl) hdrContractEl.textContent = info?.contract || 'Not assigned';
+
+        const hdrSupplierEl = document.getElementById('hdrSupplier');
+        if (hdrSupplierEl) hdrSupplierEl.textContent = info?.energySupplier || 'Not assigned';
+
+        const hdrStartDateEl = document.getElementById('hdrStartDate');
+        if (hdrStartDateEl) {
+            hdrStartDateEl.textContent = info?.potentialStartDate ? new Date(info.potentialStartDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Not set';
+        }
+
+        const hdrInductionEl = document.getElementById('hdrInduction');
+        if (hdrInductionEl) {
+            hdrInductionEl.textContent = info?.inductionLength ? `${info.inductionLength}${info.inductionLocation ? ' (' + info.inductionLocation + ')' : ''}` : 'Not specified';
+        }
+
+        const hdrCvEl = document.getElementById('hdrCvContainer');
+        if (hdrCvEl) {
+            if (info?.cvUrl) {
+                hdrCvEl.innerHTML = `<a href="${info.cvUrl}" target="_blank" class="btn-link" style="background:rgba(0,163,224,0.15); border-color:var(--accent); color:var(--accent); padding:6px 12px; font-size:0.82rem; font-weight:700;">📄 View Candidate CV (${info.cvFilename || 'CV'}) ↗</a>`;
+            } else {
+                hdrCvEl.innerHTML = `<span style="font-size:0.8rem; color:var(--text-muted);">No CV uploaded</span>`;
+            }
+        }
         
         document.getElementById('interviewTypeSelector').value = "";
         document.getElementById('engineerPack').classList.remove('active');
