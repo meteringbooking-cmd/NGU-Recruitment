@@ -269,6 +269,14 @@
                 </div>
 
                 <div class="modal-form-group">
+                    <label>Is On Call Required? <span style="color:var(--accent);">*</span></label>
+                    <select id="nameCheckOnCallRequired" class="modal-select">
+                        <option value="No" selected>No</option>
+                        <option value="Yes">Yes</option>
+                    </select>
+                </div>
+
+                <div class="modal-form-group">
                     <label>Induction Length</label>
                     <input type="text" id="nameCheckInductionLength" class="modal-input" list="inductionLengthSuggestions" placeholder="e.g. 2 Weeks, 1 Week, 3 Days">
                     <datalist id="inductionLengthSuggestions">
@@ -331,6 +339,14 @@
             <div class="modal-form-group">
                 <label>Potential Start Date</label>
                 <input type="date" id="editPlacementPotentialStartDate" class="modal-input">
+            </div>
+
+            <div class="modal-form-group">
+                <label>Is On Call Required?</label>
+                <select id="editPlacementOnCallRequired" class="modal-select">
+                    <option value="No">No</option>
+                    <option value="Yes">Yes</option>
+                </select>
             </div>
 
             <div class="modal-form-group">
@@ -965,12 +981,14 @@
         }
         const defaultSupplier = appData.interviewDetails?.energySupplier || appData.interviewEnergySupplier || appData.energySupplier || '';
         const defaultStartDate = appData.interviewDetails?.potentialStartDate || appData.interviewPotentialStartDate || appData.potentialStartDate || appData.startDate || '';
+        const defaultOnCall = appData.interviewDetails?.onCallRequired || appData.interviewOnCallRequired || appData.onCallRequired || 'No';
         const defaultInductionLength = appData.interviewDetails?.inductionLength || appData.interviewInductionLength || appData.inductionLength || '';
         const defaultInductionLoc = appData.interviewDetails?.inductionLocation || appData.interviewInductionLocation || appData.inductionLocation || '';
 
         document.getElementById('nameCheckContract').value = defaultContract;
         document.getElementById('nameCheckEnergySupplier').value = defaultSupplier;
         document.getElementById('nameCheckPotentialStartDate').value = defaultStartDate;
+        document.getElementById('nameCheckOnCallRequired').value = defaultOnCall;
         document.getElementById('nameCheckInductionLength').value = defaultInductionLength;
         document.getElementById('nameCheckInductionLocation').value = defaultInductionLoc;
 
@@ -989,6 +1007,7 @@
         document.getElementById('editPlacementContract').value = appData.interviewDetails?.contract || appData.interviewContract || appData.contract || '';
         document.getElementById('editPlacementEnergySupplier').value = appData.interviewDetails?.energySupplier || appData.interviewEnergySupplier || appData.energySupplier || '';
         document.getElementById('editPlacementPotentialStartDate').value = appData.interviewDetails?.potentialStartDate || appData.interviewPotentialStartDate || appData.potentialStartDate || appData.startDate || '';
+        document.getElementById('editPlacementOnCallRequired').value = appData.interviewDetails?.onCallRequired || appData.interviewOnCallRequired || appData.onCallRequired || 'No';
         document.getElementById('editPlacementInductionLength').value = appData.interviewDetails?.inductionLength || appData.interviewInductionLength || appData.inductionLength || '';
         document.getElementById('editPlacementInductionLocation').value = appData.interviewDetails?.inductionLocation || appData.interviewInductionLocation || appData.inductionLocation || '';
 
@@ -1007,6 +1026,7 @@
         const contractVal = document.getElementById('editPlacementContract').value.trim();
         const energySupplierVal = document.getElementById('editPlacementEnergySupplier').value.trim();
         const potentialStartDateVal = document.getElementById('editPlacementPotentialStartDate').value;
+        const onCallRequiredVal = document.getElementById('editPlacementOnCallRequired').value;
         const inductionLengthVal = document.getElementById('editPlacementInductionLength').value.trim();
         const inductionLocationVal = document.getElementById('editPlacementInductionLocation').value.trim();
 
@@ -1021,17 +1041,20 @@
                 contract: contractVal,
                 energySupplier: energySupplierVal,
                 potentialStartDate: potentialStartDateVal,
+                onCallRequired: onCallRequiredVal,
                 inductionLength: inductionLengthVal,
                 inductionLocation: inductionLocationVal,
                 interviewContract: contractVal,
                 interviewEnergySupplier: energySupplierVal,
                 interviewPotentialStartDate: potentialStartDateVal,
+                interviewOnCallRequired: onCallRequiredVal,
                 interviewInductionLength: inductionLengthVal,
                 interviewInductionLocation: inductionLocationVal,
                 interviewDetails: {
                     contract: contractVal,
                     energySupplier: energySupplierVal,
                     potentialStartDate: potentialStartDateVal,
+                    onCallRequired: onCallRequiredVal,
                     inductionLength: inductionLengthVal,
                     inductionLocation: inductionLocationVal,
                     updatedBy: adminName,
@@ -1050,6 +1073,7 @@
                         contract: contractVal,
                         energySupplier: energySupplierVal,
                         potentialStartDate: potentialStartDateVal,
+                        onCallRequired: onCallRequiredVal,
                         inductionLength: inductionLengthVal,
                         inductionLocation: inductionLocationVal,
                         cvUrl: appData.cv?.url || '',
@@ -1147,6 +1171,7 @@
         const contractVal = document.getElementById('nameCheckContract').value.trim();
         const energySupplierVal = document.getElementById('nameCheckEnergySupplier').value.trim();
         const potentialStartDateVal = document.getElementById('nameCheckPotentialStartDate').value;
+        const onCallRequiredVal = document.getElementById('nameCheckOnCallRequired').value;
         const inductionLengthVal = document.getElementById('nameCheckInductionLength').value.trim();
         const inductionLocationVal = document.getElementById('nameCheckInductionLocation').value.trim();
 
@@ -1181,17 +1206,20 @@
                 contract: contractVal,
                 energySupplier: energySupplierVal,
                 potentialStartDate: potentialStartDateVal,
+                onCallRequired: onCallRequiredVal,
                 inductionLength: inductionLengthVal,
                 inductionLocation: inductionLocationVal,
                 interviewContract: contractVal,
                 interviewEnergySupplier: energySupplierVal,
                 interviewPotentialStartDate: potentialStartDateVal,
+                interviewOnCallRequired: onCallRequiredVal,
                 interviewInductionLength: inductionLengthVal,
                 interviewInductionLocation: inductionLocationVal,
                 interviewDetails: {
                     contract: contractVal,
                     energySupplier: energySupplierVal,
                     potentialStartDate: potentialStartDateVal,
+                    onCallRequired: onCallRequiredVal,
                     inductionLength: inductionLengthVal,
                     inductionLocation: inductionLocationVal,
                     setBy: adminName,
@@ -1219,6 +1247,7 @@
                         contract: contractVal,
                         energySupplier: energySupplierVal,
                         potentialStartDate: potentialStartDateVal,
+                        onCallRequired: onCallRequiredVal,
                         inductionLength: inductionLengthVal,
                         inductionLocation: inductionLocationVal,
                         cvUrl: appData.cv?.url || '',
@@ -2056,6 +2085,7 @@
         const pSupplier = placementDetails.energySupplier || app.interviewEnergySupplier || app.energySupplier || '';
         const pStartDate = placementDetails.potentialStartDate || app.interviewPotentialStartDate || app.potentialStartDate || app.startDate || '';
         const pStartDateFormatted = pStartDate ? new Date(pStartDate).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '';
+        const pOnCall = placementDetails.onCallRequired || app.interviewOnCallRequired || app.onCallRequired || 'No';
         const pInductionLen = placementDetails.inductionLength || app.interviewInductionLength || app.inductionLength || '';
         const pInductionLoc = placementDetails.inductionLocation || app.interviewInductionLocation || app.inductionLocation || '';
 
@@ -2080,10 +2110,14 @@
                         <div class="data-value" style="font-weight:600;">${pStartDateFormatted ? `🗓 ${pStartDateFormatted}` : '<span style="color:var(--text-muted)">Not set</span>'}</div>
                     </div>
                     <div class="data-group">
+                        <div class="data-label">Is On Call Required?</div>
+                        <div class="data-value" style="font-weight:700; color:${pOnCall === 'Yes' ? 'var(--warning)' : 'var(--text-light)'};">${pOnCall === 'Yes' ? '⚡ Yes' : 'No'}</div>
+                    </div>
+                    <div class="data-group">
                         <div class="data-label">Induction Length</div>
                         <div class="data-value">${safeVal(pInductionLen, 'Not specified')}</div>
                     </div>
-                    <div class="data-group" style="grid-column: 1 / -1;">
+                    <div class="data-group">
                         <div class="data-label">Location(s) of Induction</div>
                         <div class="data-value">${safeVal(pInductionLoc, 'Not specified')}</div>
                     </div>
