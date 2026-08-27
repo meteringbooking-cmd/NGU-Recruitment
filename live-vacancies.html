@@ -4,24 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Vacancies Board - NGU Portal</title>
-    
-    <script>
-        (function() {
-            const username = localStorage.getItem('ngu_portal_username');
-            const hasAccess = localStorage.getItem('ngu_portal_access_management'); 
 
-            if (!username) {
-                window.location.href = 'login.html';
-                return;
-            }
-            if (hasAccess !== 'true') {
-                alert("Access Denied: You do not have permission to view the Live Vacancies board.");
-                window.location.href = 'homepage.html';
-                return;
-            }
-        })();
-    </script>
-    
     <style>
         :root {
             --body-bg: #141d26;
@@ -834,7 +817,7 @@
         if (!confirm("Are you sure you want to close this vacancy? This will archive the role and remove it from the live board.")) return;
         try {
             await db.collection(collectionName).doc(reqId).update({
-                workflowClosed: true, vacancyClosedAt: new Date().toISOString(), vacancyClosedBy: localStorage.getItem('ngu_portal_username') || 'Unknown User'
+                workflowClosed: true, vacancyClosedAt: new Date().toISOString(), vacancyClosedBy: 'Unknown User'
             });
         } catch (error) { alert("Failed to close vacancy. Please check your connection and try again."); }
     }
