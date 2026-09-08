@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referral Payments - NGU Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060e1e; --card: #0d1a30; --card2: #111f38;
+            --accent: #00A3E0; --border: rgba(0,163,224,0.15);
+            --light: #f8fafc; --muted: #6b80a0;
+            --success: #10b981; --warning: #f59e0b; --error: #ef4444; --purple: #8b5cf6;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Work Sans',sans-serif; background:var(--bg); color:var(--light); min-height:100vh; }
+
+        /* TOP BAR */
+        .topbar { display:flex; align-items:center; justify-content:space-between; padding:1rem 2.5rem;
+                  background:rgba(0,0,0,0.3); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10; backdrop-filter:blur(12px); }
+        .topbar img { height:36px; }
+        .topbar-title { font-size:1.05rem; font-weight:700; color:var(--accent); }
+        .topbar-nav { display:flex; gap:1rem; }
+        .topbar-nav a { color:var(--muted); text-decoration:none; font-size:0.85rem; font-weight:600;
+                        padding:6px 14px; border-radius:8px; border:1px solid transparent; transition:all .2s; }
+        .topbar-nav a:hover { color:var(--light); border-color:var(--border); }
+
+        .main { max-width:1100px; margin:0 auto; padding:2rem 1.5rem; }
+
+        /* SUMMARY CARDS */
+        .summary { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:2rem; }
+        .scard { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:1.2rem 1.4rem; position:relative; overflow:hidden; }
+        .scard::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--c,var(--accent)); }
+        .scard-label { font-size:.72rem; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.07em; margin-bottom:.4rem; }
+        .scard-val { font-size:2rem; font-weight:900; color:var(--c,var(--light)); }
+
+        /* TABLE */
+        .table-wrap { background:var(--card); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+        .table-header { display:flex; align-items:center; justify-content:space-between; padding:1.2rem 1.5rem; border-bottom:1px solid var(--border); }
+        .table-title { font-size:.85rem; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:.06em; }
+        .filter-wrap { display:flex; gap:.7rem; }
+        .filter-wrap select, .filter-wrap input {
+            background:var(--card2); border:1px solid var(--border); color:var(--light);
+            padding:.45rem .9rem; border-radius:8px; font-size:.82rem; font-family:inherit; outline:none;
+        }
+
+        table { width:100%; border-collapse:collapse; }
+        thead th { padding:.9rem 1.2rem; text-align:left; font-size:.72rem; font-weight:700; color:var(--muted);
+                   text-transform:uppercase; letter-spacing:.06em; border-bottom:1px solid var(--border); white-space:nowrap; }
+        tbody tr { border-bottom:1px solid rgba(255,255,255,.04); transition:background .15s; }
+        tbody tr:last-child { border-bottom:none; }
+        tbody tr:hover { background:rgba(255,255,255,.03); }
+        td { padding:.95rem 1.2rem; font-size:.88rem; vertical-align:middle; }
+
+        .name-cell { font-weight:700; color:var(--light); }
+        .sub-cell { font-size:.75rem; color:var(--muted); margin-top:2px; }
+
+        .payment-pill { display:inline-flex; flex-direction:column; gap:4px; }
+        .ppill { display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:99px;
+                 font-size:.75rem; font-weight:700; white-space:nowrap; }
+        .ppill-1 { background:rgba(139,92,246,0.15); border:1px solid rgba(139,92,246,0.4); color:#c4b5fd; }
+        .ppill-2 { background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.4); color:#6ee7b7; }
+        .ppill-paid { background:rgba(16,185,129,0.2); border:1px solid rgba(16,185,129,0.5); color:#34d399; }
+        .ppill-overdue { background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#fca5a5; }
+
+        .no-start { font-size:.8rem; color:var(--muted); font-style:italic; }
+
+        .btn-paid { background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.35); color:#6ee7b7;
+                    padding:3px 9px; border-radius:6px; font-size:.72rem; font-weight:700; cursor:pointer;
+                    font-family:inherit; transition:all .2s; }
+        .btn-paid:hover { background:rgba(16,185,129,0.25); }
+        .btn-paid.marked { background:rgba(16,185,129,0.3); color:#fff; cursor:default; }
+
+        .btn-remove { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5;
+                      padding:5px 12px; border-radius:8px; font-size:.78rem; font-weight:700; cursor:pointer;
+                      font-family:inherit; transition:all .2s; }
+        .btn-remove:hover { background:rgba(239,68,68,0.22); }
+
+        .empty { text-align:center; padding:3rem; color:var(--muted); font-size:.95rem; }
+
+        /* MODAL */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:100;
+                         align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+        .modal-overlay.active { display:flex; }
+        .modal { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:2rem;
+                 width:100%; max-width:420px; }
+        .modal h3 { font-size:1.1rem; margin-bottom:.7rem; color:var(--error); }
+        .modal p { font-size:.88rem; color:var(--muted); margin-bottom:1.5rem; line-height:1.5; }
+        .modal-btns { display:flex; gap:.8rem; justify-content:flex-end; }
+        .btn-cancel { background:transparent; border:1px solid var(--border); color:var(--muted); padding:.6rem 1.2rem;
+                      border-radius:8px; font-size:.88rem; font-weight:600; cursor:pointer; font-family:inherit; }
+        .btn-confirm-remove { background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:var(--error);
+                              padding:.6rem 1.2rem; border-radius:8px; font-size:.88rem; font-weight:700; cursor:pointer; font-family:inherit; }
+        .btn-confirm-remove:hover { background:rgba(239,68,68,0.28); }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU">
+    <div class="topbar-title">Referral Payments</div>
+    <nav class="topbar-nav">
+        <a href="referral-submissions.html">&larr; Referral Submissions</a>
+        <a href="view-applications.html">Applications</a>
+    </nav>
+</div>
+
+<div class="main">
+
+    <!-- SUMMARY -->
+    <div class="summary">
+        <div class="scard" style="--c:var(--accent)">
+            <div class="scard-label">Total Referrals</div>
+            <div class="scard-val" id="sTotal">—</div>
+        </div>
+        <div class="scard" style="--c:var(--warning)">
+            <div class="scard-label">Awaiting Start Date</div>
+            <div class="scard-val" id="sNoStart">—</div>
+        </div>
+        <div class="scard" style="--c:var(--purple)">
+            <div class="scard-label">1st Payment Due</div>
+            <div class="scard-val" id="s1st">—</div>
+        </div>
+        <div class="scard" style="--c:var(--success)">
+            <div class="scard-label">2nd Payment Due</div>
+            <div class="scard-val" id="s2nd">—</div>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+        <div class="table-header">
+            <div class="table-title">Referral Payment Schedule</div>
+            <div class="filter-wrap">
+                <input type="text" id="searchInput" placeholder="Search name or referrer...">
+                <select id="filterStatus">
+                    <option value="all">All</option>
+                    <option value="pending">Payments Pending</option>
+                    <option value="nostart">No Start Date</option>
+                </select>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Referred Candidate</th>
+                    <th>Referred By</th>
+                    <th>Start Date</th>
+                    <th>1st Payment — £500</th>
+                    <th>2nd Payment — £500</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr><td colspan="6" class="empty">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- REMOVE MODAL -->
+<div class="modal-overlay" id="removeModal">
+    <div class="modal">
+        <h3>Remove from Payment Schedule</h3>
+        <p id="removeModalText">Are you sure? This will mark the referral as removed from payments (e.g. they left early). This cannot be undone.</p>
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeRemoveModal()">Cancel</button>
+            <button class="btn-confirm-remove" onclick="confirmRemove()">Remove</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getFirestore, collection, getDocs, doc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCMmUOdW2uEIGVd6XQfWXKF8eaFmwEog1g",
+    authDomain: "oesperformance-a54c0.firebaseapp.com",
+    projectId: "oesperformance-a54c0",
+    storageBucket: "oesperformance-a54c0.firebasestorage.app",
+    messagingSenderId: "484894102454",
+    appId: "1:484894102454:web:17535ee497eac2d90d6717"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+let referrals  = [];   // from NGU Referral submissions
+let applicants = [];   // from NGUO New Applicants
+let pendingRemoveId = null;
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function addMonths(date, n) {
+    const d = new Date(date);
+    d.setMonth(d.getMonth() + n);
+    return d;
+}
+
+function fmtMonthYear(date) {
+    return `${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+function fmtDateGB(dateStr) {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d)) return null;
+    return d.toLocaleDateString('en-GB', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+
+function getStartDate(referralEmail) {
+    const em = (referralEmail || '').toLowerCase().trim();
+    const match = applicants.find(a => (a.personalDetails?.email || '').toLowerCase().trim() === em);
+    return match?.startDate || null;
+}
+
+function isOverdue(targetDate) {
+    return new Date() > targetDate;
+}
+
+function render() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const filter = document.getElementById('filterStatus').value;
+
+    // Only show accepted referrals that haven't been removed
+    const active = referrals.filter(r => r.status === 'Accepted' && !r.paymentRemoved);
+
+    let noStart = 0, due1st = 0, due2nd = 0;
+
+    const filtered = active.filter(r => {
+        if (search && !(r.referralName||'').toLowerCase().includes(search) && !(r.referrerName||'').toLowerCase().includes(search)) return false;
+        const sd = getStartDate(r.referralEmail);
+        if (filter === 'nostart' && sd) return false;
+        if (filter === 'pending' && !sd) return false;
+        return true;
+    });
+
+    // Counts (on all active, not filtered)
+    active.forEach(r => {
+        const sd = getStartDate(r.referralEmail);
+        if (!sd) { noStart++; return; }
+        const d = new Date(sd);
+        const p1 = addMonths(d, 3);
+        const p2 = addMonths(d, 6);
+        if (!r.payment1Paid && isOverdue(p1)) due1st++;
+        if (!r.payment2Paid && isOverdue(p2)) due2nd++;
+    });
+
+    document.getElementById('sTotal').textContent  = active.length;
+    document.getElementById('sNoStart').textContent = noStart;
+    document.getElementById('s1st').textContent     = due1st;
+    document.getElementById('s2nd').textContent     = due2nd;
+
+    const tbody = document.getElementById('tableBody');
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty">No referrals found.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(r => {
+        const sd = getStartDate(r.referralEmail);
+        let p1Html = '', p2Html = '', startHtml = '';
+
+        if (!sd) {
+            startHtml = `<span class="no-start">Not yet started</span>`;
+            p1Html = `<span class="no-start">—</span>`;
+            p2Html = `<span class="no-start">—</span>`;
+        } else {
+            const d  = new Date(sd);
+            const p1 = addMonths(d, 3);
+            const p2 = addMonths(d, 6);
+            startHtml = fmtDateGB(sd);
+
+            const p1Due    = fmtMonthYear(p1);
+            const p2Due    = fmtMonthYear(p2);
+            const p1Over   = isOverdue(p1);
+            const p2Over   = isOverdue(p2);
+            const p1Paid   = r.payment1Paid === true;
+            const p2Paid   = r.payment2Paid === true;
+            const p1Class  = p1Paid ? 'ppill-paid' : (p1Over ? 'ppill-overdue' : 'ppill-1');
+            const p2Class  = p2Paid ? 'ppill-paid' : (p2Over ? 'ppill-overdue' : 'ppill-2');
+            const p1Label  = p1Paid ? '✓ Paid' : (p1Over ? '⚠ Overdue' : '⏳ Due');
+            const p2Label  = p2Paid ? '✓ Paid' : (p2Over ? '⚠ Overdue' : '⏳ Due');
+
+            p1Html = `<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span class="ppill ${p1Class}">${p1Label} · ${p1Due}</span>
+                ${!p1Paid ? `<button class="btn-paid" onclick="markPaid('${r.id}', 1)">Mark Paid</button>` : ''}
+            </div>`;
+            p2Html = `<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <span class="ppill ${p2Class}">${p2Label} · ${p2Due}</span>
+                ${!p2Paid ? `<button class="btn-paid" onclick="markPaid('${r.id}', 2)">Mark Paid</button>` : ''}
+            </div>`;
+        }
+
+        return `<tr>
+            <td>
+                <div class="name-cell">${r.referralName || '—'}</div>
+                <div class="sub-cell">${r.referralEmail || ''}</div>
+            </td>
+            <td>
+                <div class="name-cell">${r.referrerName || '—'}</div>
+            </td>
+            <td>${startHtml}</td>
+            <td>${p1Html}</td>
+            <td>${p2Html}</td>
+            <td>
+                <button class="btn-remove" onclick="openRemoveModal('${r.id}', '${(r.referralName||'').replace(/'/g,"\\'")}')">Remove</button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+// Mark a payment as paid
+window.markPaid = async function(id, paymentNum) {
+    const field = paymentNum === 1 ? 'payment1Paid' : 'payment2Paid';
+    try {
+        await updateDoc(doc(db, 'NGU Referral submissions', id), { [field]: true });
+    } catch(e) { alert('Error marking as paid: ' + e.message); }
+};
+
+// Remove modal
+window.openRemoveModal = function(id, name) {
+    pendingRemoveId = id;
+    document.getElementById('removeModalText').textContent =
+        `Are you sure you want to remove "${name}" from the payment schedule? This should only be used if they left before completing their service. This action cannot be undone.`;
+    document.getElementById('removeModal').classList.add('active');
+};
+window.closeRemoveModal = function() {
+    pendingRemoveId = null;
+    document.getElementById('removeModal').classList.remove('active');
+};
+window.confirmRemove = async function() {
+    if (!pendingRemoveId) return;
+    try {
+        await updateDoc(doc(db, 'NGU Referral submissions', pendingRemoveId), { paymentRemoved: true });
+        closeRemoveModal();
+    } catch(e) { alert('Error removing: ' + e.message); }
+};
+
+// Search / filter listeners
+document.getElementById('searchInput').addEventListener('input', render);
+document.getElementById('filterStatus').addEventListener('change', render);
+
+// Load data
+async function loadAll() {
+    const [refSnap, appSnap] = await Promise.all([
+        getDocs(collection(db, 'NGU Referral submissions')),
+        getDocs(collection(db, 'NGUO New Applicants'))
+    ]);
+    referrals  = refSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    applicants = appSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+}
+
+// Re-render live when referral docs change (catches markPaid / remove instantly)
+onSnapshot(collection(db, 'NGU Referral submissions'), snap => {
+    referrals = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    render();
+});
+
+loadAll();
+</script>
+</body>
+</html>
