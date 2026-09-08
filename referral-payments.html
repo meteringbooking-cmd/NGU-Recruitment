@@ -135,7 +135,7 @@
                 <input type="text" id="searchInput" placeholder="Search name or referrer...">
                 <select id="filterStatus">
                     <option value="all">All</option>
-                    <option value="pending">Payments Pending</option>
+                    <option value="pending" selected>Payments Pending</option>
                     <option value="nostart">No Start Date</option>
                 </select>
             </div>
@@ -247,7 +247,7 @@ function render() {
         if (!r.payment2Paid && isOverdue(p2)) due2nd++;
     });
 
-    document.getElementById('sTotal').textContent  = active.length;
+    document.getElementById('sTotal').textContent   = active.length;
     document.getElementById('sNoStart').textContent = noStart;
     document.getElementById('s1st').textContent     = due1st;
     document.getElementById('s2nd').textContent     = due2nd;
