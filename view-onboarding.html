@@ -47,6 +47,7 @@
         .app-header h1 { font-size: 2.2rem; margin-bottom: 0.5rem; }
         .app-header .role-badge { display: inline-block; background: rgba(0,163,224,0.15); color: var(--accent); padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem; }
         .agency-badge-large { display: inline-flex; align-items: center; gap: 5px; background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.45); color: #fcd34d; padding: 0.35rem 0.9rem; border-radius: 20px; font-weight: 700; font-size: 0.82rem; white-space: nowrap; vertical-align: middle; margin-left: 0.6rem; }
+        .referral-badge-large { display: inline-flex; align-items: center; gap: 5px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.4); color: #6ee7b7; padding: 0.35rem 0.9rem; border-radius: 20px; font-weight: 700; font-size: 0.82rem; white-space: nowrap; vertical-align: middle; margin-left: 0.6rem; }
         
         .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.8rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .section h3 { font-size: 1.2rem; color: var(--accent); margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 8px;}
@@ -188,8 +189,14 @@
     const storage = getStorage(app);
     
     let applicationsData = [];
+    let referralData = [];
     let searchQuery = '';
     let selectedAppId = null;
+
+    // Load referral submissions once so we can match by email
+    getDocs(collection(db, "NGU Referral submissions")).then(snap => {
+        referralData = snap.docs.map(d => d.data());
+    });
 
     document.getElementById('nameSearch').addEventListener('input', (e) => {
         searchQuery = e.target.value.trim().toLowerCase();
@@ -848,12 +855,19 @@
             ? `<span class="agency-badge-large">🏢 Recruitment Agency${_agencyName ? ': ' + _agencyName : ''}</span>`
             : '';
 
+        // Match applicant email against referral submissions
+        const appEmailLower = (app.personalDetails?.email || '').toLowerCase().trim();
+        const matchedReferral = referralData.find(r => (r.referralEmail || '').toLowerCase().trim() === appEmailLower);
+        const referralBadge = matchedReferral
+            ? `<span class="referral-badge-large">👥 Referred by ${matchedReferral.referrerName || 'Staff Member'}</span>`
+            : '';
+
         mainEl.innerHTML = `
             ${warningBanner}
             
             <div class="app-header">
                 <div>
-                    <h1>${computedFullName} ${agencyBadge}</h1>
+                    <h1>${computedFullName} ${agencyBadge} ${referralBadge}</h1>
                     <div class="role-badge">${app.position || 'Role TBC'}</div>
                 </div>
                 <div style="display: flex; gap: 2rem; text-align: right; justify-content: flex-end;">
