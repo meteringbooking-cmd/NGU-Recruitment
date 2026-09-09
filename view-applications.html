@@ -60,6 +60,21 @@
         .app-header .badge { display: inline-block; background: rgba(0,163,224,0.15); color: var(--accent); padding: 0.4rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem; }
         .match-badge-large { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); padding: 0.4rem 1rem; border-radius: 20px; font-weight: 700; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px; }
 
+        /* Clickable status bar */
+        .status-bar-select {
+            appearance: none; -webkit-appearance: none;
+            background: rgba(0,163,224,0.08); border: 1.5px solid rgba(0,163,224,0.35);
+            color: var(--accent); font-family: inherit; font-size: 0.82rem; font-weight: 700;
+            padding: 0.35rem 2rem 0.35rem 0.9rem; border-radius: 20px; cursor: pointer; outline: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2300A3E0' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 0.6rem center; transition: all .2s;
+        }
+        .status-bar-select:hover { background-color: rgba(0,163,224,0.15); border-color: var(--accent); }
+        .status-bar-select.invited  { background-color: rgba(139,92,246,0.1); border-color: rgba(139,92,246,0.5); color: #c4b5fd;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c4b5fd' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); }
+        .status-bar-select.awaitingcerts { background-color: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.5); color: #fcd34d;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23fcd34d' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); }
+
         .section { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.8rem; margin-bottom: 1.5rem; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .section h3 { font-size: 1.2rem; color: var(--accent); margin-bottom: 1.2rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
         
@@ -961,6 +976,18 @@
         }
     };
 
+    // --- HEADER STATUS BAR ---
+    window.saveHeaderStatus = async function(appId, selectEl) {
+        const val = selectEl.value;
+        try {
+            await updateDoc(doc(db, 'NGUO New Applicants', appId), { headerStatus: val || null });
+            // Update colour class immediately
+            selectEl.classList.remove('invited', 'awaitingcerts');
+            if (val === 'invited') selectEl.classList.add('invited');
+            if (val === 'awaitingcerts') selectEl.classList.add('awaitingcerts');
+        } catch(e) { alert('Error saving status: ' + e.message); }
+    };
+
     // --- NAME CHECK OUTCOME ACTIONS ---
     window.markNameChecksProceed = function(appId) {
         const appData = applicationsData.find(a => a.id === appId);
@@ -1643,6 +1670,10 @@
             
             if (app.reviews?.length >= 1) reviewStatus = `<span style="color:var(--success); font-weight:700;">✓ Reviewed</span>`;
 
+            if (app.reviews?.[0]?.decision === 'Hold') {
+                reviewStatus = `<span style="color:var(--warning); font-weight:700;">⏸ On Hold</span>`;
+            }
+
             if (matchedInterview) {
                 if (matchedInterview.interviewCompleted) {
                     const rec = matchedInterview.interviewData?.recommendation || 'Completed';
@@ -2151,7 +2182,15 @@
         }
 
         mainEl.innerHTML = `
-            <div class="app-header"><h1>${app.fullName} ${matchBadgeHtml} ${agencyHeaderBadge} ${sourceHeaderBadge}</h1><div style="width:100%; margin-top:10px;"><div class="badge">${app.position}</div>${app.notes ? `<span style="font-size:0.82rem;color:var(--text-muted);margin-left:12px;">📝 ${app.notes}</span>` : ''}</div></div>
+            <div class="app-header"><h1>${app.fullName} ${matchBadgeHtml} ${agencyHeaderBadge} ${sourceHeaderBadge}
+                <select class="status-bar-select ${app.headerStatus === 'invited' ? 'invited' : app.headerStatus === 'awaitingcerts' ? 'awaitingcerts' : ''}"
+                    id="headerStatusSelect"
+                    onchange="saveHeaderStatus('${app.id}', this)">
+                    <option value="" ${!app.headerStatus ? 'selected' : ''}>— Set Status —</option>
+                    <option value="invited" ${app.headerStatus === 'invited' ? 'selected' : ''}>📅 Invited to Interview</option>
+                    <option value="awaitingcerts" ${app.headerStatus === 'awaitingcerts' ? 'selected' : ''}>📋 Awaiting Certs</option>
+                </select>
+            </h1><div style="width:100%; margin-top:10px;"><div class="badge">${app.position}</div>${app.notes ? `<span style="font-size:0.82rem;color:var(--text-muted);margin-left:12px;">📝 ${app.notes}</span>` : ''}</div></div>
             
             ${manualInterventionHtml}
             ${credsHtml}
