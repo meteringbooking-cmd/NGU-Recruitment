@@ -1875,7 +1875,9 @@
                 const ncDate = new Date(app.nameChecksCompletedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
                 let schedMsg = '';
                 if (app.manualNameCheckBypass || app.manualBypassToOnboarding) {
-                    schedMsg = `<div style="margin-top:0.5rem; font-size:0.85rem; color:var(--text-light); font-weight:600;">ℹ️ Bypassed manually — no automated emails sent</div>`;
+                    const alreadyInvited = matchedInterview || app.scheduledInterviewEmailSent;
+                    schedMsg = `<div style="margin-top:0.5rem; font-size:0.85rem; color:var(--text-light); font-weight:600;">ℹ️ Bypassed manually — no automated emails sent</div>
+                        ${!alreadyInvited ? `<button class="btn-action" style="margin-top:0.6rem; padding:6px 14px; font-size:0.82rem;" onclick="document.getElementById('nameCheckAppId').value='${app.id}'; document.getElementById('nameCheckProceedModal').classList.add('active');">📅 Invite to Interview</button>` : ''}`;
                 } else if (app.scheduledInterviewEmailTime) {
                     const schedDate = new Date(app.scheduledInterviewEmailTime).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' });
                     if (app.scheduledInterviewEmailSent) {
