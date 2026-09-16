@@ -203,12 +203,16 @@
         renderSidebar();
     });
 
-    // Fetch ONLY applicants who have successfully accepted their contract
-    const qApp = query(collection(db, "NGUO New Applicants"), where("contractAccepted", "==", true));
-    
-    onSnapshot(qApp, (snapshot) => {
+    // Fetch applicants who have accepted their contract OR completed onboarding.
+    // (Some applicants complete onboarding directly without contractAccepted being set)
+    onSnapshot(collection(db, "NGUO New Applicants"), (snapshot) => {
         applicationsData = [];
-        snapshot.forEach(doc => applicationsData.push({ id: doc.id, ...doc.data() }));
+        snapshot.forEach(doc => {
+            const d = { id: doc.id, ...doc.data() };
+            if (d.contractAccepted === true || d.onboardingCompleted === true) {
+                applicationsData.push(d);
+            }
+        });
         
         applicationsData.sort((a, b) => {
             if (a.onboardingProcessed && !b.onboardingProcessed) return 1;
