@@ -190,25 +190,12 @@
     
     let applicationsData = [];
     let referralData = [];
-    let interviewsData = [];
     let searchQuery = '';
     let selectedAppId = null;
 
     // Load referral submissions once so we can match by email
     getDocs(collection(db, "NGU Referral submissions")).then(snap => {
         referralData = snap.docs.map(d => d.data());
-    });
-
-    // Watch interview records so Phase 3 pre-employment checks (annual leave,
-    // doc confirmation, induction) entered at interview stage can be shown
-    // alongside onboarding, matched to the applicant by email.
-    onSnapshot(collection(db, "NGU Interview Times"), (snapshot) => {
-        interviewsData = [];
-        snapshot.forEach(doc => interviewsData.push({ id: doc.id, ...doc.data() }));
-        if (selectedAppId) {
-            const updatedApp = applicationsData.find(a => a.id === selectedAppId);
-            if (updatedApp) renderDetails(updatedApp);
-        }
     });
 
     document.getElementById('nameSearch').addEventListener('input', (e) => {
@@ -638,9 +625,6 @@
         
         const pOriginal = app.personalDetails || {};
         const pNew = app.onboardingDetails || {};
-        const appEmailForInterview = (app.personalDetails?.email || '').toLowerCase();
-        const matchedInterview = interviewsData.find(i => i.applicantEmail?.toLowerCase() === appEmailForInterview);
-        const interviewPec = matchedInterview?.interviewData?.preEmploymentChecks || null;
         const bk = app.bankDetails || {};
         const ec = app.emergencyContact || {};
         const uni = app.uniformData || {};
@@ -807,21 +791,6 @@
             holidaysHtml = `<span style="color:var(--text-muted); font-size:0.9rem;">None declared</span>`;
         }
 
-        // Annual Leave declared at interview (Phase 3 Pre-Employment Checks on the interview pack)
-        let interviewLeaveHtml = '';
-        if (interviewPec) {
-            const leave = interviewPec.annualLeave || {};
-            if (leave.hasLeave && leave.periods && leave.periods.length > 0) {
-                interviewLeaveHtml = leave.periods.map(p => `<span class="holiday-chip">${p.month || '-'}${p.startDate ? ` (${p.startDate}${p.endDate ? ' to ' + p.endDate : ''})` : ''}${p.days ? ` — ${p.days} day(s)` : ''}</span>`).join('');
-            } else if (leave.answered) {
-                interviewLeaveHtml = `<span style="color:var(--success); font-size:0.9rem;">✓ No leave declared at interview</span>`;
-            } else {
-                interviewLeaveHtml = `<span style="color:var(--text-muted); font-size:0.9rem;">Not answered at interview</span>`;
-            }
-        } else {
-            interviewLeaveHtml = `<span class="missing-data">No interview pre-employment checks on file</span>`;
-        }
-
         // HMRC / Tax block
         let taxBlock = `<div class="missing-data">Checklist pending</div>`;
         if (app.hasP45 === true) {
@@ -970,19 +939,8 @@
                 </div>
                 
                 <div style="border-top:1px solid var(--border); margin-top:1.5rem; padding-top:1.5rem;">
-                    <div class="data-label" style="color:var(--accent);">Pre-Booked Holidays (Self-Declared During Onboarding)</div>
+                    <div class="data-label" style="color:var(--accent);">Pre-Booked Holidays</div>
                     <div style="margin-top:0.5rem;">${holidaysHtml}</div>
-                </div>
-
-                <div style="border-top:1px solid var(--border); margin-top:1.5rem; padding-top:1.5rem;">
-                    <div class="data-label" style="color:var(--accent);">⚠️ Annual Leave Declared at Interview</div>
-                    <div style="margin-top:0.5rem;">${interviewLeaveHtml}</div>
-                    ${interviewPec ? `
-                    <div class="grid-3" style="margin-top:1rem;">
-                        <div class="data-group"><div class="data-label">Cert / Doc Confirmation</div><div class="data-value">${interviewPec.certsConfirmed === 'yes' ? '✓ Confirmed' : (interviewPec.certsConfirmed === 'discrepancy' ? '⚠ Discrepancy noted' : 'Not confirmed')}</div></div>
-                        <div class="data-group"><div class="data-label">Induction Location</div><div class="data-value">${safeVal(interviewPec.inductionLocation)}</div></div>
-                        <div class="data-group"><div class="data-label">Induction Duration</div><div class="data-value">${safeVal(interviewPec.inductionDuration)}</div></div>
-                    </div>` : ''}
                 </div>
             </div>
 
