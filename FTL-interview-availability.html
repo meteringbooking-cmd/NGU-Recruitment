@@ -513,70 +513,6 @@
             <div id="engPhase3" class="phase">
                 <div style="text-align: center; margin-bottom: 1.5rem; color: #fcd34d; font-weight: bold;">PHASE 3: PRE-EMPLOYMENT CHECKS</div>
 
-                <!-- Annual Leave -->
-                <div class="pack-section" style="border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.04);">
-                    <div class="pack-section-header" style="background: rgba(239,68,68,0.15); color: #fca5a5;">⚠️ Mandatory Question — Annual Leave &amp; Planned Absence</div>
-                    <div class="pack-section-body">
-                        <p style="font-size:0.9rem; color:var(--text-light); margin-bottom:1rem; line-height:1.5;">Do you have any pre-booked annual leave or other planned time off within the next 6 months?</p>
-                        <div style="display:flex; gap:12px; margin-bottom:1rem;">
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; color:var(--text-light);">
-                                <input type="radio" name="eng_annual_leave" id="eng_al_yes" value="yes" onchange="toggleLeaveDetails('eng', true)" style="width:16px;height:16px;"> Yes
-                            </label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; color:var(--text-light);">
-                                <input type="radio" name="eng_annual_leave" id="eng_al_no" value="no" onchange="toggleLeaveDetails('eng', false)" style="width:16px;height:16px;"> No
-                            </label>
-                        </div>
-
-                        <div id="eng_leave_details" style="display:none; border-top:1px solid var(--border); padding-top:1rem; margin-top:0.5rem;">
-                            <div style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.35); border-radius:8px; padding:0.8rem; margin-bottom:1rem; font-size:0.82rem; color:#fcd34d;">
-                                ℹ️ If they are unable to provide exact dates at this point, advise them to let us know ASAP.
-                            </div>
-                            <div id="eng_leave_entries"></div>
-                            <button type="button" class="btn btn-claim" style="margin-top:0.5rem; font-size:0.82rem; padding:7px 14px;" onclick="addLeaveEntry('eng')">+ Add Another Period</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Cert Confirmation -->
-                <div class="pack-section">
-                    <div class="pack-section-header">📋 Certificate &amp; Document Confirmation</div>
-                    <div class="pack-section-body">
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Confirm the candidate's certificates match what was declared on their application.</p>
-                        <div style="display:flex; gap:10px; align-items:center; margin-bottom:0.8rem;">
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                                <input type="radio" name="eng_certs_confirmed" value="yes" style="width:15px;height:15px;"> <span style="color:var(--success); font-weight:700;">✓ Certs confirmed &amp; match application</span>
-                            </label>
-                        </div>
-                        <div style="display:flex; gap:10px; align-items:center; margin-bottom:0.8rem;">
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                                <input type="radio" name="eng_certs_confirmed" value="discrepancy" style="width:15px;height:15px;"> <span style="color:var(--warning); font-weight:700;">⚠ Discrepancy noted</span>
-                            </label>
-                        </div>
-                        <textarea id="eng_cert_notes" rows="2" placeholder="Notes on certificates (discrepancies, expiry concerns, missing docs etc.)..."></textarea>
-                    </div>
-                </div>
-
-                <!-- Induction -->
-                <div class="pack-section">
-                    <div class="pack-section-header">📍 Induction Duration &amp; Location</div>
-                    <div class="pack-section-body">
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Confirm induction details have been communicated to the candidate.</p>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:0.8rem;">
-                            <div>
-                                <label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-bottom:4px;">Induction Location</label>
-                                <input type="text" id="eng_induction_location" placeholder="e.g. NGU Head Office, Leeds" style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-input); color:white; font-size:0.88rem; font-family:inherit; outline:none;">
-                            </div>
-                            <div>
-                                <label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-bottom:4px;">Induction Duration</label>
-                                <input type="text" id="eng_induction_duration" placeholder="e.g. 2 days, 18–19 Nov" style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-input); color:white; font-size:0.88rem; font-family:inherit; outline:none;">
-                            </div>
-                        </div>
-                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.88rem; color:var(--text-light); margin-top:0.3rem;">
-                            <input type="checkbox" id="eng_induction_confirmed" style="width:15px;height:15px;"> Candidate has acknowledged and confirmed induction arrangements
-                        </label>
-                    </div>
-                </div>
-
                 <div style="display: flex; gap: 10px; margin-top: 0.5rem;">
                     <button class="btn btn-claim" onclick="proceedToPhase('engPhase3', 'engPhase2')" style="flex: 1;">← Back to Scorecard</button>
                     <button class="btn btn-primary" onclick="submitInterviewData('engineer')" style="flex: 2;">Complete &amp; Save Interview</button>
@@ -704,69 +640,6 @@
             <!-- PHASE 3: PRE-EMPLOYMENT CHECKS (OFFICE) -->
             <div id="offPhase3" class="phase">
                 <div style="text-align: center; margin-bottom: 1.5rem; color: #fcd34d; font-weight: bold;">PHASE 3: PRE-EMPLOYMENT CHECKS</div>
-
-                <!-- Annual Leave -->
-                <div class="pack-section" style="border-color: rgba(239,68,68,0.5); background: rgba(239,68,68,0.04);">
-                    <div class="pack-section-header" style="background: rgba(239,68,68,0.15); color: #fca5a5;">⚠️ Mandatory Question — Annual Leave &amp; Planned Absence</div>
-                    <div class="pack-section-body">
-                        <p style="font-size:0.9rem; color:var(--text-light); margin-bottom:1rem; line-height:1.5;">Do you have any pre-booked annual leave or other planned time off within the next 6 months?</p>
-                        <div style="display:flex; gap:12px; margin-bottom:1rem;">
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; color:var(--text-light);">
-                                <input type="radio" name="off_annual_leave" id="off_al_yes" value="yes" onchange="toggleLeaveDetails('off', true)" style="width:16px;height:16px;"> Yes
-                            </label>
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:700; color:var(--text-light);">
-                                <input type="radio" name="off_annual_leave" id="off_al_no" value="no" onchange="toggleLeaveDetails('off', false)" style="width:16px;height:16px;"> No
-                            </label>
-                        </div>
-                        <div id="off_leave_details" style="display:none; border-top:1px solid var(--border); padding-top:1rem; margin-top:0.5rem;">
-                            <div style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.35); border-radius:8px; padding:0.8rem; margin-bottom:1rem; font-size:0.82rem; color:#fcd34d;">
-                                ℹ️ If they are unable to provide exact dates at this point, advise them to let us know ASAP.
-                            </div>
-                            <div id="off_leave_entries"></div>
-                            <button type="button" class="btn btn-claim" style="margin-top:0.5rem; font-size:0.82rem; padding:7px 14px;" onclick="addLeaveEntry('off')">+ Add Another Period</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Doc Confirmation -->
-                <div class="pack-section">
-                    <div class="pack-section-header">📋 Document Confirmation</div>
-                    <div class="pack-section-body">
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Confirm the candidate's documents match what was declared on their application.</p>
-                        <div style="display:flex; gap:10px; align-items:center; margin-bottom:0.8rem;">
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                                <input type="radio" name="off_certs_confirmed" value="yes" style="width:15px;height:15px;"> <span style="color:var(--success); font-weight:700;">✓ Documents confirmed &amp; match application</span>
-                            </label>
-                        </div>
-                        <div style="display:flex; gap:10px; align-items:center; margin-bottom:0.8rem;">
-                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-                                <input type="radio" name="off_certs_confirmed" value="discrepancy" style="width:15px;height:15px;"> <span style="color:var(--warning); font-weight:700;">⚠ Discrepancy noted</span>
-                            </label>
-                        </div>
-                        <textarea id="off_cert_notes" rows="2" placeholder="Notes on documents (discrepancies, missing items etc.)..."></textarea>
-                    </div>
-                </div>
-
-                <!-- Induction -->
-                <div class="pack-section">
-                    <div class="pack-section-header">📍 Induction Duration &amp; Location</div>
-                    <div class="pack-section-body">
-                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Confirm induction details have been communicated to the candidate.</p>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:0.8rem;">
-                            <div>
-                                <label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-bottom:4px;">Induction Location</label>
-                                <input type="text" id="off_induction_location" placeholder="e.g. NGU Head Office, Leeds" style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-input); color:white; font-size:0.88rem; font-family:inherit; outline:none;">
-                            </div>
-                            <div>
-                                <label style="font-size:0.82rem; color:var(--text-muted); display:block; margin-bottom:4px;">Induction Duration</label>
-                                <input type="text" id="off_induction_duration" placeholder="e.g. 2 days, 18–19 Nov" style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid var(--border); background:var(--bg-input); color:white; font-size:0.88rem; font-family:inherit; outline:none;">
-                            </div>
-                        </div>
-                        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.88rem; color:var(--text-light); margin-top:0.3rem;">
-                            <input type="checkbox" id="off_induction_confirmed" style="width:15px;height:15px;"> Candidate has acknowledged and confirmed induction arrangements
-                        </label>
-                    </div>
-                </div>
 
                 <div style="display: flex; gap: 10px; margin-top: 0.5rem;">
                     <button class="btn btn-claim" onclick="proceedToPhase('offPhase3', 'offPhase2')" style="flex: 1;">← Back to Scorecard</button>
@@ -1396,82 +1269,6 @@
         document.querySelector('.modal-content').scrollTop = 0;
     };
 
-    // --- PHASE 3: LEAVE & PRE-EMPLOYMENT HELPERS ---
-    const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-    window.toggleLeaveDetails = function(prefix, show) {
-        const detailsEl = document.getElementById(`${prefix}_leave_details`);
-        detailsEl.style.display = show ? 'block' : 'none';
-        if (show && document.getElementById(`${prefix}_leave_entries`).children.length === 0) {
-            addLeaveEntry(prefix); // auto-add first entry
-        }
-    };
-
-    window.addLeaveEntry = function(prefix) {
-        const container = document.getElementById(`${prefix}_leave_entries`);
-        const idx = container.children.length;
-        const div = document.createElement('div');
-        div.style.cssText = 'background:rgba(255,255,255,0.04); border:1px solid var(--border); border-radius:10px; padding:1rem; margin-bottom:1rem;';
-        div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.7rem;">
-                <strong style="font-size:0.88rem; color:var(--text-light);">Leave Period ${idx + 1}</strong>
-                ${idx > 0 ? `<button type="button" onclick="this.closest('div[style]').remove()" style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; border-radius:6px; padding:2px 8px; font-size:0.75rem; cursor:pointer;">Remove</button>` : ''}
-            </div>
-            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
-                <div>
-                    <label style="font-size:0.78rem; color:var(--text-muted); display:block; margin-bottom:3px;">Month of Leave <span style="color:var(--error);">*</span></label>
-                    <select class="${prefix}-leave-month" style="width:100%; padding:7px; border-radius:7px; border:1px solid var(--border); background:var(--bg-input); color:white; font-size:0.85rem; font-family:inherit; outline:none;">
-                        <option value="">Select month...</option>
-                        ${MONTHS.map((m,i) => `<option value="${m}">${m}</option>`).join('')}
-                    </select>
-                </div>
-                <div>
-                    <label style="font-size:0.78rem; color:var(--text-muted); display:block; margin-bottom:3px;">Start Date (if known)</label>
-                    <input type="date" class="${prefix}-leave-start" style="width:100%; padding:7px; border-radius:7px; border:1px solid var(--border); background:var(--bg-input); color:white; font-size:0.85rem; font-family:inherit; outline:none;">
-                </div>
-                <div>
-                    <label style="font-size:0.78rem; color:var(--text-muted); display:block; margin-bottom:3px;">End Date (if known)</label>
-                    <input type="date" class="${prefix}-leave-end" style="width:100%; padding:7px; border-radius:7px; border:1px solid var(--border); background:var(--bg-input); color:white; font-size:0.85rem; font-family:inherit; outline:none;">
-                </div>
-            </div>
-            <div style="margin-top:8px;">
-                <label style="font-size:0.78rem; color:var(--text-muted); display:block; margin-bottom:3px;">Total Duration (days) <span style="color:var(--error);">*</span></label>
-                <input type="number" min="1" class="${prefix}-leave-days" placeholder="Number of days" style="width:160px; padding:7px; border-radius:7px; border:1px solid var(--border); background:var(--bg-input); color:white; font-size:0.85rem; font-family:inherit; outline:none;">
-            </div>
-        `;
-        container.appendChild(div);
-    };
-
-    function collectLeaveData(prefix) {
-        const leaveAnswer = document.querySelector(`input[name="${prefix}_annual_leave"]:checked`)?.value || 'not_answered';
-        if (leaveAnswer !== 'yes') return { answered: leaveAnswer !== 'not_answered', hasLeave: leaveAnswer === 'yes', periods: [] };
-        const periods = [];
-        const months   = document.querySelectorAll(`.${prefix}-leave-month`);
-        const starts   = document.querySelectorAll(`.${prefix}-leave-start`);
-        const ends     = document.querySelectorAll(`.${prefix}-leave-end`);
-        const days     = document.querySelectorAll(`.${prefix}-leave-days`);
-        months.forEach((m, i) => {
-            periods.push({ month: m.value, startDate: starts[i]?.value || '', endDate: ends[i]?.value || '', days: days[i]?.value || '' });
-        });
-        return { answered: true, hasLeave: true, periods };
-    }
-
-    // Gathers all of Phase 3 (Pre-Employment Checks) — Annual Leave, Cert/Doc
-    // Confirmation, and Induction details — so it can be saved with the rest
-    // of the interview pack. Without this, anything entered in Phase 3 was
-    // being collected in the form but never actually submitted.
-    function collectPhase3(prefix) {
-        return {
-            annualLeave: collectLeaveData(prefix),
-            certsConfirmed: document.querySelector(`input[name="${prefix}_certs_confirmed"]:checked`)?.value || 'not_confirmed',
-            certNotes: document.getElementById(`${prefix}_cert_notes`)?.value || '',
-            inductionLocation: document.getElementById(`${prefix}_induction_location`)?.value || '',
-            inductionDuration: document.getElementById(`${prefix}_induction_duration`)?.value || '',
-            inductionConfirmed: document.getElementById(`${prefix}_induction_confirmed`)?.checked || false
-        };
-    }
-
-
     // --- REAL-TIME ENGINEER SCORE CALCULATORS ---
     document.querySelectorAll('.eng-score').forEach(input => {
         input.addEventListener('input', () => {
@@ -1530,7 +1327,6 @@
                 engScores.push({ criteria, score: input.value, comment: cmt });
             });
             payload.scores = engScores;
-            payload.preEmploymentChecks = collectPhase3('eng');
 
         } else if (type === 'office') {
             const rec = document.getElementById('off_recommendation').value;
@@ -1553,7 +1349,6 @@
                 offScores.push({ criteria, score: input.value, comment: cmt });
             });
             payload.scores = offScores;
-            payload.preEmploymentChecks = collectPhase3('off');
         }
 
         try {
