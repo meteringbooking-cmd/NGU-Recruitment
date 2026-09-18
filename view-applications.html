@@ -1987,41 +1987,6 @@
                     `;
                 }
 
-                if (data.preEmploymentChecks) {
-                    const pec = data.preEmploymentChecks;
-                    const leave = pec.annualLeave || {};
-                    let leaveBody = '';
-                    if (leave.hasLeave && leave.periods && leave.periods.length > 0) {
-                        const leaveRows = leave.periods.map(p => `<tr><td>${p.month || '-'}</td><td>${p.startDate || '-'}</td><td>${p.endDate || '-'}</td><td style="text-align:center;">${p.days || '-'}</td></tr>`).join('');
-                        leaveBody = `
-                            <div style="color:var(--warning); font-weight:700; margin-bottom:0.6rem;">⚠ Candidate has pre-booked annual leave / planned absence</div>
-                            <table class="data-table" style="background: rgba(0,0,0,0.15); border-radius: 8px; overflow: hidden; margin-bottom: 0;">
-                                <thead><tr><th>Month</th><th>Start Date</th><th>End Date</th><th style="text-align:center;">Days</th></tr></thead>
-                                <tbody>${leaveRows}</tbody>
-                            </table>`;
-                    } else if (leave.answered) {
-                        leaveBody = `<div style="color:var(--success); font-weight:700;">✓ No pre-booked leave declared</div>`;
-                    } else {
-                        leaveBody = `<div style="color:var(--text-muted);">Not answered during interview</div>`;
-                    }
-
-                    packResultsHtml += `
-                        <details class="collapsible-pack" open>
-                            <summary>🗓 View Pre-Employment Checks (Annual Leave, Docs, Induction)</summary>
-                            <div class="collapsible-content">
-                                <div class="data-group"><div class="data-label">Pre-Booked Annual Leave / Planned Absence</div><div class="text-box">${leaveBody}</div></div>
-                                <div class="grid-2" style="margin-top:1rem;">
-                                    <div class="data-group"><div class="data-label">Certificate / Document Confirmation</div><div class="data-value">${pec.certsConfirmed === 'yes' ? '✓ Confirmed & match application' : (pec.certsConfirmed === 'discrepancy' ? '⚠ Discrepancy noted' : 'Not confirmed')}</div></div>
-                                    <div class="data-group"><div class="data-label">Induction Confirmed</div><div class="data-value">${pec.inductionConfirmed ? '✓ Yes' : '✗ No'}</div></div>
-                                    <div class="data-group"><div class="data-label">Induction Location</div><div class="data-value">${pec.inductionLocation || '<span style="color:var(--text-muted)">Not set</span>'}</div></div>
-                                    <div class="data-group"><div class="data-label">Induction Duration</div><div class="data-value">${pec.inductionDuration || '<span style="color:var(--text-muted)">Not set</span>'}</div></div>
-                                </div>
-                                ${pec.certNotes ? `<div class="data-group" style="margin-top:1rem;"><div class="data-label">Certificate / Document Notes</div><div class="text-box">${pec.certNotes}</div></div>` : ''}
-                            </div>
-                        </details>
-                    `;
-                }
-
                 // RECRUITMENT DECISION ACTION BLOCK
                 packResultsHtml += `<div style="margin-top:2rem; padding:1.5rem; background:var(--bg-card); border:2px solid var(--warning); border-radius:12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">`;
                 packResultsHtml += `<h3 style="color:var(--warning); margin-bottom:1rem; font-size:1.3rem;">Final Recruitment Action</h3>`;
