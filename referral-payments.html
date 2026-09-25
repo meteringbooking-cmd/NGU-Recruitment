@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Referral Payments - NGU Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- EmailJS -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         :root {
             --bg: #060e1e; --card: #0d1a30; --card2: #111f38;
@@ -71,6 +73,12 @@
         .btn-paid:hover { background:rgba(16,185,129,0.25); }
         .btn-paid.marked { background:rgba(16,185,129,0.3); color:#fff; cursor:default; }
 
+        .btn-email { background:rgba(0,163,224,0.12); border:1px solid rgba(0,163,224,0.35); color:#7dd3fc;
+                     padding:3px 9px; border-radius:6px; font-size:.72rem; font-weight:700; cursor:pointer;
+                     font-family:inherit; transition:all .2s; }
+        .btn-email:hover { background:rgba(0,163,224,0.25); }
+        .emailed-note { width:100%; font-size:.7rem; color:var(--muted); }
+
         .btn-remove { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#fca5a5;
                       padding:5px 12px; border-radius:8px; font-size:.78rem; font-weight:700; cursor:pointer;
                       font-family:inherit; transition:all .2s; }
@@ -80,10 +88,10 @@
 
         /* MODAL */
         .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:100;
-                         align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+                         align-items:center; justify-content:center; backdrop-filter:blur(4px); padding:1rem; }
         .modal-overlay.active { display:flex; }
         .modal { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:2rem;
-                 width:100%; max-width:420px; }
+                 width:100%; max-width:420px; max-height:92vh; overflow-y:auto; }
         .modal h3 { font-size:1.1rem; margin-bottom:.7rem; color:var(--error); }
         .modal p { font-size:.88rem; color:var(--muted); margin-bottom:1.5rem; line-height:1.5; }
         .modal-btns { display:flex; gap:.8rem; justify-content:flex-end; }
@@ -92,6 +100,30 @@
         .btn-confirm-remove { background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:var(--error);
                               padding:.6rem 1.2rem; border-radius:8px; font-size:.88rem; font-weight:700; cursor:pointer; font-family:inherit; }
         .btn-confirm-remove:hover { background:rgba(239,68,68,0.28); }
+
+        /* EMAIL MODAL */
+        .modal.email-modal { max-width:560px; }
+        .modal.email-modal h3 { color:var(--accent); }
+        .email-summary { background:var(--card2); border:1px solid var(--border); border-radius:10px; padding:.8rem 1rem;
+                         font-size:.82rem; color:var(--muted); margin-bottom:1.2rem; line-height:1.6; }
+        .email-summary strong { color:var(--light); }
+        .email-block { border:1px solid var(--border); border-radius:12px; padding:1rem; margin-bottom:1rem; }
+        .email-block-head { display:flex; align-items:center; gap:.6rem; margin-bottom:.7rem; font-size:.85rem; font-weight:700; }
+        .email-block-head input[type=checkbox] { width:16px; height:16px; accent-color:var(--accent); }
+        .field-label { display:block; font-size:.7rem; font-weight:700; color:var(--muted); text-transform:uppercase;
+                       letter-spacing:.06em; margin:.6rem 0 .3rem; }
+        .field { width:100%; background:var(--card2); border:1px solid var(--border); color:var(--light);
+                 padding:.55rem .8rem; border-radius:8px; font-size:.85rem; font-family:inherit; outline:none; }
+        .field:focus { border-color:var(--accent); }
+        .field[readonly] { opacity:.7; }
+        textarea.field { min-height:110px; resize:vertical; line-height:1.45; }
+        .email-status { font-size:.82rem; margin:.4rem 0 1rem; min-height:1.2em; }
+        .email-status.ok { color:var(--success); }
+        .email-status.err { color:var(--error); }
+        .btn-send { background:rgba(0,163,224,0.18); border:1px solid rgba(0,163,224,0.5); color:#7dd3fc;
+                    padding:.6rem 1.2rem; border-radius:8px; font-size:.88rem; font-weight:700; cursor:pointer; font-family:inherit; }
+        .btn-send:hover { background:rgba(0,163,224,0.3); }
+        .btn-send:disabled { opacity:.5; cursor:wait; }
     </style>
 </head>
 <body>
@@ -170,6 +202,47 @@
     </div>
 </div>
 
+<!-- EMAIL MODAL -->
+<div class="modal-overlay" id="emailModal">
+    <div class="modal email-modal">
+        <h3>Send Payment Notification</h3>
+        <div class="email-summary" id="emailSummary"></div>
+
+        <label class="field-label" for="payDate">Next paydate (optional)</label>
+        <input type="date" class="field" id="payDate">
+
+        <!-- Kaye (payroll) -->
+        <div class="email-block" style="margin-top:1rem;">
+            <div class="email-block-head">
+                <input type="checkbox" id="sendKaye" checked>
+                <label for="sendKaye">Notify payroll</label>
+            </div>
+            <label class="field-label">To</label>
+            <input type="email" class="field" id="kayeEmail" value="kaye.reynolds@next-gen.uk" readonly>
+            <label class="field-label" for="kayeMsg">Message</label>
+            <textarea class="field" id="kayeMsg"></textarea>
+        </div>
+
+        <!-- Referrer -->
+        <div class="email-block">
+            <div class="email-block-head">
+                <input type="checkbox" id="sendReferrer" checked>
+                <label for="sendReferrer">Notify referrer</label>
+            </div>
+            <label class="field-label" for="referrerEmail">Referrer email</label>
+            <input type="email" class="field" id="referrerEmail" placeholder="name@next-gen.uk">
+            <label class="field-label" for="referrerMsg">Message</label>
+            <textarea class="field" id="referrerMsg"></textarea>
+        </div>
+
+        <div class="email-status" id="emailStatus"></div>
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeEmailModal()">Close</button>
+            <button class="btn-send" id="btnSend" onclick="sendEmails()">Send Email</button>
+        </div>
+    </div>
+</div>
+
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getFirestore, collection, getDocs, doc, updateDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
@@ -183,12 +256,23 @@ const firebaseConfig = {
     appId: "1:484894102454:web:17535ee497eac2d90d6717"
 };
 
+// ---- EmailJS config ----
+const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
+const EMAILJS_SERVICE_ID = 'service_b3nh4bo';
+const EMAILJS_TEMPLATE_ID = 'template_1p0910l';
+const PAYROLL_EMAIL = 'kaye.reynolds@next-gen.uk';
+const PAYROLL_NAME  = 'Kaye';
+const PAYMENT_AMOUNT = '£500';
+
+emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
 
 let referrals  = [];   // from NGU Referral submissions
 let applicants = [];   // from NGUO New Applicants
 let pendingRemoveId = null;
+let emailCtx = null;   // { id, paymentNum, referral, dueLabel }
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -209,6 +293,12 @@ function fmtDateGB(dateStr) {
     return d.toLocaleDateString('en-GB', { day:'2-digit', month:'2-digit', year:'numeric' });
 }
 
+function fmtLongDate(dateStr) {
+    const d = new Date(dateStr);
+    if (isNaN(d)) return null;
+    return d.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+}
+
 function getStartDate(referralEmail) {
     const em = (referralEmail || '').toLowerCase().trim();
     const match = applicants.find(a => (a.personalDetails?.email || '').toLowerCase().trim() === em);
@@ -217,6 +307,14 @@ function getStartDate(referralEmail) {
 
 function isOverdue(targetDate) {
     return new Date() > targetDate;
+}
+
+function ordinal(n) { return n === 1 ? '1st' : '2nd'; }
+
+function emailedNote(r, n) {
+    const at = r[`payment${n}EmailedAt`];
+    if (!at) return '';
+    return `<div class="emailed-note">✉ Emailed ${fmtDateGB(at)}</div>`;
 }
 
 function render() {
@@ -286,11 +384,15 @@ function render() {
 
             p1Html = `<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                 <span class="ppill ${p1Class}">${p1Label} · ${p1Due}</span>
+                ${!p1Paid ? `<button class="btn-email" onclick="openEmailModal('${r.id}', 1, '${p1Due}')">✉ Email</button>` : ''}
                 ${!p1Paid ? `<button class="btn-paid" onclick="markPaid('${r.id}', 1)">Mark Paid</button>` : ''}
+                ${!p1Paid ? emailedNote(r, 1) : ''}
             </div>`;
             p2Html = `<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                 <span class="ppill ${p2Class}">${p2Label} · ${p2Due}</span>
+                ${!p2Paid ? `<button class="btn-email" onclick="openEmailModal('${r.id}', 2, '${p2Due}')">✉ Email</button>` : ''}
                 ${!p2Paid ? `<button class="btn-paid" onclick="markPaid('${r.id}', 2)">Mark Paid</button>` : ''}
+                ${!p2Paid ? emailedNote(r, 2) : ''}
             </div>`;
         }
 
@@ -301,6 +403,7 @@ function render() {
             </td>
             <td>
                 <div class="name-cell">${r.referrerName || '—'}</div>
+                ${r.referrerEmail ? `<div class="sub-cell">${r.referrerEmail}</div>` : ''}
             </td>
             <td>${startHtml}</td>
             <td>${p1Html}</td>
@@ -311,6 +414,130 @@ function render() {
         </tr>`;
     }).join('');
 }
+
+// ---------- EMAIL ----------
+function buildMessages() {
+    if (!emailCtx) return;
+    const { referral: r, paymentNum, dueLabel } = emailCtx;
+    const payDateVal = document.getElementById('payDate').value;
+    const payDateText = payDateVal ? `on your next paydate (${fmtLongDate(payDateVal)})` : 'on your next paydate';
+    const payDateKaye = payDateVal ? `on the next paydate (${fmtLongDate(payDateVal)})` : 'on the next paydate';
+    const referrer = r.referrerName || 'the referrer';
+    const candidate = r.referralName || 'the referred candidate';
+    const firstName = (r.referrerName || '').split(' ')[0] || 'there';
+    const startDate = fmtDateGB(getStartDate(r.referralEmail)) || '—';
+
+    document.getElementById('kayeMsg').value =
+`Hi ${PAYROLL_NAME},
+
+A referral bonus payment is now due.
+
+Referrer: ${referrer}
+Referred candidate: ${candidate}
+Candidate start date: ${startDate}
+Payment: ${ordinal(paymentNum)} referral payment (${dueLabel})
+Amount: ${PAYMENT_AMOUNT}
+
+Please arrange for this to be paid to ${referrer} ${payDateKaye}.
+
+Thanks`;
+
+    document.getElementById('referrerMsg').value =
+`Hi ${firstName},
+
+Thank you for referring ${candidate} to Next-gen.
+
+We're pleased to let you know that your ${ordinal(paymentNum)} referral payment of ${PAYMENT_AMOUNT} will be paid ${payDateText}.
+
+Thanks again for your referral.`;
+}
+
+window.openEmailModal = function(id, paymentNum, dueLabel) {
+    const r = referrals.find(x => x.id === id);
+    if (!r) return;
+    emailCtx = { id, paymentNum, referral: r, dueLabel };
+
+    document.getElementById('emailSummary').innerHTML =
+        `<strong>${ordinal(paymentNum)} payment — ${PAYMENT_AMOUNT}</strong> · due ${dueLabel}<br>
+         Referrer: <strong>${r.referrerName || '—'}</strong> · Candidate: <strong>${r.referralName || '—'}</strong>`;
+    document.getElementById('payDate').value = '';
+    document.getElementById('referrerEmail').value = r.referrerEmail || '';
+    document.getElementById('sendKaye').checked = true;
+    document.getElementById('sendReferrer').checked = true;
+    document.getElementById('emailStatus').textContent = '';
+    document.getElementById('emailStatus').className = 'email-status';
+    document.getElementById('btnSend').disabled = false;
+    buildMessages();
+    document.getElementById('emailModal').classList.add('active');
+};
+
+window.closeEmailModal = function() {
+    emailCtx = null;
+    document.getElementById('emailModal').classList.remove('active');
+};
+
+document.getElementById('payDate').addEventListener('change', buildMessages);
+
+function validEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+window.sendEmails = async function() {
+    if (!emailCtx) return;
+    const { id, paymentNum, referral: r } = emailCtx;
+    const status = document.getElementById('emailStatus');
+    const btn = document.getElementById('btnSend');
+    const sendKaye = document.getElementById('sendKaye').checked;
+    const sendRef  = document.getElementById('sendReferrer').checked;
+    const refEmail = document.getElementById('referrerEmail').value.trim();
+
+    status.className = 'email-status';
+    if (!sendKaye && !sendRef) { status.textContent = 'Select at least one recipient.'; status.classList.add('err'); return; }
+    if (sendRef && !validEmail(refEmail)) { status.textContent = 'Enter a valid referrer email address.'; status.classList.add('err'); return; }
+
+    btn.disabled = true;
+    status.textContent = 'Sending…';
+
+    const subject = `Referral Payment ${PAYMENT_AMOUNT} — ${ordinal(paymentNum)} payment`;
+    const common = {
+        subject,
+        referrer_name: r.referrerName || '',
+        referral_name: r.referralName || '',
+        payment_number: ordinal(paymentNum),
+        amount: PAYMENT_AMOUNT,
+        due_date: emailCtx.dueLabel,
+        reply_to: PAYROLL_EMAIL
+    };
+
+    const jobs = [];
+    if (sendKaye) jobs.push({ who: 'payroll', params: { ...common, to_email: PAYROLL_EMAIL, to_name: PAYROLL_NAME, message: document.getElementById('kayeMsg').value } });
+    if (sendRef)  jobs.push({ who: 'referrer', params: { ...common, to_email: refEmail, to_name: r.referrerName || '', message: document.getElementById('referrerMsg').value } });
+
+    const sent = [], failed = [];
+    for (const job of jobs) {
+        try {
+            await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, job.params);
+            sent.push(job.who);
+        } catch (e) {
+            failed.push(`${job.who} (${e?.text || e?.message || 'error'})`);
+        }
+    }
+
+    // Log against the referral record
+    if (sent.length) {
+        const upd = { [`payment${paymentNum}EmailedAt`]: new Date().toISOString() };
+        if (sendRef && refEmail && sent.includes('referrer')) upd.referrerEmail = refEmail;
+        try { await updateDoc(doc(db, 'NGU Referral submissions', id), upd); } catch (e) { console.warn('Log failed', e); }
+    }
+
+    btn.disabled = false;
+    if (failed.length) {
+        status.textContent = `${sent.length ? 'Sent to ' + sent.join(' & ') + '. ' : ''}Failed: ${failed.join(', ')}`;
+        status.classList.add('err');
+    } else {
+        status.textContent = `✓ Email sent to ${sent.join(' & ')}.`;
+        status.classList.add('ok');
+        setTimeout(closeEmailModal, 1500);
+    }
+};
 
 // Mark a payment as paid
 window.markPaid = async function(id, paymentNum) {
@@ -354,7 +581,7 @@ async function loadAll() {
     render();
 }
 
-// Re-render live when referral docs change (catches markPaid / remove instantly)
+// Re-render live when referral docs change (catches markPaid / remove / emailed instantly)
 onSnapshot(collection(db, 'NGU Referral submissions'), snap => {
     referrals = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     render();
