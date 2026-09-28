@@ -390,6 +390,20 @@
                     </div>
                 </div>
 
+                <!-- Proof of Address -->
+                <div class="cert-upload-row" id="row-poa">
+                    <div class="cert-row-icon">🏠</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">Proof of Address (Utility Bill, Bank Statement)</div>
+                        <div id="sub-poa" class="cert-row-sub">No file selected</div>
+                        <div id="prog-poa" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-poa">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-poa" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('poa',this)"></label>
+                    </div>
+                </div>
+
                 <div class="cert-section-label desirable" style="margin-top:1.8rem;">Desirable Qualifications</div>
 
                 <!-- EUSR -->
@@ -590,7 +604,7 @@
     /* Pre-fill badges for certs already uploaded */
     function prefillExistingCerts(certs, oDocs = {}) {
         if (!certs && !oDocs) return;
-        const simpleKeys = ['mocopa', 'gasl3', 'cmagas', 'higherskills', 'idphoto', 'passport', 'dlfront', 'dlback', 'niproof'];
+        const simpleKeys = ['mocopa', 'gasl3', 'cmagas', 'higherskills', 'idphoto', 'passport', 'dlfront', 'dlback', 'niproof', 'poa'];
         simpleKeys.forEach(key => {
             const data = (certs && certs[key]) || (oDocs && oDocs[key]);
             if (data?.url) {
@@ -826,6 +840,7 @@
                 dlfront:      certUploadResults['dlfront']      || null,
                 dlback:       certUploadResults['dlback']       || null,
                 niproof:      certUploadResults['niproof']      || null,
+                poa:          certUploadResults['poa']          || null,
                 drivinglicence: {
                     confirmed: dlConfirmed,
                     expiry:    document.getElementById('dl-expiry').value || '',
@@ -845,6 +860,7 @@
             if (certUploadResults['dlfront'])  updates['onboardingDocs.dlfront']  = certUploadResults['dlfront'];
             if (certUploadResults['dlback'])   updates['onboardingDocs.dlback']   = certUploadResults['dlback'];
             if (certUploadResults['niproof'])  updates['onboardingDocs.niproof']  = certUploadResults['niproof'];
+            if (certUploadResults['poa'])      updates['onboardingDocs.poa']      = certUploadResults['poa'];
 
             await updateDoc(foundDocRef, updates);
 
