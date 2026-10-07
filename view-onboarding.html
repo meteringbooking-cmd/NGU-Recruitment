@@ -7,7 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-    
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
     <style>
         :root {
             --primary: #005EB8; --accent: #00A3E0;
@@ -75,6 +76,15 @@
         /* ── Contract button ── */
         .btn-contract { display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.12); border: 1px solid var(--success); color: #6ee7b7; padding: 0.45rem 0.9rem; border-radius: 6px; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
         .btn-contract:hover { background: rgba(16, 185, 129, 0.22); transform: translateY(-1px); }
+        .reissue-panel { margin-top: 1.5rem; padding: 1rem 1.2rem; border: 1px dashed var(--warning); border-radius: 10px; background: rgba(245, 158, 11, 0.06); }
+        .reissue-panel .reissue-row { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: flex-end; margin-top: 0.6rem; }
+        .reissue-panel input[type="date"] { background: var(--bg-input); color: white; border: 1px solid var(--border); border-radius: 6px; padding: 0.55rem 0.7rem; font-family: inherit; font-size: 0.9rem; outline: none; }
+        .btn-reissue { background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning); color: #fcd34d; padding: 0.55rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+        .btn-reissue:hover:not(:disabled) { background: rgba(245, 158, 11, 0.28); }
+        .btn-reissue:disabled { opacity: 0.6; cursor: not-allowed; }
+        .reissue-pending { margin-bottom: 1rem; padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--warning); background: rgba(245, 158, 11, 0.1); color: #fcd34d; font-size: 0.9rem; font-weight: 600; }
+        .contract-history-item { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1rem; margin-top: 0.6rem; font-size: 0.85rem; color: var(--text-light); }
+        .contract-history-item img { max-height: 40px; background: #fff; border-radius: 3px; padding: 3px; margin-top: 6px; display: block; }
         
         .banner-warning { background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 1rem; border-radius: 8px; color: #fcd34d; margin-bottom: 1.5rem; font-weight: 600; }
         .doc-item { background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 0.8rem; display: flex; justify-content: space-between; align-items: center; }
@@ -172,7 +182,7 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, onSnapshot, where, doc, updateDoc, getDocs, getDoc, deleteField } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, query, onSnapshot, where, doc, updateDoc, getDocs, getDoc, deleteField, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
     const firebaseConfig = {
@@ -187,7 +197,16 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const storage = getStorage(app);
-    
+
+    // ── EmailJS (used to tell a candidate their contract has been reissued) ──
+    const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
+    const EMAILJS_SERVICE_ID = 'service_dcdbhph';
+    // TODO: paste the EmailJS template ID for the "contract reissued" email here.
+    // Template variables sent: to_email, first_name, job_title, previous_start_date,
+    // new_start_date, portal_link, username, password
+    const EMAILJS_CONTRACT_REISSUE = '';
+    if (window.emailjs) emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+
     let applicationsData = [];
     let referralData = [];
     let interviewsData = [];
@@ -294,6 +313,105 @@
     function safeVal(val) { 
         return val ? val : `<span class="missing-data">Awaiting submission</span>`; 
     }
+
+    // ─── REISSUE CONTRACT (start date changed) ───────────────────────────────
+    // Saves the new start date, files the currently signed contract in
+    // `contractHistory`, clears the live signature so the candidate has to
+    // re-sign, and emails them. The candidate signs again via engineer-portal.html,
+    // which shows the contract populated with the NEW start date.
+    window.reissueContract = async function(appId, btnEl) {
+        const appData = applicationsData.find(a => a.id === appId);
+        if (!appData) return alert('Applicant record not found. Please refresh and try again.');
+
+        const newDate = document.getElementById('reissueStartDate')?.value;
+        if (!newDate) return alert('Please choose the new start date first.');
+        if (newDate === appData.startDate) return alert('That is already the start date on this contract. Choose a different date to reissue.');
+
+        const fmtLong = (d) => d ? new Date(d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'TBC';
+        const candidateName = appData.fullName || `${appData.personalDetails?.forename || ''} ${appData.personalDetails?.surname || ''}`.trim() || 'this candidate';
+
+        if (!confirm(
+            `Reissue the contract for ${candidateName}?\n\n` +
+            `Start date: ${fmtLong(appData.startDate)}  →  ${fmtLong(newDate)}\n\n` +
+            `• Their current signed contract is kept in the history below.\n` +
+            `• Their signature is cleared and they must re-sign the new contract.\n` +
+            `• ${EMAILJS_CONTRACT_REISSUE ? 'They will be emailed their login and the new start date.' : 'No email template is configured, so you will need to tell them yourself.'}\n\n` +
+            `Continue?`
+        )) return;
+
+        const by = localStorage.getItem('ngu_portal_username') || 'Admin';
+        const nowIso = new Date().toISOString();
+        const updates = {
+            startDate: newDate,
+            previousStartDate: appData.startDate || '',
+            contractAccepted: false,
+            offerAccepted: false,
+            contractAcceptedAt: deleteField(),
+            offerAcceptedAt: deleteField(),
+            contractSignature: deleteField(),
+            contractSignName: deleteField(),
+            contractReissuedAt: nowIso,
+            contractReissuedBy: by,
+            contractReissueCount: (appData.contractReissueCount || 0) + 1
+        };
+        // Keep the superseded contract on file (only if there was a signed one to keep)
+        if (appData.contractAccepted === true) {
+            updates.contractHistory = arrayUnion({
+                startDate: appData.startDate || '',
+                contractAcceptedAt: appData.contractAcceptedAt || '',
+                contractSignName: appData.contractSignName || '',
+                contractSignature: appData.contractSignature || '',
+                supersededAt: nowIso,
+                supersededBy: by,
+                reason: 'Start date changed'
+            });
+        }
+
+        if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Reissuing…'; }
+
+        try {
+            await updateDoc(doc(db, "NGUO New Applicants", appId), updates);
+        } catch (e) {
+            console.error('Reissue contract error:', e);
+            alert('Could not reissue the contract. Please check your connection and try again.');
+            if (btnEl) { btnEl.disabled = false; btnEl.textContent = '🔄 Reissue Contract'; }
+            return;
+        }
+
+        // Email the candidate. A failure here must not undo the reissue.
+        let emailNote = '';
+        const toEmail = appData.personalDetails?.email;
+        if (!EMAILJS_CONTRACT_REISSUE) {
+            emailNote = '\n\nNo email was sent (no template ID is set yet) — please tell the candidate to log back into the portal and re-sign.';
+        } else if (!toEmail) {
+            emailNote = '\n\nNo email address on file for this candidate, so no email was sent.';
+        } else {
+            try {
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_CONTRACT_REISSUE, {
+                    to_email: toEmail,
+                    first_name: (appData.fullName || appData.personalDetails?.forename || 'there').split(' ')[0],
+                    job_title: appData.position || 'the role',
+                    previous_start_date: fmtLong(appData.startDate),
+                    new_start_date: fmtLong(newDate),
+                    portal_link: 'https://ngu-recruitment-portal.vercel.app/engineer-portal.html',
+                    username: appData.portalUsername || '',
+                    password: appData.portalPassword || ''
+                });
+                emailNote = '\n\nThe candidate has been emailed.';
+            } catch (e) {
+                console.error('Reissue email error:', e);
+                emailNote = '\n\nThe contract was reissued, but the email failed to send — please tell the candidate yourself.';
+            }
+        }
+
+        alert('Contract reissued. The candidate must now re-sign with the new start date.' + emailNote);
+
+        // Until they re-sign, an applicant who hasn't finished onboarding drops out of this list
+        if (!appData.onboardingCompleted && selectedAppId === appId) {
+            selectedAppId = null;
+            document.getElementById('mainContent').innerHTML = '<div class="empty-state">Contract reissued. This applicant will reappear here once they have re-signed.</div>';
+        }
+    };
 
     window.markAsProcessed = async function(appId) {
         if(!confirm("Are you sure you want to mark this onboarding file as processed? This indicates HR has extracted all required data.")) return;
@@ -648,7 +766,25 @@
         
         const computedFullName = app.fullName || `${pNew.firstName || pOriginal.forename || ''} ${pNew.lastName || pOriginal.surname || ''}`.trim() || 'Applicant';
         const formatStart = app.startDate ? new Date(app.startDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'TBC';
-        const contractDate = app.contractAcceptedAt ? new Date(app.contractAcceptedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short'}) : 'Unknown';
+        const contractDate = app.contractAcceptedAt ? new Date(app.contractAcceptedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short'}) : (app.contractAccepted === false && app.contractReissuedAt ? 'Awaiting re-signature' : 'Unknown');
+
+        // Contract reissue: pending banner + history of superseded contracts
+        const fmtShortDate = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
+        const reissuePendingHtml = (app.contractAccepted === false && app.contractReissuedAt)
+            ? `<div class="reissue-pending">⏳ Contract reissued ${new Date(app.contractReissuedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}${app.contractReissuedBy ? ' by ' + escapeHtml(app.contractReissuedBy) : ''} — awaiting the candidate's new signature (start date ${fmtShortDate(app.startDate)}).</div>`
+            : '';
+        const contractHistoryHtml = (Array.isArray(app.contractHistory) && app.contractHistory.length > 0)
+            ? `<div style="margin-top:1.5rem;">
+                    <div class="data-label" style="color:var(--accent);">📚 Previous Contract Versions (superseded)</div>
+                    ${app.contractHistory.slice().reverse().map(h => `
+                        <div class="contract-history-item">
+                            Start date <strong>${fmtShortDate(h.startDate)}</strong>
+                            ${h.contractAcceptedAt ? ` · signed ${new Date(h.contractAcceptedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}${h.contractSignName ? ' by ' + escapeHtml(h.contractSignName) : ''}` : ' · never signed'}
+                            · superseded ${new Date(h.supersededAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}${h.supersededBy ? ' by ' + escapeHtml(h.supersededBy) : ''}
+                            ${h.contractSignature ? `<img src="${h.contractSignature}" alt="Previous signature">` : ''}
+                        </div>`).join('')}
+               </div>`
+            : '';
 
         let warningBanner = '';
         if (!app.onboardingCompleted) {
@@ -1034,6 +1170,25 @@
                         ${app.contractSignature ? `<img src="${app.contractSignature}" class="signature-img">` : '<div class="missing-data">No digital signature image found</div>'}
                     </div>
                 </div>
+
+                ${reissuePendingHtml}
+
+                <div class="reissue-panel">
+                    <div class="data-label" style="color:var(--warning);">🔄 Start Date Changed? Reissue Contract</div>
+                    <div style="font-size:0.82rem; color:var(--text-muted); margin-top:0.3rem;">
+                        Current start date: <strong style="color:var(--text-light);">${formatStart}</strong>.
+                        Reissuing saves the new start date, files the current signed contract in the history below, and asks the candidate to re-sign.
+                    </div>
+                    <div class="reissue-row">
+                        <div>
+                            <div class="data-label" style="margin-bottom:4px;">New Start Date</div>
+                            <input type="date" id="reissueStartDate" value="${app.startDate || ''}">
+                        </div>
+                        <button type="button" class="btn-reissue" data-reissue-app-id="${app.id}">🔄 Reissue Contract</button>
+                    </div>
+                </div>
+
+                ${contractHistoryHtml}
             </div>
 
             ${actionHtml}
@@ -1044,6 +1199,14 @@
         if (hmrcBtn) {
             hmrcBtn.addEventListener('click', function() {
                 generateHmrcChecklist(this.getAttribute('data-hmrc-app-id'));
+            });
+        }
+
+        // Wire up Reissue Contract button
+        const reissueBtn = mainEl.querySelector('[data-reissue-app-id]');
+        if (reissueBtn) {
+            reissueBtn.addEventListener('click', function() {
+                reissueContract(this.getAttribute('data-reissue-app-id'), this);
             });
         }
 
