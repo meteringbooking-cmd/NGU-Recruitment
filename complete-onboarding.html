@@ -103,6 +103,16 @@
         .holiday-remove-btn:hover { background: rgba(239,68,68,0.25); }
         .btn-add-range { margin-top: 0.75rem; background: transparent; border: 1px dashed var(--accent); color: var(--accent); padding: 0.7rem 1.2rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; font-family: inherit; transition: all 0.2s; }
         .btn-add-range:hover { background: rgba(0,163,224,0.08); }
+        .rtw-card { background: rgba(13, 31, 58, 0.4); padding: 1.5rem; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 1.8rem; }
+        .rtw-card .rtw-q { display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin: 1.1rem 0 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .rtw-card .rtw-q:first-of-type { margin-top: 0.4rem; }
+        .rtw-card .radio-group { flex-wrap: wrap; row-gap: 0.6rem; }
+        .rtw-note { display: none; margin-top: 1rem; padding: 0.8rem 1rem; border-radius: 8px; background: rgba(0,163,224,0.08); border: 1px solid rgba(0,163,224,0.35); color: #bae6fd; font-size: 0.9rem; line-height: 1.5; }
+        .rtw-hint { margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted); }
+        .rtw-reject { display: none; margin-top: 0.5rem; font-size: 0.8rem; color: #fca5a5; font-weight: bold; background: rgba(239,68,68,0.1); padding: 5px 8px; border-radius: 4px; }
+        .req-star { color: var(--error); font-weight: 800; }
+        .opt-tag { color: var(--text-muted); font-weight: 500; text-transform: none; letter-spacing: 0; font-size: 0.75rem; }
+        .doc-stamp { font-size: 0.75rem; margin-top: 4px; color: var(--text-muted); }
     </style>
 </head>
 <body>
@@ -149,6 +159,37 @@
                 <div class="previous-docs">
                     <label style="font-size:0.8rem; color:var(--text-muted); text-transform:uppercase;">Previously Uploaded Certificates:</label>
                     <div id="prevDocsList">Loading...</div>
+                </div>
+
+                <div class="rtw-card" id="rtwCard">
+                    <div class="hmrc-sub-title">Right to Work</div>
+
+                    <span class="rtw-q">Do you have the right to work in the UK without requiring sponsorship from NGU? <span class="req-star">*</span></span>
+                    <div class="radio-group" id="rtwSponsorGroup">
+                        <label><input type="radio" name="rtwSponsor" value="yes"> Yes</label>
+                        <label><input type="radio" name="rtwSponsor" value="no"> No</label>
+                        <label><input type="radio" name="rtwSponsor" value="unsure"> Unsure</label>
+                    </div>
+
+                    <span class="rtw-q">What evidence can you provide to confirm your right to work? <span class="req-star">*</span></span>
+                    <div class="radio-group" id="rtwEvidenceGroup">
+                        <label><input type="radio" name="rtwEvidence" value="UK Passport" onchange="applyRtwRoute()"> UK Passport</label>
+                        <label><input type="radio" name="rtwEvidence" value="Irish passport / passport card" onchange="applyRtwRoute()"> Irish passport / passport card</label>
+                        <label><input type="radio" name="rtwEvidence" value="Right to work share code" onchange="applyRtwRoute()"> Right to work share code</label>
+                        <label><input type="radio" name="rtwEvidence" value="Other acceptable documentation" onchange="applyRtwRoute()"> Other acceptable documentation</label>
+                        <label><input type="radio" name="rtwEvidence" value="Unsure" onchange="applyRtwRoute()"> Unsure</label>
+                    </div>
+
+                    <div class="rtw-note" id="rtwPassportNote">Please note we can accept a UK Passport which is current or expired.</div>
+
+                    <div id="rtwShareCodeBox" style="display:none; margin-top:1rem;">
+                        <label style="display:block; font-size:0.85rem; font-weight:600; color:var(--text-muted); margin-bottom:0.5rem; text-transform:uppercase; letter-spacing:0.05em;">Right to work share code <span class="req-star">*</span></label>
+                        <input type="text" id="rtwShareCode" class="form-control" placeholder="9-character code, e.g. W12AB3456" maxlength="14" autocomplete="off">
+                        <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.4rem;">We need this code to carry out your right to work check. You can get one at <a class="external-link" href="https://www.gov.uk/prove-right-to-work" target="_blank">gov.uk/prove-right-to-work</a>. Please also upload your ID headshot and driving licence (front and back) below.</div>
+                        <div class="rtw-reject" id="rej-sharecode"></div>
+                    </div>
+
+                    <div class="rtw-hint" id="rtwRouteHint">Choose your right to work evidence above to see which documents you need to upload.</div>
                 </div>
 
                 <div class="grid-2">
@@ -220,15 +261,16 @@
                     
                     <!-- P45 / HMRC STARTER CHECKLIST SYSTEM -->
                     <div class="form-group" id="fg-p45" style="grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 1rem;">
-                        <label>Do you have a P45 from your most recent employer?</label>
+                        <div class="hmrc-sub-title" style="margin-bottom:0.8rem;">Tax &amp; HMRC</div>
+                        <label>Do you have your latest P45? <span class="req-star">*</span></label>
                         <div class="radio-group" style="margin-bottom:1rem;" id="p45Radios">
-                            <label><input type="radio" name="hasP45" value="yes" onchange="toggleP45(true)"> Yes</label>
-                            <label><input type="radio" name="hasP45" value="no" onchange="toggleP45(false)"> No (I will complete a New Starter Checklist)</label>
+                            <label><input type="radio" name="hasP45" value="yes" onchange="toggleP45(true)"> Yes — upload it below</label>
+                            <label><input type="radio" name="hasP45" value="no" onchange="toggleP45(false)"> No — HMRC Starter Checklist required</label>
                         </div>
                         
                         <div id="p45UploadDiv" style="display:none;">
                             <div class="file-upload-box" id="box-p45">
-                                <span id="label-doc-p45">Upload your P45 here</span>
+                                <span id="label-doc-p45">Click or drag your P45 here to upload</span>
                                 <input type="file" id="file-p45" onchange="handleFileUpload(this, 'p45')">
                                 <div class="upload-progress-wrap" id="prog-wrap-p45"><div class="upload-progress-bar" id="prog-p45"></div></div>
                                 <div class="file-status" id="status-p45"></div>
@@ -593,7 +635,7 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, where, getDocs, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, query, where, getDocs, doc, updateDoc, deleteField } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
     // --- EMAILJS CONFIG ---
@@ -731,6 +773,109 @@
         }
     };
 
+    // ─── RIGHT TO WORK: evidence decides which documents are needed ─────────────
+
+    class ValidationError extends Error {}
+
+    const RTW_DOC_KEYS = ['passport', 'idphoto', 'dlfront', 'dlback', 'niproof', 'poa'];
+    const RTW_BASE_LABELS = {
+        passport: 'Passport / Right to Work ID',
+        idphoto:  'ID Headshot (passport style, white background)',
+        dlfront:  'Driving Licence (Front)',
+        dlback:   'Driving Licence (Back)',
+        poa:      'Proof of Address (Utility Bill, Bank Statement)',
+        niproof:  'Proof of NI Number (Payslip, NI Card, etc.)'
+    };
+    const RTW_DOC_NAMES = {
+        passport: 'Passport / ID', idphoto: 'ID Headshot', dlfront: 'Driving Licence (Front)',
+        dlback: 'Driving Licence (Back)', poa: 'Proof of Address', niproof: 'Proof of NI Number', p45: 'P45'
+    };
+
+    function rtwRoute() {
+        const ev = document.querySelector('input[name="rtwEvidence"]:checked')?.value || '';
+        if (ev === 'UK Passport' || ev === 'Irish passport / passport card') return 'passport';
+        if (ev === 'Right to work share code') return 'sharecode';
+        if (ev === 'Other acceptable documentation' || ev === 'Unsure') return 'other';
+        return '';
+    }
+
+    // required / visible document keys for a route
+    function rtwRequirements(route) {
+        if (route === 'passport')  return { required: ['passport', 'idphoto', 'dlfront', 'dlback', 'niproof'], optional: ['poa'] };
+        if (route === 'sharecode') return { required: ['idphoto', 'dlfront', 'dlback', 'niproof'], optional: ['poa'] };
+        if (route === 'other')     return { required: ['passport', 'idphoto', 'dlfront', 'dlback', 'niproof'], optional: ['poa'] };
+        return { required: [], optional: [] };
+    }
+
+    function docIsSatisfied(key) {
+        const u = uploadedUrls[key];
+        if (u && u.url && u.docStatus !== 'rejected') return true;
+        const c = currentApplicant && currentApplicant.certificates && currentApplicant.certificates[key];
+        if (c && c.url && c.docStatus !== 'rejected') return true;
+        return false;
+    }
+
+    function docHasContent(key) {
+        return !!((uploadedUrls[key] && uploadedUrls[key].url) || (currentApplicant && currentApplicant.certificates && currentApplicant.certificates[key] && currentApplicant.certificates[key].url));
+    }
+
+    window.applyRtwRoute = function() {
+        const route = rtwRoute();
+        const req = rtwRequirements(route);
+        document.getElementById('rtwPassportNote').style.display = route === 'passport' ? 'block' : 'none';
+        document.getElementById('rtwShareCodeBox').style.display = route === 'sharecode' ? 'block' : 'none';
+        document.getElementById('rtwRouteHint').style.display = route ? 'none' : 'block';
+
+        RTW_DOC_KEYS.forEach(key => {
+            const fg = document.getElementById(`fg-${key}`);
+            if (!fg) return;
+            const isReq = req.required.includes(key);
+            const isOpt = req.optional.includes(key);
+            // keep a box visible if the file is already there (or was rejected) so nothing disappears
+            const keep = docHasContent(key) || (uploadedUrls[key] && uploadedUrls[key].docStatus === 'rejected');
+            fg.style.display = (isReq || isOpt || keep) ? '' : 'none';
+            const lab = fg.querySelector(':scope > label');
+            if (lab) {
+                let text = RTW_BASE_LABELS[key];
+                if (key === 'passport' && route === 'other') text = 'Passport / ID (e.g. Birth Certificate)';
+                lab.innerHTML = '';
+                lab.appendChild(document.createTextNode(text + ' '));
+                const tag = document.createElement('span');
+                if (isReq) { tag.className = 'req-star'; tag.textContent = '*'; }
+                else { tag.className = 'opt-tag'; tag.textContent = '(optional)'; }
+                lab.appendChild(tag);
+            }
+        });
+    };
+
+    // Shown on the page before saving step 1
+    function validateStep1() {
+        const missing = [];
+        const sponsor = document.querySelector('input[name="rtwSponsor"]:checked')?.value;
+        const route = rtwRoute();
+        if (!sponsor) missing.push('right to work question');
+        if (!route) missing.push('right to work evidence');
+        if (route === 'sharecode') {
+            const code = document.getElementById('rtwShareCode').value.replace(/[\s-]/g, '');
+            if (!/^[A-Za-z0-9]{9}$/.test(code)) missing.push('a valid 9-character share code');
+        }
+        rtwRequirements(route).required.forEach(k => { if (!docIsSatisfied(k)) missing.push(RTW_DOC_NAMES[k]); });
+
+        const p45 = document.querySelector('input[name="hasP45"]:checked')?.value;
+        if (!p45) {
+            missing.push('P45 question');
+        } else if (p45 === 'yes') {
+            if (!docIsSatisfied('p45')) missing.push('P45 upload');
+        } else {
+            const need = [];
+            if (!document.querySelector('input[name="scGender"]:checked')) need.push('sex');
+            if (!document.querySelector('input[name="qAnotherJob"]:checked')) need.push('another-job statement');
+            if (!document.querySelector('input[name="qStudentLoan"]:checked')) need.push('student loan answer');
+            if (need.length) missing.push('HMRC Starter Checklist (' + need.join(', ') + ')');
+        }
+        if (missing.length) throw new ValidationError('Please complete: ' + missing.join(', ') + '.');
+    }
+
     // ─── TOGGLE HELPERS ─────────────────────────────────────────────────────────
 
     window.toggleP45 = function(hasP45) { 
@@ -824,12 +969,30 @@
             });
 
             const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-            uploadedUrls[docType] = { url: downloadUrl, filename: file.name, path: storagePath };
+            const nowIso = new Date().toISOString();
+            const record = { url: downloadUrl, filename: file.name, path: storagePath, docStatus: 'under_review', uploadedAt: nowIso };
+            uploadedUrls[docType] = record;
 
-            // Persist uploaded docs to Firestore immediately
-            await updateDoc(doc(db, "NGUO New Applicants", currentAppId), {
-                onboardingDocs: uploadedUrls
-            });
+            // Persist just this document (never overwrite other documents' verification stamps)
+            const upd = { [`onboardingDocs.${docType}`]: record };
+            const rej = currentApplicant && currentApplicant.rejectedDocuments && currentApplicant.rejectedDocuments[docType];
+            if (rej) {
+                upd[`rejectedDocuments.${docType}`] = deleteField();
+                delete currentApplicant.rejectedDocuments[docType];
+                // if the rejected copy lived under certificates, replace it there too (keeps any expiry date)
+                if (rej.store === 'certificates') {
+                    upd[`certificates.${docType}.url`] = downloadUrl;
+                    upd[`certificates.${docType}.filename`] = file.name;
+                    upd[`certificates.${docType}.docStatus`] = 'under_review';
+                    upd[`certificates.${docType}.docStatusBy`] = deleteField();
+                    upd[`certificates.${docType}.docStatusAt`] = deleteField();
+                    upd[`certificates.${docType}.docRejectReason`] = deleteField();
+                    if (currentApplicant.certificates && currentApplicant.certificates[docType]) {
+                        Object.assign(currentApplicant.certificates[docType], { url: downloadUrl, filename: file.name, docStatus: 'under_review' });
+                    }
+                }
+            }
+            await updateDoc(doc(db, "NGUO New Applicants", currentAppId), upd);
 
             box.classList.remove('uploading');
             box.classList.add('verified');
@@ -837,6 +1000,10 @@
             statusEl.style.color = 'var(--success)';
             labelEl.textContent = `Replace: ${file.name}`;
             if (progWrap) progWrap.style.display = 'none';
+            if (rejMsg) rejMsg.style.display = 'none';
+            const stampEl = document.getElementById(`stamp-${docType}`);
+            if (stampEl) stampEl.remove();
+            if (RTW_DOC_KEYS.includes(docType)) applyRtwRoute();
 
         } catch (e) {
             console.error('Upload error:', e);
@@ -877,13 +1044,18 @@
             goToStep(nextStep);
         } catch (e) {
             console.error(`Save error on step ${currentStep}:`, e);
-            showStepIndicator(currentStep, 'error', '✗ Save failed — check your connection and try again');
+            showStepIndicator(currentStep, 'error', e instanceof ValidationError ? '✗ ' + e.message : '✗ Save failed — check your connection and try again');
+            if (e instanceof ValidationError) {
+                const ind = document.getElementById(`step${currentStep}-save-indicator`);
+                if (ind) ind.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
     };
 
     // ─── STEP SAVE FUNCTIONS ─────────────────────────────────────────────────────
 
     async function saveStep1() {
+        validateStep1();
         const hasP45Choice = document.querySelector('input[name="hasP45"]:checked')?.value;
         let hmrcData = null;
 
@@ -908,18 +1080,36 @@
             };
         }
 
-        await updateDoc(doc(db, "NGUO New Applicants", currentAppId), {
-            onboardingDocs: uploadedUrls,
+        const rtwSponsor  = document.querySelector('input[name="rtwSponsor"]:checked')?.value;
+        const rtwEvidence = document.querySelector('input[name="rtwEvidence"]:checked')?.value;
+        const rtwShare    = rtwRoute() === 'sharecode' ? document.getElementById('rtwShareCode').value.replace(/[\s-]/g, '').toUpperCase() : '';
+        const oldRtw      = currentApplicant.rightToWork || {};
+        const upd = {
             hasP45: hasP45Choice === 'yes',
             hmrcChecklist: hmrcData,
+            'rightToWork.withoutSponsorship': rtwSponsor,
+            'rightToWork.evidence': rtwEvidence,
+            'rightToWork.shareCode': rtwShare,
+            // kept for older pages that read "workPermit": yes = needs a permit/sponsorship
+            workPermit: rtwSponsor === 'no' ? 'yes' : rtwSponsor === 'yes' ? 'no' : 'unsure',
             step1SavedAt: new Date().toISOString()
-        });
+        };
+        // a new/changed share code needs checking again, and clears any earlier "share code rejected" request
+        if (rtwShare && rtwShare !== (oldRtw.shareCode || '')) {
+            upd['rightToWork.shareCodeCheck'] = deleteField();
+        }
+        if (rtwShare && currentApplicant.rejectedDocuments && currentApplicant.rejectedDocuments.sharecode) {
+            upd['rejectedDocuments.sharecode'] = deleteField();
+            delete currentApplicant.rejectedDocuments.sharecode;
+        }
+        await updateDoc(doc(db, "NGUO New Applicants", currentAppId), upd);
+        currentApplicant.rightToWork = Object.assign({}, oldRtw, { withoutSponsorship: rtwSponsor, evidence: rtwEvidence, shareCode: rtwShare });
     }
 
     async function saveStep2() {
         const chkConfirm = document.getElementById('chkDetailsConfirm').checked;
         if (!chkConfirm) {
-            throw new Error('Please check the confirmation box before proceeding.');
+            throw new ValidationError('Please check the confirmation box before proceeding.');
         }
 
         await updateDoc(doc(db, "NGUO New Applicants", currentAppId), {
@@ -957,9 +1147,9 @@
 
     async function saveStep3() {
         const dbsChoice = document.querySelector('input[name="dbsChoice"]:checked')?.value;
-        if (!dbsChoice) throw new Error('Please select a DBS check option before proceeding.');
+        if (!dbsChoice) throw new ValidationError('Please select a DBS check option before proceeding.');
         if (dbsChoice === 'yes' && !document.getElementById('chkDbsConsent').checked) {
-            throw new Error('You must consent to the DBS check to proceed.');
+            throw new ValidationError('You must consent to the DBS check to proceed.');
         }
 
         await updateDoc(doc(db, "NGUO New Applicants", currentAppId), {
@@ -1255,17 +1445,51 @@
                 document.getElementById('refNameSpan').textContent = currentApplicant.referralName;
             }
 
-            // Restore verified/uploaded state for already-uploaded docs
+            // Restore verified / rejected / uploaded state for already-uploaded docs
+            const rejLog = currentApplicant.rejectedDocuments || {};
+            const fmtWhen = (iso) => { try { return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }); } catch (e) { return ''; } };
             Object.keys(uploadedUrls).forEach(key => {
                 const box = document.getElementById(`box-${key}`);
                 const statusEl = document.getElementById(`status-${key}`);
                 const labelEl = document.getElementById(`label-doc-${key}`);
-                if (box && !box.classList.contains('verified')) {
+                const rejMsg = document.getElementById(`rej-${key}`);
+                const d = uploadedUrls[key] || {};
+                if (!box) return;
+                if (d.docStatus === 'rejected') {
+                    box.classList.remove('verified'); box.classList.add('rejected');
+                    const reason = d.docRejectReason || (rejLog[key] && rejLog[key].reason) || '';
+                    if (rejMsg) { rejMsg.textContent = 'Rejected' + (reason ? ' — ' + reason : '') + '. Please upload a replacement.'; rejMsg.style.display = 'block'; }
+                    if (statusEl) { statusEl.textContent = '✗ Rejected — please replace'; statusEl.style.color = 'var(--error)'; }
+                } else if (!box.classList.contains('verified')) {
                     box.classList.add('verified');
-                    if (statusEl) { statusEl.textContent = '✓ Previously uploaded'; statusEl.style.color = 'var(--success)'; }
-                    if (labelEl && uploadedUrls[key].filename) labelEl.textContent = `Replace: ${uploadedUrls[key].filename}`;
+                    const isOk = d.docStatus === 'verified';
+                    if (statusEl) { statusEl.textContent = isOk ? '✓ Verified by HR' : '✓ Previously uploaded'; statusEl.style.color = 'var(--success)'; }
                 }
+                if (labelEl && d.filename) labelEl.textContent = `Replace: ${d.filename}`;
             });
+
+            // Newer-style rejections (from the recruitment team) don't lock the form — just flag them
+            if (Object.keys(rejLog).length > 0 && currentApplicant.onboardingVerificationStatus !== 'Rejected') {
+                const names = Object.keys(rejLog).map(k => (rejLog[k] && rejLog[k].label) || RTW_DOC_NAMES[k] || k);
+                const b = document.getElementById('rejectionBanner');
+                b.textContent = '⚠️ Action required: please replace the following document(s): ' + names.join(', ') + '.';
+                b.style.display = 'block';
+            }
+            if (rejLog.sharecode) {
+                const r = document.getElementById('rej-sharecode');
+                r.textContent = 'Your share code could not be verified' + (rejLog.sharecode.reason ? ' — ' + rejLog.sharecode.reason : '') + '. Please enter a new code.';
+                r.style.display = 'block';
+            }
+
+            // Right to work (pre-filled from the application form where available)
+            const rtw = currentApplicant.rightToWork || {};
+            if (rtw.withoutSponsorship) { const r = document.querySelector(`input[name="rtwSponsor"][value="${rtw.withoutSponsorship}"]`); if (r) r.checked = true; }
+            if (rtw.evidence) {
+                const radios = document.querySelectorAll('input[name="rtwEvidence"]');
+                radios.forEach(r => { if (r.value === rtw.evidence) r.checked = true; });
+            }
+            if (rtw.shareCode) document.getElementById('rtwShareCode').value = rtw.shareCode;
+            applyRtwRoute();
 
             // Populate prev docs chips
             const c = currentApplicant.certificates || {};
