@@ -1745,6 +1745,7 @@
             { key: 'mocopa',       label: 'MOCOPA' },
             { key: 'gasl3',        label: 'Level 3 Gas' },
             { key: 'cmagas',       label: 'CMA Gas' },
+            { key: 'met1',         label: 'MET1' },
             { key: 'higherskills', label: 'Higher Skills' },
             { key: 'passport',     label: 'Passport / ID' },
             { key: 'dlfront',      label: 'Driving Licence (Front)' },
@@ -2242,7 +2243,9 @@
             </div></div>
 
             <div class="section"><h3>Background & Compliance</h3><div class="grid-2">
-                <div class="data-group"><div class="data-label">Right to Work in UK</div><div class="data-value">${app.workPermit === 'yes' ? 'Needs Permit' : 'Does Not Need Permit'}</div></div>
+                <div class="data-group"><div class="data-label">Right to Work in UK</div><div class="data-value">${app.rightToWork
+                    ? `${({yes:'Yes — can work without sponsorship', no:'<span style="color:var(--error);font-weight:bold;">No — requires sponsorship</span>', unsure:'<span style="color:var(--warning);font-weight:bold;">Unsure</span>'})[app.rightToWork.withoutSponsorship] || 'Not answered'}<br><span style="font-size:0.85rem; color:var(--text-muted);">Evidence: ${safeVal(app.rightToWork.evidence)}</span>`
+                    : (app.workPermit === 'yes' ? 'Needs Permit' : 'Does Not Need Permit')}</div></div>
                 <div class="data-group"><div class="data-label">Criminal Convictions</div><div class="data-value">${app.convictions === 'yes' ? '<span style="color:var(--error);font-weight:bold;">Yes</span>' : 'No'}</div></div>
             </div>${app.convictions === 'yes' ? `<div class="data-group" style="margin-top:1rem;"><div class="data-label">Conviction Details</div><div class="text-box">${safeVal(app.convictionsText)}</div></div>` : ''}</div>
 
