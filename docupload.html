@@ -278,6 +278,20 @@
                     </div>
                 </div>
 
+                <!-- MET1 -->
+                <div class="cert-upload-row" id="row-met1">
+                    <div class="cert-row-icon">🏅</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">MET1 Certificate</div>
+                        <div id="sub-met1" class="cert-row-sub">No file selected</div>
+                        <div id="prog-met1" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-met1">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-met1" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('met1',this)"></label>
+                    </div>
+                </div>
+
                 <!-- Driving Licence -->
                 <div class="cert-upload-row" id="row-drivinglicence">
                     <div class="cert-row-icon">🪪</div>
@@ -604,7 +618,7 @@
     /* Pre-fill badges for certs already uploaded */
     function prefillExistingCerts(certs, oDocs = {}) {
         if (!certs && !oDocs) return;
-        const simpleKeys = ['mocopa', 'gasl3', 'cmagas', 'higherskills', 'idphoto', 'passport', 'dlfront', 'dlback', 'niproof', 'poa'];
+        const simpleKeys = ['mocopa', 'gasl3', 'cmagas', 'met1', 'higherskills', 'idphoto', 'passport', 'dlfront', 'dlback', 'niproof', 'poa'];
         simpleKeys.forEach(key => {
             const data = (certs && certs[key]) || (oDocs && oDocs[key]);
             if (data?.url) {
@@ -791,6 +805,7 @@
         if (!certUploadResults['mocopa'])  missing.push('MOCOPA certificate');
         if (!certUploadResults['gasl3'])   missing.push('Level 3 Gas certificate');
         if (!certUploadResults['cmagas'])  missing.push('CMA Gas certificate');
+        if (!certUploadResults['met1'])    missing.push('MET1 certificate');
 
         const dlYes = document.getElementById('yn-dl-yes').classList.contains('selected-yes');
         const dlNo  = document.getElementById('yn-dl-no').classList.contains('selected-no');
@@ -834,6 +849,7 @@
                 mocopa:       certUploadResults['mocopa']       || null,
                 gasl3:        certUploadResults['gasl3']        || null,
                 cmagas:       certUploadResults['cmagas']       || null,
+                met1:         certUploadResults['met1']         || null,
                 higherskills: certUploadResults['higherskills'] || null,
                 idphoto:      certUploadResults['idphoto']      || null,
                 passport:     certUploadResults['passport']     || null,
