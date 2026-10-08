@@ -531,7 +531,7 @@
         </div>
 
         <!-- 7. CERTIFICATES (HIDDEN BY DEFAULT) -->
-        <div class="section" id="certificatesSection" style="display: none;">
+        <div class="section" id="certificatesSection">
             <div class="section-header">
                 <div class="section-num">7</div>
                 <div><h2>Your Certificates</h2><p>Tell us which certificates you hold</p></div>
@@ -808,7 +808,7 @@
     const EMAILJS_PUBLIC_KEY         = 'ziLnha91scpGjFABh';
     const INTERNAL_NOTIFY_EMAIL      = 'barry.dixon@next-gen.uk';
     // Sent automatically when a candidate does not hold all four required certificates
-    const EMAILJS_TEMPLATE_REJECT    = 'template_un6lrqi';
+    const EMAILJS_TEMPLATE_REJECT    = 'template_846sl7l';
 
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
@@ -892,13 +892,8 @@
             cRec.innerHTML = 'I understand my personal data will be used for recruitment purposes <span class="req">*</span>';
         }
 
-        if (recruitmentAgency === 'yes') {
-            certSection.style.display = 'none';
-        } else if (pos === 'Smart Meter Engineer' || pos === 'SMETs 2 installer') {
-            certSection.style.display = 'block';
-        } else {
-            certSection.style.display = 'none';
-        }
+        // Q8 (Your Certificates) is shown to everyone
+        certSection.style.display = 'block';
         updateSectionNumbers();
     }
     document.getElementById('position').addEventListener('change', updateCertificatesSectionVisibility);
@@ -1301,7 +1296,7 @@
         });
 
         // Certificates (only asked for some roles)
-        const certsAsked = document.getElementById('certificatesSection').style.display === 'block';
+        const certsAsked = true; // Q8 is shown to everyone
         const CERT_LABELS = {
             mocopa: 'Level 3 Power / Smart Meter / Electric MOCOPA',
             gasl3: 'Level 3 Gas / City & Guilds Qualification / CMA / CCN',
