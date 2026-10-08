@@ -202,14 +202,18 @@
             input[type="email"], input[type="text"], input[type="date"] { font-size: 1rem; padding: 0.75rem 0.85rem; }
             .btn-primary { width: 100%; }
         }
+        .reupload-banner { background: rgba(239,68,68,0.08); border: 1.5px solid rgba(239,68,68,0.4); border-radius: 12px; padding: 1.1rem 1.3rem; margin-bottom: 1.2rem; color: #fca5a5; font-size: 0.92rem; line-height: 1.55; }
+        .reupload-banner strong { color: #fecaca; }
+        .reupload-banner .rb-item { margin-top: 0.5rem; }
+        .reupload-banner .rb-reason { color: #fda4af; font-size: 0.85rem; }
     </style>
 </head>
 <body>
 <div class="container">
     <img src="https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1" alt="NGU Logo" class="logo">
     <div class="page-header">
-        <h1>Certificate Upload</h1>
-        <p>Upload your missing certificates to complete your application</p>
+        <h1 id="pageHeading">Certificate Upload</h1>
+        <p id="pageSubheading">Upload your missing certificates to complete your application</p>
     </div>
 
     <div id="mainContent">
@@ -229,9 +233,10 @@
 
         <!-- STEP 2: Uploads (shown after lookup) -->
         <div id="uploadSection">
+            <div id="reuploadBanner" style="display:none;"></div>
             <div class="section">
                 <div class="section-header">
-                    <div><h2>Your Certificates</h2><p>Upload all mandatory items — desirable qualifications are optional</p></div>
+                    <div><h2 id="uploadHeading">Your Certificates</h2><p id="uploadSubheading">Upload all mandatory items — desirable qualifications are optional</p></div>
                 </div>
 
                 <div class="cert-section-label mandatory">Mandatory Certificates</div>
@@ -278,6 +283,20 @@
                     </div>
                 </div>
 
+                <!-- MET1 -->
+                <div class="cert-upload-row" id="row-met1">
+                    <div class="cert-row-icon">🏅</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">MET1 Certificate</div>
+                        <div id="sub-met1" class="cert-row-sub">No file selected</div>
+                        <div id="prog-met1" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-met1">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-met1" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('met1',this)"></label>
+                    </div>
+                </div>
+
                 <!-- Driving Licence -->
                 <div class="cert-upload-row" id="row-drivinglicence">
                     <div class="cert-row-icon">🪪</div>
@@ -315,6 +334,92 @@
                     </div>
                     <div class="cert-row-actions">
                         <span class="cert-badge none" id="badge-drivinglicence">Not answered</span>
+                    </div>
+                </div>
+
+                <div class="cert-section-label mandatory" style="margin-top:1.8rem;">ID & Right to Work Documents</div>
+
+                <!-- ID Headshot -->
+                <div class="cert-upload-row" id="row-idphoto">
+                    <div class="cert-row-icon">📸</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">ID Headshot (Clear photo of your face)</div>
+                        <div id="sub-idphoto" class="cert-row-sub">No file selected</div>
+                        <div id="prog-idphoto" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-idphoto">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-idphoto" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('idphoto',this)"></label>
+                    </div>
+                </div>
+
+                <!-- Passport / ID -->
+                <div class="cert-upload-row" id="row-passport">
+                    <div class="cert-row-icon">🪪</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">Passport / Right to Work ID</div>
+                        <div id="sub-passport" class="cert-row-sub">No file selected</div>
+                        <div id="prog-passport" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-passport">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-passport" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('passport',this)"></label>
+                    </div>
+                </div>
+
+                <!-- Driving Licence (Front) -->
+                <div class="cert-upload-row" id="row-dlfront">
+                    <div class="cert-row-icon">🪪</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">Driving Licence (Front Card)</div>
+                        <div id="sub-dlfront" class="cert-row-sub">No file selected</div>
+                        <div id="prog-dlfront" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-dlfront">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-dlfront" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('dlfront',this)"></label>
+                    </div>
+                </div>
+
+                <!-- Driving Licence (Back) -->
+                <div class="cert-upload-row" id="row-dlback">
+                    <div class="cert-row-icon">🪪</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">Driving Licence (Back Card)</div>
+                        <div id="sub-dlback" class="cert-row-sub">No file selected</div>
+                        <div id="prog-dlback" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-dlback">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-dlback" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('dlback',this)"></label>
+                    </div>
+                </div>
+
+                <!-- Proof of NI Number -->
+                <div class="cert-upload-row" id="row-niproof">
+                    <div class="cert-row-icon">🪪</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">Proof of NI Number (Payslip, NI Card, etc.)</div>
+                        <div id="sub-niproof" class="cert-row-sub">No file selected</div>
+                        <div id="prog-niproof" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-niproof">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-niproof" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('niproof',this)"></label>
+                    </div>
+                </div>
+
+                <!-- Proof of Address -->
+                <div class="cert-upload-row" id="row-poa">
+                    <div class="cert-row-icon">🏠</div>
+                    <div class="cert-row-info">
+                        <div class="cert-row-title">Proof of Address (Utility Bill, Bank Statement)</div>
+                        <div id="sub-poa" class="cert-row-sub">No file selected</div>
+                        <div id="prog-poa" class="cert-upload-progress">⏳ Uploading…</div>
+                    </div>
+                    <div class="cert-row-actions">
+                        <span class="cert-badge none" id="badge-poa">Not uploaded</span>
+                        <label class="cert-file-label">Choose file<input type="file" id="file-poa" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('poa',this)"></label>
                     </div>
                 </div>
 
@@ -368,6 +473,8 @@
                     </div>
                 </div>
 
+                <div id="reuploadExtra"></div>
+
                 <div class="cert-section-label additional" style="margin-top:1.8rem;">Additional Certificates</div>
                 <div id="additionalCertsContainer"></div>
                 <button type="button" class="add-cert-btn" id="addCertBtn">+ Add Another Certificate</button>
@@ -390,7 +497,7 @@
 
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, where, getDocs, updateDoc }
+    import { getFirestore, collection, query, where, getDocs, updateDoc, deleteField }
         from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { getStorage, ref, uploadBytes, getDownloadURL }
         from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
@@ -423,6 +530,194 @@
     }
 
     /* ═══════════════════════════════════════════════════
+       RE-UPLOAD MODE — only shows what has been rejected
+    ═══════════════════════════════════════════════════ */
+    const REUPLOAD_LABELS = {
+        passport: 'Passport / ID', idphoto: 'ID Headshot', dlfront: 'Driving Licence (Front)', dlback: 'Driving Licence (Back)',
+        poa: 'Proof of Address', niproof: 'Proof of NI Number (Payslip/Card)', p45: 'P45 Document',
+        mocopa: 'Level 3 Power / Smart Meter / Electric MOCOPA', gasl3: 'Level 3 Gas / City & Guilds / CMA / CCN',
+        cmagas: 'CMA Gas Certificate', met1: 'MET1 Certificate', higherskills: 'Higher Skills Set Certificates',
+        sharecode: 'Right to Work Share Code'
+    };
+    const REUPLOAD_ICONS = { idphoto: '📸', passport: '🪪', dlfront: '🪪', dlback: '🪪', niproof: '🪪', poa: '🏠', p45: '🧾', mocopa: '📋', gasl3: '🔥', cmagas: '🏅', met1: '🏅', higherskills: '⭐', sharecode: '🔢' };
+    const ID_DOC_KEYS = ['idphoto', 'passport', 'dlfront', 'dlback', 'niproof', 'poa', 'p45'];
+
+    let reuploadMode = false;
+    let rejectedItems = {};   // key -> { label, reason, store }
+    let originalDocs = {};    // key -> the rejected file's old record (to keep its expiry)
+    const replacedKeys = new Set();
+    const escHtml = (t) => String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // What has been rejected on this application? Uses the list written when a document
+    // is rejected, plus anything marked rejected that has no list entry (older rejections).
+    function collectRejected(data) {
+        const out = {};
+        const log = data.rejectedDocuments || {};
+        Object.keys(log).forEach(k => {
+            out[k] = { label: log[k].label || REUPLOAD_LABELS[k] || k, reason: log[k].reason || '', store: log[k].store || (ID_DOC_KEYS.includes(k) ? 'onboardingDocs' : 'certificates') };
+        });
+        Object.keys(REUPLOAD_LABELS).forEach(k => {
+            if (out[k] || k === 'sharecode') return;
+            const c = data.certificates && data.certificates[k];
+            const o = data.onboardingDocs && data.onboardingDocs[k];
+            if (c && c.docStatus === 'rejected') out[k] = { label: REUPLOAD_LABELS[k], reason: c.docRejectReason || '', store: 'certificates' };
+            else if (o && o.docStatus === 'rejected') out[k] = { label: REUPLOAD_LABELS[k], reason: o.docRejectReason || '', store: 'onboardingDocs' };
+        });
+        return out;
+    }
+
+    function buildExtraRow(key) {
+        const label = REUPLOAD_LABELS[key] || key;
+        const div = document.createElement('div');
+        div.className = 'cert-upload-row'; div.id = `row-${key}`;
+        if (key === 'sharecode') {
+            div.innerHTML = `
+                <div class="cert-row-icon">${REUPLOAD_ICONS[key]}</div>
+                <div class="cert-row-info" style="flex:1;min-width:200px;">
+                    <div class="cert-row-title">${label}</div>
+                    <div style="margin-top:0.5rem;">
+                        <input type="text" id="sharecode-input" class="cert-inline-input" placeholder="9-character share code, e.g. W12AB3456" maxlength="14" autocomplete="off" style="resize:none;">
+                    </div>
+                    <div style="font-size:0.76rem;color:var(--text-muted);margin-top:0.3rem;">Get a new code at <a href="https://www.gov.uk/prove-right-to-work" target="_blank" style="color:var(--accent);">gov.uk/prove-right-to-work</a></div>
+                </div>
+                <div class="cert-row-actions"><span class="cert-badge ready" id="badge-sharecode">Enter new code</span></div>`;
+        } else {
+            div.innerHTML = `
+                <div class="cert-row-icon">${REUPLOAD_ICONS[key] || '📎'}</div>
+                <div class="cert-row-info">
+                    <div class="cert-row-title">${label}</div>
+                    <div id="sub-${key}" class="cert-row-sub">No file selected</div>
+                    <div id="prog-${key}" class="cert-upload-progress">⏳ Uploading…</div>
+                </div>
+                <div class="cert-row-actions">
+                    <span class="cert-badge none" id="badge-${key}">Not uploaded</span>
+                    <label class="cert-file-label">Choose file<input type="file" id="file-${key}" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('${key}',this)"></label>
+                </div>`;
+        }
+        return div;
+    }
+
+    // Returns true when there is something for the applicant to re-upload.
+    function initReuploadMode(data) {
+        reuploadMode = true;
+        rejectedItems = collectRejected(data);
+        const keys = Object.keys(rejectedItems);
+        const msgEl = document.getElementById('lookupMsg');
+
+        if (keys.length === 0) {
+            const note = document.createElement('div');
+            note.className = 'applicant-found-banner';
+            note.innerHTML = '👍 Nothing needs re-uploading right now.<br><span style="font-weight:400;">If you were asked to replace a document, please contact recruitment.</span>';
+            document.getElementById('lookupSection').appendChild(note);
+            return false;
+        }
+
+        document.getElementById('pageHeading').textContent = 'Replace Your Documents';
+        document.getElementById('pageSubheading').textContent = 'We could not accept the document(s) below — please upload a replacement for each one';
+        document.getElementById('uploadHeading').textContent = 'Documents to Replace';
+        document.getElementById('uploadSubheading').textContent = 'Only the items we need from you are shown';
+        document.getElementById('submitBtn').textContent = 'Submit Replacement Documents';
+
+        // Banner listing what was rejected and why
+        const banner = document.getElementById('reuploadBanner');
+        banner.className = 'reupload-banner';
+        banner.style.display = 'block';
+        banner.innerHTML = `<strong>⚠️ These documents need to be replaced:</strong>` + keys.map(k =>
+            `<div class="rb-item">• <strong>${escHtml(rejectedItems[k].label)}</strong>${rejectedItems[k].reason ? `<div class="rb-reason">${escHtml(rejectedItems[k].reason)}</div>` : ''}</div>`).join('');
+
+        // Add rows that the normal page does not have (P45, share code)
+        const extra = document.getElementById('reuploadExtra');
+        keys.forEach(k => { if (!document.getElementById(`row-${k}`)) extra.appendChild(buildExtraRow(k)); });
+
+        // Hide everything that has not been rejected
+        const section = document.getElementById('uploadSection').querySelector('.section');
+        section.querySelectorAll('.cert-section-label, #addCertBtn, #additionalCertsContainer').forEach(el => el.style.display = 'none');
+        section.querySelectorAll('.cert-upload-row').forEach(row => {
+            const key = row.id.replace('row-', '');
+            row.style.display = rejectedItems[key] ? '' : 'none';
+        });
+
+        // Rejected items start empty so a NEW file is required
+        keys.forEach(k => {
+            if (k === 'sharecode') return;
+            originalDocs[k] = (data[rejectedItems[k].store] && data[rejectedItems[k].store][k]) || {};
+            delete certUploadResults[k];
+            const row = document.getElementById(`row-${k}`);
+            if (row) row.classList.remove('uploaded', 'uploading-row');
+            const badge = document.getElementById(`badge-${k}`);
+            if (badge) { badge.textContent = 'Needs replacing'; badge.className = 'cert-badge ready'; }
+            const sub = document.getElementById(`sub-${k}`);
+            if (sub) sub.textContent = 'No file selected';
+            const fileEl = document.getElementById(`file-${k}`);
+            if (fileEl) fileEl.value = '';
+        });
+
+        const sc = document.getElementById('sharecode-input');
+        if (sc) sc.addEventListener('input', function() {
+            const ok = /^[A-Za-z0-9]{9}$/.test(this.value.replace(/[\s-]/g, ''));
+            const b = document.getElementById('badge-sharecode');
+            b.textContent = ok ? '✓ Code entered' : 'Enter new code';
+            b.className = 'cert-badge ' + (ok ? 'done' : 'ready');
+        });
+        return true;
+    }
+
+    async function submitReupload() {
+        const btn   = document.getElementById('submitBtn');
+        const msgEl = document.getElementById('submitMsg');
+        msgEl.textContent = '';
+
+        const missing = [];
+        let code = '';
+        Object.keys(rejectedItems).forEach(k => {
+            if (k === 'sharecode') {
+                code = (document.getElementById('sharecode-input').value || '').replace(/[\s-]/g, '').toUpperCase();
+                if (!/^[A-Z0-9]{9}$/.test(code)) missing.push('a valid 9-character share code');
+            } else if (!replacedKeys.has(k) || !certUploadResults[k]) {
+                missing.push(rejectedItems[k].label);
+            }
+        });
+        if (missing.length > 0) {
+            msgEl.className = 'submit-msg err';
+            msgEl.textContent = `Please provide: ${missing.slice(0, 3).join(', ')}${missing.length > 3 ? ` and ${missing.length - 3} more…` : '.'}`;
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>Submitting…';
+
+        try {
+            const nowIso = new Date().toISOString();
+            const updates = {};
+            Object.keys(rejectedItems).forEach(k => {
+                if (k === 'sharecode') {
+                    updates['rightToWork.shareCode'] = code;
+                    updates['rightToWork.shareCodeCheck'] = deleteField();
+                } else {
+                    const r = certUploadResults[k];
+                    const rec = { url: r.url, filename: r.filename, type: r.type || '', size: r.size || 0, docStatus: 'under_review', reuploadedAt: nowIso };
+                    const oldExpiry = originalDocs[k] && originalDocs[k].expiry;
+                    if (oldExpiry) rec.expiry = oldExpiry;
+                    updates[`${rejectedItems[k].store}.${k}`] = rec;
+                }
+                updates[`rejectedDocuments.${k}`] = deleteField();
+            });
+            updates.documentsReuploadedAt = nowIso;
+            await updateDoc(foundDocRef, updates);
+
+            document.querySelector('#successScreen h2').textContent = 'Documents Submitted!';
+            document.querySelector('#successScreen p').textContent = 'Thank you — your replacement documents have been sent to us and will be checked shortly.';
+            document.getElementById('mainContent').style.display = 'none';
+            document.getElementById('successScreen').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (err) {
+            msgEl.className   = 'submit-msg err';
+            msgEl.textContent = 'Submission failed: ' + err.message;
+            btn.disabled = false; btn.innerHTML = 'Submit Replacement Documents';
+        }
+    }
+
+    /* ═══════════════════════════════════════════════════
        LOOKUP
     ═══════════════════════════════════════════════════ */
     window.lookupApplicant = async function() {
@@ -439,11 +734,34 @@
         msgEl.textContent = '';
 
         try {
-            const q = query(
+            let snap = await getDocs(query(
                 collection(db, 'NGUO New Applicants'),
                 where('personalDetails.email', '==', email)
-            );
-            const snap = await getDocs(q);
+            ));
+
+            if (snap.empty) {
+                // Try exact case entered by user (e.g. Jasonborne743@gmail.com)
+                snap = await getDocs(query(
+                    collection(db, 'NGUO New Applicants'),
+                    where('personalDetails.email', '==', emailInput.value.trim())
+                ));
+            }
+
+            if (snap.empty) {
+                // Fallback: case-insensitive scan across all applicants for mixed-case stored emails
+                const allSnap = await getDocs(collection(db, 'NGUO New Applicants'));
+                const matchingDocs = [];
+                allSnap.forEach(d => {
+                    const data = d.data();
+                    const docEmail = data.personalDetails?.email || data.email || '';
+                    if (docEmail.trim().toLowerCase() === email) {
+                        matchingDocs.push(d);
+                    }
+                });
+                if (matchingDocs.length > 0) {
+                    snap = { empty: false, forEach: cb => matchingDocs.forEach(cb) };
+                }
+            }
 
             if (snap.empty) {
                 msgEl.className = 'lookup-msg err';
@@ -476,11 +794,14 @@
             document.getElementById('lookupSection').appendChild(banner);
 
             // Pre-fill any certs already on the record
-            prefillExistingCerts(foundDocData.certificates);
+            prefillExistingCerts(foundDocData.certificates, foundDocData.onboardingDocs);
+            const reuploadHasItems = initReuploadMode(foundDocData);
 
             // Show upload section
-            document.getElementById('uploadSection').style.display = 'block';
-            document.getElementById('uploadSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (reuploadHasItems) {
+                document.getElementById('uploadSection').style.display = 'block';
+                document.getElementById('uploadSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
 
             emailInput.disabled = true;
             btn.textContent = 'Found ✓';
@@ -493,22 +814,23 @@
     };
 
     /* Pre-fill badges for certs already uploaded */
-    function prefillExistingCerts(certs) {
-        if (!certs) return;
-        const simpleKeys = ['mocopa', 'gasl3', 'cmagas', 'higherskills'];
+    function prefillExistingCerts(certs, oDocs = {}) {
+        if (!certs && !oDocs) return;
+        const simpleKeys = ['mocopa', 'gasl3', 'cmagas', 'met1', 'higherskills', 'idphoto', 'passport', 'dlfront', 'dlback', 'niproof', 'poa'];
         simpleKeys.forEach(key => {
-            if (certs[key]?.url) {
-                certUploadResults[key] = certs[key];
+            const data = (certs && certs[key]) || (oDocs && oDocs[key]);
+            if (data?.url) {
+                certUploadResults[key] = data;
                 const row   = document.getElementById(`row-${key}`);
                 const badge = document.getElementById(`badge-${key}`);
                 const sub   = document.getElementById(`sub-${key}`);
                 if (row)   row.classList.add('uploaded');
                 if (badge) { badge.textContent = '✓ Already uploaded'; badge.className = 'cert-badge done'; }
-                if (sub)   sub.textContent = certs[key].filename || 'Previously uploaded';
+                if (sub)   sub.textContent = data.filename || 'Previously uploaded';
             }
         });
         // Driving licence
-        const dl = certs.drivinglicence;
+        const dl = certs?.drivinglicence;
         if (dl) {
             if (dl.confirmed === false) {
                 setDrivingLicence(false);
@@ -525,7 +847,7 @@
             }
         }
         // EUSR
-        const eusr = certs.eusr;
+        const eusr = certs?.eusr;
         if (eusr) {
             if (eusr.has === false) setEUSR(false);
             else if (eusr.has === true) {
@@ -534,7 +856,7 @@
             }
         }
         // Gas Safe
-        if (certs.gassafe?.number) {
+        if (certs?.gassafe?.number) {
             document.getElementById('gassafe-number').value = certs.gassafe.number;
             const badge = document.getElementById('badge-gassafe');
             badge.textContent = `✓ ${certs.gassafe.number}`;
@@ -566,6 +888,7 @@
 
         try {
             certUploadResults[key] = await uploadFileToStorage(file, uploadPath(key, file.name));
+            replacedKeys.add(key);
             row.classList.remove('uploading-row'); row.classList.add('uploaded');
             if (badge) { badge.textContent = '✓ Uploaded'; badge.className = 'cert-badge done'; }
             if (prog)  prog.classList.remove('visible');
@@ -671,6 +994,7 @@
     ═══════════════════════════════════════════════════ */
     window.submitCertificates = async function() {
         if (!foundDocRef) { alert('Please find your application first.'); return; }
+        if (reuploadMode) return submitReupload();
 
         const btn   = document.getElementById('submitBtn');
         const msgEl = document.getElementById('submitMsg');
@@ -681,6 +1005,7 @@
         if (!certUploadResults['mocopa'])  missing.push('MOCOPA certificate');
         if (!certUploadResults['gasl3'])   missing.push('Level 3 Gas certificate');
         if (!certUploadResults['cmagas'])  missing.push('CMA Gas certificate');
+        if (!certUploadResults['met1'])    missing.push('MET1 certificate');
 
         const dlYes = document.getElementById('yn-dl-yes').classList.contains('selected-yes');
         const dlNo  = document.getElementById('yn-dl-no').classList.contains('selected-no');
@@ -724,7 +1049,14 @@
                 mocopa:       certUploadResults['mocopa']       || null,
                 gasl3:        certUploadResults['gasl3']        || null,
                 cmagas:       certUploadResults['cmagas']       || null,
+                met1:         certUploadResults['met1']         || null,
                 higherskills: certUploadResults['higherskills'] || null,
+                idphoto:      certUploadResults['idphoto']      || null,
+                passport:     certUploadResults['passport']     || null,
+                dlfront:      certUploadResults['dlfront']      || null,
+                dlback:       certUploadResults['dlback']       || null,
+                niproof:      certUploadResults['niproof']      || null,
+                poa:          certUploadResults['poa']          || null,
                 drivinglicence: {
                     confirmed: dlConfirmed,
                     expiry:    document.getElementById('dl-expiry').value || '',
@@ -735,10 +1067,18 @@
                 additional: additionalCerts
             };
 
-            await updateDoc(foundDocRef, {
+            const updates = {
                 certificates,
                 certificatesUpdatedAt: new Date().toISOString()
-            });
+            };
+            if (certUploadResults['idphoto'])  updates['onboardingDocs.idphoto']  = certUploadResults['idphoto'];
+            if (certUploadResults['passport']) updates['onboardingDocs.passport'] = certUploadResults['passport'];
+            if (certUploadResults['dlfront'])  updates['onboardingDocs.dlfront']  = certUploadResults['dlfront'];
+            if (certUploadResults['dlback'])   updates['onboardingDocs.dlback']   = certUploadResults['dlback'];
+            if (certUploadResults['niproof'])  updates['onboardingDocs.niproof']  = certUploadResults['niproof'];
+            if (certUploadResults['poa'])      updates['onboardingDocs.poa']      = certUploadResults['poa'];
+
+            await updateDoc(foundDocRef, updates);
 
             document.getElementById('mainContent').style.display = 'none';
             document.getElementById('successScreen').style.display = 'block';
