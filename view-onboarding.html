@@ -201,10 +201,10 @@
     // ── EmailJS (used to tell a candidate their contract has been reissued) ──
     const EMAILJS_PUBLIC_KEY = 'ziLnha91scpGjFABh';
     const EMAILJS_SERVICE_ID = 'service_dcdbhph';
-    // TODO: paste the EmailJS template ID for the "contract reissued" email here.
+    // EmailJS template for the "contract reissued" email.
     // Template variables sent: to_email, first_name, job_title, previous_start_date,
     // new_start_date, portal_link, username, password
-    const EMAILJS_CONTRACT_REISSUE = '';
+    const EMAILJS_CONTRACT_REISSUE = 'template_9cnewsa';
     if (window.emailjs) emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
     let applicationsData = [];
@@ -240,7 +240,8 @@
         applicationsData = [];
         snapshot.forEach(doc => {
             const d = { id: doc.id, ...doc.data() };
-            if (d.contractAccepted === true || d.onboardingCompleted === true) {
+            // Also keep applicants whose contract has been reissued and is awaiting a new signature
+            if (d.contractAccepted === true || d.onboardingCompleted === true || (d.contractReissuedAt && d.contractAccepted === false)) {
                 applicationsData.push(d);
             }
         });
@@ -280,7 +281,9 @@
 
         filteredApps.forEach((app) => {
             let statusBadge = '';
-            if (app.onboardingProcessed) {
+            if (app.contractReissuedAt && app.contractAccepted === false) {
+                statusBadge = `<span class="status-badge status-pending">🔄 Awaiting Re-Sign</span>`;
+            } else if (app.onboardingProcessed) {
                 statusBadge = `<span class="status-badge status-processed">✓ HR Processed</span>`;
             } else if (app.onboardingCompleted) {
                 statusBadge = `<span class="status-badge status-submitted">🟢 Data Submitted</span>`;
@@ -379,38 +382,69 @@
         }
 
         // Email the candidate. A failure here must not undo the reissue.
-        let emailNote = '';
+        const result = await sendReissueEmail(appData, appData.startDate, newDate);
+        const emailNote = result.ok
+            ? '\n\nThe candidate has been emailed.'
+            : `\n\nThe contract was reissued, but the email was NOT sent:\n${result.error}\n\nUse the "Resend email" button on this applicant once that is fixed, or tell the candidate yourself.`;
+
+        alert('Contract reissued. The candidate must now re-sign with the new start date.' + emailNote);
+    };
+
+    // Sends the "contract reissued" email and records the outcome on the applicant
+    // record, so a failed send is visible later and can be retried.
+    async function sendReissueEmail(appData, previousStartDate, newStartDate) {
+        const fmtLong = (d) => d ? new Date(d).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'TBC';
         const toEmail = appData.personalDetails?.email;
+        let result = { ok: false, error: '' };
+
         if (!EMAILJS_CONTRACT_REISSUE) {
-            emailNote = '\n\nNo email was sent (no template ID is set yet) — please tell the candidate to log back into the portal and re-sign.';
+            result.error = 'No EmailJS template ID is set in this page (EMAILJS_CONTRACT_REISSUE is blank).';
+        } else if (!window.emailjs) {
+            result.error = 'The EmailJS library did not load (check the internet connection / ad-blocker).';
         } else if (!toEmail) {
-            emailNote = '\n\nNo email address on file for this candidate, so no email was sent.';
+            result.error = 'There is no email address on file for this candidate.';
         } else {
             try {
                 await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_CONTRACT_REISSUE, {
                     to_email: toEmail,
                     first_name: (appData.fullName || appData.personalDetails?.forename || 'there').split(' ')[0],
                     job_title: appData.position || 'the role',
-                    previous_start_date: fmtLong(appData.startDate),
-                    new_start_date: fmtLong(newDate),
+                    previous_start_date: fmtLong(previousStartDate),
+                    new_start_date: fmtLong(newStartDate),
                     portal_link: 'https://ngu-recruitment-portal.vercel.app/engineer-portal.html',
                     username: appData.portalUsername || '',
                     password: appData.portalPassword || ''
-                });
-                emailNote = '\n\nThe candidate has been emailed.';
+                }, { publicKey: EMAILJS_PUBLIC_KEY });
+                result.ok = true;
             } catch (e) {
                 console.error('Reissue email error:', e);
-                emailNote = '\n\nThe contract was reissued, but the email failed to send — please tell the candidate yourself.';
+                // EmailJS errors look like { status: 422, text: "The recipients address is empty" }
+                result.error = `${e?.status ? 'EmailJS error ' + e.status + ': ' : ''}${e?.text || e?.message || e}`;
             }
         }
 
-        alert('Contract reissued. The candidate must now re-sign with the new start date.' + emailNote);
+        try {
+            await updateDoc(doc(db, "NGUO New Applicants", appData.id), {
+                contractReissueEmail: {
+                    status: result.ok ? 'sent' : 'failed',
+                    at: new Date().toISOString(),
+                    to: toEmail || '',
+                    error: result.ok ? '' : result.error
+                }
+            });
+        } catch (e) { console.error('Could not record reissue email outcome:', e); }
 
-        // Until they re-sign, an applicant who hasn't finished onboarding drops out of this list
-        if (!appData.onboardingCompleted && selectedAppId === appId) {
-            selectedAppId = null;
-            document.getElementById('mainContent').innerHTML = '<div class="empty-state">Contract reissued. This applicant will reappear here once they have re-signed.</div>';
-        }
+        return result;
+    }
+
+    window.resendReissueEmail = async function(appId, btnEl) {
+        const appData = applicationsData.find(a => a.id === appId);
+        if (!appData) return alert('Applicant record not found. Please refresh and try again.');
+        if (!confirm(`Resend the "contract reissued" email to ${appData.personalDetails?.email || 'this candidate'}?`)) return;
+        if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Sending…'; }
+        const result = await sendReissueEmail(appData, appData.previousStartDate || appData.startDate, appData.startDate);
+        if (btnEl) { btnEl.disabled = false; btnEl.textContent = '📧 Resend email'; }
+        alert(result.ok ? 'Email sent to the candidate.' : `The email was NOT sent:\n${result.error}`);
     };
 
     window.markAsProcessed = async function(appId) {
@@ -771,7 +805,16 @@
         // Contract reissue: pending banner + history of superseded contracts
         const fmtShortDate = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A';
         const reissuePendingHtml = (app.contractAccepted === false && app.contractReissuedAt)
-            ? `<div class="reissue-pending">⏳ Contract reissued ${new Date(app.contractReissuedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}${app.contractReissuedBy ? ' by ' + escapeHtml(app.contractReissuedBy) : ''} — awaiting the candidate's new signature (start date ${fmtShortDate(app.startDate)}).</div>`
+            ? `<div class="reissue-pending">⏳ Contract reissued ${new Date(app.contractReissuedAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}${app.contractReissuedBy ? ' by ' + escapeHtml(app.contractReissuedBy) : ''} — awaiting the candidate's new signature (start date ${fmtShortDate(app.startDate)}).
+                <div style="margin-top:0.6rem; display:flex; flex-wrap:wrap; gap:0.8rem; align-items:center; font-weight:500;">
+                    <span>${app.contractReissueEmail
+                        ? (app.contractReissueEmail.status === 'sent'
+                            ? `✅ Email sent to ${escapeHtml(app.contractReissueEmail.to || 'candidate')} ${new Date(app.contractReissueEmail.at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })}`
+                            : `❌ Last email attempt failed: ${escapeHtml(app.contractReissueEmail.error || 'unknown error')}`)
+                        : '⚠️ No email has been sent to the candidate yet'}</span>
+                    <button type="button" class="btn-reissue" data-resend-app-id="${app.id}">📧 Resend email</button>
+                </div>
+            </div>`
             : '';
         const contractHistoryHtml = (Array.isArray(app.contractHistory) && app.contractHistory.length > 0)
             ? `<div style="margin-top:1.5rem;">
@@ -1199,6 +1242,14 @@
         if (hmrcBtn) {
             hmrcBtn.addEventListener('click', function() {
                 generateHmrcChecklist(this.getAttribute('data-hmrc-app-id'));
+            });
+        }
+
+        // Wire up Resend reissue email button
+        const resendBtn = mainEl.querySelector('[data-resend-app-id]');
+        if (resendBtn) {
+            resendBtn.addEventListener('click', function() {
+                resendReissueEmail(this.getAttribute('data-resend-app-id'), this);
             });
         }
 
