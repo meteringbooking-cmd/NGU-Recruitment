@@ -178,6 +178,14 @@
         }
 
         /* ── Certificates styles ── */
+        .cert-have { display:flex; align-items:flex-start; gap:0.7rem; cursor:pointer; font-weight:600; font-size:0.9rem; line-height:1.4; }
+        .cert-have input[type="checkbox"] { margin-top:0.15rem; width:1.15rem; height:1.15rem; accent-color: var(--accent); cursor:pointer; flex-shrink:0; }
+        .cert-upload-wrap { margin-top:0.8rem; padding-top:0.8rem; border-top:1px dashed var(--border); }
+        .cert-opt-tag { font-size:0.74rem; color:var(--text-muted); font-weight:500; margin-bottom:0.3rem; display:block; }
+        .cert-notice { margin-top:1.2rem; padding:0.9rem 1.1rem; border-radius:10px; background: rgba(245,158,11,0.08); border:1.5px solid rgba(245,158,11,0.35); color:#fcd34d; font-size:0.88rem; line-height:1.55; }
+        .cert-notice strong { color:#fde68a; }
+        .sub-heading { font-size:0.95rem; font-weight:700; margin: 1.6rem 0 0.3rem; }
+        .sub-hint { font-size:0.82rem; color: var(--text-muted); margin-bottom:0.9rem; }
         .cert-section-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin: 1.4rem 0 0.8rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
         .cert-section-label.mandatory { color: #f87171; border-color: rgba(248,113,113,0.3); }
         .cert-section-label.desirable { color: #60a5fa; border-color: rgba(96,165,250,0.3); }
@@ -472,30 +480,37 @@
             </div>
         </div>
 
-        <!-- 5. WORK PERMIT -->
+        <!-- 5. RIGHT TO WORK -->
         <div class="section">
             <div class="section-header">
                 <div class="section-num">5</div>
                 <div><h2>Right to Work</h2></div>
             </div>
+            <div class="form-group" style="margin-bottom:1.6rem;">
+                <label>Do you have the right to work in the UK without requiring sponsorship from NGU? <span class="req">*</span></label>
+                <div class="radio-group" id="rtwSponsorGroup" style="margin-top:0.5rem;">
+                    <label class="radio-option"><input type="radio" name="rtwSponsor" value="yes"> Yes</label>
+                    <label class="radio-option"><input type="radio" name="rtwSponsor" value="no"> No</label>
+                    <label class="radio-option"><input type="radio" name="rtwSponsor" value="unsure"> Unsure</label>
+                </div>
+            </div>
             <div class="form-group">
-                <label>Do you need a work permit to be employed in the UK? <span class="req">*</span></label>
-                <div class="radio-group" id="workPermitGroup" style="margin-top:0.5rem;">
-                    <label class="radio-option" id="workPermitYesLabel"><input type="radio" name="workPermit" value="yes"> Yes</label>
-                    <label class="radio-option" id="workPermitNoLabel"><input type="radio" name="workPermit" value="no"> No</label>
+                <label>What evidence can you provide to confirm your right to work? <span class="req">*</span></label>
+                <div class="radio-group" id="rtwEvidenceGroup" style="margin-top:0.5rem;">
+                    <label class="radio-option"><input type="radio" name="rtwEvidence" value="UK Passport"> UK Passport</label>
+                    <label class="radio-option"><input type="radio" name="rtwEvidence" value="Irish passport / passport card"> Irish passport / passport card</label>
+                    <label class="radio-option"><input type="radio" name="rtwEvidence" value="Right to work share code"> Right to work share code</label>
+                    <label class="radio-option"><input type="radio" name="rtwEvidence" value="Other acceptable documentation"> Other acceptable documentation</label>
+                    <label class="radio-option"><input type="radio" name="rtwEvidence" value="Unsure"> Unsure</label>
                 </div>
             </div>
         </div>
 
-        <!-- 6. QUALIFICATIONS -->
+        <!-- 6. QUALIFICATIONS & EMPLOYMENT HISTORY (merged) -->
         <div class="section">
             <div class="section-header">
                 <div class="section-num">6</div>
-                <div><h2>Qualifications</h2><p>I confirm I have the minimum required qualifications for the role</p></div>
-            </div>
-            <div class="form-group" style="margin-bottom:1.4rem;">
-                <label>Please specify your qualifications below <span class="req">*</span></label>
-                <textarea id="qualifications" placeholder="List your relevant qualifications, certifications and training…" style="min-height:110px;"></textarea>
+                <div><h2>Qualifications &amp; Employment History</h2></div>
             </div>
             <div class="form-group">
                 <label>Upload CV <span class="req">*</span></label>
@@ -508,113 +523,120 @@
                     <div class="upload-zone-progress" id="cvProgress">⏳ Uploading…</div>
                 </div>
             </div>
+
+            <div class="sub-heading">Employment History <span class="req" style="color:var(--accent)">*</span></div>
+            <div class="sub-hint">Please provide details for the past 5 years. At least one employer is required.</div>
+            <div id="employmentList"></div>
+            <button class="btn-add" id="addEmploymentBtn">+ Add Employment</button>
         </div>
 
         <!-- 7. CERTIFICATES (HIDDEN BY DEFAULT) -->
         <div class="section" id="certificatesSection" style="display: none;">
             <div class="section-header">
                 <div class="section-num">7</div>
-                <div><h2>Your Certificates</h2><p>Upload mandatory items and any desirable qualifications that apply to you</p></div>
+                <div><h2>Your Certificates</h2><p>Tell us which certificates you hold</p></div>
             </div>
 
-            <div class="cert-section-label mandatory">Mandatory Certificates</div>
+            <p class="sub-hint" style="margin-top:0.2rem;">Tick each certificate that you hold.</p>
 
             <div class="cert-upload-row" id="row-mocopa">
                 <div class="cert-row-icon">📋</div>
-                <div class="cert-row-info">
-                    <div class="cert-row-title">Level 3 Power / Smart Meter / Electric MOCOPA</div>
-                    <div style="margin-top:0.4rem; font-size:0.8rem; color:var(--text-muted);">
-                        <label style="margin-right:0.5rem;">Expiry Date (Optional):</label>
-                        <input type="date" id="expiry-mocopa" class="cert-inline-input" style="padding:0.2rem; font-size:0.8rem; max-width:130px;">
+                <div class="cert-row-info" style="flex:1;min-width:200px;">
+                    <label class="cert-have">
+                        <input type="checkbox" id="have-mocopa" onchange="toggleHaveCert('mocopa', this.checked)">
+                        <span>Level 3 Power / Smart Meter / Electric MOCOPA</span>
+                    </label>
+                    <div class="cert-upload-wrap" id="wrap-mocopa" style="display:none;">
+                        <span class="cert-opt-tag">Upload is optional — you can add it now or provide it later.</span>
+                        <div style="margin-top:0.4rem; font-size:0.8rem; color:var(--text-muted);">
+                            <label style="margin-right:0.5rem;">Expiry Date (Optional):</label>
+                            <input type="date" id="expiry-mocopa" class="cert-inline-input" style="padding:0.2rem; font-size:0.8rem; max-width:130px;">
+                        </div>
+                        <div id="sub-mocopa" class="cert-row-sub">No file selected</div>
+                        <div id="prog-mocopa" class="cert-upload-progress">⏳ Uploading…</div>
+                        <div class="cert-row-actions" style="margin-top:0.6rem;">
+                            <span class="cert-badge none" id="badge-mocopa">Not uploaded</span>
+                            <label class="cert-file-label">Choose file<input type="file" id="file-mocopa" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('mocopa',this)"></label>
+                        </div>
                     </div>
-                    <div id="sub-mocopa" class="cert-row-sub">No file selected</div>
-                    <div id="prog-mocopa" class="cert-upload-progress">⏳ Uploading…</div>
-                </div>
-                <div class="cert-row-actions">
-                    <span class="cert-badge none" id="badge-mocopa">Not uploaded</span>
-                    <label class="cert-file-label">Choose file<input type="file" id="file-mocopa" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('mocopa',this)"></label>
                 </div>
             </div>
 
             <div class="cert-upload-row" id="row-gasl3">
                 <div class="cert-row-icon">🔥</div>
-                <div class="cert-row-info">
-                    <div class="cert-row-title">Level 3 Gas / City &amp; Guilds Qualification / CMA / CCN</div>
-                    <div style="margin-top:0.4rem; font-size:0.8rem; color:var(--text-muted);">
-                        <label style="margin-right:0.5rem;">Expiry Date (Optional):</label>
-                        <input type="date" id="expiry-gasl3" class="cert-inline-input" style="padding:0.2rem; font-size:0.8rem; max-width:130px;">
+                <div class="cert-row-info" style="flex:1;min-width:200px;">
+                    <label class="cert-have">
+                        <input type="checkbox" id="have-gasl3" onchange="toggleHaveCert('gasl3', this.checked)">
+                        <span>Level 3 Gas / City &amp; Guilds Qualification / CMA / CCN</span>
+                    </label>
+                    <div class="cert-upload-wrap" id="wrap-gasl3" style="display:none;">
+                        <span class="cert-opt-tag">Upload is optional — you can add it now or provide it later.</span>
+                        <div style="margin-top:0.4rem; font-size:0.8rem; color:var(--text-muted);">
+                            <label style="margin-right:0.5rem;">Expiry Date (Optional):</label>
+                            <input type="date" id="expiry-gasl3" class="cert-inline-input" style="padding:0.2rem; font-size:0.8rem; max-width:130px;">
+                        </div>
+                        <div id="sub-gasl3" class="cert-row-sub">No file selected</div>
+                        <div id="prog-gasl3" class="cert-upload-progress">⏳ Uploading…</div>
+                        <div class="cert-row-actions" style="margin-top:0.6rem;">
+                            <span class="cert-badge none" id="badge-gasl3">Not uploaded</span>
+                            <label class="cert-file-label">Choose file<input type="file" id="file-gasl3" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('gasl3',this)"></label>
+                        </div>
                     </div>
-                    <div id="sub-gasl3" class="cert-row-sub">No file selected</div>
-                    <div id="prog-gasl3" class="cert-upload-progress">⏳ Uploading…</div>
-                </div>
-                <div class="cert-row-actions">
-                    <span class="cert-badge none" id="badge-gasl3">Not uploaded</span>
-                    <label class="cert-file-label">Choose file<input type="file" id="file-gasl3" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('gasl3',this)"></label>
                 </div>
             </div>
 
-            <div class="cert-upload-row" id="row-cmagas">
+            <div class="cert-upload-row" id="row-met1">
                 <div class="cert-row-icon">🏅</div>
-                <div class="cert-row-info">
-                    <div class="cert-row-title">CMA Gas Certificate</div>
-                    <div style="margin-top:0.4rem; font-size:0.8rem; color:var(--text-muted);">
-                        <label style="margin-right:0.5rem;">Expiry Date (Optional):</label>
-                        <input type="date" id="expiry-cmagas" class="cert-inline-input" style="padding:0.2rem; font-size:0.8rem; max-width:130px;">
+                <div class="cert-row-info" style="flex:1;min-width:200px;">
+                    <label class="cert-have">
+                        <input type="checkbox" id="have-met1" onchange="toggleHaveCert('met1', this.checked)">
+                        <span>MET1 Certificate</span>
+                    </label>
+                    <div class="cert-upload-wrap" id="wrap-met1" style="display:none;">
+                        <span class="cert-opt-tag">Upload is optional — you can add it now or provide it later.</span>
+                        <div style="margin-top:0.4rem; font-size:0.8rem; color:var(--text-muted);">
+                            <label style="margin-right:0.5rem;">Expiry Date (Optional):</label>
+                            <input type="date" id="expiry-met1" class="cert-inline-input" style="padding:0.2rem; font-size:0.8rem; max-width:130px;">
+                        </div>
+                        <div id="sub-met1" class="cert-row-sub">No file selected</div>
+                        <div id="prog-met1" class="cert-upload-progress">⏳ Uploading…</div>
+                        <div class="cert-row-actions" style="margin-top:0.6rem;">
+                            <span class="cert-badge none" id="badge-met1">Not uploaded</span>
+                            <label class="cert-file-label">Choose file<input type="file" id="file-met1" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('met1',this)"></label>
+                        </div>
                     </div>
-                    <div id="sub-cmagas" class="cert-row-sub">No file selected</div>
-                    <div id="prog-cmagas" class="cert-upload-progress">⏳ Uploading…</div>
-                </div>
-                <div class="cert-row-actions">
-                    <span class="cert-badge none" id="badge-cmagas">Not uploaded</span>
-                    <label class="cert-file-label">Choose file<input type="file" id="file-cmagas" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('cmagas',this)"></label>
                 </div>
             </div>
 
-            <!-- Driving Licence confirmation + summary upload -->
             <div class="cert-upload-row" id="row-drivinglicence">
                 <div class="cert-row-icon">🪪</div>
                 <div class="cert-row-info" style="flex:1;min-width:200px;">
-                    <div class="cert-row-title">I confirm I have a current and valid Driving Licence</div>
-                    <div class="yn-group">
-                        <button type="button" class="yn-btn" id="yn-dl-yes" onclick="setDrivingLicenceApp(true)">Yes</button>
-                        <button type="button" class="yn-btn" id="yn-dl-no"  onclick="setDrivingLicenceApp(false)">No</button>
-                    </div>
-
-                    <div id="dl-details-wrap" style="display:none;margin-top:0.9rem;gap:12px;flex-direction:column;">
-
-                        <!-- Expiry date -->
-                        <div>
-                            <label style="font-size:0.82rem;font-weight:600;color:var(--text-muted);display:block;margin-bottom:0.3rem;">Licence Expiry Date <span style="color:var(--accent)">*</span></label>
-                            <input type="date" id="dl-expiry" class="cert-inline-input" style="max-width:220px;">
+                    <label class="cert-have">
+                        <input type="checkbox" id="have-drivinglicence" onchange="toggleHaveCert('drivinglicence', this.checked)">
+                        <span>Driving Licence</span>
+                    </label>
+                    <div class="cert-upload-wrap" id="wrap-drivinglicence" style="display:none;">
+                        <span class="cert-opt-tag">Upload is optional — you can add it now or provide it later.</span>
+                        <div class="dl-info-summary" style="margin-bottom:0.8rem;">
+                            <strong>📋 Driving Licence Summary</strong>
+                            <p style="margin-top:0.45rem;color:var(--text-muted);font-size:0.82rem;">If you have it, upload your summary from the <a href="https://www.gov.uk/view-driving-licence" target="_blank" style="color:var(--accent);text-decoration:underline;">GOV.UK View or Share Driving Licence</a> service.</p>
                         </div>
-
-                        <!-- Summary info block -->
-                        <div class="dl-info-summary">
-                            <strong>📋 Upload your Driving Licence Summary</strong>
-                            <p style="margin-top:0.45rem;color:var(--text-muted);font-size:0.82rem;">Your summary can be downloaded from the <a href="https://www.gov.uk/view-driving-licence" target="_blank" style="color:var(--accent);text-decoration:underline;">GOV.UK View or Share Driving Licence</a> service. It should include:</p>
-                            <ul>
-                                <li>Driver's name and address</li>
-                                <li>Licence number, type and vehicle categories</li>
-                                <li>Licence and category expiry dates</li>
-                                <li>Penalty points and any endorsements or convictions</li>
-                                <li>Disqualifications, bans or restrictions</li>
-                            </ul>
+                        <div style="margin-top:0.4rem; font-size:0.8rem; color:var(--text-muted);">
+                            <label style="margin-right:0.5rem;">Expiry Date (Optional):</label>
+                            <input type="date" id="dl-expiry" class="cert-inline-input" style="padding:0.2rem; font-size:0.8rem; max-width:130px;">
                         </div>
-
-                        <!-- Upload for the summary document -->
-                        <div>
-                            <div id="sub-drivinglicence" class="cert-row-sub">No file selected</div>
-                            <div id="prog-drivinglicence" class="cert-upload-progress">⏳ Uploading…</div>
-                            <label class="cert-file-label" style="margin-top:0.5rem;display:inline-flex;">
-                                Upload Summary
-                                <input type="file" id="file-drivinglicence" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('drivinglicence',this)">
-                            </label>
+                        <div id="sub-drivinglicence" class="cert-row-sub">No file selected</div>
+                        <div id="prog-drivinglicence" class="cert-upload-progress">⏳ Uploading…</div>
+                        <div class="cert-row-actions" style="margin-top:0.6rem;">
+                            <span class="cert-badge none" id="badge-drivinglicence">Not uploaded</span>
+                            <label class="cert-file-label">Choose file<input type="file" id="file-drivinglicence" accept=".jpg,.jpeg,.png,.pdf" onchange="handleCertFile('drivinglicence',this)"></label>
                         </div>
                     </div>
                 </div>
-                <div class="cert-row-actions">
-                    <span class="cert-badge none" id="badge-drivinglicence">Not answered</span>
-                </div>
+            </div>
+
+            <div class="cert-notice">
+                <strong>Please note:</strong> If you are invited to interview, you will be required to provide evidence of your relevant qualifications. Please ensure your certificates are available and ready to upload.
             </div>
 
             <div class="cert-section-label desirable" style="margin-top:1.8rem;">Desirable Qualifications</div>
@@ -676,16 +698,6 @@
             <button type="button" class="add-cert-btn" id="addCertBtn">+ Add Another Certificate</button>
         </div>
 
-        <!-- 8. EMPLOYMENT HISTORY -->
-        <div class="section">
-            <div class="section-header">
-                <div class="section-num">8</div>
-                <div><h2>Employment History</h2><p>Please provide details for the past 5 years</p></div>
-            </div>
-            <div id="employmentList"></div>
-            <button class="btn-add" id="addEmploymentBtn">+ Add Employment</button>
-        </div>
-
         <!-- 9. INTERVIEW AVAILABILITY -->
         <div class="section">
             <div class="section-header">
@@ -733,11 +745,11 @@
             <div class="checkbox-group">
                 <label class="checkbox-label">
                     <input type="checkbox" id="consentAccurate">
-                    <span>I confirm the information provided is accurate <span class="req">*</span></span>
+                    <span id="consentAccurateText">I confirm the information provided is accurate <span class="req">*</span></span>
                 </label>
                 <label class="checkbox-label">
                     <input type="checkbox" id="consentRecruitment">
-                    <span>I understand my personal data will be used for recruitment purposes <span class="req">*</span></span>
+                    <span id="consentRecruitmentText">I understand my personal data will be used for recruitment purposes <span class="req">*</span></span>
                 </label>
             </div>
 
@@ -765,7 +777,7 @@
     <div id="successScreen">
         <div class="success-icon">✅</div>
         <h2>Application Submitted!</h2>
-        <p>Thank you for applying. We have received your application and will be in touch shortly regarding the next steps.</p>
+        <p id="successMsg">Thank you for applying. We have received your application and will be in touch shortly regarding the next steps.</p>
     </div>
 </div>
 
@@ -795,6 +807,8 @@
     const EMAILJS_TEMPLATE_INTERNAL  = 'template_rdg2zp9';
     const EMAILJS_PUBLIC_KEY         = 'ziLnha91scpGjFABh';
     const INTERNAL_NOTIFY_EMAIL      = 'barry.dixon@next-gen.uk';
+    // Sent automatically when a candidate does not hold all four required certificates
+    const EMAILJS_TEMPLATE_REJECT    = 'template_un6lrqi';
 
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
@@ -818,6 +832,15 @@
             to_email: data.email, to_name: data.forename,
             full_name: `${data.forename} ${data.surname}`,
             position: data.position, reply_to: INTERNAL_NOTIFY_EMAIL
+        });
+    }
+
+    async function sendRejectionEmail(data) {
+        return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_REJECT, {
+            to_email: data.email,
+            first_name: data.forename,
+            job_title: data.position || 'the role',
+            reply_to: INTERNAL_NOTIFY_EMAIL
         });
     }
 
@@ -856,6 +879,17 @@
             declText.textContent = "I confirm that, to the best of my knowledge, the information I have provided on this referral form is accurate and complete. I understand that any information found to be deliberately false or misleading may result in the referral being withdrawn or deemed ineligible.";
         } else {
             declText.textContent = "I confirm that the information I have provided on this form is correct and I accept that providing deliberately false information could result in my dismissal.";
+        }
+
+        // Data consent wording for recruiters submitting on behalf of a candidate
+        const cAcc = document.getElementById('consentAccurateText');
+        const cRec = document.getElementById('consentRecruitmentText');
+        if (recruitmentAgency === 'yes') {
+            cAcc.innerHTML = 'I confirm that the candidate has given their permission for me to submit their details and application to Next Generation Utilities. <span class="req">*</span>';
+            cRec.innerHTML = 'I confirm that the candidate has agreed for their personal information to be shared and processed for recruitment purposes. <span class="req">*</span>';
+        } else {
+            cAcc.innerHTML = 'I confirm the information provided is accurate <span class="req">*</span>';
+            cRec.innerHTML = 'I understand my personal data will be used for recruitment purposes <span class="req">*</span>';
         }
 
         if (recruitmentAgency === 'yes') {
@@ -943,7 +977,21 @@
     setupRadio('disability',        'disabilityYesLabel',        'disabilityNoLabel',        'disabilityDetails');
     setupRadio('medical',           'medicalYesLabel',           'medicalNoLabel',           'medicalDetails');
     setupRadio('convictions',       'convictionsYesLabel',       'convictionsNoLabel',       'convictionsDetails');
-    setupRadio('workPermit',        'workPermitYesLabel',        'workPermitNoLabel',        null);
+    function setupRadioGroup(name) {
+        document.querySelectorAll(`input[name="${name}"]`).forEach(r => {
+            r.addEventListener('change', () => {
+                document.querySelectorAll(`input[name="${name}"]`).forEach(o => o.closest('.radio-option').classList.toggle('selected', o.checked));
+            });
+        });
+        document.querySelectorAll(`input[name="${name}"]`).forEach(o => {
+            o.closest('.radio-option').addEventListener('click', function() {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true; radio.dispatchEvent(new Event('change'));
+            });
+        });
+    }
+    setupRadioGroup('rtwSponsor');
+    setupRadioGroup('rtwEvidence');
     setupRadio('recruitmentAgency', 'recruitmentAgencyYesLabel', 'recruitmentAgencyNoLabel', 'recruitmentAgencyDetails');
     function getRadioValue(name) { const r = document.querySelector(`input[name="${name}"]:checked`); return r ? r.value : ''; }
 
@@ -1024,13 +1072,23 @@
         }
     };
 
-    window.setDrivingLicenceApp = function(val) {
-        document.getElementById('yn-dl-yes').className = 'yn-btn' + (val ? ' selected-yes' : '');
-        document.getElementById('yn-dl-no').className  = 'yn-btn' + (!val ? ' selected-no' : '');
-        document.getElementById('dl-details-wrap').style.display = val ? 'flex' : 'none';
-        const badge = document.getElementById('badge-drivinglicence');
-        if (val) { badge.textContent = 'Details required'; badge.className = 'cert-badge ready'; }
-        else     { badge.textContent = 'No'; badge.className = 'cert-badge done'; document.getElementById('row-drivinglicence').classList.add('uploaded'); }
+    /* Tick box: "I have this certificate" — reveals the (optional) upload */
+    window.toggleHaveCert = function(key, checked) {
+        document.getElementById(`wrap-${key}`).style.display = checked ? 'block' : 'none';
+        if (!checked) {
+            // clear anything already chosen/uploaded for this certificate
+            delete certUploadResults[key];
+            const fileInput = document.getElementById(`file-${key}`);
+            if (fileInput) fileInput.value = '';
+            const exp = document.getElementById(key === 'drivinglicence' ? 'dl-expiry' : `expiry-${key}`);
+            if (exp) exp.value = '';
+            document.getElementById(`sub-${key}`).textContent = 'No file selected';
+            const badge = document.getElementById(`badge-${key}`);
+            badge.textContent = 'Not uploaded'; badge.className = 'cert-badge none';
+            const prog = document.getElementById(`prog-${key}`);
+            if (prog) prog.classList.remove('visible');
+            document.getElementById(`row-${key}`).classList.remove('uploaded', 'uploading-row');
+        }
     };
 
     window.setEUSRApp = function(val) {
@@ -1041,14 +1099,6 @@
         if (val) { badge.textContent = 'Yes — add number'; badge.className = 'cert-badge ready'; }
         else     { badge.textContent = 'N/A'; badge.className = 'cert-badge done'; document.getElementById('row-eusr').classList.add('uploaded'); }
     };
-
-    document.getElementById('dl-expiry').addEventListener('change', function() {
-        const badge = document.getElementById('badge-drivinglicence');
-        const expiry = this.value;
-        const uploaded = certUploadResults['drivinglicence'];
-        if (expiry && uploaded) { badge.textContent = '✓ Complete'; badge.className = 'cert-badge done'; document.getElementById('row-drivinglicence').classList.add('uploaded'); }
-        else if (expiry)        { badge.textContent = 'Summary needed'; badge.className = 'cert-badge ready'; }
-    });
 
     document.getElementById('gassafe-number').addEventListener('input', function() {
         const badge = document.getElementById('badge-gassafe');
@@ -1139,12 +1189,12 @@
                 <button type="button" class="btn-remove" onclick="this.closest('.employment-entry').remove()">Remove</button>
             </div>
             <div class="form-grid" style="margin-bottom:1rem;">
-                <div class="form-group"><label>Company Name</label><input type="text" class="emp-company" placeholder="Company name"></div>
-                <div class="form-group"><label>Position</label><input type="text" class="emp-position" placeholder="Job title held"></div>
+                <div class="form-group"><label>Company Name <span class="req">*</span></label><input type="text" class="emp-company" placeholder="Company name"></div>
+                <div class="form-group"><label>Position <span class="req">*</span></label><input type="text" class="emp-position" placeholder="Job title held"></div>
             </div>
             <div class="form-group">
                 <label>Reason for Leaving</label>
-                <textarea class="emp-reason" placeholder="Reason for leaving…" style="min-height:70px;"></textarea>
+                <textarea class="emp-reason" placeholder="Reason for leaving (or 'Current role')…" style="min-height:70px;"></textarea>
             </div>`;
         document.getElementById('employmentList').appendChild(div);
     }
@@ -1235,8 +1285,37 @@
         const disability      = getRadioValue('disability');
         const medical         = getRadioValue('medical');
         const convictions     = getRadioValue('convictions');
-        const workPermit      = getRadioValue('workPermit');
-        const qualifications  = document.getElementById('qualifications').value.trim();
+        const rtwSponsor      = getRadioValue('rtwSponsor');
+        const rtwEvidence     = getRadioValue('rtwEvidence');
+        // Kept for older pages that read "workPermit": yes = needs a permit/sponsorship
+        const workPermit      = rtwSponsor === 'no' ? 'yes' : rtwSponsor === 'yes' ? 'no' : 'unsure';
+
+        // Employment history (mandatory)
+        const employment = [];
+        document.querySelectorAll('.employment-entry').forEach(entry => {
+            employment.push({
+                company:  entry.querySelector('.emp-company')?.value.trim()  || '',
+                position: entry.querySelector('.emp-position')?.value.trim() || '',
+                reason:   entry.querySelector('.emp-reason')?.value.trim()   || ''
+            });
+        });
+
+        // Certificates (only asked for some roles)
+        const certsAsked = document.getElementById('certificatesSection').style.display === 'block';
+        const CERT_LABELS = {
+            mocopa: 'Level 3 Power / Smart Meter / Electric MOCOPA',
+            gasl3: 'Level 3 Gas / City & Guilds Qualification / CMA / CCN',
+            met1: 'MET1 Certificate',
+            drivinglicence: 'Driving Licence'
+        };
+        const certHave = {};
+        Object.keys(CERT_LABELS).forEach(k => { certHave[k] = !!document.getElementById(`have-${k}`)?.checked; });
+        const missingCertLabels = Object.keys(CERT_LABELS).filter(k => !certHave[k]).map(k => CERT_LABELS[k]);
+        const autoReject = certsAsked && missingCertLabels.length > 0;
+        // Short text summary of what the candidate says they hold (shown as "Listed Qualifications" elsewhere)
+        const qualifications = certsAsked
+            ? Object.keys(CERT_LABELS).filter(k => certHave[k]).map(k => CERT_LABELS[k]).join('; ')
+            : '';
         const declarationName = document.getElementById('declarationName').value.trim();
         const declarationDate = document.getElementById('declarationDate').value;
         const consentAccurate    = document.getElementById('consentAccurate').checked;
@@ -1261,9 +1340,11 @@
         if (!disability)      missing.push('Disability adjustment question');
         if (!medical)         missing.push('Medical adjustment question');
         if (!convictions)     missing.push('Convictions question');
-        if (!workPermit)      missing.push('Work permit question');
-        if (!qualifications)  missing.push('Qualifications');
+        if (!rtwSponsor)      missing.push('Right to work question');
+        if (!rtwEvidence)     missing.push('Right to work evidence');
         if (!cvUploadResult)  missing.push('CV upload (please wait for upload to complete)');
+        if (employment.length === 0) missing.push('Employment history');
+        else if (employment.some(e => !e.company || !e.position)) missing.push('Employment history (company and position are required for each entry)');
         if (!declarationName) missing.push('Declaration name');
         if (!declarationDate) missing.push('Declaration date');
         if (!consentAccurate) missing.push('Information accuracy confirmation');
@@ -1282,20 +1363,7 @@
         btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Submitting…';
 
         try {
-            const employment = [];
-            document.querySelectorAll('.employment-entry').forEach(entry => {
-                employment.push({
-                    company:  entry.querySelector('.emp-company')?.value.trim()  || '',
-                    position: entry.querySelector('.emp-position')?.value.trim() || '',
-                    reason:   entry.querySelector('.emp-reason')?.value.trim()   || ''
-                });
-            });
-
             // Collect certificate data (now URLs from pre-uploaded files)
-            const dlYesBtnSelected = document.getElementById('yn-dl-yes').classList.contains('selected-yes');
-            const dlNoBtnSelected  = document.getElementById('yn-dl-no').classList.contains('selected-no');
-            const dlConfirmed = dlYesBtnSelected ? true : dlNoBtnSelected ? false : null;
-            
             const euYesBtnSelected = document.getElementById('yn-eusr-yes').classList.contains('selected-yes');
             const euNoBtnSelected  = document.getElementById('yn-eusr-no').classList.contains('selected-no');
             const euHas = euYesBtnSelected ? true : euNoBtnSelected ? false : null;
@@ -1315,14 +1383,14 @@
             });
 
             const certificates = {
-                mocopa:       certUploadResults['mocopa']       ? { ...certUploadResults['mocopa'], expiry: document.getElementById('expiry-mocopa').value } : null,
-                gasl3:        certUploadResults['gasl3']        ? { ...certUploadResults['gasl3'], expiry: document.getElementById('expiry-gasl3').value } : null,
-                cmagas:       certUploadResults['cmagas']       ? { ...certUploadResults['cmagas'], expiry: document.getElementById('expiry-cmagas').value } : null,
+                mocopa:       certHave.mocopa && certUploadResults['mocopa'] ? { ...certUploadResults['mocopa'], expiry: document.getElementById('expiry-mocopa').value } : null,
+                gasl3:        certHave.gasl3  && certUploadResults['gasl3']  ? { ...certUploadResults['gasl3'],  expiry: document.getElementById('expiry-gasl3').value }  : null,
+                met1:         certHave.met1   && certUploadResults['met1']   ? { ...certUploadResults['met1'],   expiry: document.getElementById('expiry-met1').value }   : null,
                 higherskills: certUploadResults['higherskills'] ? { ...certUploadResults['higherskills'], expiry: document.getElementById('expiry-higherskills').value } : null,
                 drivinglicence: {
-                    confirmed: dlConfirmed,
-                    expiry: document.getElementById('dl-expiry').value || '',
-                    summary: certUploadResults['drivinglicence'] || null
+                    confirmed: certHave.drivinglicence,
+                    expiry: certHave.drivinglicence ? (document.getElementById('dl-expiry').value || '') : '',
+                    summary: certHave.drivinglicence ? (certUploadResults['drivinglicence'] || null) : null
                 },
                 eusr:    { has: euHas, number: document.getElementById('eusr-number').value.trim() },
                 gassafe: { number: document.getElementById('gassafe-number').value.trim() },
@@ -1346,9 +1414,18 @@
                 convictions,
                 convictionsText: convictions === 'yes' ? document.getElementById('convictionsText').value.trim() : '',
                 workPermit,
+                rightToWork: { withoutSponsorship: rtwSponsor, evidence: rtwEvidence },
                 qualifications,
                 cv: cvUploadResult,
-                certificates: (position === 'Smart Meter Engineer' || position === 'SMETs 2 installer') ? certificates : null,
+                certificates: certsAsked ? certificates : null,
+                certificatesDeclared: certsAsked ? { ...certHave, allHeld: !autoReject } : null,
+                ...(autoReject ? {
+                    finalRecruitmentDecision: 'Rejected',
+                    finalRecruitmentDecisionAt: new Date().toISOString(),
+                    finalRecruitmentDecisionBy: 'Automatic - application form (missing required certificates)',
+                    autoRejected: true,
+                    autoRejectReason: 'Candidate did not confirm they hold: ' + missingCertLabels.join('; ')
+                } : {}),
                 employment,
                 unavailability,
                 declaration: { name: declarationName, date: declarationDate, signature: sig1 },
@@ -1362,7 +1439,13 @@
             });
 
             const emailData = { forename, surname, email, phone, position, postcode };
-await Promise.allSettled([sendApplicantEmail(emailData), sendInternalEmail(emailData)]);
+            if (autoReject) {
+                // Does not hold all required certificates → rejection email instead of the normal acknowledgement
+                await Promise.allSettled([sendRejectionEmail(emailData)]);
+                document.getElementById('successMsg').textContent = 'Thank you for your interest in Next Generation Utilities. Unfortunately, as you have not confirmed that you hold all of the certificates required for this role, we are unable to take your application any further. We have sent you an email with more information.';
+            } else {
+                await Promise.allSettled([sendApplicantEmail(emailData), sendInternalEmail(emailData)]);
+            }
 
             document.getElementById('applicationForm').style.display = 'none';
             document.getElementById('successScreen').style.display   = 'block';
