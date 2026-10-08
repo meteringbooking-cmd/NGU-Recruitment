@@ -82,6 +82,31 @@
         .btn-reissue { background: rgba(245, 158, 11, 0.15); border: 1px solid var(--warning); color: #fcd34d; padding: 0.55rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; }
         .btn-reissue:hover:not(:disabled) { background: rgba(245, 158, 11, 0.28); }
         .btn-reissue:disabled { opacity: 0.6; cursor: not-allowed; }
+        /* Sidebar tabs (Active / Archive) */
+        .list-tabs { display: flex; gap: 6px; padding: 0.75rem 1.5rem 0; background: var(--bg-dark); }
+        .list-tabs button { flex: 1; background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 7px 10px; border-radius: 6px; font-family: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+        .list-tabs button.active { background: rgba(0,163,224,0.15); border-color: var(--accent); color: var(--accent); }
+        .status-archived { background: rgba(139,154,174,0.15); color: #cbd5e1; }
+        .status-approval { background: rgba(245,158,11,0.15); color: #fcd34d; }
+        /* Document verification stamps */
+        .doc-stamp { display: block; margin-top: 3px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
+        .doc-stamp.ok { color: #6ee7b7; }
+        .doc-stamp.bad { color: #fca5a5; }
+        .rejected-banner { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.4); color: #fca5a5; padding: 0.9rem 1.1rem; border-radius: 8px; margin-bottom: 1.2rem; font-size: 0.9rem; line-height: 1.5; }
+        .rejected-banner button, .approval-panel button, .archive-panel button, .rtw-panel button { cursor: pointer; font-family: inherit; font-weight: 700; border-radius: 6px; padding: 0.5rem 0.9rem; font-size: 0.82rem; }
+        .rtw-panel { background: rgba(0,163,224,0.05); border: 1px solid rgba(0,163,224,0.3); border-radius: 10px; padding: 1rem 1.2rem; margin-bottom: 1.4rem; }
+        .rtw-panel select { color: white; border: 1px solid var(--border); padding: 6px; border-radius: 6px; font-size: 0.85rem; }
+        .approval-panel { margin-top: 1.5rem; padding: 1rem 1.2rem; border-radius: 10px; border: 1px solid var(--warning); background: rgba(245,158,11,0.06); }
+        .approval-panel.approved { border-color: var(--success); background: rgba(16,185,129,0.07); }
+        .btn-approve { background: rgba(16,185,129,0.18); border: 1px solid var(--success); color: #6ee7b7; }
+        .btn-approve:hover { background: rgba(16,185,129,0.3); }
+        .btn-muted { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+        .archive-panel { margin-top: 1.5rem; padding: 1rem 1.2rem; border: 1px dashed var(--border); border-radius: 10px; background: rgba(0,0,0,0.15); }
+        .archive-panel .archive-row { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: flex-end; margin-top: 0.6rem; }
+        .archive-panel input { background: var(--bg-input); color: white; border: 1px solid var(--border); border-radius: 6px; padding: 0.55rem 0.7rem; font-family: inherit; font-size: 0.9rem; }
+        .btn-leaver { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.5); color: #fca5a5; }
+        .btn-dns { background: rgba(139,154,174,0.12); border: 1px solid var(--text-muted); color: #cbd5e1; }
+        .archived-banner { background: rgba(139,154,174,0.1); border: 1px solid var(--text-muted); color: #e2e8f0; padding: 1rem 1.2rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
         .reissue-pending { margin-bottom: 1rem; padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--warning); background: rgba(245, 158, 11, 0.1); color: #fcd34d; font-size: 0.9rem; font-weight: 600; }
         .contract-history-item { background: rgba(0,0,0,0.2); border: 1px solid var(--border); border-radius: 8px; padding: 0.7rem 1rem; margin-top: 0.6rem; font-size: 0.85rem; color: var(--text-light); }
         .contract-history-item img { max-height: 40px; background: #fff; border-radius: 3px; padding: 3px; margin-top: 6px; display: block; }
@@ -149,10 +174,13 @@
             color: var(--text-light) !important;
         }
         @media print {
-            body * { visibility: hidden; }
-            #contractOverlay, #contractOverlay * { visibility: visible; }
-            #contractOverlay { position: absolute; inset: 0; background: #fff !important; padding: 0 !important; }
+            html, body { height: auto !important; overflow: visible !important; display: block !important; background: #fff !important; }
+            body > *:not(#contractOverlay):not(#hmrcOverlay) { display: none !important; }
+            #contractOverlay { position: static !important; display: block !important; background: #fff !important; padding: 0 !important; }
+            #contractOverlay .contract-sheet { max-height: none !important; overflow: visible !important; border-radius: 0 !important; max-width: none !important; width: auto !important; }
             #contractOverlay .contract-toolbar { display: none !important; }
+            #contractOverlay .lh-band { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            #contractOverlay .lh-footer { page-break-inside: avoid; }
         }
     </style>
 </head>
@@ -169,6 +197,11 @@
             <div class="search-input-row">
                 🔍 <input type="text" id="nameSearch" placeholder="Search onboardings…" autocomplete="off">
             </div>
+        </div>
+
+        <div class="list-tabs">
+            <button type="button" id="tabActive" class="active">Active</button>
+            <button type="button" id="tabArchive">Archive <span id="archiveCount"></span></button>
         </div>
 
         <div class="applicant-list" id="applicantList">
@@ -207,6 +240,33 @@
     const EMAILJS_CONTRACT_REISSUE = 'template_9cnewsa';
     if (window.emailjs) emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 
+    // EmailJS template sent automatically when a document is rejected.
+    // Variables sent: to_email, first_name, job_title, rejected_items (HTML list),
+    // rejected_items_text (plain text list), upload_link
+    const EMAILJS_DOCS_REJECTED = 'template_709wmtm';
+    const PORTAL_BASE = 'https://ngu-recruitment-portal.vercel.app';
+
+    // Letterhead used when viewing the signed contract. Fill in the blank lines to
+    // show your address / contact / registration details on the contract.
+    const LETTERHEAD = {
+        logoUrl: 'https://www.dropbox.com/scl/fi/kkujm1u6y7vvnp7luq8d7/ngu-main-white.png?rlkey=kgq2uh48qh4xssh4vlbz868lr&raw=1',
+        companyName: 'Next Generation Utilities',
+        addressLines: [],   // e.g. ['Unit 1, Example Park', 'Town', 'AB1 2CD']
+        contactLine: '',    // e.g. 'Tel: 01234 567890  |  hr@next-gen.uk'
+        footerLine: ''      // e.g. 'Registered in England & Wales No. 01234567'
+    };
+
+    const DOC_LABELS = {
+        passport: 'Passport / ID', idphoto: 'ID Headshot', dlfront: 'Driving Licence (Front)', dlback: 'Driving Licence (Back)',
+        poa: 'Proof of Address', niproof: 'Proof of NI Number (Payslip/Card)', p45: 'P45 Document',
+        mocopa: 'Level 3 Power / Smart Meter / Electric MOCOPA', gasl3: 'Level 3 Gas / City & Guilds / CMA / CCN',
+        cmagas: 'CMA Gas Certificate', met1: 'MET1 Certificate', higherskills: 'Higher Skills Set Certificates',
+        sharecode: 'Right to Work Share Code'
+    };
+    const DEFAULT_REJECT_REASON = 'This document could not be accepted. Please upload a clear, valid copy.';
+    const currentUserName = () => localStorage.getItem('ngu_portal_username') || 'Admin';
+    let currentTab = 'active';
+
     let applicationsData = [];
     let referralData = [];
     let interviewsData = [];
@@ -228,6 +288,10 @@
             if (updatedApp) renderDetails(updatedApp);
         }
     });
+
+    function setTab(tab) { currentTab = tab; renderSidebar(); }
+    document.getElementById('tabActive').addEventListener('click', () => setTab('active'));
+    document.getElementById('tabArchive').addEventListener('click', () => setTab('archive'));
 
     document.getElementById('nameSearch').addEventListener('input', (e) => {
         searchQuery = e.target.value.trim().toLowerCase();
@@ -266,7 +330,15 @@
         const listEl = document.getElementById('applicantList');
         listEl.innerHTML = '';
 
-        let filteredApps = applicationsData;
+        const archivedCount = applicationsData.filter(a => a.onboardingArchive && a.onboardingArchive.status).length;
+        document.getElementById('archiveCount').textContent = archivedCount ? `(${archivedCount})` : '';
+        document.getElementById('tabActive').classList.toggle('active', currentTab === 'active');
+        document.getElementById('tabArchive').classList.toggle('active', currentTab === 'archive');
+
+        let filteredApps = applicationsData.filter(a => {
+            const isArchived = !!(a.onboardingArchive && a.onboardingArchive.status);
+            return currentTab === 'archive' ? isArchived : !isArchived;
+        });
         if (searchQuery) {
             filteredApps = filteredApps.filter(app => {
                 const name = app.fullName || `${app.personalDetails?.forename || ''} ${app.personalDetails?.surname || ''}`;
@@ -275,13 +347,16 @@
         }
 
         if (filteredApps.length === 0) {
-            listEl.innerHTML = `<div class="empty-state" style="font-size: 0.9rem;">No active onboardings found.</div>`;
+            listEl.innerHTML = `<div class="empty-state" style="font-size: 0.9rem;">${currentTab === 'archive' ? 'Nothing in the archive.' : 'No active onboardings found.'}</div>`;
             return;
         }
 
         filteredApps.forEach((app) => {
             let statusBadge = '';
-            if (app.contractReissuedAt && app.contractAccepted === false) {
+            if (app.onboardingArchive && app.onboardingArchive.status) {
+                const arc = app.onboardingArchive;
+                statusBadge = `<span class="status-badge status-archived">${arc.status === 'Leaver' ? '🚪 Leaver' : '🚫 Did not start'}${arc.date ? ' · ' + new Date(arc.date).toLocaleDateString('en-GB') : ''}</span>`;
+            } else if (app.contractReissuedAt && app.contractAccepted === false) {
                 statusBadge = `<span class="status-badge status-pending">🔄 Awaiting Re-Sign</span>`;
             } else if (app.onboardingProcessed) {
                 statusBadge = `<span class="status-badge status-processed">✓ HR Processed</span>`;
@@ -289,6 +364,10 @@
                 statusBadge = `<span class="status-badge status-submitted">🟢 Data Submitted</span>`;
             } else {
                 statusBadge = `<span class="status-badge status-pending">🟡 Pending Forms</span>`;
+            }
+
+            if (!(app.onboardingArchive && app.onboardingArchive.status) && app.contractAccepted === true && !app.contractApproved) {
+                statusBadge += ` <span class="status-badge status-approval">📝 Contract awaiting approval</span>`;
             }
 
             const div = document.createElement('div');
@@ -355,7 +434,12 @@
             contractSignName: deleteField(),
             contractReissuedAt: nowIso,
             contractReissuedBy: by,
-            contractReissueCount: (appData.contractReissueCount || 0) + 1
+            contractReissueCount: (appData.contractReissueCount || 0) + 1,
+            // a reissued contract has to be approved again once re-signed
+            contractApproved: false,
+            contractApprovedAt: deleteField(),
+            contractApprovedBy: deleteField(),
+            contractApprovalNote: deleteField()
         };
         // Keep the superseded contract on file (only if there was a signed one to keep)
         if (appData.contractAccepted === true) {
@@ -364,6 +448,8 @@
                 contractAcceptedAt: appData.contractAcceptedAt || '',
                 contractSignName: appData.contractSignName || '',
                 contractSignature: appData.contractSignature || '',
+                contractApprovedAt: appData.contractApprovedAt || '',
+                contractApprovedBy: appData.contractApprovedBy || '',
                 supersededAt: nowIso,
                 supersededBy: by,
                 reason: 'Start date changed'
@@ -593,8 +679,12 @@
             overlay.id = 'contractOverlay';
             overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; display:flex; align-items:center; justify-content:center; padding:30px;';
 
+            const approvedLine = app.contractApproved
+                ? `<div style="margin-top:10px; font-size:12px; color:#065f46; font-weight:700;">✔ Contract approved by ${escapeHtml(app.contractApprovedBy || 'NGU')} on ${escapeHtml(fmtStampDate(app.contractApprovedAt))}</div>`
+                : '';
+
             overlay.innerHTML = `
-                <div style="background:#fff; color:#111; max-width:860px; width:100%; max-height:92vh; overflow-y:auto; border-radius:8px;">
+                <div class="contract-sheet" style="background:#fff; color:#111; max-width:860px; width:100%; max-height:92vh; overflow-y:auto; border-radius:8px;">
                     <div class="contract-toolbar" style="position:sticky; top:0; background:#fff; padding:14px 24px; border-bottom:1px solid #ddd; display:flex; justify-content:space-between; align-items:center; gap:10px; z-index:10;">
                         <div style="font-family:Arial,sans-serif; font-size:13px; font-weight:700; color:#333;">📄 Signed Employment Contract — ${escapeHtml(computedFullName)}</div>
                         <div style="display:flex; gap:10px;">
@@ -602,18 +692,23 @@
                             <button id="contractCloseBtn" style="background:#666; color:#fff; border:none; padding:8px 16px; border-radius:5px; font-size:13px; cursor:pointer; font-weight:600;">✕ Close</button>
                         </div>
                     </div>
-                    <div style="padding:40px 50px 60px;">
+
+                    ${letterheadHeaderHtml()}
+
+                    <div style="padding:34px 50px 40px;">
                         ${noContractHtml}
                         ${populatedBody}
 
-                        <!-- Accepted banner — shown below the contract body (after the inline sig above) -->
                         ${contractContent ? `
                         <div style="margin-top:32px; border-top:2px solid #000; padding-top:18px; font-family:Arial,sans-serif;">
                             <div style="background:#e6f9f0; border:1px solid #10B981; border-radius:4px; padding:10px 16px; font-size:12px; color:#065f46; font-weight:700; display:inline-block;">
                                 ✅ Digitally accepted via NGU Onboarding Portal on ${escapeHtml(signDate)}
                             </div>
+                            ${approvedLine}
                         </div>` : ''}
                     </div>
+
+                    ${letterheadFooterHtml()}
                 </div>`;
 
             // The old separate signature section is no longer needed — it's now inline
@@ -864,7 +959,7 @@
 
                 docsHtml += `<div class="doc-item" style="display: block;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                                    <div><strong>${title}</strong><br><small style="color:var(--text-muted);">${f.filename}</small></div>
+                                    <div><strong>${title}</strong><br><small style="color:var(--text-muted);">${f.filename}</small>${docStampHtml(f)}</div>
                                     <div style="display:flex; gap:10px; align-items:center;">
                                         <select onchange="updateOnboardingDocStatus('${app.id}', 'onboardingDocs.${key}.docStatus', this.value)" style="color:white; border:1px solid var(--border); padding:6px; border-radius:6px; font-size:0.85rem; outline:none; cursor:pointer;">
                                             <option value="">— Verification Status —</option>
@@ -916,7 +1011,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                             <div>
                                 <strong>${cert.label}</strong><br>
-                                <small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${c[cert.key].filename || ''}</small><br>
+                                <small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${c[cert.key].filename || ''}</small>${docStampHtml(c[cert.key])}<br>
                                 <small style="color:var(--warning);font-weight:600;">${expDisplay}</small>
                             </div>
                             <div style="display:flex; gap:10px; align-items:center;">
@@ -956,7 +1051,7 @@
                             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                                 <div>
                                     <strong>${add.certName || add.name || 'Additional Certificate'}</strong><br>
-                                    <small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${add.filename || ''}</small><br>
+                                    <small style="color:var(--text-muted);font-family:'DM Mono', monospace;">${add.filename || ''}</small>${docStampHtml(add)}<br>
                                     <small style="color:var(--warning);font-weight:600;">${expDisplay}</small>
                                 </div>
                                 <div style="display:flex; gap:10px; align-items:center;">
@@ -1080,7 +1175,94 @@
             ? `<span class="referral-badge-large">👥 Referred by ${matchedReferral.referrerName || 'Staff Member'}</span>`
             : '';
 
+        // ── Documents awaiting re-upload (rejected) ──
+        const rejectedMap = app.rejectedDocuments || {};
+        const rejectedEntries = Object.keys(rejectedMap);
+        const rejectedBannerHtml = rejectedEntries.length > 0
+            ? `<div class="rejected-banner">
+                    ⚠️ <strong>Awaiting re-upload from the applicant:</strong>
+                    ${rejectedEntries.map(k => `<div style="margin-top:4px;">• <strong>${escapeHtml(rejectedMap[k].label || DOC_LABELS[k] || k)}</strong> — ${escapeHtml(rejectedMap[k].reason || '')}</div>`).join('')}
+                    <div style="margin-top:0.7rem; display:flex; flex-wrap:wrap; gap:0.8rem; align-items:center;">
+                        <span style="font-size:0.82rem;">${app.docRejectionEmail
+                            ? (app.docRejectionEmail.status === 'sent'
+                                ? `✅ Email sent to ${escapeHtml(app.docRejectionEmail.to || 'applicant')} ${fmtStampDate(app.docRejectionEmail.at)}`
+                                : `❌ Last email failed: ${escapeHtml(app.docRejectionEmail.error || 'unknown error')}`)
+                            : '⚠️ No email has been sent yet'}</span>
+                        <button type="button" class="btn-reissue" onclick="resendRejectedDocsEmail('${app.id}')">📧 Resend email</button>
+                    </div>
+               </div>`
+            : '';
+
+        // ── Right to Work (answers given at onboarding + share-code check) ──
+        const rtw = app.rightToWork || null;
+        let rtwHtml = '';
+        if (rtw && (rtw.withoutSponsorship || rtw.evidence)) {
+            const sponsorText = ({ yes: '<span style="color:var(--success); font-weight:700;">Yes</span>', no: '<span style="color:var(--error); font-weight:700;">No — needs sponsorship</span>', unsure: '<span style="color:var(--warning); font-weight:700;">Unsure</span>' })[rtw.withoutSponsorship] || '<span class="missing-data">Not answered</span>';
+            const chk = rtw.shareCodeCheck || {};
+            const shareHtml = rtw.shareCode
+                ? `<div class="data-group"><div class="data-label">Share Code</div>
+                        <div class="data-value mono" style="font-size:1.05rem; letter-spacing:0.05em;">${escapeHtml(rtw.shareCode)}</div>
+                        <a href="https://www.gov.uk/check-job-applicant-right-to-work" target="_blank" class="btn-download" style="margin-top:6px; display:inline-flex;">🔗 Open GOV.UK checker</a></div>
+                   <div class="data-group"><div class="data-label">Share Code Check</div>
+                        <select onchange="updateShareCodeCheck('${app.id}', this.value)">
+                            <option value="">— Verification Status —</option>
+                            <option value="verified" ${chk.docStatus === 'verified' ? 'selected' : ''}>✓ Verified</option>
+                            <option value="under_review" ${chk.docStatus === 'under_review' ? 'selected' : ''}>⏳ Under Review</option>
+                            <option value="rejected" ${chk.docStatus === 'rejected' ? 'selected' : ''}>✗ Rejected</option>
+                        </select>
+                        ${docStampHtml(chk)}</div>`
+                : '';
+            rtwHtml = `<div class="rtw-panel">
+                    <div class="data-label" style="color:var(--accent);">🛂 Right to Work</div>
+                    <div class="grid-2" style="margin-top:0.7rem;">
+                        <div class="data-group"><div class="data-label">Right to work without NGU sponsorship</div><div class="data-value">${sponsorText}</div></div>
+                        <div class="data-group"><div class="data-label">Evidence they are providing</div><div class="data-value">${escapeHtml(rtw.evidence || 'Not answered')}</div></div>
+                        ${shareHtml}
+                    </div>
+               </div>`;
+        } else if (app.workPermit) {
+            rtwHtml = `<div class="rtw-panel"><div class="data-label" style="color:var(--accent);">🛂 Right to Work</div>
+                    <div class="data-value" style="margin-top:0.5rem;">${app.workPermit === 'yes' ? 'Needs a work permit' : 'Does not need a work permit'} <span style="color:var(--text-muted); font-size:0.8rem;">(from application form)</span></div></div>`;
+        }
+
+        // ── Contract approval ──
+        let approvalHtml = '';
+        if (app.contractAccepted === true) {
+            approvalHtml = app.contractApproved
+                ? `<div class="approval-panel approved">
+                        <div class="data-label" style="color:var(--success);">✅ Contract Approved</div>
+                        <div style="margin-top:0.4rem; font-size:0.9rem;">Approved by <strong>${escapeHtml(app.contractApprovedBy || 'Admin')}</strong> on ${fmtStampDate(app.contractApprovedAt)}${app.contractApprovalNote ? `<br><span style="color:var(--text-muted);">Note: ${escapeHtml(app.contractApprovalNote)}</span>` : ''}</div>
+                        <div style="margin-top:0.7rem;"><button type="button" class="btn-muted" onclick="revokeContractApproval('${app.id}')">Undo approval</button></div>
+                   </div>`
+                : `<div class="approval-panel">
+                        <div class="data-label" style="color:var(--warning);">📝 Signed Contract — Approval Required</div>
+                        <div style="margin-top:0.4rem; font-size:0.85rem; color:var(--text-muted);">The candidate has signed. Review the signed contract, then approve it. Your name and the time are recorded.</div>
+                        <div style="margin-top:0.7rem;"><button type="button" class="btn-approve" onclick="approveContract('${app.id}')">✅ Approve Signed Contract</button></div>
+                   </div>`;
+        }
+
+        // ── Archive (Leaver / Did not start) ──
+        const arc = app.onboardingArchive && app.onboardingArchive.status ? app.onboardingArchive : null;
+        const archivedBannerHtml = arc
+            ? `<div class="archived-banner">
+                    <div>${arc.status === 'Leaver' ? '🚪 <strong>Leaver</strong>' : '🚫 <strong>Did not start</strong>'}
+                        — archived ${fmtStampDate(arc.at)}${arc.by ? ' by ' + escapeHtml(arc.by) : ''}${arc.date ? ` · date: ${new Date(arc.date).toLocaleDateString('en-GB')}` : ''}${arc.reason ? `<br><span style="color:var(--text-muted);">Reason: ${escapeHtml(arc.reason)}</span>` : ''}</div>
+                    <button type="button" class="btn-muted" onclick="restoreOnboarding('${app.id}')">↩ Restore to main list</button>
+               </div>`
+            : '';
+        const archivePanelHtml = arc ? '' : `
+            <div class="archive-panel">
+                <div class="data-label" style="color:var(--text-muted);">📦 Not starting or no longer with us? Move to Archive</div>
+                <div class="archive-row">
+                    <div><div class="data-label" style="margin-bottom:4px;">Date (leaving date for a leaver — optional)</div><input type="date" id="archiveDate"></div>
+                    <div style="flex:1; min-width:200px;"><div class="data-label" style="margin-bottom:4px;">Reason (optional)</div><input type="text" id="archiveReason" style="width:100%;" placeholder="e.g. Resigned / Accepted another role / No show"></div>
+                    <button type="button" class="btn-leaver" onclick="archiveOnboarding('${app.id}', 'Leaver')">🚪 Leaver</button>
+                    <button type="button" class="btn-dns" onclick="archiveOnboarding('${app.id}', 'Did not start')">🚫 Did not start</button>
+                </div>
+            </div>`;
+
         mainEl.innerHTML = `
+            ${archivedBannerHtml}
             ${warningBanner}
             
             <div class="app-header">
@@ -1102,6 +1284,8 @@
 
             <div class="section">
                 <h3>📁 Uploaded Identification & Documents</h3>
+                ${rejectedBannerHtml}
+                ${rtwHtml}
                 ${docsHtml}
                 <div style="border-top:1px dashed var(--border); margin-top:1.5rem; padding-top:1.5rem;">
                     <div class="data-label" style="color:var(--accent); margin-bottom:1rem;">Tax & HMRC Documents</div>
@@ -1215,6 +1399,8 @@
                     </div>
                 </div>
 
+                ${approvalHtml}
+
                 ${reissuePendingHtml}
 
                 <div class="reissue-panel">
@@ -1234,6 +1420,8 @@
 
                 ${contractHistoryHtml}
             </div>
+
+            ${archivePanelHtml}
 
             ${actionHtml}
         `;
@@ -1289,33 +1477,228 @@
         if (currentApp) renderDetails(currentApp);
     };
 
-    // ─── DOCUMENT STATUS UPDATES ─────────────────────────────────────────────
-    window.updateOnboardingDocStatus = async function(appId, fieldPath, statusValue) {
+    // ─── LETTERHEAD (signed contract view) ───────────────────────────────────
+    function letterheadHeaderHtml() {
+        const addr = (LETTERHEAD.addressLines || []).filter(Boolean).map(escapeHtml).join('<br>');
+        return `
+            <div class="lh-band" style="background:#0A1628; padding:22px 50px; display:flex; justify-content:space-between; align-items:center; gap:24px; border-bottom:5px solid #00A3E0; font-family:Arial,sans-serif;">
+                <img src="${LETTERHEAD.logoUrl}" alt="${escapeHtml(LETTERHEAD.companyName)}" style="max-height:52px; display:block;">
+                <div style="text-align:right; color:#E8EDF2; font-size:11.5px; line-height:1.55;">
+                    <div style="font-size:14px; font-weight:700; letter-spacing:0.02em;">${escapeHtml(LETTERHEAD.companyName)}</div>
+                    ${addr ? `<div style="color:#b6c2d1;">${addr}</div>` : ''}
+                    ${LETTERHEAD.contactLine ? `<div style="color:#b6c2d1;">${escapeHtml(LETTERHEAD.contactLine)}</div>` : ''}
+                </div>
+            </div>`;
+    }
+    function letterheadFooterHtml() {
+        const line = [LETTERHEAD.companyName, LETTERHEAD.footerLine].filter(Boolean).map(escapeHtml).join('  |  ');
+        return `
+            <div class="lh-footer" style="border-top:3px solid #00A3E0; margin:0 50px; padding:12px 0 22px; text-align:center; font-family:Arial,sans-serif; font-size:10.5px; color:#666;">
+                ${line}
+            </div>`;
+    }
+
+    // ─── DOCUMENT STAMPS ─────────────────────────────────────────────────────
+    function fmtStampDate(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        return isNaN(d.getTime()) ? '' : d.toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    // "✓ Verified by <name> · <date time>" under a document
+    function docStampHtml(f) {
+        if (!f || !f.docStatus || !f.docStatusAt) return '';
+        const who = escapeHtml(f.docStatusBy || 'Unknown');
+        const when = fmtStampDate(f.docStatusAt);
+        if (f.docStatus === 'verified') return `<small class="doc-stamp ok">✓ Verified by ${who} · ${when}</small>`;
+        if (f.docStatus === 'rejected') return `<small class="doc-stamp bad">✗ Rejected by ${who} · ${when}${f.docRejectReason ? ' — ' + escapeHtml(f.docRejectReason) : ''}</small>`;
+        return `<small class="doc-stamp">⏳ Set to under review by ${who} · ${when}</small>`;
+    }
+
+    // ─── REJECTED DOCUMENTS EMAIL ────────────────────────────────────────────
+    // Emails the applicant a list of everything currently rejected, with a link to
+    // docupload2.html which only shows the rejected items. Records the outcome.
+    async function sendRejectedDocsEmail(appId, rejectedMap) {
+        const appData = applicationsData.find(a => a.id === appId) || {};
+        const toEmail = appData.personalDetails?.email || appData.onboardingDetails?.personalEmail || '';
+        const firstName = (appData.fullName || '').split(' ')[0] || 'there';
+        const items = Object.keys(rejectedMap || {}).map(k => rejectedMap[k]);
+        let result = { ok: false, error: '' };
+
+        if (!window.emailjs) result.error = 'EmailJS has not loaded on this page.';
+        else if (!toEmail) result.error = 'This applicant has no email address on file.';
+        else if (items.length === 0) result.error = 'There are no rejected documents to send.';
+        else {
+            const base = location.origin.startsWith('file') ? PORTAL_BASE : location.origin;
+            try {
+                await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_DOCS_REJECTED, {
+                    to_email: toEmail,
+                    first_name: firstName,
+                    job_title: appData.position || 'the role',
+                    rejected_items: '<ul style="margin:0; padding-left:20px;">' + items.map(i => `<li style="margin-bottom:8px;"><strong>${escapeHtml(i.label)}</strong><br><span style="color:#b91c1c;">${escapeHtml(i.reason || '')}</span></li>`).join('') + '</ul>',
+                    rejected_items_text: items.map(i => `- ${i.label}: ${i.reason || ''}`).join('\n'),
+                    upload_link: `${base}/docupload2.html?email=${encodeURIComponent(toEmail)}`
+                }, { publicKey: EMAILJS_PUBLIC_KEY });
+                result.ok = true;
+            } catch (err) {
+                console.error('Rejected-documents email failed:', err);
+                result.error = (err && (err.text || err.message)) ? `EmailJS error ${err.status || ''}: ${err.text || err.message}` : String(err);
+            }
+        }
         try {
-            const appRef = doc(db, "NGUO New Applicants", appId);
-            const updates = {};
-            updates[fieldPath] = statusValue;
-            
-            let didDelete = false;
-            if (statusValue === 'rejected') {
-                if (confirm("Would you like to delete this file entirely so the applicant must re-upload it? (Choosing 'Cancel' keeps the file but marks it rejected)")) {
-                    const baseDocPath = fieldPath.replace('.docStatus', '');
-                    updates[baseDocPath] = deleteField();
-                    const certKey = baseDocPath.split('.').pop();
-                    if (certKey) updates[`certificates.${certKey}`] = deleteField();
-                    didDelete = true;
-                }
-            }
-            
-            await updateDoc(appRef, updates);
-            console.log(`Updated ${fieldPath} to ${statusValue}`);
-            if (didDelete) {
-                alert("File deleted successfully. The applicant will now be able to upload a replacement via the upload link.");
-                location.reload();
-            }
+            await updateDoc(doc(db, 'NGUO New Applicants', appId), {
+                docRejectionEmail: { status: result.ok ? 'sent' : 'failed', at: new Date().toISOString(), to: toEmail, error: result.error || '' }
+            });
+        } catch (e) { console.error('Could not record rejection email outcome:', e); }
+        return result;
+    }
+
+    window.resendRejectedDocsEmail = async function(appId) {
+        const appData = applicationsData.find(a => a.id === appId);
+        if (!appData) return;
+        const r = await sendRejectedDocsEmail(appId, appData.rejectedDocuments || {});
+        alert(r.ok ? 'Email sent to the applicant.' : 'Email NOT sent:\n' + r.error);
+    };
+
+    // ─── RIGHT TO WORK SHARE-CODE CHECK ──────────────────────────────────────
+    window.updateShareCodeCheck = async function(appId, statusValue) {
+        const appData = applicationsData.find(a => a.id === appId);
+        if (!appData) return;
+        const nowIso = new Date().toISOString();
+        const by = currentUserName();
+        const updates = {};
+        let rejectInfo = null;
+
+        if (statusValue) {
+            updates['rightToWork.shareCodeCheck'] = { docStatus: statusValue, docStatusBy: by, docStatusAt: nowIso };
+        } else {
+            updates['rightToWork.shareCodeCheck'] = deleteField();
+        }
+        if (statusValue === 'rejected') {
+            const input = prompt('Rejecting the right to work share code.\n\nEnter the reason (it is emailed to the applicant straight away so they can send a new code):', '');
+            if (input === null) { renderDetails(appData); return; }
+            const reason = input.trim() || 'We could not verify this share code. Please provide a new, valid share code.';
+            updates['rightToWork.shareCodeCheck'].docRejectReason = reason;
+            rejectInfo = { label: DOC_LABELS.sharecode, reason, store: 'rightToWork', at: nowIso, by };
+            updates['rejectedDocuments.sharecode'] = rejectInfo;
+        } else {
+            updates['rejectedDocuments.sharecode'] = deleteField();
+        }
+        try { await updateDoc(doc(db, 'NGUO New Applicants', appId), updates); }
+        catch (e) { console.error(e); alert('Could not save the share code check.'); renderDetails(appData); return; }
+
+        if (rejectInfo) {
+            const r = await sendRejectedDocsEmail(appId, { ...(appData.rejectedDocuments || {}), sharecode: rejectInfo });
+            alert(r.ok ? 'Marked as rejected and the applicant has been emailed.' : 'Marked as rejected, but the email was NOT sent:\n' + r.error + '\n\nUse "Resend email" once fixed.');
+        }
+    };
+
+    // ─── CONTRACT APPROVAL ───────────────────────────────────────────────────
+    window.approveContract = async function(appId) {
+        const appData = applicationsData.find(a => a.id === appId);
+        if (!appData) return;
+        if (appData.contractAccepted !== true) return alert('This contract has not been signed yet.');
+        const note = prompt(`Approve the signed contract for ${appData.fullName || 'this candidate'}?\n\nOptional note (leave blank for none):`, '');
+        if (note === null) return;
+        const updates = {
+            contractApproved: true,
+            contractApprovedAt: new Date().toISOString(),
+            contractApprovedBy: currentUserName()
+        };
+        updates.contractApprovalNote = note.trim() ? note.trim() : deleteField();
+        try { await updateDoc(doc(db, 'NGUO New Applicants', appId), updates); }
+        catch (e) { console.error(e); alert('Could not save the approval. Please try again.'); }
+    };
+
+    window.revokeContractApproval = async function(appId) {
+        if (!confirm('Remove the approval from this contract?')) return;
+        try {
+            await updateDoc(doc(db, 'NGUO New Applicants', appId), {
+                contractApproved: false,
+                contractApprovedAt: deleteField(),
+                contractApprovedBy: deleteField(),
+                contractApprovalNote: deleteField()
+            });
+        } catch (e) { console.error(e); alert('Could not remove the approval.'); }
+    };
+
+    // ─── ARCHIVE: LEAVER / DID NOT START ─────────────────────────────────────
+    window.archiveOnboarding = async function(appId, status) {
+        const appData = applicationsData.find(a => a.id === appId);
+        if (!appData) return;
+        const date = document.getElementById('archiveDate')?.value || '';
+        const reason = (document.getElementById('archiveReason')?.value || '').trim();
+        if (!confirm(`Move ${appData.fullName || 'this person'} out of the main list and into the Archive as "${status}"?\n\nYou can restore them from the Archive tab at any time.`)) return;
+        try {
+            await updateDoc(doc(db, 'NGUO New Applicants', appId), {
+                onboardingArchive: { status, at: new Date().toISOString(), by: currentUserName(), date, reason }
+            });
+            selectedAppId = null;
+            document.getElementById('mainContent').innerHTML = `<div class="empty-state">${escapeHtml(appData.fullName || 'Applicant')} moved to the Archive (${status}).</div>`;
+        } catch (e) { console.error(e); alert('Could not archive this person. Please try again.'); }
+    };
+
+    window.restoreOnboarding = async function(appId) {
+        const appData = applicationsData.find(a => a.id === appId);
+        if (!confirm(`Restore ${appData?.fullName || 'this person'} to the main list?`)) return;
+        try {
+            await updateDoc(doc(db, 'NGUO New Applicants', appId), { onboardingArchive: deleteField() });
+            selectedAppId = null;
+            currentTab = 'active';
+            renderSidebar();
+            document.getElementById('mainContent').innerHTML = `<div class="empty-state">Restored to the main list.</div>`;
+        } catch (e) { console.error(e); alert('Could not restore this person.'); }
+    };
+
+    // ─── DOCUMENT STATUS UPDATES ─────────────────────────────────────────────
+    // Sets Verified / Under Review / Rejected on a document, stamping who did it and when.
+    // Rejecting asks for a reason, records it, and automatically emails the applicant.
+    window.updateOnboardingDocStatus = async function(appId, fieldPath, statusValue) {
+        const appData = applicationsData.find(a => a.id === appId);
+        if (!appData) return;
+        const parts = fieldPath.split('.');           // e.g. ['onboardingDocs', 'passport', 'docStatus']
+        const store = parts[0], key = parts[1];
+        const base = `${store}.${key}`;
+        const label = DOC_LABELS[key] || key;
+        const nowIso = new Date().toISOString();
+        const by = currentUserName();
+        const updates = {};
+        let rejectInfo = null;
+
+        updates[`${base}.docStatus`] = statusValue;
+        if (statusValue) {
+            updates[`${base}.docStatusBy`] = by;
+            updates[`${base}.docStatusAt`] = nowIso;
+        } else {
+            updates[`${base}.docStatusBy`] = deleteField();
+            updates[`${base}.docStatusAt`] = deleteField();
+        }
+
+        if (statusValue === 'rejected') {
+            const input = prompt(`Rejecting "${label}".\n\nEnter the reason. The applicant is emailed straight away, listing everything that has been rejected, with a link to upload replacements:`, '');
+            if (input === null) { renderDetails(appData); return; }   // cancelled — put the dropdown back
+            const reason = input.trim() || DEFAULT_REJECT_REASON;
+            updates[`${base}.docRejectReason`] = reason;
+            rejectInfo = { label, reason, store, at: nowIso, by };
+            updates[`rejectedDocuments.${key}`] = rejectInfo;
+        } else {
+            updates[`${base}.docRejectReason`] = deleteField();
+            updates[`rejectedDocuments.${key}`] = deleteField();
+        }
+
+        try {
+            await updateDoc(doc(db, 'NGUO New Applicants', appId), updates);
         } catch (error) {
-            console.error("Failed to update status:", error);
-            alert("Error updating document status.");
+            console.error('Failed to update status:', error);
+            alert('Error updating document status.');
+            renderDetails(appData);
+            return;
+        }
+
+        if (rejectInfo) {
+            const r = await sendRejectedDocsEmail(appId, { ...(appData.rejectedDocuments || {}), [key]: rejectInfo });
+            alert(r.ok
+                ? `"${label}" rejected. The applicant has been emailed with a link to upload a replacement.`
+                : `"${label}" rejected, but the email was NOT sent:\n${r.error}\n\nUse the "Resend email" button on this applicant once that is fixed.`);
         }
     };
 
@@ -1334,6 +1717,8 @@
                         didDelete = true;
                     } else {
                         additional[idx].docStatus = statusValue;
+                        additional[idx].docStatusBy = currentUserName();
+                        additional[idx].docStatusAt = new Date().toISOString();
                     }
                     await updateDoc(appRef, { "certificates.additional": additional });
                     console.log(`Updated additional cert ${idx} to ${statusValue}`);
@@ -1372,6 +1757,7 @@
 
             const appRef = doc(db, "NGUO New Applicants", appId);
             const updates = {};
+            updates[`rejectedDocuments.${docKey}`] = deleteField();
             updates[`onboardingDocs.${docKey}`] = {
                 url: downloadUrl,
                 filename: file.name,
@@ -1412,6 +1798,7 @@
 
             const appRef = doc(db, "NGUO New Applicants", appId);
             const updates = {};
+            updates[`rejectedDocuments.${certKey}`] = deleteField();
             updates[`certificates.${certKey}`] = {
                 url: downloadUrl,
                 filename: file.name,
