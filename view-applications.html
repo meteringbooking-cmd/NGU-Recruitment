@@ -1615,12 +1615,88 @@
         // Auto-archive on Do Not Proceed interview recommendation
         const appEmail = (app.personalDetails?.email || '').toLowerCase();
         const matchedInterview = interviewsData.find(i => i.applicantEmail?.toLowerCase() === appEmail);
-        if (matchedInterview?.interviewCompleted && matchedInterview?.interviewData?.recommendation === 'Do Not Proceed') {
+        if (!app.restoredToActiveAt && matchedInterview?.interviewCompleted && matchedInterview?.interviewData?.recommendation === 'Do Not Proceed') {
             return true;
         }
 
         return false;
     }
+
+    // Why is this applicant in the Archived tab? (null = not archived)
+    function archiveReasonOf(app) {
+        if (app.finalRecruitmentDecision === 'Approved') return 'Offer sent';
+        if (app.finalRecruitmentDecision === 'Rejected') return app.autoRejected ? 'Automatically rejected (missing required certificates)' : 'Rejected at final decision';
+        if (app.interviewDecision === 'Interview Rejected') return 'Interview rejected';
+        if (app.nameChecksDeclined === true) return 'Name check declined';
+        if (app.reviews && app.reviews.length >= 1 && app.reviews[0].decision === 'Do not proceed') return 'Do not proceed (first review)';
+        return null;
+    }
+
+    function archivedBannerHtml(app) {
+        const reason = archiveReasonOf(app);
+        if (!reason) return '';
+        const by = app.finalRecruitmentDecisionBy || app.nameChecksCompletedBy || '';
+        return `<div style="display:flex; justify-content:space-between; align-items:center; gap:14px; flex-wrap:wrap; background:rgba(148,163,184,0.1); border:1px solid rgba(148,163,184,0.35); border-radius:10px; padding:0.9rem 1.2rem; margin-bottom:1.2rem;">
+            <div style="font-size:0.92rem; color:var(--text-light);">📦 <strong>Archived</strong> — ${escapeHtml(reason)}${by ? ` <span style="color:var(--text-muted); font-size:0.8rem;">(${escapeHtml(by)})</span>` : ''}</div>
+            <button type="button" class="btn-action" onclick="restoreToActive('${app.id}')">↩ Restore to Active</button>
+        </div>`;
+    }
+
+    window.restoreToActive = async function(appId) {
+        const app = applicationsData.find(a => a.id === appId);
+        if (!app) return;
+        const reason = archiveReasonOf(app);
+        if (!reason) { alert('This applicant is not in the Archived list.'); return; }
+
+        let msg = `Restore ${app.fullName || 'this applicant'} to the Active list?\n\nArchived reason: ${reason}.\n\nThe archive decision is cleared so you can carry on from where they were. No emails are sent.`;
+        if (app.finalRecruitmentDecision === 'Approved') {
+            msg += `\n\nNOTE: an offer and portal login have already been sent to this person. Restoring clears the offer decision so you can re-decide; their existing login details are not removed.`;
+        }
+        if (!confirm(msg)) return;
+
+        const who = localStorage.getItem('ngu_portal_username') || 'Recruiter';
+        const now = new Date().toISOString();
+        const upd = {
+            restoredToActiveAt: now,
+            restoredToActiveBy: who,
+            restoredFrom: reason,
+            reinstated: true,
+            reinstatedAt: now
+        };
+        let backToStart = false;
+        if (app.finalRecruitmentDecision === 'Approved' || app.finalRecruitmentDecision === 'Rejected') {
+            upd.finalRecruitmentDecision = deleteField();
+            upd.finalRecruitmentDecisionAt = deleteField();
+            upd.finalRecruitmentDecisionBy = deleteField();
+            if (app.autoRejected) { upd.autoRejected = deleteField(); upd.autoRejectReason = deleteField(); backToStart = true; }
+        }
+        if (app.interviewDecision === 'Interview Rejected') upd.interviewDecision = deleteField();
+        if (app.nameChecksDeclined === true) {
+            // back to "Name Checks Pending" so you can Proceed or Decline again (no emails re-sent)
+            upd.nameChecksDeclined = deleteField();
+            upd.nameChecksCompleted = false;
+            upd.nameChecks = 'Pending';
+        }
+        if (app.reviews && app.reviews.length >= 1 && app.reviews[0].decision === 'Do not proceed') {
+            upd.reviews = [];
+            backToStart = true;
+        }
+        upd.status = backToStart ? 'Pending Review' : 'Under Review';
+
+        try {
+            await updateDoc(doc(db, 'NGUO New Applicants', appId), upd);
+            // jump to the Active tab with this person still selected
+            currentTab = 'active';
+            document.getElementById('tabActive').classList.add('active');
+            document.getElementById('tabArchived').classList.remove('active');
+            selectedAppId = appId;
+            renderSidebar();
+            alert(`${app.fullName || 'Applicant'} has been restored to the Active list.`);
+        } catch (err) {
+            console.error('Restore error:', err);
+            alert('Could not restore this applicant: ' + (err && err.message ? err.message : err));
+        }
+    };
 
     function renderSidebar() {
         const listEl = document.getElementById('applicantList');
@@ -2233,6 +2309,7 @@
         }
 
         mainEl.innerHTML = `
+            ${archivedBannerHtml(app)}
             <div class="app-header"><h1>${app.fullName} ${matchBadgeHtml} ${agencyHeaderBadge} ${sourceHeaderBadge}
                 <select class="status-bar-select ${app.headerStatus === 'invited' ? 'invited' : app.headerStatus === 'awaitingcerts' ? 'awaitingcerts' : ''}"
                     id="headerStatusSelect"
