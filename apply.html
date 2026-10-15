@@ -807,8 +807,6 @@
     const EMAILJS_TEMPLATE_INTERNAL  = 'template_rdg2zp9';
     const EMAILJS_PUBLIC_KEY         = 'ziLnha91scpGjFABh';
     const INTERNAL_NOTIFY_EMAIL      = 'barry.dixon@next-gen.uk';
-    // Sent automatically when a candidate does not hold all four required certificates
-    const EMAILJS_TEMPLATE_REJECT    = 'template_846sl7l';
 
     emailjs.init(EMAILJS_PUBLIC_KEY);
 
@@ -832,15 +830,6 @@
             to_email: data.email, to_name: data.forename,
             full_name: `${data.forename} ${data.surname}`,
             position: data.position, reply_to: INTERNAL_NOTIFY_EMAIL
-        });
-    }
-
-    async function sendRejectionEmail(data) {
-        return emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_REJECT, {
-            to_email: data.email,
-            first_name: data.forename,
-            job_title: data.position || 'the role',
-            reply_to: INTERNAL_NOTIFY_EMAIL
         });
     }
 
@@ -1306,7 +1295,6 @@
         const certHave = {};
         Object.keys(CERT_LABELS).forEach(k => { certHave[k] = !!document.getElementById(`have-${k}`)?.checked; });
         const missingCertLabels = Object.keys(CERT_LABELS).filter(k => !certHave[k]).map(k => CERT_LABELS[k]);
-        const autoReject = certsAsked && missingCertLabels.length > 0;
         // Short text summary of what the candidate says they hold (shown as "Listed Qualifications" elsewhere)
         const qualifications = certsAsked
             ? Object.keys(CERT_LABELS).filter(k => certHave[k]).map(k => CERT_LABELS[k]).join('; ')
@@ -1413,14 +1401,9 @@
                 qualifications,
                 cv: cvUploadResult,
                 certificates: certsAsked ? certificates : null,
-                certificatesDeclared: certsAsked ? { ...certHave, allHeld: !autoReject } : null,
-                ...(autoReject ? {
-                    finalRecruitmentDecision: 'Rejected',
-                    finalRecruitmentDecisionAt: new Date().toISOString(),
-                    finalRecruitmentDecisionBy: 'Automatic - application form (missing required certificates)',
-                    autoRejected: true,
-                    autoRejectReason: 'Candidate did not confirm they hold: ' + missingCertLabels.join('; ')
-                } : {}),
+                // Which certificates the candidate says they hold. Missing ones do NOT reject the application;
+                // the recruitment team sees them and decides.
+                certificatesDeclared: certsAsked ? { ...certHave, allHeld: missingCertLabels.length === 0, missing: missingCertLabels } : null,
                 employment,
                 unavailability,
                 declaration: { name: declarationName, date: declarationDate, signature: sig1 },
@@ -1434,13 +1417,7 @@
             });
 
             const emailData = { forename, surname, email, phone, position, postcode };
-            if (autoReject) {
-                // Does not hold all required certificates → rejection email instead of the normal acknowledgement
-                await Promise.allSettled([sendRejectionEmail(emailData)]);
-                document.getElementById('successMsg').textContent = 'Thank you for your interest in Next Generation Utilities. Unfortunately, as you have not confirmed that you hold all of the certificates required for this role, we are unable to take your application any further. We have sent you an email with more information.';
-            } else {
-                await Promise.allSettled([sendApplicantEmail(emailData), sendInternalEmail(emailData)]);
-            }
+            await Promise.allSettled([sendApplicantEmail(emailData), sendInternalEmail(emailData)]);
 
             document.getElementById('applicationForm').style.display = 'none';
             document.getElementById('successScreen').style.display   = 'block';
