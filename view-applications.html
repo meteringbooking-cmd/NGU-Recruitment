@@ -1602,7 +1602,7 @@
     // An application is archived if:
     //   1. A final recruitment decision of Approved or Rejected has been made
     //   2. The interview stage recorded an "Interview Rejected" outcome
-    //   3. The interview recommendation came back as "Do Not Proceed"
+    //   (An interview recommendation of "Do Not Proceed" does not archive - the final decision is still made here)
     function isArchivedApp(app) {
         if (
             app.finalRecruitmentDecision === 'Approved' ||
@@ -1612,13 +1612,8 @@
             (app.reviews && app.reviews.length >= 1 && app.reviews[0].decision === 'Do not proceed')
         ) return true;
 
-        // Auto-archive on Do Not Proceed interview recommendation
-        const appEmail = (app.personalDetails?.email || '').toLowerCase();
-        const matchedInterview = interviewsData.find(i => i.applicantEmail?.toLowerCase() === appEmail);
-        if (!app.restoredToActiveAt && matchedInterview?.interviewCompleted && matchedInterview?.interviewData?.recommendation === 'Do Not Proceed') {
-            return true;
-        }
-
+        // NOTE: an interview recommendation of "Do Not Proceed" does NOT archive the applicant. They stay in Active
+        // so the recruiter can still make the Final Recruitment Action (Approve / Hold / Reject).
         return false;
     }
 
@@ -1719,28 +1714,8 @@
         if (currentTab === 'active') {
             filteredApps = filteredApps.filter(app => !isArchivedApp(app));
         } else {
-            // Archived tab: only show apps that are explicitly archived via decision or interview rejection.
-            // Do Not Proceed (interview rec) apps do NOT appear in Archived — they are silently hidden.
-            filteredApps = filteredApps.filter(app => {
-                const appEmail = (app.personalDetails?.email || '').toLowerCase();
-                const matchedInterview = interviewsData.find(i => i.applicantEmail?.toLowerCase() === appEmail);
-                const isDNPOnly =
-                    matchedInterview?.interviewCompleted &&
-                    matchedInterview?.interviewData?.recommendation === 'Do Not Proceed' &&
-                    app.finalRecruitmentDecision !== 'Approved' &&
-                    app.finalRecruitmentDecision !== 'Rejected' &&
-                    app.interviewDecision !== 'Interview Rejected';
-
-                if (isDNPOnly) return false; // hidden from archived too
-
-                return (
-                    app.finalRecruitmentDecision === 'Approved' ||
-                    app.finalRecruitmentDecision === 'Rejected' ||
-                    app.interviewDecision === 'Interview Rejected' ||
-                    app.nameChecksDeclined === true ||
-                    (app.reviews && app.reviews.length >= 1 && app.reviews[0].decision === 'Do not proceed')
-                );
-            });
+            // Archived tab: everything isArchivedApp() says is archived. Each shows its reason + Restore to Active.
+            filteredApps = filteredApps.filter(app => isArchivedApp(app));
         }
 
         if (filteredApps.length === 0) {
