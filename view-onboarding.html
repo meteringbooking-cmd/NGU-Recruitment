@@ -752,6 +752,22 @@
             .replace(/"/g, '&quot;');
     }
 
+    // Date of birth shown as DD-MM-YYYY (stored value is normally YYYY-MM-DD from the date picker)
+    function fmtDob(val) {
+        if (!val) return '';
+        if (typeof val === 'object' && typeof val.toDate === 'function') val = val.toDate();
+        if (val instanceof Date) {
+            if (isNaN(val.getTime())) return '';
+            return String(val.getDate()).padStart(2,'0') + '-' + String(val.getMonth()+1).padStart(2,'0') + '-' + val.getFullYear();
+        }
+        const str = String(val).trim();
+        let m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (m) return m[3].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-' + m[1];
+        m = str.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
+        if (m) return m[1].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-' + m[3];
+        return escapeHtml(str);
+    }
+
     function fmtDateDMY(val) {
         if (!val) return '';
         const d = new Date(val);
@@ -775,7 +791,7 @@
 
         const firstName = pNew.firstName || (app.fullName || '').split(' ')[0] || '';
         const lastName = pNew.lastName || (app.fullName || '').split(' ').slice(1).join(' ') || '';
-        const dob = fmtDateDMY(pNew.dob);
+        const dob = fmtDob(pNew.dob);
         const ni = pNew.niNumber || '';
         const address = pNew.address || '';
         const postcode = pNew.postcode || '';
@@ -1343,7 +1359,7 @@
                 <div class="grid-3">
                     <div class="data-group"><div class="data-label">Legal Name</div><div class="data-value">${safeVal(pNew.firstName || pOriginal.forename)} ${safeVal(pNew.lastName || pOriginal.surname)}</div></div>
                     <div class="data-group"><div class="data-label">Preferred Name</div><div class="data-value">${safeVal(pNew.preferredName)}</div></div>
-                    <div class="data-group"><div class="data-label">Date of Birth</div><div class="data-value">${safeVal(pNew.dob || pOriginal.dob)}</div></div>
+                    <div class="data-group"><div class="data-label">Date of Birth</div><div class="data-value">${safeVal(fmtDob(pNew.dob || pOriginal.dob))}</div></div>
                     <div class="data-group"><div class="data-label">National Insurance</div><div class="data-value mono">${safeVal(pNew.niNumber || pOriginal.niNumber)}</div></div>
                     <div class="data-group"><div class="data-label">Personal Email</div><div class="data-value">${safeVal(pNew.personalEmail || pOriginal.email)}</div></div>
                     <div class="data-group"><div class="data-label">Phone</div><div class="data-value">${safeVal(pNew.phone || pOriginal.phone)}</div></div>
