@@ -303,6 +303,17 @@
         }
     });
 
+    // Watch DBS Check form submissions (DBS-check.html) so they can be shown against the matching applicant
+    let dbsSubmissions = [];
+    onSnapshot(collection(db, "DBS Check"), (snapshot) => {
+        dbsSubmissions = [];
+        snapshot.forEach(d => dbsSubmissions.push({ id: d.id, ...d.data() }));
+        if (selectedAppId) {
+            const updatedApp = applicationsData.find(a => a.id === selectedAppId);
+            if (updatedApp) renderDetails(updatedApp);
+        }
+    }, (err) => console.warn('DBS Check not readable:', err));
+
     function setTab(tab) { currentTab = tab; renderSidebar(); }
     document.getElementById('tabActive').addEventListener('click', () => setTab('active'));
     document.getElementById('tabArchive').addEventListener('click', () => setTab('archive'));
@@ -404,6 +415,108 @@
             };
             listEl.appendChild(div);
         });
+    }
+
+    // ─── DBS INFORMATION ─────────────────────────────────────────────────────
+    // Shows: the applicant's choice + consent (from onboarding step 3) and the DBS form they filled in
+    // (DBS-check.html), including the signed declaration. The form has no applicant id, so it is matched by name.
+    function normName(s) { return String(s || '').toLowerCase().replace(/[^a-z\s'-]/g, ' ').replace(/\s+/g, ' ').trim(); }
+    function dbsSubmissionsFor(app) {
+        const p = app.onboardingDetails || {}, o = app.personalDetails || {};
+        const names = new Set([
+            normName(`${p.firstName || ''} ${p.lastName || ''}`),
+            normName(`${o.forename || ''} ${o.surname || ''}`),
+            normName(app.fullName)
+        ].filter(Boolean));
+        const matches = dbsSubmissions.filter(d => names.has(normName(`${d.firstName || ''} ${d.lastName || ''}`)));
+        const ts = d => (d.submittedAt && d.submittedAt.toMillis) ? d.submittedAt.toMillis() : 0;
+        matches.sort((a, b) => ts(b) - ts(a));
+        return matches;
+    }
+    function dbsLink(url, label) {
+        if (!url || !/^https?:\/\//i.test(url)) return '';
+        return `<a href="${escapeHtml(url)}" target="_blank" rel="noopener" style="color:var(--accent);">${label} ↗</a>`;
+    }
+    function dbsSectionHtml(app) {
+        const info = app.dbsInfo || {};
+        const row = (label, value) => `<div class="data-group"><div class="data-label">${label}</div><div class="data-value">${value}</div></div>`;
+        const savedAt = app.step3SavedAt ? new Date(app.step3SavedAt) : null;
+        const savedStr = savedAt && !isNaN(savedAt) ? savedAt.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+
+        // 1. Choice + consent given during onboarding
+        let choiceHtml, consentHtml;
+        if (info.choice === 'yes') {
+            choiceHtml = '<span style="color:var(--success);">Yes — Next Generation Utilities process the DBS on my behalf</span>';
+            consentHtml = info.consentGiven
+                ? `<span style="color:var(--success);">✓ Consent given</span>${savedStr ? ` <span style="color:var(--text-muted); font-weight:400;">(${savedStr})</span>` : ''}<div style="font-size:0.8rem; font-weight:400; color:var(--text-muted); margin-top:0.2rem;">&ldquo;I consent to my personal information being used by Next Generation Utilities for the sole purpose of completing a Basic DBS check.&rdquo;</div>`
+                : '<span style="color:var(--error);">✗ Consent not recorded</span>';
+        } else if (info.choice === 'no') {
+            choiceHtml = '<span style="color:var(--warning);">No — I will provide a recent valid certificate</span>';
+            consentHtml = '<span style="color:var(--text-muted); font-weight:400;">Not applicable (applicant is providing their own certificate)</span>';
+        } else {
+            choiceHtml = '<span class="missing-data">Pending</span>';
+            consentHtml = '<span class="missing-data">Pending</span>';
+        }
+
+        // 2. The DBS form (declaration + details)
+        const subs = dbsSubmissionsFor(app);
+        let formHtml;
+        if (subs.length === 0) {
+            formHtml = `<div style="margin-top:1rem; padding:0.9rem 1.1rem; border:1px dashed var(--border); border-radius:8px; color:var(--text-muted); font-size:0.9rem;">No DBS form has been submitted for this applicant yet (matched by name on the DBS Check form).</div>`;
+        } else {
+            const d = subs[0];
+            const when = (d.submittedAt && d.submittedAt.toDate) ? d.submittedAt.toDate().toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : 'Unknown';
+            const proc = d.nguProcessChoice === 'yes' ? 'Yes — NGU process this' : (d.nguProcessChoice === 'no' ? 'No — self process' : '—');
+            let inner = `<div class="grid-3">
+                ${row('Form chosen', escapeHtml(proc))}
+                ${row('Submitted', escapeHtml(when))}
+                ${row('Name on form', escapeHtml(`${d.firstName || ''} ${d.lastName || ''}`.trim()))}
+            </div>`;
+            if (d.nguProcessChoice === 'yes') {
+                const prev = (d.previousNames && d.previousNames.length) ? d.previousNames.map(escapeHtml).join('<br>') : 'None';
+                inner += `<div class="grid-3" style="margin-top:1rem;">
+                    ${row('Middle name', escapeHtml(d.middleName || 'None'))}
+                    ${row('National Insurance', `<span class="mono">${escapeHtml(d.niNumber || '—')}</span>`)}
+                    ${row('Surname at birth', escapeHtml(d.birthSurname || '—'))}
+                    ${row('Previous names', prev)}
+                </div>`;
+                if (d.addresses && d.addresses.length) {
+                    inner += `<div style="margin-top:1rem;"><div class="data-label">Address history</div>` + d.addresses.map((a, i) =>
+                        `<div class="data-value" style="margin-top:0.4rem;">${escapeHtml(a.line || '')} <span style="font-size:0.8rem; color:var(--text-muted);">(${i === 0 ? 'current' : 'previous'}${a.dateFrom ? ', from ' + escapeHtml(fmtDob(a.dateFrom)) : ''})</span></div>`).join('') + `</div>`;
+                }
+                const docs = [dbsLink(d.documents?.driversLicence, "Driver's licence"), dbsLink(d.documents?.passport, 'Passport'), dbsLink(d.documents?.altCertificate, 'Birth / marriage certificate')].filter(Boolean);
+                const alt = d.passportAlternatives;
+                if (docs.length || alt) {
+                    inner += `<div style="margin-top:1rem;"><div class="data-label">Identity documents</div><div class="data-value" style="margin-top:0.4rem;">${docs.join(' &nbsp;|&nbsp; ') || '<span class="missing-data">None uploaded</span>'}</div>`;
+                    if (alt) {
+                        inner += `<div class="grid-3" style="margin-top:0.8rem;">
+                            ${row('Date of birth', escapeHtml(fmtDob(alt.dob) || '—'))}
+                            ${row('Birth town', escapeHtml(alt.birthTown || '—'))}
+                            ${row('Country of birth', escapeHtml(alt.birthCountry || '—'))}
+                            ${row('Nationality at birth', escapeHtml(alt.nationalityAtBirth || '—'))}
+                            ${row('No certificate provided', alt.unableToProvideCert ? 'Yes' : 'No')}
+                        </div>`;
+                    }
+                    inner += `</div>`;
+                }
+            }
+            const sig = (d.signatureData && /^data:image\//.test(d.signatureData))
+                ? `<div style="margin-top:0.5rem; display:inline-block; background:#0f172a; border:1px solid var(--border); border-radius:8px; padding:6px;"><img src="${d.signatureData}" alt="Signature" style="display:block; max-width:320px; max-height:120px;"></div>`
+                : '<span class="missing-data">No signature</span>';
+            inner += `<div style="margin-top:1rem;"><div class="data-label">Signed declaration</div>${sig}<div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.3rem;">Signed on the DBS form, ${escapeHtml(when)}</div></div>`;
+            if (subs.length > 1) inner += `<div style="margin-top:0.8rem; font-size:0.8rem; color:var(--warning);">${subs.length} DBS forms were found under this name — showing the most recent.</div>`;
+            formHtml = `<div style="margin-top:1rem; padding:1rem 1.2rem; background:rgba(148,163,184,0.06); border:1px solid var(--border); border-radius:10px;">
+                <div class="data-label" style="color:var(--accent); margin-bottom:0.8rem;">DBS Form Submission</div>${inner}</div>`;
+        }
+
+        return `<div style="border-top:1px dashed var(--border); padding-top:1.5rem;">
+            <div class="data-label" style="color:var(--accent);">🛡 DBS Background Check</div>
+            <div class="grid-3" style="margin-top:0.6rem;">
+                <div class="data-group" style="grid-column: 1 / span 2;"><div class="data-label">Choice</div><div class="data-value" style="font-weight:bold;">${choiceHtml}</div></div>
+                <div class="data-group"><div class="data-label">Consent</div><div class="data-value" style="font-weight:bold;">${consentHtml}</div></div>
+            </div>
+            ${formHtml}
+        </div>`;
     }
 
     function safeVal(val) { 
@@ -1407,14 +1520,7 @@
                     <div class="data-group"><div class="data-label">Boots / Gloves</div><div class="data-value">B: ${safeVal(uni.boots)} | G: ${safeVal(uni.gloves)}</div></div>
                 </div>
                 
-                <div style="border-top:1px dashed var(--border); padding-top:1.5rem;">
-                    <div class="data-group">
-                        <div class="data-label" style="color:var(--accent);">DBS Background Check Preference</div>
-                        <div class="data-value" style="margin-top:0.5rem; font-weight:bold;">
-                            ${app.dbsInfo?.choice === 'yes' ? '<span style="color:var(--success);">Yes, process on my behalf</span> (Consent Given)' : (app.dbsInfo?.choice === 'no' ? '<span style="color:var(--warning);">No, I will provide a recent valid certificate</span>' : '<span class="missing-data">Pending</span>')}
-                        </div>
-                    </div>
-                </div>
+                ${dbsSectionHtml(app)}
             </div>
 
             <div class="section">
