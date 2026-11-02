@@ -257,8 +257,8 @@
                 <div class="lv-field full"><label class="lv-label" for="lvDate">Leaving date (optional)</label><input type="date" id="lvDate"></div>
                 <div class="lv-field"><label class="lv-label" for="lvHolidays">Holidays owed (days)</label><input type="number" id="lvHolidays" min="0" step="0.5" value="0"></div>
                 <div class="lv-field"><label class="lv-label" for="lvNotice">Notice pay (days)</label><input type="number" id="lvNotice" min="0" step="0.5" value="0"></div>
-                <div class="lv-field"><label class="lv-label" for="lvVan">Van deduction (days)</label><input type="number" id="lvVan" min="0" step="0.5" value="0"></div>
-                <div class="lv-field"><label class="lv-label" for="lvTraining">Training deduction (days)</label><input type="number" id="lvTraining" min="0" step="0.5" value="0"></div>
+                <div class="lv-field"><label class="lv-label" for="lvVan">Van deduction (£)</label><input type="number" id="lvVan" min="0" step="0.01" value="0"></div>
+                <div class="lv-field"><label class="lv-label" for="lvTraining">Training deduction (£)</label><input type="number" id="lvTraining" min="0" step="0.01" value="0"></div>
                 <div class="lv-field full"><label class="lv-label">Phone returned?</label>
                     <div class="lv-radios"><label><input type="radio" name="lvPhone" value="yes"> Yes</label><label><input type="radio" name="lvPhone" value="no"> No</label></div></div>
                 <div class="lv-field full"><label class="lv-label">Kit returned?</label>
@@ -535,8 +535,8 @@
             <div class="grid-3">
                 ${cell('Holidays owed', escapeHtml(fmtDaysQty(d.holidaysOwedDays)))}
                 ${cell('Notice pay', escapeHtml(fmtDaysQty(d.noticePayDays)))}
-                ${cell('Van deduction', escapeHtml(fmtDaysQty(d.vanDeductionDays)))}
-                ${cell('Training deduction', escapeHtml(fmtDaysQty(d.trainingDeductionDays)))}
+                ${cell('Van deduction', escapeHtml(fmtMoney(d.vanDeductionValue)))}
+                ${cell('Training deduction', escapeHtml(fmtMoney(d.trainingDeductionValue)))}
                 ${cell('Phone returned', d.phoneReturned === 'yes' ? yes('Yes') : no('No'))}
                 ${cell('Kit returned', d.kitReturned === 'yes' ? yes('Yes') : no(`No — ${escapeHtml(fmtMoney(d.kitOutstandingValue))} to deduct`))}
             </div>
@@ -568,8 +568,8 @@
         document.getElementById('lvDate').value = (rec && (rec.leavingDate || rec.onboardingArchive?.date)) || '';
         document.getElementById('lvHolidays').value = d.holidaysOwedDays ?? 0;
         document.getElementById('lvNotice').value = d.noticePayDays ?? 0;
-        document.getElementById('lvVan').value = d.vanDeductionDays ?? 0;
-        document.getElementById('lvTraining').value = d.trainingDeductionDays ?? 0;
+        document.getElementById('lvVan').value = d.vanDeductionValue ?? 0;
+        document.getElementById('lvTraining').value = d.trainingDeductionValue ?? 0;
         document.querySelectorAll('input[name="lvPhone"]').forEach(r => r.checked = (r.value === d.phoneReturned));
         document.querySelectorAll('input[name="lvKit"]').forEach(r => r.checked = (r.value === d.kitReturned));
         document.getElementById('lvKitCost').value = d.kitReturned === 'no' ? (d.kitOutstandingValue ?? '') : '';
@@ -586,16 +586,16 @@
         const isManual = target === 'new' || String(target).startsWith('ML_');
         const name = document.getElementById('lvName').value.trim();
         if (isManual && !name) return err('Please enter the leaver\'s name.');
-        const num = (id, label) => {
+        const num = (id, label, money) => {
             const raw = document.getElementById(id).value.trim();
             const v = Number(raw);
-            if (raw === '' || !isFinite(v) || v < 0) { err(`Please enter a valid quantity for ${label} (0 if none).`); return null; }
-            return v;
+            if (raw === '' || !isFinite(v) || v < 0) { err(money ? `Please enter a valid £ amount for ${label} (0 if none).` : `Please enter a valid quantity for ${label} (0 if none).`); return null; }
+            return money ? Math.round(v * 100) / 100 : v;
         };
         const holidays = num('lvHolidays', 'Holidays owed'); if (holidays === null) return;
         const notice = num('lvNotice', 'Notice pay'); if (notice === null) return;
-        const van = num('lvVan', 'Van deduction'); if (van === null) return;
-        const training = num('lvTraining', 'Training deduction'); if (training === null) return;
+        const van = num('lvVan', 'Van deduction', true); if (van === null) return;
+        const training = num('lvTraining', 'Training deduction', true); if (training === null) return;
         const phone = document.querySelector('input[name="lvPhone"]:checked')?.value;
         if (!phone) return err('Please say whether the phone was returned (Yes / No).');
         const kit = document.querySelector('input[name="lvKit"]:checked')?.value;
@@ -610,7 +610,7 @@
         const leavingDate = document.getElementById('lvDate').value || '';
         const now = new Date().toISOString();
         const leaverDetails = {
-            holidaysOwedDays: holidays, noticePayDays: notice, vanDeductionDays: van, trainingDeductionDays: training,
+            holidaysOwedDays: holidays, noticePayDays: notice, vanDeductionValue: van, trainingDeductionValue: training,
             phoneReturned: phone, kitReturned: kit, kitOutstandingValue: kit === 'no' ? kitCost : 0,
             recordedAt: now, recordedBy: currentUserName()
         };
