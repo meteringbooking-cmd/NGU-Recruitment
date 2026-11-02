@@ -105,6 +105,28 @@
         .archive-panel .archive-row { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: flex-end; margin-top: 0.6rem; }
         .archive-panel input { background: var(--bg-input); color: white; border: 1px solid var(--border); border-radius: 6px; padding: 0.55rem 0.7rem; font-family: inherit; font-size: 0.9rem; }
         .btn-leaver { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.5); color: #fca5a5; }
+        /* Leaver details */
+        .btn-leaver-main { cursor:pointer; font-family:inherit; font-weight:700; border-radius:6px; padding:0.55rem 1rem; font-size:0.88rem; background: rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.5); color:#fca5a5; }
+        .btn-leaver-main:hover { background: rgba(239,68,68,0.22); }
+        .lv-topbar { display:flex; justify-content:flex-end; margin-bottom:1rem; }
+        .lv-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.65); display:none; align-items:center; justify-content:center; z-index:1000; padding:1rem; }
+        .lv-overlay.open { display:flex; }
+        .lv-modal { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; width:100%; max-width:560px; max-height:92vh; overflow-y:auto; padding:1.6rem; box-shadow:0 10px 40px rgba(0,0,0,0.5); }
+        .lv-modal h2 { font-size:1.25rem; color:#fca5a5; margin-bottom:0.3rem; }
+        .lv-sub { font-size:0.85rem; color:var(--text-muted); margin-bottom:1.2rem; }
+        .lv-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.9rem 1rem; }
+        .lv-field.full { grid-column:1 / span 2; }
+        .lv-field label.lv-label { display:block; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); margin-bottom:4px; }
+        .lv-field input[type=text], .lv-field input[type=number], .lv-field input[type=date] { width:100%; background:var(--bg-input); color:white; border:1px solid var(--border); border-radius:6px; padding:0.6rem 0.7rem; font-family:inherit; font-size:0.95rem; }
+        .lv-field input:focus { outline:none; border-color:var(--accent); }
+        .lv-radios { display:flex; gap:0.6rem; }
+        .lv-radios label { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:0.55rem; border:1px solid var(--border); border-radius:6px; background:var(--bg-input); cursor:pointer; font-size:0.92rem; }
+        .lv-radios input { accent-color: var(--accent); }
+        .lv-actions { display:flex; justify-content:flex-end; gap:0.7rem; margin-top:1.4rem; }
+        .lv-actions button { cursor:pointer; font-family:inherit; font-weight:700; border-radius:6px; padding:0.6rem 1.2rem; font-size:0.92rem; }
+        .lv-err { color:var(--error); font-size:0.85rem; margin-top:0.8rem; min-height:1.1em; }
+        .lv-add { margin:0.9rem 1rem 0; }
+        .lv-add button { width:100%; }
         .btn-dns { background: rgba(139,154,174,0.12); border: 1px solid var(--text-muted); color: #cbd5e1; }
         .archived-banner { background: rgba(139,154,174,0.1); border: 1px solid var(--text-muted); color: #e2e8f0; padding: 1rem 1.2rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
         .reissue-pending { margin-bottom: 1rem; padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--warning); background: rgba(245, 158, 11, 0.1); color: #fcd34d; font-size: 0.9rem; font-weight: 600; }
@@ -215,6 +237,8 @@
             <button type="button" id="tabArchive">Archive <span id="archiveCount"></span></button>
         </div>
 
+        <div class="lv-add"><button type="button" class="btn-leaver-main" onclick="openLeaverModal('new')">➕ Add Leaver (not on the system)</button></div>
+
         <div class="applicant-list" id="applicantList">
             <div class="empty-state" style="font-size: 1rem;">Loading records...</div>
         </div>
@@ -224,9 +248,34 @@
         <div class="empty-state">Select an onboarding profile from the sidebar to review details.</div>
     </main>
 
+    <div class="lv-overlay" id="leaverModal">
+        <div class="lv-modal">
+            <h2 id="lvTitle">Record Leaver</h2>
+            <div class="lv-sub" id="lvSub"></div>
+            <div class="lv-grid">
+                <div class="lv-field full" id="lvNameRow" style="display:none;"><label class="lv-label" for="lvName">Name *</label><input type="text" id="lvName" placeholder="Full name" autocomplete="off"></div>
+                <div class="lv-field full"><label class="lv-label" for="lvDate">Leaving date (optional)</label><input type="date" id="lvDate"></div>
+                <div class="lv-field"><label class="lv-label" for="lvHolidays">Holidays owed (days)</label><input type="number" id="lvHolidays" min="0" step="0.5" value="0"></div>
+                <div class="lv-field"><label class="lv-label" for="lvNotice">Notice pay (days)</label><input type="number" id="lvNotice" min="0" step="0.5" value="0"></div>
+                <div class="lv-field"><label class="lv-label" for="lvVan">Van deduction (days)</label><input type="number" id="lvVan" min="0" step="0.5" value="0"></div>
+                <div class="lv-field"><label class="lv-label" for="lvTraining">Training deduction (days)</label><input type="number" id="lvTraining" min="0" step="0.5" value="0"></div>
+                <div class="lv-field full"><label class="lv-label">Phone returned?</label>
+                    <div class="lv-radios"><label><input type="radio" name="lvPhone" value="yes"> Yes</label><label><input type="radio" name="lvPhone" value="no"> No</label></div></div>
+                <div class="lv-field full"><label class="lv-label">Kit returned?</label>
+                    <div class="lv-radios"><label><input type="radio" name="lvKit" value="yes" onchange="lvKitToggle()"> Yes</label><label><input type="radio" name="lvKit" value="no" onchange="lvKitToggle()"> No</label></div></div>
+                <div class="lv-field full" id="lvKitCostRow" style="display:none;"><label class="lv-label" for="lvKitCost">Kit not returned — amount to deduct (£)</label><input type="number" id="lvKitCost" min="0" step="0.01" placeholder="e.g. 85.00"></div>
+            </div>
+            <div class="lv-err" id="lvErr"></div>
+            <div class="lv-actions">
+                <button type="button" class="btn-muted" onclick="closeLeaverModal()">Cancel</button>
+                <button type="button" class="btn-leaver-main" id="lvSaveBtn" onclick="saveLeaver()">Save leaver details</button>
+            </div>
+        </div>
+    </div>
+
 <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-    import { getFirestore, collection, query, onSnapshot, where, doc, updateDoc, getDocs, getDoc, deleteField, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+    import { getFirestore, collection, query, onSnapshot, where, doc, updateDoc, getDocs, getDoc, deleteField, arrayUnion, addDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
     import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
     const firebaseConfig = {
@@ -314,6 +363,20 @@
         }
     }, (err) => console.warn('DBS Check not readable:', err));
 
+    // Leavers who were never on the system (added with "Add Leaver"). Kept in their own collection so they
+    // do not appear as applicants on any other page.
+    let manualLeavers = [];
+    onSnapshot(collection(db, "NGU Leavers"), (snapshot) => {
+        manualLeavers = [];
+        snapshot.forEach(d => manualLeavers.push({ id: d.id, ...d.data() }));
+        manualLeavers.sort((a, b) => String(b.addedAt || '').localeCompare(String(a.addedAt || '')));
+        renderSidebar();
+        if (selectedAppId && String(selectedAppId).startsWith('ML_')) {
+            const r = manualLeavers.find(x => 'ML_' + x.id === selectedAppId);
+            if (r) renderManualLeaver(r); else document.getElementById('mainContent').innerHTML = '<div class="empty-state">Select an onboarding profile from the sidebar to review details.</div>';
+        }
+    }, (err) => console.warn('NGU Leavers not readable:', err));
+
     function setTab(tab) { currentTab = tab; renderSidebar(); }
     document.getElementById('tabActive').addEventListener('click', () => setTab('active'));
     document.getElementById('tabArchive').addEventListener('click', () => setTab('archive'));
@@ -355,7 +418,7 @@
         const listEl = document.getElementById('applicantList');
         listEl.innerHTML = '';
 
-        const archivedCount = applicationsData.filter(a => a.onboardingArchive && a.onboardingArchive.status).length;
+        const archivedCount = applicationsData.filter(a => a.onboardingArchive && a.onboardingArchive.status).length + manualLeavers.length;
         document.getElementById('archiveCount').textContent = archivedCount ? `(${archivedCount})` : '';
         document.getElementById('tabActive').classList.toggle('active', currentTab === 'active');
         document.getElementById('tabArchive').classList.toggle('active', currentTab === 'archive');
@@ -371,7 +434,11 @@
             });
         }
 
-        if (filteredApps.length === 0) {
+        const manualShown = currentTab === 'archive'
+            ? manualLeavers.filter(r => !searchQuery || String(r.fullName || '').toLowerCase().includes(searchQuery))
+            : [];
+
+        if (filteredApps.length === 0 && manualShown.length === 0) {
             listEl.innerHTML = `<div class="empty-state" style="font-size: 0.9rem;">${currentTab === 'archive' ? 'Nothing in the archive.' : 'No active onboardings found.'}</div>`;
             return;
         }
@@ -415,7 +482,214 @@
             };
             listEl.appendChild(div);
         });
+
+        manualShown.forEach(r => {
+            const div = document.createElement('div');
+            div.className = 'applicant-item';
+            if (selectedAppId === 'ML_' + r.id) div.classList.add('active');
+            const dt = r.leavingDate ? ' · ' + escapeHtml(fmtDob(r.leavingDate)) : '';
+            div.innerHTML = `
+                <div class="app-name">${escapeHtml(r.fullName || 'Unnamed leaver')}</div>
+                <div class="app-pos">Added manually</div>
+                <div><span class="status-badge status-archived">🚪 Leaver${dt}</span></div>
+            `;
+            div.onclick = () => {
+                selectedAppId = 'ML_' + r.id;
+                document.querySelectorAll('.applicant-item').forEach(el => el.classList.remove('active'));
+                div.classList.add('active');
+                renderManualLeaver(r);
+            };
+            listEl.appendChild(div);
+        });
     }
+
+    // ─── LEAVER DETAILS ──────────────────────────────────────────────────────
+    function fmtDaysQty(n) {
+        const v = Number(n);
+        if (!isFinite(v)) return '0 days';
+        return `${v} ${v === 1 ? 'day' : 'days'}`;
+    }
+    function fmtMoney(n) { const v = Number(n); return '£' + (isFinite(v) ? v : 0).toFixed(2); }
+
+    // Outcomes block shown below the Payroll block (and on manually added leavers)
+    function leaverBlockHtml(rec, target, isLeaver) {
+        const d = rec.leaverDetails;
+        if (!d) {
+            if (!isLeaver) return '';
+            return `<div class="section" style="border-color:var(--error);">
+                <h3>🚪 Leaver Outcomes</h3>
+                <div style="color:var(--text-muted); font-size:0.9rem; margin-bottom:0.8rem;">No leaver details have been recorded yet.</div>
+                <button type="button" class="btn-leaver-main" onclick="openLeaverModal('${target}')">🚪 Record Leaver Details</button>
+            </div>`;
+        }
+        const yes = t => `<span style="color:var(--success); font-weight:700;">✓ ${t}</span>`;
+        const no = t => `<span style="color:var(--error); font-weight:700;">✗ ${t}</span>`;
+        const cell = (label, value) => `<div class="data-group"><div class="data-label">${label}</div><div class="data-value">${value}</div></div>`;
+        const leaving = rec.leavingDate || rec.onboardingArchive?.date || '';
+        const rb = d.recordedBy ? ` by ${escapeHtml(d.recordedBy)}` : '';
+        return `<div class="section" style="border-color:var(--error);">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:16px;">
+                <h3 style="margin:0; border:none; padding:0;">🚪 Leaver Outcomes</h3>
+                <button type="button" class="btn-leaver-main" style="padding:4px 10px; font-size:0.8rem;" onclick="openLeaverModal('${target}')">✏️ Edit</button>
+            </div>
+            <div class="grid-3">
+                ${cell('Holidays owed', escapeHtml(fmtDaysQty(d.holidaysOwedDays)))}
+                ${cell('Notice pay', escapeHtml(fmtDaysQty(d.noticePayDays)))}
+                ${cell('Van deduction', escapeHtml(fmtDaysQty(d.vanDeductionDays)))}
+                ${cell('Training deduction', escapeHtml(fmtDaysQty(d.trainingDeductionDays)))}
+                ${cell('Phone returned', d.phoneReturned === 'yes' ? yes('Yes') : no('No'))}
+                ${cell('Kit returned', d.kitReturned === 'yes' ? yes('Yes') : no(`No — ${escapeHtml(fmtMoney(d.kitOutstandingValue))} to deduct`))}
+            </div>
+            <div style="margin-top:1rem; font-size:0.8rem; color:var(--text-muted);">${leaving ? `Leaving date: ${escapeHtml(fmtDob(leaving))} · ` : ''}Recorded ${escapeHtml(fmtStampDate(d.recordedAt))}${rb}</div>
+        </div>`;
+    }
+
+    let leaverTarget = null; // appId, 'new', or 'ML_<id>'
+    function findLeaverRecord(target) {
+        if (!target || target === 'new') return null;
+        if (String(target).startsWith('ML_')) return manualLeavers.find(x => 'ML_' + x.id === target) || null;
+        return applicationsData.find(a => a.id === target) || null;
+    }
+    window.lvKitToggle = function() {
+        const no = document.querySelector('input[name="lvKit"][value="no"]')?.checked;
+        document.getElementById('lvKitCostRow').style.display = no ? 'block' : 'none';
+    };
+    window.openLeaverModal = function(target) {
+        leaverTarget = target;
+        const rec = findLeaverRecord(target);
+        const isManual = target === 'new' || String(target).startsWith('ML_');
+        const d = (rec && rec.leaverDetails) || {};
+        document.getElementById('lvTitle').textContent = target === 'new' ? 'Add Leaver' : (d.recordedAt ? 'Edit Leaver Details' : 'Record Leaver');
+        document.getElementById('lvSub').textContent = target === 'new'
+            ? 'For someone who is not on the system. They will be added to the Archive as a Leaver.'
+            : `${rec?.fullName || 'This person'}${isManual ? '' : (rec?.onboardingArchive?.status ? '' : ' will also be moved to the Archive as a Leaver.')}`;
+        document.getElementById('lvNameRow').style.display = isManual ? 'block' : 'none';
+        document.getElementById('lvName').value = isManual && rec ? (rec.fullName || '') : '';
+        document.getElementById('lvDate').value = (rec && (rec.leavingDate || rec.onboardingArchive?.date)) || '';
+        document.getElementById('lvHolidays').value = d.holidaysOwedDays ?? 0;
+        document.getElementById('lvNotice').value = d.noticePayDays ?? 0;
+        document.getElementById('lvVan').value = d.vanDeductionDays ?? 0;
+        document.getElementById('lvTraining').value = d.trainingDeductionDays ?? 0;
+        document.querySelectorAll('input[name="lvPhone"]').forEach(r => r.checked = (r.value === d.phoneReturned));
+        document.querySelectorAll('input[name="lvKit"]').forEach(r => r.checked = (r.value === d.kitReturned));
+        document.getElementById('lvKitCost').value = d.kitReturned === 'no' ? (d.kitOutstandingValue ?? '') : '';
+        lvKitToggle();
+        document.getElementById('lvErr').textContent = '';
+        document.getElementById('lvSaveBtn').disabled = false;
+        document.getElementById('leaverModal').classList.add('open');
+    };
+    window.closeLeaverModal = function() { document.getElementById('leaverModal').classList.remove('open'); leaverTarget = null; };
+
+    window.saveLeaver = async function() {
+        const target = leaverTarget;
+        const err = m => { document.getElementById('lvErr').textContent = m; };
+        const isManual = target === 'new' || String(target).startsWith('ML_');
+        const name = document.getElementById('lvName').value.trim();
+        if (isManual && !name) return err('Please enter the leaver\'s name.');
+        const num = (id, label) => {
+            const raw = document.getElementById(id).value.trim();
+            const v = Number(raw);
+            if (raw === '' || !isFinite(v) || v < 0) { err(`Please enter a valid quantity for ${label} (0 if none).`); return null; }
+            return v;
+        };
+        const holidays = num('lvHolidays', 'Holidays owed'); if (holidays === null) return;
+        const notice = num('lvNotice', 'Notice pay'); if (notice === null) return;
+        const van = num('lvVan', 'Van deduction'); if (van === null) return;
+        const training = num('lvTraining', 'Training deduction'); if (training === null) return;
+        const phone = document.querySelector('input[name="lvPhone"]:checked')?.value;
+        if (!phone) return err('Please say whether the phone was returned (Yes / No).');
+        const kit = document.querySelector('input[name="lvKit"]:checked')?.value;
+        if (!kit) return err('Please say whether the kit was returned (Yes / No).');
+        let kitCost = 0;
+        if (kit === 'no') {
+            const raw = document.getElementById('lvKitCost').value.trim();
+            kitCost = Number(raw);
+            if (raw === '' || !isFinite(kitCost) || kitCost < 0) return err('Kit not returned — please enter the amount to deduct (£).');
+            kitCost = Math.round(kitCost * 100) / 100;
+        }
+        const leavingDate = document.getElementById('lvDate').value || '';
+        const now = new Date().toISOString();
+        const leaverDetails = {
+            holidaysOwedDays: holidays, noticePayDays: notice, vanDeductionDays: van, trainingDeductionDays: training,
+            phoneReturned: phone, kitReturned: kit, kitOutstandingValue: kit === 'no' ? kitCost : 0,
+            recordedAt: now, recordedBy: currentUserName()
+        };
+        document.getElementById('lvSaveBtn').disabled = true;
+        try {
+            if (isManual) {
+                if (target === 'new') {
+                    const payload = { fullName: name, leavingDate, leaverDetails, manual: true, addedAt: now, addedBy: currentUserName() };
+                    const ref = await addDoc(collection(db, 'NGU Leavers'), payload);
+                    closeLeaverModal();
+                    currentTab = 'archive';
+                    selectedAppId = 'ML_' + ref.id;
+                    renderSidebar();
+                    renderManualLeaver({ id: ref.id, ...payload });
+                } else {
+                    const id = String(target).slice(3);
+                    await updateDoc(doc(db, 'NGU Leavers', id), { fullName: name, leavingDate, leaverDetails });
+                    closeLeaverModal();
+                }
+            } else {
+                const appData = applicationsData.find(a => a.id === target);
+                if (!appData) throw new Error('Profile not found');
+                const upd = { leaverDetails };
+                const arc = appData.onboardingArchive && appData.onboardingArchive.status ? appData.onboardingArchive : null;
+                const moving = !arc;
+                if (moving) {
+                    if (!confirm(`Save these details and move ${appData.fullName || 'this person'} to the Archive as a Leaver?\n\nYou can restore them from the Archive tab at any time.`)) {
+                        document.getElementById('lvSaveBtn').disabled = false; return;
+                    }
+                    upd.onboardingArchive = { status: 'Leaver', at: now, by: currentUserName(), date: leavingDate, reason: '' };
+                } else if (leavingDate && leavingDate !== arc.date) {
+                    upd['onboardingArchive.date'] = leavingDate;
+                }
+                await updateDoc(doc(db, 'NGUO New Applicants', target), upd);
+                closeLeaverModal();
+                if (moving) {
+                    selectedAppId = null;
+                    document.getElementById('mainContent').innerHTML = `<div class="empty-state">${escapeHtml(appData.fullName || 'Applicant')} recorded as a leaver and moved to the Archive.</div>`;
+                }
+            }
+        } catch (e) {
+            console.error('Save leaver failed:', e);
+            err('Could not save: ' + (e && e.message ? e.message : e));
+            document.getElementById('lvSaveBtn').disabled = false;
+        }
+    };
+
+    // Profile page for a leaver who was added manually (not on the system)
+    function renderManualLeaver(r) {
+        const target = 'ML_' + r.id;
+        document.getElementById('mainContent').innerHTML = `
+            <div class="archived-banner">
+                <div>🚪 <strong>Leaver</strong> — added manually ${escapeHtml(fmtStampDate(r.addedAt))}${r.addedBy ? ' by ' + escapeHtml(r.addedBy) : ''}</div>
+                <button type="button" class="btn-muted" style="cursor:pointer; font-family:inherit; font-weight:700; border-radius:6px; padding:0.5rem 0.9rem; font-size:0.85rem;" onclick="deleteManualLeaver('${r.id}')">🗑 Remove record</button>
+            </div>
+            <div class="lv-topbar"><button type="button" class="btn-leaver-main" onclick="openLeaverModal('${target}')">🚪 Edit Leaver Details</button></div>
+            <div class="app-header">
+                <div>
+                    <h1>${escapeHtml(r.fullName || 'Unnamed leaver')}</h1>
+                    <div class="role-badge">Leaver — not on the system</div>
+                </div>
+                <div style="display:flex; gap:2rem; text-align:right; justify-content:flex-end;">
+                    <div>
+                        <div style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase;">Leaving date</div>
+                        <div style="font-size:1.2rem; color:white; font-weight:700;">${r.leavingDate ? escapeHtml(fmtDob(r.leavingDate)) : 'Not set'}</div>
+                    </div>
+                </div>
+            </div>
+            ${leaverBlockHtml(r, target, true)}`;
+    }
+    window.deleteManualLeaver = async function(id) {
+        const r = manualLeavers.find(x => x.id === id);
+        if (!confirm(`Permanently remove the leaver record for ${r?.fullName || 'this person'}?\n\nThis cannot be undone.`)) return;
+        try {
+            await deleteDoc(doc(db, 'NGU Leavers', id));
+            selectedAppId = null;
+            document.getElementById('mainContent').innerHTML = '<div class="empty-state">Leaver record removed.</div>';
+        } catch (e) { console.error(e); alert('Could not remove this record.'); }
+    };
 
     // ─── DBS INFORMATION ─────────────────────────────────────────────────────
     // Shows: the applicant's choice + consent (from onboarding step 3) and the DBS form they filled in
@@ -509,12 +783,30 @@
                 <div class="data-label" style="color:var(--accent); margin-bottom:0.8rem;">DBS Form Submission</div>${inner}</div>`;
         }
 
+        // Did the DBS notification emails actually go out? (recorded by complete-onboarding.html / DBS-check.html)
+        const mailBits = [];
+        const em = app.dbsEmail;
+        if (em && em.status) {
+            const t = em.at ? new Date(em.at).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' }) : '';
+            mailBits.push(em.status === 'sent'
+                ? `<span style="color:var(--success);">✓ Onboarding DBS email sent${t ? ' (' + t + ')' : ''}</span>`
+                : `<span style="color:var(--error);">✗ Onboarding DBS email FAILED${t ? ' (' + t + ')' : ''}: ${escapeHtml(em.error || 'unknown error')}</span>`);
+        }
+        const fm = subs[0] && subs[0].notification;
+        if (fm && fm.status) {
+            mailBits.push(fm.status === 'failed'
+                ? `<span style="color:var(--error);">✗ DBS form notification email FAILED: ${escapeHtml(fm.error || 'unknown error')}</span>`
+                : `<span style="color:${fm.status === 'sent' ? 'var(--success)' : 'var(--warning)'};">${fm.status === 'sent' ? '✓' : '⚠'} DBS form notification email ${escapeHtml(fm.status)}</span>`);
+        }
+        const mailHtml = mailBits.length ? `<div style="margin-top:0.8rem; font-size:0.85rem; display:flex; flex-direction:column; gap:0.2rem;">${mailBits.join('')}</div>` : '';
+
         return `<div style="border-top:1px dashed var(--border); padding-top:1.5rem;">
             <div class="data-label" style="color:var(--accent);">🛡 DBS Background Check</div>
             <div class="grid-3" style="margin-top:0.6rem;">
                 <div class="data-group" style="grid-column: 1 / span 2;"><div class="data-label">Choice</div><div class="data-value" style="font-weight:bold;">${choiceHtml}</div></div>
                 <div class="data-group"><div class="data-label">Consent</div><div class="data-value" style="font-weight:bold;">${consentHtml}</div></div>
             </div>
+            ${mailHtml}
             ${formHtml}
         </div>`;
     }
@@ -1409,6 +1701,7 @@
         mainEl.innerHTML = `
             ${archivedBannerHtml}
             ${warningBanner}
+            ${(arc && arc.status !== 'Leaver') ? '' : `<div class="lv-topbar"><button type="button" class="btn-leaver-main" onclick="openLeaverModal('${app.id}')">🚪 ${app.leaverDetails ? 'Edit Leaver Details' : 'Record Leaver'}</button></div>`}
             
             <div class="app-header">
                 <div>
@@ -1498,6 +1791,8 @@
             </div>
 
             ${payrollSectionHtml}
+
+            ${leaverBlockHtml(app, app.id, !!(arc && arc.status === 'Leaver'))}
 
             <div class="section" style="border-color: ${app.onboardingCompleted ? 'var(--border)' : 'var(--warning)'}">
                 <h3>🚨 Emergency Contact (Next of Kin)</h3>
